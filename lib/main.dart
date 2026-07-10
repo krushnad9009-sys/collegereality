@@ -1,205 +1,38 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'config/router/app_router.dart';
+import 'config/theme/app_theme.dart';
+import 'config/theme/theme_provider.dart';
 
-void main() {
-  runApp(const CollegeRealityIndia());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  runApp(
+    const ProviderScope(
+      child: CollegeRealityApp(),
+    ),
+  );
 }
 
-class CollegeRealityIndia extends StatelessWidget {
-  const CollegeRealityIndia({super.key});
+class CollegeRealityApp extends ConsumerWidget {
+  const CollegeRealityApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(themeModeProvider);
+    final appRouter = ref.watch(appRouterProvider);
+
+    return MaterialApp.router(
       debugShowCheckedModeBanner: false,
-      home: const DashboardPage(),
+      title: 'College Reality',
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: themeMode,
+      routerConfig: appRouter,
     );
   }
-}
-
-
-class DashboardPage extends StatelessWidget {
-  const DashboardPage({super.key});
-
-
-  @override
-  Widget build(BuildContext context){
-
-    return Scaffold(
-
-      appBar: AppBar(
-        title: const Text(
-          "Student Dashboard",
-        ),
-      ),
-
-
-      body: GridView.count(
-
-        padding: const EdgeInsets.all(20),
-
-        crossAxisCount:2,
-
-        crossAxisSpacing:15,
-
-        mainAxisSpacing:15,
-
-
-        children:[
-
-
-          dashboardCard(
-            context,
-            Icons.star,
-            "College Rating",
-            const SurveyPage(),
-          ),
-
-
-          dashboardCard(
-            context,
-            Icons.school,
-            "College Search",
-            null,
-          ),
-
-
-          dashboardCard(
-            context,
-            Icons.rate_review,
-            "Reviews",
-            null,
-          ),
-
-
-          dashboardCard(
-            context,
-            Icons.work,
-            "Jobs & Internship",
-            null,
-          ),
-
-
-          dashboardCard(
-            context,
-            Icons.people,
-            "Student Community",
-            null,
-          ),
-
-
-          dashboardCard(
-            context,
-            Icons.person,
-            "My Profile",
-            null,
-          ),
-
-        ],
-
-      ),
-
-    );
-
-  }
-
-
-
-  Widget dashboardCard(
-      BuildContext context,
-      IconData icon,
-      String title,
-      Widget? page
-      ){
-
-    return Card(
-
-      elevation:5,
-
-      child:InkWell(
-
-        onTap:(){
-
-          if(page!=null){
-
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder:(context)=>page,
-              ),
-            );
-
-          }
-
-        },
-
-
-        child:Column(
-
-          mainAxisAlignment:MainAxisAlignment.center,
-
-          children:[
-
-
-            Icon(
-              icon,
-              size:45,
-              color:Colors.indigo,
-            ),
-
-
-            const SizedBox(height:10),
-
-
-            Text(
-              title,
-              textAlign:TextAlign.center,
-            )
-
-
-          ],
-
-        ),
-
-      ),
-
-    );
-
-  }
-
-}
-
-
-
-class SurveyPage extends StatelessWidget{
-
-  const SurveyPage({super.key});
-
-
-  @override
-  Widget build(BuildContext context){
-
-    return Scaffold(
-
-      appBar:AppBar(
-        title:const Text(
-          "College Rating Survey",
-        ),
-      ),
-
-
-      body:const Center(
-
-        child:Text(
-          "Rating Questions Page",
-          style:TextStyle(
-            fontSize:25,
-          ),
-        ),
-
-      ),
-
-    );
-
-  }
-
 }
