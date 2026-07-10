@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../config/theme/app_theme.dart';
-import '../../config/router/route_names.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../../../config/theme/app_theme.dart';
+import '../../../config/router/route_names.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -52,8 +54,24 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
   Future<void> _navigateAfterSplash() async {
     await Future.delayed(const Duration(milliseconds: 3500));
+    
+    if (!mounted) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    final hasSeenOnboarding = prefs.getBool('hasSeenOnboarding') ?? false;
+    final isLoggedIn = FirebaseAuth.instance.currentUser != null;
+
     if (mounted) {
-      context.go(RouteNames.onboarding);
+      if (isLoggedIn) {
+        // If logged in, go to home
+        context.go(RouteNames.home);
+      } else if (hasSeenOnboarding) {
+        // If seen onboarding but not logged in, go to login
+        context.go(RouteNames.login);
+      } else {
+        // If first time, go to onboarding
+        context.go(RouteNames.onboarding);
+      }
     }
   }
 
