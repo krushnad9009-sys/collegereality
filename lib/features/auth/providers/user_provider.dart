@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../repositories/user_repository.dart';
 import '../services/firestore_user_service.dart';
 import '../models/user_model.dart';
@@ -32,17 +31,14 @@ final userStreamProvider =
 
 // Current user detail provider (combines auth state with user data)
 final currentUserDetailProvider = FutureProvider<UserModel?>((ref) async {
-  final authState = ref.watch(authStateProvider);
-  
-  final user = await authState.whenData((firebaseUser) async {
-    if (firebaseUser != null) {
-      final userRepository = ref.watch(userRepositoryProvider);
-      return userRepository.getUser(firebaseUser.uid);
-    }
-    return null;
-  });
+  final authState = await ref.watch(authStateProvider.future);
 
-  return user.value;
+  if (authState != null) {
+    final userRepository = ref.watch(userRepositoryProvider);
+    return userRepository.getUser(authState.uid);
+  }
+
+  return null;
 });
 
 // Note: authStateProvider is imported from auth_provider.dart

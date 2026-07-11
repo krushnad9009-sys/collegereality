@@ -1,5 +1,3 @@
-import 'package:json_annotation/json_annotation.dart';
-
 // Manual JSON serialization without code generation
 // To regenerate: flutter pub run build_runner build
 

@@ -42,7 +42,7 @@ class PrimaryButton extends StatelessWidget {
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
                   valueColor: AlwaysStoppedAnimation<Color>(
-                    Colors.white.withOpacity(0.7),
+                    Colors.white.withValues(alpha: 0.7),
                   ),
                 ),
               )
@@ -98,7 +98,7 @@ class SecondaryButton extends StatelessWidget {
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
                   valueColor: AlwaysStoppedAnimation<Color>(
-                    AppTheme.primaryColor.withOpacity(0.7),
+                    AppTheme.primaryColor.withValues(alpha: 0.7),
                   ),
                 ),
               )

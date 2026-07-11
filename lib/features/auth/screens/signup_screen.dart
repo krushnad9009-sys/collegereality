@@ -2,14 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:uuid/uuid.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../config/router/route_names.dart';
 import '../../../core/widgets/index.dart';
 import '../models/user_model.dart';
 import '../providers/auth_provider.dart';
 import '../providers/user_provider.dart';
-import '../repositories/user_repository.dart';
 import '../utils/validation_util.dart';
 
 class SignupScreen extends ConsumerStatefulWidget {
@@ -308,7 +306,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: AppTheme.errorColor.withOpacity(0.1),
+                      color: AppTheme.errorColor.withValues(alpha: 0.1),
                       border: Border.all(color: AppTheme.errorColor),
                       borderRadius: BorderRadius.circular(8),
                     ),

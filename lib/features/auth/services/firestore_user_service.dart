@@ -44,7 +44,7 @@ class FirestoreUserService {
           .snapshots()
           .map((doc) {
         if (doc.exists) {
-          return UserModel.fromJson(doc.data() as Map<String, dynamic>);
+          return UserModel.fromJson(doc.data()!);
         }
         return null;
       });
@@ -150,8 +150,7 @@ class FirestoreUserService {
           .get();
 
       if (querySnapshot.docs.isNotEmpty) {
-        return UserModel.fromJson(
-            querySnapshot.docs.first.data() as Map<String, dynamic>);
+        return UserModel.fromJson(querySnapshot.docs.first.data());
       }
       return null;
     } catch (e) {

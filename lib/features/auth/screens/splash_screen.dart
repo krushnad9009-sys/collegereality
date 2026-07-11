@@ -103,7 +103,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                         borderRadius: BorderRadius.circular(25),
                         boxShadow: [
                           BoxShadow(
-                            color: AppTheme.black.withOpacity(0.2),
+                            color: AppTheme.black.withValues(alpha: 0.2),
                             blurRadius: 20,
                             offset: const Offset(0, 10),
                           ),
@@ -130,7 +130,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                     Text(
                       'Know the Reality Before You Take Admission',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppTheme.white.withOpacity(0.9),
+                            color: AppTheme.white.withValues(alpha: 0.9),
                             fontWeight: FontWeight.w500,
                           ),
                       textAlign: TextAlign.center,

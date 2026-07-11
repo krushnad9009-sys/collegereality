@@ -88,11 +88,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             onPageChanged: (index) {
               setState(() => _currentPage = index);
             },
-            children: pages
-                .map(
-                  (page) => OnboardingPageView(page: page, isMobile: isMobile),
-                )
-                .toList(),
+            itemBuilder: (context, index) {
+              final page = pages[index];
+              return OnboardingPageView(page: page, isMobile: isMobile);
+            },
+            itemCount: pages.length,
           ),
           Positioned(
             bottom: 40,
@@ -179,8 +179,8 @@ class OnboardingPageView extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            page.color.withOpacity(0.1),
-            page.color.withOpacity(0.05),
+            page.color.withValues(alpha: 0.1),
+            page.color.withValues(alpha: 0.05),
           ],
         ),
       ),
@@ -194,7 +194,7 @@ class OnboardingPageView extends StatelessWidget {
                 width: isMobile ? 120 : 160,
                 height: isMobile ? 120 : 160,
                 decoration: BoxDecoration(
-                  color: page.color.withOpacity(0.15),
+                  color: page.color.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(40),
                 ),
                 child: Icon(

@@ -1,14 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../config/theme/app_theme.dart';
-import '../../../config/router/route_names.dart';
 import '../../../core/widgets/index.dart';
 import '../../auth/providers/auth_provider.dart';
-import '../../auth/providers/user_provider.dart';
 import '../widgets/home_header_widget.dart';
-import '../widgets/college_card_widget.dart';
 import '../widgets/search_bar_widget.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -205,7 +201,7 @@ class HomeScreen extends ConsumerWidget {
                               style: GoogleFonts.poppins(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,
-                                color: AppTheme.white.withOpacity(0.9),
+                                color: AppTheme.white.withValues(alpha: 0.9),
                               ),
                             ),
                             const SizedBox(height: 16),
@@ -318,8 +314,8 @@ class _QuickAccessCard extends StatelessWidget {
         child: Container(
           width: 90,
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            border: Border.all(color: color.withOpacity(0.3)),
+            color: color.withValues(alpha: 0.1),
+            border: Border.all(color: color.withValues(alpha: 0.3)),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Column(

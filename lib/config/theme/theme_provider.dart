@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -7,7 +8,7 @@ final themeModeProvider = StateProvider<ThemeMode>((ref) {
 
 final isDarkModeProvider = Provider<bool>((ref) {
   final themeMode = ref.watch(themeModeProvider);
-  final brightness = WidgetsBinding.instance.window.platformBrightness;
+  final brightness = PlatformDispatcher.instance.platformBrightness;
   
   if (themeMode == ThemeMode.system) {
     return brightness == Brightness.dark;

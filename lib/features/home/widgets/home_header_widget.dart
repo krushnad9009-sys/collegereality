@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:go_router/go_router.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/widgets/index.dart';
 
@@ -59,7 +58,7 @@ class HomeHeaderWidget extends StatelessWidget {
               height: 48,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppTheme.primaryColor.withOpacity(0.2),
+                color: AppTheme.primaryColor.withValues(alpha: 0.2),
               ),
               child: user.photoURL != null
                   ? ClipOval(
@@ -149,7 +148,7 @@ class HomeHeaderWidget extends StatelessWidget {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.settings_outline),
+                leading: const Icon(Icons.settings_outlined),
                 title: const Text('Settings'),
                 onTap: () {
                   Navigator.pop(context);

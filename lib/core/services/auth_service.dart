@@ -87,13 +87,4 @@ class AuthService {
     }
   }
 
-  // Check if email exists
-  Future<bool> isEmailRegistered(String email) async {
-    try {
-      final methods = await _firebaseAuth.fetchSignInMethodsForEmail(email);
-      return methods.isNotEmpty;
-    } catch (e) {
-      rethrow;
-    }
-  }
 }

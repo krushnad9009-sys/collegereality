@@ -8,17 +8,6 @@ import '../../features/auth/screens/signup_screen.dart';
 import '../../features/home/screens/home_screen.dart';
 import 'route_names.dart';
 
-// Auth state redirect logic
-final _authStateProvider = StateProvider<AuthRedirect>((ref) {
-  return AuthRedirect.initial;
-});
-
-enum AuthRedirect {
-  initial,
-  authenticated,
-  unauthenticated,
-}
-
 final appRouterProvider = Provider<GoRouter>((ref) {
   final firebaseAuth = FirebaseAuth.instance;
   

@@ -57,7 +57,7 @@ class AppTheme {
         ),
       ),
       textTheme: _buildTextTheme(gray900),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: white,
         elevation: 2,
         shape: RoundedRectangleBorder(
@@ -170,7 +170,7 @@ class AppTheme {
         ),
       ),
       textTheme: _buildTextTheme(white),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: gray800,
         elevation: 2,
         shape: RoundedRectangleBorder(

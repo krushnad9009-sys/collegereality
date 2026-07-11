@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "244446156099",
+    "project_id": "college-reality",
+    "storage_bucket": "college-reality.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:244446156099:android:223655613f2373c6bf0bf6",
+        "android_client_info": {
+          "package_name": "com.collegeReality"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCF11KTKt0yHRon2McwwYvIRtIgO4qYJ8U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
