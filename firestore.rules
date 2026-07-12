@@ -15,6 +15,11 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
+    function isAggregateOnlyUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys()
+        .hasOnly(['aggregatedRatings', 'reviewCount', 'updatedAt']);
+    }
+
     match /users/{userId} {
       allow read: if isAuthenticated();
       allow create: if isOwner(userId);
@@ -24,7 +29,8 @@ service cloud.firestore {
     match /colleges/{collegeId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated();
-      allow update, delete: if isAdmin();
+      allow update: if isAdmin() || (isAuthenticated() && isAggregateOnlyUpdate());
+      allow delete: if isAdmin();
     }
 
     match /_meta/{docId} {

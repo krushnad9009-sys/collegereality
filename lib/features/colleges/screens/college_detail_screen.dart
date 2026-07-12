@@ -6,25 +6,56 @@ import 'package:intl/intl.dart';
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/widgets/college_image_widget.dart';
+import '../../../core/widgets/skeleton_loader.dart';
 import '../../reviews/providers/review_provider.dart';
 import '../../reviews/widgets/review_card_widget.dart';
 import '../../reviews/widgets/star_rating_widget.dart';
 import '../models/college_model.dart';
 import '../providers/college_provider.dart';
 
-class CollegeDetailScreen extends ConsumerWidget {
+class CollegeDetailScreen extends ConsumerStatefulWidget {
   final String collegeId;
+  final String? initialTab;
 
-  const CollegeDetailScreen({required this.collegeId, super.key});
+  const CollegeDetailScreen({
+    required this.collegeId,
+    this.initialTab,
+    super.key,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final collegeAsync = ref.watch(collegeByIdProvider(collegeId));
+  ConsumerState<CollegeDetailScreen> createState() =>
+      _CollegeDetailScreenState();
+}
+
+class _CollegeDetailScreenState extends ConsumerState<CollegeDetailScreen> {
+  int _initialTabIndex() {
+    switch (widget.initialTab) {
+      case 'reviews':
+        return 6;
+      case 'ratings':
+        return 5;
+      case 'fees':
+        return 4;
+      case 'hostel':
+        return 3;
+      case 'faculty':
+        return 2;
+      case 'placements':
+        return 1;
+      default:
+        return 0;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final collegeAsync = ref.watch(collegeByIdProvider(widget.collegeId));
     final currency = NumberFormat.compactCurrency(locale: 'en_IN', symbol: '₹');
 
     return collegeAsync.when(
       loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+        body: Center(child: CollegeCardSkeleton()),
       ),
       error: (e, _) => Scaffold(
         appBar: AppBar(),
@@ -39,9 +70,11 @@ class CollegeDetailScreen extends ConsumerWidget {
         }
 
         return DefaultTabController(
+          initialIndex: _initialTabIndex(),
           length: 7,
           child: Scaffold(
             floatingActionButton: FloatingActionButton.extended(
+              elevation: 4,
               onPressed: () => context.go(
                 '${RouteNames.writeReviewPath(college.id)}?name=${Uri.encodeComponent(college.name)}',
               ),
@@ -51,8 +84,9 @@ class CollegeDetailScreen extends ConsumerWidget {
             body: NestedScrollView(
               headerSliverBuilder: (context, innerBoxIsScrolled) => [
                 SliverAppBar(
-                  expandedHeight: 220,
+                  expandedHeight: 280,
                   pinned: true,
+                  stretch: true,
                   leading: IconButton(
                     icon: const Icon(Icons.arrow_back_ios_new, size: 18),
                     onPressed: () => context.go(RouteNames.home),
@@ -73,8 +107,9 @@ class CollegeDetailScreen extends ConsumerWidget {
                         CollegeImageWidget(
                           collegeId: college.id,
                           imageUrl: college.coverPhotoUrl,
-                          height: 220,
+                          height: 280,
                           fit: BoxFit.cover,
+                          showComingSoonLabel: true,
                         ),
                         Container(
                           decoration: BoxDecoration(
@@ -393,11 +428,28 @@ class _ReviewsTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final reviewsAsync = ref.watch(collegeReviewsProvider(collegeId));
+    final reviewsAsync = ref.watch(mergedCollegeReviewsProvider(collegeId));
 
     return reviewsAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Failed to load reviews: $e')),
+      loading: () => const ReviewListSkeleton(),
+      error: (e, _) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, size: 48, color: AppTheme.errorColor),
+              const SizedBox(height: 12),
+              Text(
+                'Failed to load reviews',
+                style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 8),
+              Text('$e', textAlign: TextAlign.center),
+            ],
+          ),
+        ),
+      ),
       data: (reviews) {
         if (reviews.isEmpty) {
           return Center(
@@ -406,20 +458,21 @@ class _ReviewsTab extends ConsumerWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.rate_review_outlined,
-                      size: 64, color: AppTheme.gray400),
+                  Icon(Icons.rate_review_outlined,
+                      size: 64, color: AppTheme.primaryColor.withValues(alpha: 0.4)),
                   const SizedBox(height: 16),
                   Text(
                     'No reviews yet',
                     style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Be the first to share your experience!',
                     style: GoogleFonts.poppins(color: AppTheme.gray500),
+                    textAlign: TextAlign.center,
                   ),
                 ],
               ),
@@ -432,12 +485,24 @@ class _ReviewsTab extends ConsumerWidget {
           itemCount: reviews.length,
           itemBuilder: (context, index) {
             final review = reviews[index];
-            return ReviewCardWidget(
-              review: review,
-              onLike: () async {
-                await ref.read(reviewRepositoryProvider).likeReview(review.id);
-                ref.invalidate(collegeReviewsProvider(collegeId));
-              },
+            return TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: 1),
+              duration: Duration(milliseconds: 280 + (index * 40)),
+              curve: Curves.easeOutCubic,
+              builder: (context, value, child) => Opacity(
+                opacity: value,
+                child: Transform.translate(
+                  offset: Offset(0, 16 * (1 - value)),
+                  child: child,
+                ),
+              ),
+              child: ReviewCardWidget(
+                review: review,
+                onLike: () async {
+                  await ref.read(reviewRepositoryProvider).likeReview(review.id);
+                  ref.invalidate(collegeReviewsProvider(collegeId));
+                },
+              ),
             );
           },
         );

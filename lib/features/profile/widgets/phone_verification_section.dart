@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -33,6 +35,10 @@ class _PhoneVerificationSectionState
   bool _otpSent = false;
   bool _isSending = false;
   bool _isVerifying = false;
+  int _resendSeconds = 0;
+  Timer? _resendTimer;
+
+  static const _resendCooldown = 60;
 
   @override
   void initState() {
@@ -42,14 +48,33 @@ class _PhoneVerificationSectionState
 
   @override
   void dispose() {
+    _resendTimer?.cancel();
     _phoneController.dispose();
     _otpController.dispose();
     super.dispose();
   }
 
+  void _startResendTimer() {
+    _resendTimer?.cancel();
+    setState(() => _resendSeconds = _resendCooldown);
+    _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      if (_resendSeconds <= 1) {
+        timer.cancel();
+        setState(() => _resendSeconds = 0);
+      } else {
+        setState(() => _resendSeconds -= 1);
+      }
+    });
+  }
+
   Future<void> _persistPhoneVerification() async {
     final digits = _phoneController.text.replaceAll(RegExp(r'\D'), '');
-    final normalized = digits.length >= 10 ? digits.substring(digits.length - 10) : digits;
+    final normalized =
+        digits.length >= 10 ? digits.substring(digits.length - 10) : digits;
 
     await ref.read(userRepositoryProvider).verifyPhone(
           widget.userId,
@@ -60,6 +85,8 @@ class _PhoneVerificationSectionState
   }
 
   Future<void> _sendOtp() async {
+    if (_resendSeconds > 0) return;
+
     final phoneError = ValidationUtil.validatePhone(_phoneController.text);
     if (phoneError != null) {
       SnackBarHelper.showErrorSnackBar(context, message: phoneError);
@@ -84,11 +111,17 @@ class _PhoneVerificationSectionState
         return;
       }
 
-      setState(() => _otpSent = true);
+      setState(() {
+        _otpSent = true;
+        _otpController.clear();
+      });
+      _startResendTimer();
       if (mounted) {
         SnackBarHelper.showSuccessSnackBar(
           context,
-          message: 'OTP sent to +91${_phoneController.text.trim()}',
+          message: _resendSeconds == _resendCooldown
+              ? 'OTP sent to +91${_phoneController.text.trim()}'
+              : 'OTP resent successfully',
         );
       }
     } catch (e) {
@@ -98,6 +131,15 @@ class _PhoneVerificationSectionState
     } finally {
       if (mounted) setState(() => _isSending = false);
     }
+  }
+
+  void _changeNumber() {
+    _resendTimer?.cancel();
+    setState(() {
+      _otpSent = false;
+      _resendSeconds = 0;
+      _otpController.clear();
+    });
   }
 
   Future<void> _verifyOtp() async {
@@ -115,6 +157,7 @@ class _PhoneVerificationSectionState
             _otpController.text.trim(),
           );
       await _persistPhoneVerification();
+      _resendTimer?.cancel();
       if (mounted) {
         SnackBarHelper.showSuccessSnackBar(
           context,
@@ -163,7 +206,7 @@ class _PhoneVerificationSectionState
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: AppTheme.secondaryColor.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: AppTheme.secondaryColor.withValues(alpha: 0.25),
         ),
@@ -172,7 +215,7 @@ class _PhoneVerificationSectionState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Phone Verification (OTP)',
+            'Phone Verification',
             style: GoogleFonts.poppins(
               fontWeight: FontWeight.w700,
               color: AppTheme.secondaryColor,
@@ -180,7 +223,7 @@ class _PhoneVerificationSectionState
           ),
           const SizedBox(height: 8),
           Text(
-            'Verify your Indian mobile number via Firebase SMS OTP.',
+            'Verify your Indian mobile number with Firebase SMS OTP.',
             style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.gray600),
           ),
           const SizedBox(height: 12),
@@ -199,10 +242,24 @@ class _PhoneVerificationSectionState
               keyboardType: TextInputType.number,
               prefixIcon: Icons.sms_outlined,
               isRequired: true,
-              validator: (v) {
-                if (v == null || v.length != 6) return 'Enter 6-digit OTP';
-                return null;
-              },
+            ),
+            if (_resendSeconds > 0)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  'Resend available in $_resendSeconds s',
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    color: AppTheme.gray500,
+                  ),
+                ),
+              ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: _changeNumber,
+                child: const Text('Change number'),
+              ),
             ),
           ],
           const SizedBox(height: 12),
@@ -210,7 +267,7 @@ class _PhoneVerificationSectionState
             children: [
               Expanded(
                 child: OutlinedButton(
-                  onPressed: _isSending ? null : _sendOtp,
+                  onPressed: (_isSending || _resendSeconds > 0) ? null : _sendOtp,
                   child: _isSending
                       ? const SizedBox(
                           width: 18,

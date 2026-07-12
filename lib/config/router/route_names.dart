@@ -16,7 +16,11 @@ class RouteNames {
   static const String adminReviews = '/admin/reviews';
   static const String adminUsers = '/admin/users';
 
-  static String collegeDetailsPath(String id) => '/college-details/$id';
+  static String collegeDetailsPath(String id, {String? tab}) {
+    final path = '/college-details/$id';
+    if (tab == null || tab.isEmpty) return path;
+    return '$path?tab=$tab';
+  }
   static String writeReviewPath(String collegeId) =>
       '/college-details/$collegeId/write-review';
 }

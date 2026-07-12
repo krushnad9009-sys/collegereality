@@ -49,14 +49,11 @@ void main() {
     expect(RatingParameters.emptyRatings().length, 10);
   });
 
-  test('CollegeImageHelper returns fallback URL when cover is missing', () {
-    final url = CollegeImageHelper.getCoverImageUrl('college-001');
-    expect(url, startsWith('https://picsum.photos/seed/college'));
+  test('CollegeImageHelper returns null when cover is missing', () {
+    expect(CollegeImageHelper.resolveCoverUrl(null), isNull);
+    expect(CollegeImageHelper.resolveCoverUrl(''), isNull);
     expect(
-      CollegeImageHelper.getCoverImageUrl(
-        'college-001',
-        coverPhotoUrl: 'https://example.com/cover.jpg',
-      ),
+      CollegeImageHelper.resolveCoverUrl('https://example.com/cover.jpg'),
       'https://example.com/cover.jpg',
     );
   });

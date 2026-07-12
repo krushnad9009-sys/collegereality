@@ -19,7 +19,18 @@ class FirestoreReviewService {
     required ReviewModel review,
   }) async {
     final id = review.id.isEmpty ? _uuid.v4() : review.id;
-    final data = review.copyWith(id: id, updatedAt: DateTime.now()).toJson();
+    final now = DateTime.now();
+    final data = review
+        .copyWith(
+          id: id,
+          collegeId: review.collegeId.trim(),
+          status: ReviewModel.statusPublished,
+          createdAt: review.createdAt,
+          updatedAt: now,
+        )
+        .toJson();
+    data['createdAt'] = review.createdAt.toIso8601String();
+    data['updatedAt'] = now.toIso8601String();
     await _reviews.doc(id).set(data);
     return ReviewModel.fromJson(data, docId: id);
   }
@@ -27,6 +38,13 @@ class FirestoreReviewService {
   Future<void> updateReview(ReviewModel review) async {
     final data = review.copyWith(updatedAt: DateTime.now()).toJson();
     await _reviews.doc(review.id).update(data);
+  }
+
+  Future<void> updateReviewStatus(String reviewId, String status) async {
+    await _reviews.doc(reviewId).update({
+      'status': ReviewModel.normalizeStatus(status),
+      'updatedAt': DateTime.now().toIso8601String(),
+    });
   }
 
   Future<void> deleteReview(String reviewId) async {
@@ -45,7 +63,7 @@ class FirestoreReviewService {
   ) async {
     final snapshot = await _reviews
         .where('userId', isEqualTo: userId)
-        .where('collegeId', isEqualTo: collegeId)
+        .where('collegeId', isEqualTo: collegeId.trim())
         .limit(1)
         .get();
     if (snapshot.docs.isEmpty) return null;
@@ -53,44 +71,46 @@ class FirestoreReviewService {
     return ReviewModel.fromJson(doc.data(), docId: doc.id);
   }
 
-  List<ReviewModel> _parseAndFilterReviews(
+  List<ReviewModel> _parseReviews(
     QuerySnapshot<Map<String, dynamic>> snapshot, {
-    String? statusFilter,
+    bool publicOnly = false,
   }) {
-    final reviews = snapshot.docs
-        .map((doc) => ReviewModel.fromJson(doc.data(), docId: doc.id))
-        .where((r) => statusFilter == null || r.status == statusFilter)
-        .toList()
-      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    final reviews = <ReviewModel>[];
+    for (final doc in snapshot.docs) {
+      try {
+        final review = ReviewModel.fromJson(doc.data(), docId: doc.id);
+        if (!publicOnly || review.isPublicVisible) {
+          reviews.add(review);
+        }
+      } catch (_) {
+        // Skip malformed documents.
+      }
+    }
+    reviews.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     return reviews;
   }
 
   Future<List<ReviewModel>> getReviewsByCollege(String collegeId) async {
+    final normalizedId = collegeId.trim();
     try {
       final snapshot = await _reviews
-          .where('collegeId', isEqualTo: collegeId)
-          .where('status', isEqualTo: 'published')
+          .where('collegeId', isEqualTo: normalizedId)
           .orderBy('createdAt', descending: true)
           .get();
-      return snapshot.docs
-          .map((doc) => ReviewModel.fromJson(doc.data(), docId: doc.id))
-          .toList();
+      return _parseReviews(snapshot, publicOnly: true);
     } on FirebaseException {
-      final snapshot = await _reviews
-          .where('collegeId', isEqualTo: collegeId)
-          .get();
-      return _parseAndFilterReviews(snapshot, statusFilter: 'published');
+      final snapshot =
+          await _reviews.where('collegeId', isEqualTo: normalizedId).get();
+      return _parseReviews(snapshot, publicOnly: true);
     }
   }
 
   Stream<List<ReviewModel>> watchReviewsByCollege(String collegeId) {
+    final normalizedId = collegeId.trim();
     return _reviews
-        .where('collegeId', isEqualTo: collegeId)
+        .where('collegeId', isEqualTo: normalizedId)
         .snapshots()
-        .map((snapshot) => _parseAndFilterReviews(
-              snapshot,
-              statusFilter: 'published',
-            ));
+        .map((snapshot) => _parseReviews(snapshot, publicOnly: true));
   }
 
   Future<List<ReviewModel>> getReviewsByUser(String userId) async {
@@ -99,28 +119,38 @@ class FirestoreReviewService {
           .where('userId', isEqualTo: userId)
           .orderBy('createdAt', descending: true)
           .get();
-      return snapshot.docs
-          .map((doc) => ReviewModel.fromJson(doc.data(), docId: doc.id))
-          .toList();
+      return _parseReviews(snapshot);
     } on FirebaseException {
-      final snapshot =
-          await _reviews.where('userId', isEqualTo: userId).get();
-      return _parseAndFilterReviews(snapshot);
+      final snapshot = await _reviews.where('userId', isEqualTo: userId).get();
+      return _parseReviews(snapshot);
     }
   }
 
-  Future<List<ReviewModel>> getAllReviews({int limit = 100}) async {
+  Future<List<ReviewModel>> getAllReviews({
+    int limit = 100,
+    String? statusFilter,
+  }) async {
     try {
-      final snapshot = await _reviews
-          .orderBy('createdAt', descending: true)
-          .limit(limit)
-          .get();
-      return snapshot.docs
-          .map((doc) => ReviewModel.fromJson(doc.data(), docId: doc.id))
-          .toList();
+      Query<Map<String, dynamic>> query = _reviews.orderBy(
+        'createdAt',
+        descending: true,
+      );
+      if (statusFilter != null) {
+        query = query.where(
+          'status',
+          isEqualTo: ReviewModel.normalizeStatus(statusFilter),
+        );
+      }
+      final snapshot = await query.limit(limit).get();
+      return _parseReviews(snapshot);
     } on FirebaseException {
       final snapshot = await _reviews.limit(limit).get();
-      return _parseAndFilterReviews(snapshot).take(limit).toList();
+      var reviews = _parseReviews(snapshot);
+      if (statusFilter != null) {
+        final normalized = ReviewModel.normalizeStatus(statusFilter);
+        reviews = reviews.where((r) => r.status == normalized).toList();
+      }
+      return reviews.take(limit).toList();
     }
   }
 
@@ -134,10 +164,8 @@ class FirestoreReviewService {
     String collegeId,
     List<ReviewModel> reviews,
   ) async {
-    if (reviews.isEmpty) return;
-
     final aggregates = _computeAggregates(reviews);
-    await _colleges.doc(collegeId).update({
+    await _colleges.doc(collegeId.trim()).update({
       'aggregatedRatings': aggregates,
       'reviewCount': reviews.length,
       'updatedAt': DateTime.now().toIso8601String(),

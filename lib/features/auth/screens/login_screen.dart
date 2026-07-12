@@ -7,8 +7,7 @@ import '../../../config/router/route_names.dart';
 import '../../../core/widgets/index.dart';
 import '../../../core/services/preferences_service.dart';
 import '../providers/auth_provider.dart';
-import '../providers/user_provider.dart';
-import '../repositories/user_repository.dart';
+import '../utils/google_auth_helper.dart';
 import '../utils/validation_util.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -94,16 +93,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       final authNotifier = ref.read(authProvider.notifier);
       await authNotifier.signInWithGoogle();
 
-      final firebaseUser = ref.read(authProvider).user;
-      if (firebaseUser != null) {
-        final userRepository = ref.read(userRepositoryProvider);
-        final exists = await userRepository.userExists(firebaseUser.uid);
-        if (!exists) {
-          await userRepository.createUser(
-            createUserModelFromFirebaseUser(firebaseUser),
+      final authState = ref.read(authProvider);
+      if (authState.error != null || authState.user == null) {
+        if (mounted && authState.error != null) {
+          SnackBarHelper.showInfoSnackBar(
+            context,
+            message: authState.error!,
           );
         }
+        return;
       }
+
+      await syncGoogleUserToFirestore(ref, authState.user!);
 
       if (mounted) {
         SnackBarHelper.showSuccessSnackBar(

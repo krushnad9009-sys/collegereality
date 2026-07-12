@@ -73,6 +73,15 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
         _batchYear = review.batchYear;
         _ratings.addAll(review.ratings);
       });
+      return;
+    }
+
+    final userDetail = await ref.read(userRepositoryProvider).getUser(user.uid);
+    if (userDetail != null && mounted) {
+      setState(() {
+        _courseController.text = userDetail.course ?? '';
+        _batchYear = userDetail.batchYear;
+      });
     }
   }
 
@@ -105,7 +114,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
 
       final review = ReviewModel(
         id: _existingReview?.id ?? '',
-        collegeId: widget.collegeId,
+        collegeId: widget.collegeId.trim(),
         collegeName: widget.collegeName,
         userId: user.uid,
         anonymousAlias: generateAnonymousAlias(user.uid),
@@ -126,17 +135,23 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
             .where((e) => e.isNotEmpty)
             .toList(),
         isVerifiedStudent: isVerified,
+        status: ReviewModel.statusPublished,
         createdAt: _existingReview?.createdAt ?? DateTime.now(),
         updatedAt: DateTime.now(),
       );
 
       final repository = ref.read(reviewRepositoryProvider);
+      late ReviewModel savedReview;
       if (_existingReview != null) {
-        await repository.updateReview(review.copyWith(id: _existingReview!.id));
+        savedReview = review.copyWith(id: _existingReview!.id);
+        await repository.updateReview(savedReview);
       } else {
-        await repository.submitReview(review);
+        savedReview = await repository.submitReview(review);
       }
 
+      ref
+          .read(optimisticReviewsProvider.notifier)
+          .addReview(widget.collegeId.trim(), savedReview);
       ref.invalidate(collegeReviewsProvider(widget.collegeId));
       ref.invalidate(collegeByIdProvider(widget.collegeId));
       ref.invalidate(userReviewsProvider);
@@ -148,7 +163,9 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
               ? 'Review updated successfully!'
               : 'Review submitted successfully!',
         );
-        context.go(RouteNames.collegeDetailsPath(widget.collegeId));
+        context.go(
+          RouteNames.collegeDetailsPath(widget.collegeId, tab: 'reviews'),
+        );
       }
     } catch (e) {
       if (mounted) {

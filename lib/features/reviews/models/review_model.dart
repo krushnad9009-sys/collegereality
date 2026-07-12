@@ -1,6 +1,12 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/constants/rating_parameters.dart';
 
 class ReviewModel {
+  static const String statusPublished = 'published';
+  static const String statusPending = 'pending';
+  static const String statusRejected = 'rejected';
+  static const String statusHidden = 'hidden';
+
   final String id;
   final String collegeId;
   final String collegeName;
@@ -32,15 +38,37 @@ class ReviewModel {
     this.cons = const [],
     this.likeCount = 0,
     this.isVerifiedStudent = false,
-    this.status = 'published',
+    this.status = statusPublished,
     required this.createdAt,
     required this.updatedAt,
   });
 
-  double get overallRating =>
-      ratings[RatingParameters.overall] ??
-      ratings.values.where((v) => v > 0).fold(0.0, (a, b) => a + b) /
-          ratings.values.where((v) => v > 0).length;
+  bool get isPublicVisible {
+    final normalized = normalizeStatus(status);
+    return normalized == statusPublished || normalized.isEmpty;
+  }
+
+  static String normalizeStatus(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return statusPublished;
+    return raw.trim().toLowerCase();
+  }
+
+  double get overallRating {
+    final direct = ratings[RatingParameters.overall];
+    if (direct != null && direct > 0) return direct;
+    final values = ratings.values.where((v) => v > 0).toList();
+    if (values.isEmpty) return 0;
+    return double.parse(
+      (values.reduce((a, b) => a + b) / values.length).toStringAsFixed(1),
+    );
+  }
+
+  static DateTime _parseDate(dynamic value) {
+    if (value == null) return DateTime.now();
+    if (value is Timestamp) return value.toDate();
+    if (value is DateTime) return value;
+    return DateTime.tryParse(value.toString()) ?? DateTime.now();
+  }
 
   factory ReviewModel.fromJson(Map<String, dynamic> json, {String? docId}) {
     final ratingsRaw = json['ratings'] as Map<String, dynamic>? ?? {};
@@ -50,7 +78,7 @@ class ReviewModel {
 
     return ReviewModel(
       id: docId ?? json['id'] as String? ?? '',
-      collegeId: json['collegeId'] as String? ?? '',
+      collegeId: (json['collegeId'] as String? ?? '').trim(),
       collegeName: json['collegeName'] as String? ?? '',
       userId: json['userId'] as String? ?? '',
       anonymousAlias: json['anonymousAlias'] as String? ?? 'Anonymous Student',
@@ -58,15 +86,17 @@ class ReviewModel {
       batchYear: (json['batchYear'] as num?)?.toInt(),
       ratings: ratings,
       textReview: json['textReview'] as String? ?? '',
-      pros: (json['pros'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
-      cons: (json['cons'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+      pros: (json['pros'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
+      cons: (json['cons'] as List<dynamic>?)?.map((e) => e.toString()).toList() ??
+          [],
       likeCount: (json['likeCount'] as num?)?.toInt() ?? 0,
       isVerifiedStudent: json['isVerifiedStudent'] as bool? ?? false,
-      status: json['status'] as String? ?? 'published',
-      createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
-          DateTime.now(),
-      updatedAt: DateTime.tryParse(json['updatedAt']?.toString() ?? '') ??
-          DateTime.now(),
+      status: normalizeStatus(json['status'] as String?),
+      createdAt: _parseDate(json['createdAt']),
+      updatedAt: _parseDate(json['updatedAt']),
     );
   }
 
@@ -85,7 +115,7 @@ class ReviewModel {
       'cons': cons,
       'likeCount': likeCount,
       'isVerifiedStudent': isVerifiedStudent,
-      'status': status,
+      'status': normalizeStatus(status),
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };

@@ -106,7 +106,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: RouteNames.collegeDetails,
         builder: (context, state) {
           final id = state.pathParameters['id']!;
-          return CollegeDetailScreen(collegeId: id);
+          final tab = state.uri.queryParameters['tab'];
+          return CollegeDetailScreen(collegeId: id, initialTab: tab);
         },
       ),
       GoRoute(

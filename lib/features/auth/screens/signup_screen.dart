@@ -8,6 +8,7 @@ import '../../../core/widgets/index.dart';
 import '../models/user_model.dart';
 import '../providers/auth_provider.dart';
 import '../providers/user_provider.dart';
+import '../utils/google_auth_helper.dart';
 import '../utils/validation_util.dart';
 
 class SignupScreen extends ConsumerStatefulWidget {
@@ -90,6 +91,38 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
         SnackBarHelper.showErrorSnackBar(
           context,
           message: e.toString(),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleGoogleSignup() async {
+    try {
+      final authNotifier = ref.read(authProvider.notifier);
+      await authNotifier.signInWithGoogle();
+
+      final authState = ref.read(authProvider);
+      if (authState.error != null || authState.user == null) {
+        if (mounted && authState.error != null) {
+          SnackBarHelper.showInfoSnackBar(context, message: authState.error!);
+        }
+        return;
+      }
+
+      await syncGoogleUserToFirestore(ref, authState.user!);
+
+      if (mounted) {
+        SnackBarHelper.showSuccessSnackBar(
+          context,
+          message: 'Signed up with Google!',
+        );
+        context.go(RouteNames.home);
+      }
+    } catch (e) {
+      if (mounted) {
+        SnackBarHelper.showErrorSnackBar(
+          context,
+          message: 'Google sign-up failed. Please try again.',
         );
       }
     }
@@ -276,6 +309,33 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                   label: 'Create Account',
                   isLoading: authState.isLoading,
                   onPressed: _handleSignup,
+                ),
+
+                const SizedBox(height: 24),
+
+                Row(
+                  children: [
+                    const Expanded(child: Divider()),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Text(
+                        'OR',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.gray400,
+                        ),
+                      ),
+                    ),
+                    const Expanded(child: Divider()),
+                  ],
+                ),
+
+                const SizedBox(height: 24),
+
+                GoogleSignInButton(
+                  isLoading: authState.isLoading,
+                  onPressed: _handleGoogleSignup,
                 ),
 
                 const SizedBox(height: 20),

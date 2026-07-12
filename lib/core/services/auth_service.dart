@@ -1,9 +1,16 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthService {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  late final GoogleSignIn _googleSignIn = GoogleSignIn(
+    scopes: const ['email', 'profile'],
+    clientId: kIsWeb ? _webClientId : null,
+  );
+
+  static const String _webClientId =
+      '244446156099-bb6c7e0dabe7a5efbf0bf6.apps.googleusercontent.com';
 
   User? get currentUser => _firebaseAuth.currentUser;
 
@@ -24,6 +31,11 @@ class AuthService {
   }
 
   Future<UserCredential?> signInWithGoogle() async {
+    if (kIsWeb) {
+      final provider = GoogleAuthProvider();
+      return _firebaseAuth.signInWithPopup(provider);
+    }
+
     final googleUser = await _googleSignIn.signIn();
     if (googleUser == null) return null;
 
@@ -39,7 +51,7 @@ class AuthService {
   Future<void> signOut() async {
     await Future.wait([
       _firebaseAuth.signOut(),
-      _googleSignIn.signOut(),
+      if (!kIsWeb) _googleSignIn.signOut(),
     ]);
   }
 

@@ -13,7 +13,7 @@ class AdminDashboardScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final collegesAsync = ref.watch(collegesProvider);
-    final reviewsAsync = ref.watch(allReviewsAdminProvider);
+    final reviewsAsync = ref.watch(allReviewsAdminProvider(null));
 
     return Scaffold(
       appBar: AppBar(

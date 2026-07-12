@@ -4,12 +4,13 @@ import '../services/firestore_review_service.dart';
 abstract class ReviewRepository {
   Future<ReviewModel> submitReview(ReviewModel review);
   Future<void> updateReview(ReviewModel review);
+  Future<void> updateReviewStatus(String reviewId, String collegeId, String status);
   Future<void> deleteReview(String reviewId, String collegeId);
   Future<ReviewModel?> getUserReviewForCollege(String userId, String collegeId);
   Future<List<ReviewModel>> getReviewsByCollege(String collegeId);
   Stream<List<ReviewModel>> watchReviewsByCollege(String collegeId);
   Future<List<ReviewModel>> getReviewsByUser(String userId);
-  Future<List<ReviewModel>> getAllReviews({int limit = 100});
+  Future<List<ReviewModel>> getAllReviews({int limit = 100, String? statusFilter});
   Future<void> likeReview(String reviewId);
 }
 
@@ -29,6 +30,16 @@ class ReviewRepositoryImpl implements ReviewRepository {
   Future<void> updateReview(ReviewModel review) async {
     await _service.updateReview(review);
     await _refreshCollegeAggregates(review.collegeId);
+  }
+
+  @override
+  Future<void> updateReviewStatus(
+    String reviewId,
+    String collegeId,
+    String status,
+  ) async {
+    await _service.updateReviewStatus(reviewId, status);
+    await _refreshCollegeAggregates(collegeId);
   }
 
   @override
@@ -61,8 +72,11 @@ class ReviewRepositoryImpl implements ReviewRepository {
   }
 
   @override
-  Future<List<ReviewModel>> getAllReviews({int limit = 100}) {
-    return _service.getAllReviews(limit: limit);
+  Future<List<ReviewModel>> getAllReviews({
+    int limit = 100,
+    String? statusFilter,
+  }) {
+    return _service.getAllReviews(limit: limit, statusFilter: statusFilter);
   }
 
   @override
