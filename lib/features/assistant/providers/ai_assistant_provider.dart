@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/constants/compare_constants.dart';
 import '../../auth/providers/user_provider.dart';
 import '../../colleges/providers/college_provider.dart';
 import '../models/ai_assistant_message.dart';
@@ -59,7 +60,7 @@ class AiAssistantNotifier extends StateNotifier<AiAssistantState> {
   void addContextCollege(String collegeId) {
     if (state.contextCollegeIds.contains(collegeId)) return;
     final updated = [...state.contextCollegeIds, collegeId]
-        .take(5)
+        .take(CompareConstants.maxColleges)
         .toList();
     state = state.copyWith(contextCollegeIds: updated);
   }
@@ -132,7 +133,7 @@ class AiAssistantNotifier extends StateNotifier<AiAssistantState> {
         ...response.recommendations.map((r) => r.college.id),
         if (response.comparison != null)
           ...response.comparison!.colleges.map((c) => c.id),
-      }.take(5).toList();
+      }.take(CompareConstants.maxColleges).toList();
 
       state = state.copyWith(
         messages: [...state.messages, response],

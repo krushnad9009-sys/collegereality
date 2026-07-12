@@ -7,6 +7,7 @@ class RouteNames {
   static const String home = '/home';
   static const String collegeSearch = '/college-search';
   static const String assistant = '/assistant';
+  static const String compare = '/compare';
   static const String collegeDetails = '/college-details/:id';
   static const String writeReview = '/college-details/:id/write-review';
   static const String profile = '/profile';
@@ -60,5 +61,12 @@ class RouteNames {
     }
     if (params.isEmpty) return assistant;
     return Uri(path: assistant, queryParameters: params).toString();
+  }
+
+  static String comparePath({required List<String> ids}) {
+    return Uri(
+      path: compare,
+      queryParameters: {'ids': ids.join(',')},
+    ).toString();
   }
 }

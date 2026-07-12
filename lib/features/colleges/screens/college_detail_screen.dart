@@ -15,6 +15,8 @@ import '../../reviews/providers/review_provider.dart';
 import '../../reviews/widgets/review_card_widget.dart';
 import '../../reviews/widgets/review_summary_panel.dart';
 import '../../reviews/widgets/star_rating_widget.dart';
+import '../../compare/providers/compare_basket_provider.dart';
+import '../../compare/widgets/compare_basket_bar.dart';
 import '../widgets/accreditation_badges.dart';
 import '../widgets/college_gallery_widget.dart';
 import '../widgets/college_map_section.dart';
@@ -78,6 +80,8 @@ class _CollegeDetailScreenState extends ConsumerState<CollegeDetailScreen> {
         }
 
         final verifiedAsync = ref.watch(isVerifiedForReviewProvider);
+        final basket = ref.watch(compareBasketProvider);
+        final isInCompare = basket.contains(college.id);
 
         return DefaultTabController(
           initialIndex: _initialTabIndex(),
@@ -115,6 +119,32 @@ class _CollegeDetailScreenState extends ConsumerState<CollegeDetailScreen> {
                     onPressed: () => context.go(RouteNames.home),
                   ),
                   actions: [
+                    TextButton.icon(
+                      onPressed: () {
+                        final message = ref
+                            .read(compareBasketProvider.notifier)
+                            .toggle(college.id);
+                        if (message != null && context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(message)),
+                          );
+                        }
+                      },
+                      icon: Icon(
+                        isInCompare
+                            ? Icons.check_circle_rounded
+                            : Icons.compare_arrows_outlined,
+                        size: 18,
+                        color: isInCompare ? AppTheme.accentColor : null,
+                      ),
+                      label: Text(
+                        isInCompare ? 'Added' : 'Compare',
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
                     TextButton.icon(
                       onPressed: () => context.go(
                         RouteNames.assistantPath(
@@ -204,6 +234,7 @@ class _CollegeDetailScreenState extends ConsumerState<CollegeDetailScreen> {
                 ],
               ),
             ),
+            bottomNavigationBar: const CompareBasketBar(),
           ),
         );
       },

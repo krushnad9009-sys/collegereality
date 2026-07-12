@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/ai_assistant_constants.dart';
+import '../../compare/providers/compare_basket_provider.dart';
 import '../models/ai_assistant_message.dart';
 import '../providers/ai_assistant_provider.dart';
 import '../widgets/ai_comparison_table.dart';
@@ -79,6 +82,7 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(aiAssistantProvider);
+    final basket = ref.watch(compareBasketProvider);
     ref.listen(aiAssistantProvider, (_, __) => _scrollToBottom());
 
     return Scaffold(
@@ -103,6 +107,17 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
           ],
         ),
         actions: [
+          if (basket.canCompare)
+            TextButton.icon(
+              onPressed: () => context.go(
+                RouteNames.comparePath(ids: basket.collegeIds),
+              ),
+              icon: const Icon(Icons.compare, size: 18),
+              label: Text(
+                'Compare (${basket.collegeIds.length})',
+                style: GoogleFonts.poppins(fontSize: 12),
+              ),
+            ),
           if (state.contextCollegeIds.isNotEmpty)
             Center(
               child: Padding(
@@ -157,9 +172,10 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
                     itemBuilder: (context, index) {
                       return _MessageBubble(
                         message: state.messages[index],
-                        onAddToCompare: (id) => ref
-                            .read(aiAssistantProvider.notifier)
-                            .addContextCollege(id),
+                        onAddToCompare: (id) {
+                          ref.read(aiAssistantProvider.notifier).addContextCollege(id);
+                          ref.read(compareBasketProvider.notifier).add(id);
+                        },
                       );
                     },
                   ),

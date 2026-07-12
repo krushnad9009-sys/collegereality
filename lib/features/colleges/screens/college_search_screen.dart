@@ -5,6 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../home/widgets/college_card_widget.dart';
+import '../../compare/providers/compare_basket_provider.dart';
+import '../../compare/widgets/compare_basket_bar.dart';
 import '../models/college_model.dart';
 import '../providers/college_provider.dart';
 
@@ -129,7 +131,7 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
     final statesAsync = ref.watch(indianStatesProvider);
     final coursesAsync = ref.watch(indianCoursesProvider);
     final metaAsync = ref.watch(collegeDirectoryMetaProvider);
-
+    final basket = ref.watch(compareBasketProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -329,6 +331,17 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
                               reviewCount: college.reviewCount,
                               imageUrl: college.coverPhotoUrl ?? college.logoUrl,
                               logoUrl: college.logoUrl,
+                              isSelectedForCompare: basket.contains(college.id),
+                              onCompareToggle: () {
+                                final message = ref
+                                    .read(compareBasketProvider.notifier)
+                                    .toggle(college.id);
+                                if (message != null && context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text(message)),
+                                  );
+                                }
+                              },
                               onTap: () => context.go(
                                 RouteNames.collegeDetailsPath(college.id),
                               ),
@@ -339,6 +352,7 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
           ),
         ],
       ),
+      bottomNavigationBar: const CompareBasketBar(),
     );
   }
 }

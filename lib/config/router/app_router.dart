@@ -11,6 +11,7 @@ import '../../features/profile/screens/profile_screen.dart';
 import '../../features/colleges/screens/college_search_screen.dart';
 import '../../features/colleges/screens/college_detail_screen.dart';
 import '../../features/assistant/screens/ai_assistant_screen.dart';
+import '../../features/compare/screens/college_compare_screen.dart';
 import '../../features/reviews/screens/write_review_screen.dart';
 import '../../features/reviews/screens/my_reviews_screen.dart';
 import '../../features/admin/screens/admin_dashboard_screen.dart';
@@ -112,6 +113,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RouteNames.myReviews,
         builder: (context, state) => const MyReviewsScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.compare,
+        builder: (context, state) {
+          final idsParam = state.uri.queryParameters['ids'] ?? '';
+          final ids = idsParam
+              .split(',')
+              .map((e) => e.trim())
+              .where((e) => e.isNotEmpty)
+              .toList();
+          return CollegeCompareScreen(collegeIds: ids);
+        },
       ),
       GoRoute(
         path: RouteNames.assistant,

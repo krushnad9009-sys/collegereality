@@ -2,7 +2,7 @@ class AiAssistantConstants {
   AiAssistantConstants._();
 
   static const int maxRecommendations = 10;
-  static const int maxCompareColleges = 5;
+  static const int maxCompareColleges = 3;
   static const int candidateFetchLimit = 48;
   static const int maxConversationTurns = 30;
 

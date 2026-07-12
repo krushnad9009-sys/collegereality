@@ -1,0 +1,133 @@
+import 'package:flutter_test/flutter_test.dart';
+
+import 'package:college_reality_india/core/constants/compare_constants.dart';
+import 'package:college_reality_india/features/colleges/models/college_model.dart';
+import 'package:college_reality_india/features/compare/services/college_comparison_service.dart';
+
+void main() {
+  group('CollegeComparisonService', () {
+    final service = CollegeComparisonService();
+
+    CollegeModel sample({
+      required String id,
+      required String name,
+      double overall = 4.0,
+      double teaching = 4.0,
+      double placements = 4.0,
+      double faculty = 4.0,
+      int reviewCount = 10,
+      int feeMax = 200000,
+      double avgPackage = 8.0,
+      double highestPackage = 20.0,
+      String? naacGrade,
+    }) {
+      return CollegeModel(
+        id: id,
+        name: name,
+        nameLower: name.toLowerCase(),
+        slug: id,
+        city: 'Pune',
+        state: 'Maharashtra',
+        address: 'Test',
+        type: 'private',
+        courses: const ['B.Tech', 'MBA'],
+        fees: CollegeFees(
+          tuitionMin: feeMax ~/ 2,
+          tuitionMax: feeMax,
+          hostelAnnual: 50000,
+        ),
+        placements: CollegePlacements(
+          highestPackageLpa: highestPackage,
+          averagePackageLpa: avgPackage,
+          placementPercentage: 85,
+        ),
+        accreditation: CollegeAccreditation(naacGrade: naacGrade),
+        aggregatedRatings: CollegeRatings(
+          overall: overall,
+          faculty: faculty,
+          infrastructure: 4.0,
+          placements: placements,
+          campusLife: 4.0,
+          teaching: teaching,
+          labs: 4.0,
+          library: 4.0,
+          hostel: 4.0,
+          food: 4.0,
+          safety: 4.0,
+        ),
+        reviewCount: reviewCount,
+      );
+    }
+
+    test('requires at least 2 colleges', () {
+      final result = service.compare([
+        sample(id: '1', name: 'College A'),
+      ]);
+      expect(result.rows, isEmpty);
+      expect(result.summary, contains('2'));
+    });
+
+    test('limits to max 3 colleges', () {
+      final colleges = List.generate(
+        5,
+        (i) => sample(id: '$i', name: 'College $i', overall: 3.0 + i * 0.2),
+      );
+      final result = service.compare(colleges);
+      expect(result.colleges.length, CompareConstants.maxColleges);
+    });
+
+    test('includes all required rating metrics', () {
+      final result = service.compare([
+        sample(id: '1', name: 'Alpha', overall: 4.5),
+        sample(id: '2', name: 'Beta', overall: 3.8),
+      ]);
+      final metrics = result.rows.map((r) => r.metric).toSet();
+      expect(metrics, contains('Overall Rating'));
+      expect(metrics, contains('Teaching'));
+      expect(metrics, contains('Placement'));
+      expect(metrics, contains('Faculty'));
+      expect(metrics, contains('Labs'));
+      expect(metrics, contains('Library'));
+      expect(metrics, contains('Hostel'));
+      expect(metrics, contains('Food'));
+      expect(metrics, contains('Infrastructure'));
+      expect(metrics, contains('Safety'));
+      expect(metrics, contains('Fees (Annual)'));
+      expect(metrics, contains('Average Package'));
+      expect(metrics, contains('Highest Package'));
+      expect(metrics, contains('Accreditation'));
+      expect(metrics, contains('Courses'));
+      expect(metrics, contains('Verified Reviews'));
+    });
+
+    test('highlights best overall rating winner', () {
+      final result = service.compare([
+        sample(id: '1', name: 'Alpha', overall: 4.8),
+        sample(id: '2', name: 'Beta', overall: 3.5),
+      ]);
+      final overallRow =
+          result.rows.firstWhere((r) => r.metric == 'Overall Rating');
+      expect(overallRow.winnerIndex, 0);
+    });
+
+    test('generates AI insights from verified data', () {
+      final result = service.compare([
+        sample(id: '1', name: 'Alpha', overall: 4.8, avgPackage: 12),
+        sample(id: '2', name: 'Beta', overall: 3.5, avgPackage: 6),
+      ]);
+      expect(result.insights.length, 2);
+      expect(result.insights.first.strengths, isNotEmpty);
+    });
+
+    test('shows review count in rows', () {
+      final result = service.compare([
+        sample(id: '1', name: 'Alpha', reviewCount: 25),
+        sample(id: '2', name: 'Beta', reviewCount: 5),
+      ]);
+      final reviewRow =
+          result.rows.firstWhere((r) => r.metric == 'Verified Reviews');
+      expect(reviewRow.values, contains('25'));
+      expect(reviewRow.winnerIndex, 0);
+    });
+  });
+}

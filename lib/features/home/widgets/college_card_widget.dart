@@ -14,6 +14,8 @@ class CollegeCardWidget extends StatelessWidget {
   final String? imageUrl;
   final String? logoUrl;
   final VoidCallback? onTap;
+  final bool isSelectedForCompare;
+  final VoidCallback? onCompareToggle;
 
   const CollegeCardWidget({
     required this.collegeId,
@@ -25,6 +27,8 @@ class CollegeCardWidget extends StatelessWidget {
     this.imageUrl,
     this.logoUrl,
     this.onTap,
+    this.isSelectedForCompare = false,
+    this.onCompareToggle,
     super.key,
   });
 
@@ -116,23 +120,43 @@ class CollegeCardWidget extends StatelessWidget {
                           reviewCount: reviewCount,
                           starSize: 14,
                         ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppTheme.primaryColor.withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            'View',
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: AppTheme.primaryColor,
+                        Row(
+                          children: [
+                            if (onCompareToggle != null)
+                              IconButton(
+                                tooltip: isSelectedForCompare
+                                    ? 'Remove from compare'
+                                    : 'Add to compare',
+                                onPressed: onCompareToggle,
+                                icon: Icon(
+                                  isSelectedForCompare
+                                      ? Icons.check_circle_rounded
+                                      : Icons.compare_arrows_outlined,
+                                  color: isSelectedForCompare
+                                      ? AppTheme.accentColor
+                                      : AppTheme.gray500,
+                                  size: 22,
+                                ),
+                              ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryColor.withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                'View',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppTheme.primaryColor,
+                                ),
+                              ),
                             ),
-                          ),
+                          ],
                         ),
                       ],
                     ),
