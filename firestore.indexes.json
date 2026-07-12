@@ -63,6 +63,15 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "collegeId", "order": "ASCENDING" },
+        { "fieldPath": "isVerifiedStudent", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "review_reports",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
         { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
     },

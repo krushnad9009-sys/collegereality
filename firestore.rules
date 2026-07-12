@@ -17,7 +17,7 @@ service cloud.firestore {
 
     function isAggregateOnlyUpdate() {
       return request.resource.data.diff(resource.data).affectedKeys()
-        .hasOnly(['aggregatedRatings', 'reviewCount', 'updatedAt']);
+        .hasOnly(['aggregatedRatings', 'reviewCount', 'ratingDistribution', 'reviewAggregation', 'updatedAt']);
     }
 
     function isGuideStatsOnlyUpdate() {

@@ -40,7 +40,10 @@ class _ReviewCardWidgetState extends ConsumerState<ReviewCardWidget> {
     final review = widget.review;
     final theme = Theme.of(context);
     final helpfulMarkedAsync = ref.watch(reviewHelpfulMarkedProvider(review.id));
-    final hasMarked = helpfulMarkedAsync.valueOrNull ?? false;
+    final optimisticMarked = ref.watch(optimisticHelpfulProvider).contains(review.id);
+    final hasMarked = helpfulMarkedAsync.valueOrNull == true || optimisticMarked;
+    final displayHelpfulCount =
+        review.helpfulCount + (optimisticMarked ? 1 : 0);
 
     return Card(
       elevation: 0,
@@ -257,8 +260,8 @@ class _ReviewCardWidgetState extends ConsumerState<ReviewCardWidget> {
                     ),
                     label: Text(
                       hasMarked
-                          ? 'Helpful (${review.helpfulCount})'
-                          : 'Helpful (${review.helpfulCount})',
+                          ? 'Helpful ($displayHelpfulCount)'
+                          : 'Helpful ($displayHelpfulCount)',
                     ),
                   ),
                 if (widget.onReport != null)

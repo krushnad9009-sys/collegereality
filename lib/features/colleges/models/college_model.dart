@@ -400,6 +400,7 @@ class CollegeModel {
   final CollegeAccreditation accreditation;
   final CollegeRatings aggregatedRatings;
   final int reviewCount;
+  final Map<String, int> ratingDistribution;
   final List<String> searchKeywords;
   final List<String> searchTokens;
   final bool isActive;
@@ -435,6 +436,7 @@ class CollegeModel {
     this.accreditation = const CollegeAccreditation(),
     required this.aggregatedRatings,
     this.reviewCount = 0,
+    this.ratingDistribution = const {},
     this.searchKeywords = const [],
     this.searchTokens = const [],
     this.isActive = true,
@@ -516,6 +518,10 @@ class CollegeModel {
         (json['aggregatedRatings'] as Map<String, dynamic>?) ?? {},
       ),
       reviewCount: (json['reviewCount'] as num?)?.toInt() ?? 0,
+      ratingDistribution:
+          (json['ratingDistribution'] as Map<String, dynamic>?)
+                  ?.map((k, v) => MapEntry(k, (v as num).toInt())) ??
+              {},
       searchKeywords: (json['searchKeywords'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??
@@ -575,6 +581,7 @@ class CollegeModel {
       'accreditation': accreditation.toJson(),
       'aggregatedRatings': aggregatedRatings.toJson(),
       'reviewCount': reviewCount,
+      'ratingDistribution': ratingDistribution,
       'searchKeywords': searchKeywords,
       'searchTokens': tokens,
       'isActive': isActive,
@@ -612,6 +619,7 @@ class CollegeModel {
     CollegeAccreditation? accreditation,
     CollegeRatings? aggregatedRatings,
     int? reviewCount,
+    Map<String, int>? ratingDistribution,
     List<String>? searchKeywords,
     List<String>? searchTokens,
     bool? isActive,
@@ -648,6 +656,7 @@ class CollegeModel {
       accreditation: accreditation ?? this.accreditation,
       aggregatedRatings: aggregatedRatings ?? this.aggregatedRatings,
       reviewCount: reviewCount ?? this.reviewCount,
+      ratingDistribution: ratingDistribution ?? this.ratingDistribution,
       searchKeywords: searchKeywords ?? this.searchKeywords,
       searchTokens: searchTokens ?? this.searchTokens,
       isActive: isActive ?? this.isActive,

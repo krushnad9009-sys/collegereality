@@ -1,4 +1,5 @@
 import '../models/review_model.dart';
+import '../models/review_page_model.dart';
 import '../services/firestore_review_service.dart';
 
 abstract class ReviewRepository {
@@ -7,7 +8,10 @@ abstract class ReviewRepository {
   Future<void> updateReviewStatus(String reviewId, String collegeId, String status);
   Future<void> deleteReview(String reviewId, String collegeId);
   Future<ReviewModel?> getUserReviewForCollege(String userId, String collegeId);
-  Future<List<ReviewModel>> getReviewsByCollege(String collegeId);
+  Future<ReviewPage> getReviewsPage(
+    String collegeId, {
+    String? startAfterDocumentId,
+  });
   Stream<List<ReviewModel>> watchReviewsByCollege(String collegeId);
   Future<List<ReviewModel>> getReviewsByUser(String userId);
   Future<List<ReviewModel>> getAllReviews({int limit = 100, String? statusFilter});
@@ -32,15 +36,13 @@ class ReviewRepositoryImpl implements ReviewRepository {
 
   @override
   Future<ReviewModel> submitReview(ReviewModel review) async {
-    final created = await _service.createReview(review: review);
-    await _refreshCollegeAggregates(review.collegeId);
-    return created;
+    return _service.createReview(review: review);
   }
 
   @override
   Future<void> updateReview(ReviewModel review) async {
-    await _service.updateReview(review);
-    await _refreshCollegeAggregates(review.collegeId);
+    final previous = await _service.getReviewById(review.id);
+    await _service.updateReview(review, previous: previous);
   }
 
   @override
@@ -50,13 +52,11 @@ class ReviewRepositoryImpl implements ReviewRepository {
     String status,
   ) async {
     await _service.updateReviewStatus(reviewId, status);
-    await _refreshCollegeAggregates(collegeId);
   }
 
   @override
   Future<void> deleteReview(String reviewId, String collegeId) async {
     await _service.deleteReview(reviewId);
-    await _refreshCollegeAggregates(collegeId);
   }
 
   @override
@@ -68,8 +68,14 @@ class ReviewRepositoryImpl implements ReviewRepository {
   }
 
   @override
-  Future<List<ReviewModel>> getReviewsByCollege(String collegeId) {
-    return _service.getReviewsByCollege(collegeId);
+  Future<ReviewPage> getReviewsPage(
+    String collegeId, {
+    String? startAfterDocumentId,
+  }) {
+    return _service.getReviewsPage(
+      collegeId,
+      startAfterDocumentId: startAfterDocumentId,
+    );
   }
 
   @override
@@ -113,14 +119,5 @@ class ReviewRepositoryImpl implements ReviewRepository {
       reporterId: reporterId,
       reason: reason,
     );
-  }
-
-  Future<void> _refreshCollegeAggregates(String collegeId) async {
-    try {
-      final reviews = await _service.getReviewsByCollege(collegeId);
-      await _service.updateCollegeAggregates(collegeId, reviews);
-    } catch (_) {
-      // Best-effort aggregate update.
-    }
   }
 }

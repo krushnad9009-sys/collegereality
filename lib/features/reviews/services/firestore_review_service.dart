@@ -6,6 +6,7 @@ import '../../../core/constants/review_constants.dart';
 import '../../../core/constants/verification_constants.dart';
 import '../../colleges/models/college_model.dart';
 import '../models/review_model.dart';
+import '../models/review_page_model.dart';
 
 class FirestoreReviewService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -37,41 +38,111 @@ class FirestoreReviewService {
 
     final id = review.id.isEmpty ? _uuid.v4() : review.id;
     final now = DateTime.now();
-    final data = review
-        .copyWith(
-          id: id,
-          collegeId: review.collegeId.trim(),
-          status: ReviewModel.statusPublished,
-          isVerifiedStudent: true,
-          createdAt: review.createdAt,
-          updatedAt: now,
-        )
-        .toJson();
-    data['createdAt'] = review.createdAt.toIso8601String();
+    final saved = review.copyWith(
+      id: id,
+      collegeId: review.collegeId.trim(),
+      status: ReviewModel.statusPublished,
+      isVerifiedStudent: true,
+      createdAt: review.createdAt,
+      updatedAt: now,
+    );
+    final data = saved.toJson();
+    data['createdAt'] = saved.createdAt.toIso8601String();
     data['updatedAt'] = now.toIso8601String();
-    await _reviews.doc(id).set(data);
-    return ReviewModel.fromJson(data, docId: id);
+
+    await _firestore.runTransaction((transaction) async {
+      transaction.set(_reviews.doc(id), data);
+      await _applyReviewDeltaInTransaction(
+        transaction,
+        collegeId: review.collegeId.trim(),
+        review: saved,
+        deltaSign: 1,
+      );
+    });
+
+    return saved;
   }
 
-  Future<void> updateReview(ReviewModel review) async {
+  Future<void> updateReview(ReviewModel review, {ReviewModel? previous}) async {
     if (!review.isVerifiedStudent) {
       throw ReviewFirestoreException(
         message: 'Only verified students can update reviews.',
       );
     }
+
     final data = review.copyWith(updatedAt: DateTime.now()).toJson();
-    await _reviews.doc(review.id).update(data);
+    await _firestore.runTransaction((transaction) async {
+      transaction.update(_reviews.doc(review.id), data);
+      if (previous != null && previous.isPublicVisible) {
+        await _applyReviewDeltaInTransaction(
+          transaction,
+          collegeId: review.collegeId.trim(),
+          review: previous,
+          deltaSign: -1,
+        );
+      }
+      if (review.isPublicVisible) {
+        await _applyReviewDeltaInTransaction(
+          transaction,
+          collegeId: review.collegeId.trim(),
+          review: review,
+          deltaSign: 1,
+        );
+      }
+    });
   }
 
   Future<void> updateReviewStatus(String reviewId, String status) async {
-    await _reviews.doc(reviewId).update({
-      'status': ReviewModel.normalizeStatus(status),
-      'updatedAt': DateTime.now().toIso8601String(),
+    final review = await getReviewById(reviewId);
+    if (review == null) return;
+
+    await _firestore.runTransaction((transaction) async {
+      transaction.update(_reviews.doc(reviewId), {
+        'status': ReviewModel.normalizeStatus(status),
+        'updatedAt': DateTime.now().toIso8601String(),
+      });
+
+      final wasVisible = review.isPublicVisible;
+      final normalized = ReviewModel.normalizeStatus(status);
+      final nowVisible =
+          normalized == ReviewModel.statusPublished && review.isVerifiedStudent;
+
+      if (wasVisible && !nowVisible) {
+        await _applyReviewDeltaInTransaction(
+          transaction,
+          collegeId: review.collegeId.trim(),
+          review: review,
+          deltaSign: -1,
+        );
+      } else if (!wasVisible && nowVisible) {
+        await _applyReviewDeltaInTransaction(
+          transaction,
+          collegeId: review.collegeId.trim(),
+          review: review,
+          deltaSign: 1,
+        );
+      }
     });
   }
 
   Future<void> deleteReview(String reviewId) async {
-    await _reviews.doc(reviewId).delete();
+    final review = await getReviewById(reviewId);
+    if (review == null) {
+      await _reviews.doc(reviewId).delete();
+      return;
+    }
+
+    await _firestore.runTransaction((transaction) async {
+      transaction.delete(_reviews.doc(reviewId));
+      if (review.isPublicVisible) {
+        await _applyReviewDeltaInTransaction(
+          transaction,
+          collegeId: review.collegeId.trim(),
+          review: review,
+          deltaSign: -1,
+        );
+      }
+    });
   }
 
   Future<ReviewModel?> getReviewById(String reviewId) async {
@@ -109,33 +180,60 @@ class FirestoreReviewService {
         // Skip malformed documents.
       }
     }
-    reviews.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     return reviews;
   }
 
-  Future<List<ReviewModel>> getReviewsByCollege(String collegeId) async {
+  Query<Map<String, dynamic>> _verifiedCollegeQuery(String collegeId) {
+    return _reviews
+        .where('collegeId', isEqualTo: collegeId.trim())
+        .where('isVerifiedStudent', isEqualTo: true)
+        .orderBy('createdAt', descending: true);
+  }
+
+  Future<ReviewPage> getReviewsPage(
+    String collegeId, {
+    String? startAfterDocumentId,
+    int limit = ReviewConstants.pageSize,
+  }) async {
     final normalizedId = collegeId.trim();
+    Query<Map<String, dynamic>> query =
+        _verifiedCollegeQuery(normalizedId).limit(limit);
+
+    if (startAfterDocumentId != null && startAfterDocumentId.isNotEmpty) {
+      final cursor = await _reviews.doc(startAfterDocumentId).get();
+      if (cursor.exists) {
+        query = query.startAfterDocument(cursor);
+      }
+    }
+
     try {
-      final snapshot = await _reviews
-          .where('collegeId', isEqualTo: normalizedId)
-          .where('isVerifiedStudent', isEqualTo: true)
-          .orderBy('createdAt', descending: true)
-          .get();
-      return _parseReviews(snapshot, publicOnly: true);
+      final snapshot = await query.get();
+      final reviews = _parseReviews(snapshot, publicOnly: true);
+      final lastId = snapshot.docs.isEmpty ? null : snapshot.docs.last.id;
+      return ReviewPage(
+        reviews: reviews,
+        lastDocumentId: lastId,
+        hasMore: snapshot.docs.length >= limit,
+      );
     } on FirebaseException {
-      final snapshot = await _reviews
-          .where('collegeId', isEqualTo: normalizedId)
-          .get();
-      return _parseReviews(snapshot, publicOnly: true);
+      final snapshot =
+          await _reviews.where('collegeId', isEqualTo: normalizedId).get();
+      final all = _parseReviews(snapshot, publicOnly: true);
+      return ReviewPage(reviews: all.take(limit).toList(), hasMore: false);
     }
   }
 
   Stream<List<ReviewModel>> watchReviewsByCollege(String collegeId) {
     final normalizedId = collegeId.trim();
-    return _reviews
-        .where('collegeId', isEqualTo: normalizedId)
+    return _verifiedCollegeQuery(normalizedId)
+        .limit(ReviewConstants.pageSize)
         .snapshots()
         .map((snapshot) => _parseReviews(snapshot, publicOnly: true));
+  }
+
+  Future<List<ReviewModel>> getReviewsByCollege(String collegeId) async {
+    final page = await getReviewsPage(collegeId, limit: 500);
+    return page.reviews;
   }
 
   Future<List<ReviewModel>> getReviewsByUser(String userId) async {
@@ -194,12 +292,14 @@ class FirestoreReviewService {
         .collection(FirestoreConstants.reviewHelpfulSubcollection)
         .doc(userId);
 
-    final existing = await helpfulRef.get();
-    if (existing.exists) {
-      throw ReviewFirestoreException(message: 'You already marked this helpful.');
-    }
-
     await _firestore.runTransaction((transaction) async {
+      final existing = await transaction.get(helpfulRef);
+      if (existing.exists) {
+        throw ReviewFirestoreException(
+          message: 'You already marked this helpful.',
+        );
+      }
+
       final reviewRef = _reviews.doc(reviewId);
       final reviewSnap = await transaction.get(reviewRef);
       if (!reviewSnap.exists) {
@@ -235,43 +335,104 @@ class FirestoreReviewService {
     });
   }
 
+  Future<void> _applyReviewDeltaInTransaction(
+    Transaction transaction, {
+    required String collegeId,
+    required ReviewModel review,
+    required int deltaSign,
+  }) async {
+    final collegeRef = _colleges.doc(collegeId);
+    final collegeSnap = await transaction.get(collegeRef);
+
+    ReviewAggregationMeta meta;
+    if (collegeSnap.exists) {
+      meta = ReviewAggregationMeta.fromJson(
+        collegeSnap.data()?['reviewAggregation'] as Map<String, dynamic>?,
+      );
+    } else {
+      meta = const ReviewAggregationMeta();
+    }
+
+    final nextMeta = _applyDeltaToMeta(meta, review, deltaSign);
+    final aggregates = _averagesFromMeta(nextMeta);
+    final distribution = _distributionFromMeta(nextMeta);
+
+    transaction.set(
+      collegeRef,
+      {
+        'reviewAggregation': nextMeta.toJson(),
+        'aggregatedRatings': aggregates,
+        'ratingDistribution': distribution,
+        'reviewCount': nextMeta.reviewCount,
+        'updatedAt': DateTime.now().toIso8601String(),
+      },
+      SetOptions(merge: true),
+    );
+  }
+
+  ReviewAggregationMeta _applyDeltaToMeta(
+    ReviewAggregationMeta meta,
+    ReviewModel review,
+    int deltaSign,
+  ) {
+    final sums = Map<String, double>.from(meta.dimensionSums);
+    final counts = Map<String, int>.from(meta.dimensionCounts);
+    final stars = Map<String, int>.from(meta.starDistribution);
+
+    review.ratings.forEach((key, value) {
+      if (value <= 0) return;
+      sums[key] = (sums[key] ?? 0) + (value * deltaSign);
+      counts[key] = ((counts[key] ?? 0) + deltaSign).clamp(0, 999999);
+    });
+
+    final star = RatingDistribution.starBucketFor(review.overallRating);
+    final starKey = '$star';
+    stars[starKey] = ((stars[starKey] ?? 0) + deltaSign).clamp(0, 999999);
+
+    return ReviewAggregationMeta(
+      dimensionSums: sums,
+      dimensionCounts: counts,
+      starDistribution: stars,
+      reviewCount: (meta.reviewCount + deltaSign).clamp(0, 999999),
+    );
+  }
+
+  Map<String, dynamic> _averagesFromMeta(ReviewAggregationMeta meta) {
+    double avg(String key) {
+      final count = meta.dimensionCounts[key] ?? 0;
+      if (count <= 0) return 0;
+      return double.parse(
+        ((meta.dimensionSums[key] ?? 0) / count).toStringAsFixed(1),
+      );
+    }
+
+    return {for (final key in RatingParameters.allKeys) key: avg(key)};
+  }
+
+  Map<String, int> _distributionFromMeta(ReviewAggregationMeta meta) {
+    return {
+      for (var i = 1; i <= 5; i++)
+        '$i': meta.starDistribution['$i'] ?? 0,
+    };
+  }
+
+  /// Full recompute fallback for admin/migration.
   Future<void> updateCollegeAggregates(
     String collegeId,
     List<ReviewModel> reviews,
   ) async {
-    final verifiedPublished = reviews
-        .where((r) => r.isPublicVisible)
-        .toList();
-    final aggregates = _computeAggregates(verifiedPublished);
-    await _colleges.doc(collegeId.trim()).update({
-      'aggregatedRatings': aggregates,
-      'reviewCount': verifiedPublished.length,
+    var meta = const ReviewAggregationMeta();
+    for (final review in reviews.where((r) => r.isPublicVisible)) {
+      meta = _applyDeltaToMeta(meta, review, 1);
+    }
+
+    await _colleges.doc(collegeId.trim()).set({
+      'reviewAggregation': meta.toJson(),
+      'aggregatedRatings': _averagesFromMeta(meta),
+      'ratingDistribution': _distributionFromMeta(meta),
+      'reviewCount': meta.reviewCount,
       'updatedAt': DateTime.now().toIso8601String(),
-    });
-  }
-
-  Map<String, dynamic> _computeAggregates(List<ReviewModel> reviews) {
-    final sums = <String, double>{};
-    final counts = <String, int>{};
-
-    for (final review in reviews) {
-      review.ratings.forEach((key, value) {
-        if (value > 0) {
-          sums[key] = (sums[key] ?? 0) + value;
-          counts[key] = (counts[key] ?? 0) + 1;
-        }
-      });
-    }
-
-    double avg(String key) {
-      final count = counts[key] ?? 0;
-      if (count == 0) return 0;
-      return double.parse(((sums[key] ?? 0) / count).toStringAsFixed(1));
-    }
-
-    return {
-      for (final key in RatingParameters.allKeys) key: avg(key),
-    };
+    }, SetOptions(merge: true));
   }
 }
 

@@ -177,3 +177,20 @@ final isVerifiedForReviewProvider = FutureProvider<bool>((ref) async {
   if (user == null) return false;
   return ref.read(reviewRepositoryProvider).isUserVerified(user.uid);
 });
+
+/// Instant helpful vote UI before Firestore confirms.
+class OptimisticHelpfulNotifier extends StateNotifier<Set<String>> {
+  OptimisticHelpfulNotifier() : super({});
+
+  void mark(String reviewId) => state = {...state, reviewId};
+
+  void unmark(String reviewId) {
+    if (!state.contains(reviewId)) return;
+    state = state.where((id) => id != reviewId).toSet();
+  }
+}
+
+final optimisticHelpfulProvider =
+    StateNotifierProvider<OptimisticHelpfulNotifier, Set<String>>(
+  (ref) => OptimisticHelpfulNotifier(),
+);

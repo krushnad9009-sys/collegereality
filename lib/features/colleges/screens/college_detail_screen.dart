@@ -13,6 +13,7 @@ import '../../auth/providers/auth_provider.dart';
 import '../../reviews/models/review_model.dart';
 import '../../reviews/providers/review_provider.dart';
 import '../../reviews/widgets/review_card_widget.dart';
+import '../../reviews/widgets/review_summary_panel.dart';
 import '../../reviews/widgets/star_rating_widget.dart';
 import '../widgets/accreditation_badges.dart';
 import '../widgets/college_gallery_widget.dart';
@@ -181,7 +182,7 @@ class _CollegeDetailScreenState extends ConsumerState<CollegeDetailScreen> {
                   _HostelTab(college: college),
                   _FeesTab(college: college, currency: currency),
                   _RatingsTab(college: college),
-                  _ReviewsTab(collegeId: college.id),
+                  _ReviewsTab(college: college),
                 ],
               ),
             ),
@@ -549,24 +550,74 @@ class _HostelTab extends StatelessWidget {
   }
 }
 
-class _ReviewsTab extends ConsumerWidget {
-  final String collegeId;
+class _ReviewsTab extends ConsumerStatefulWidget {
+  final CollegeModel college;
 
-  const _ReviewsTab({required this.collegeId});
+  const _ReviewsTab({required this.college});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final normalizedId = collegeId.trim();
+  ConsumerState<_ReviewsTab> createState() => _ReviewsTabState();
+}
 
-    ref.listen(collegeReviewsProvider(normalizedId), (previous, next) {
+class _ReviewsTabState extends ConsumerState<_ReviewsTab> {
+  final List<ReviewModel> _extraReviews = [];
+  String? _cursor;
+  bool _hasMore = true;
+  bool _loadingMore = false;
+
+  String get _collegeId => widget.college.id.trim();
+
+  Future<void> _loadMore() async {
+    if (_loadingMore || !_hasMore) return;
+    setState(() => _loadingMore = true);
+    try {
+      final page = await ref.read(reviewRepositoryProvider).getReviewsPage(
+            _collegeId,
+            startAfterDocumentId: _cursor,
+          );
+      if (!mounted) return;
+      setState(() {
+        final existingIds = {
+          ..._extraReviews.map((r) => r.id),
+        };
+        _extraReviews.addAll(
+          page.reviews.where((r) => !existingIds.contains(r.id)),
+        );
+        _cursor = page.lastDocumentId;
+        _hasMore = page.hasMore;
+      });
+    } finally {
+      if (mounted) setState(() => _loadingMore = false);
+    }
+  }
+
+  List<ReviewModel> _mergeLists(List<ReviewModel> firstPage) {
+    final byId = <String, ReviewModel>{};
+    for (final r in firstPage) {
+      byId[r.id] = r;
+    }
+    for (final r in _extraReviews) {
+      byId[r.id] = r;
+    }
+    return byId.values.toList()
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    ref.listen(collegeReviewsProvider(_collegeId), (previous, next) {
       next.whenData((reviews) {
-        ref
-            .read(optimisticReviewsProvider.notifier)
-            .syncWithStream(normalizedId, reviews);
+        ref.read(optimisticReviewsProvider.notifier).syncWithStream(
+              _collegeId,
+              reviews,
+            );
+        if (_cursor == null && reviews.isNotEmpty) {
+          _cursor = reviews.last.id;
+        }
       });
     });
 
-    final reviewsAsync = ref.watch(mergedCollegeReviewsProvider(normalizedId));
+    final reviewsAsync = ref.watch(mergedCollegeReviewsProvider(_collegeId));
 
     return reviewsAsync.when(
       loading: () => const ReviewListSkeleton(),
@@ -588,44 +639,71 @@ class _ReviewsTab extends ConsumerWidget {
           ),
         ),
       ),
-      data: (reviews) {
+      data: (firstPage) {
+        final reviews = _mergeLists(firstPage);
+
         if (reviews.isEmpty) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.rate_review_outlined,
-                      size: 64, color: AppTheme.primaryColor.withValues(alpha: 0.4)),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No reviews yet',
-                    style: GoogleFonts.poppins(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                    ),
+          return ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              ReviewSummaryPanel(college: widget.college),
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    children: [
+                      Icon(Icons.rate_review_outlined,
+                          size: 64,
+                          color: AppTheme.primaryColor.withValues(alpha: 0.4)),
+                      const SizedBox(height: 16),
+                      Text(
+                        'No reviews yet',
+                        style: GoogleFonts.poppins(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Only verified students can write reviews.',
+                        style: GoogleFonts.poppins(color: AppTheme.gray500),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Only verified student reviews are shown here.',
-                    style: GoogleFonts.poppins(color: AppTheme.gray500),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
+                ),
               ),
-            ),
+            ],
           );
         }
 
         return ListView.builder(
           padding: const EdgeInsets.all(16),
-          itemCount: reviews.length,
+          itemCount: reviews.length + 1 + (_hasMore ? 1 : 0),
           itemBuilder: (context, index) {
-            final review = reviews[index];
+            if (index == 0) {
+              return ReviewSummaryPanel(college: widget.college);
+            }
+
+            final reviewIndex = index - 1;
+            if (reviewIndex == reviews.length) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Center(
+                  child: _loadingMore
+                      ? const CircularProgressIndicator()
+                      : OutlinedButton(
+                          onPressed: _loadMore,
+                          child: const Text('Load more reviews'),
+                        ),
+                ),
+              );
+            }
+
+            final review = reviews[reviewIndex];
             return TweenAnimationBuilder<double>(
               tween: Tween(begin: 0, end: 1),
-              duration: Duration(milliseconds: 280 + (index * 40)),
+              duration: Duration(milliseconds: 280 + (reviewIndex * 40)),
               curve: Curves.easeOutCubic,
               builder: (context, value, child) => Opacity(
                 opacity: value,
@@ -639,13 +717,16 @@ class _ReviewsTab extends ConsumerWidget {
                 onHelpful: () async {
                   final user = ref.read(currentUserProvider);
                   if (user == null) return;
+                  ref.read(optimisticHelpfulProvider.notifier).mark(review.id);
                   try {
                     await ref
                         .read(reviewRepositoryProvider)
                         .markHelpful(review.id, user.uid);
                     ref.invalidate(reviewHelpfulMarkedProvider(review.id));
-                    ref.invalidate(collegeReviewsProvider(normalizedId));
                   } catch (e) {
+                    ref
+                        .read(optimisticHelpfulProvider.notifier)
+                        .unmark(review.id);
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text('$e')),
@@ -816,42 +897,52 @@ class _RatingsTab extends StatelessWidget {
 
     return ListView(
       padding: const EdgeInsets.all(16),
-      children: items
-          .map(
-            (item) => Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        item.$1,
-                        style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+      children: [
+        ReviewSummaryPanel(college: college),
+        const SizedBox(height: 8),
+        Text(
+          'Category-wise ratings',
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.w700,
+            fontSize: 16,
+          ),
+        ),
+        const SizedBox(height: 12),
+        ...items.map(
+          (item) => Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      item.$1,
+                      style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                    ),
+                    Text(
+                      '${item.$2}/5',
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.primaryColor,
                       ),
-                      Text(
-                        '${item.$2}/5',
-                        style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w700,
-                          color: AppTheme.primaryColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  LinearProgressIndicator(
-                    value: item.$2 / 5,
-                    minHeight: 8,
-                    borderRadius: BorderRadius.circular(4),
-                    backgroundColor: AppTheme.gray200,
-                    color: AppTheme.warningColor,
-                  ),
-                ],
-              ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                LinearProgressIndicator(
+                  value: item.$2 / 5,
+                  minHeight: 8,
+                  borderRadius: BorderRadius.circular(4),
+                  backgroundColor: AppTheme.gray200,
+                  color: AppTheme.warningColor,
+                ),
+              ],
             ),
-          )
-          .toList(),
+          ),
+        ),
+      ],
     );
   }
 }
