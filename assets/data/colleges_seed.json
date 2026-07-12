@@ -1,0 +1,5569 @@
+[
+  {
+    "id": "college_001",
+    "name": "Global Mumbai Institute of Technology",
+    "slug": "global-mumbai-institute-of-technology-0",
+    "city": "Mumbai",
+    "state": "Maharashtra",
+    "address": "251 University Road, Mumbai",
+    "type": "government",
+    "courses": [
+      "B.Sc",
+      "M.Sc"
+    ],
+    "website": "https://www.college0.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 76868,
+      "tuitionMax": 771858,
+      "hostelAnnual": 41395
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 29.8,
+      "averagePackageLpa": 3.5,
+      "placementPercentage": 65,
+      "topRecruiters": [
+        "Google",
+        "Infosys",
+        "Microsoft",
+        "Amazon"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.5,
+      "faculty": 4.2,
+      "infrastructure": 4.2,
+      "placements": 4.7,
+      "campusLife": 4.4
+    },
+    "reviewCount": 952,
+    "searchKeywords": [
+      "institute",
+      "mumbai",
+      "of",
+      "global",
+      "technology",
+      "global mumbai institute of technology",
+      "maharashtra"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_002",
+    "name": "Progressive Pune College of Pharmacy",
+    "slug": "progressive-pune-college-of-pharmacy-1",
+    "city": "Pune",
+    "state": "Maharashtra",
+    "address": "891 University Road, Pune",
+    "type": "government",
+    "courses": [
+      "B.Sc",
+      "M.Sc"
+    ],
+    "website": "https://www.college1.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 160785,
+      "tuitionMax": 556778,
+      "hostelAnnual": 66421
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 13.8,
+      "averagePackageLpa": 17.4,
+      "placementPercentage": 81,
+      "topRecruiters": [
+        "Infosys",
+        "TCS",
+        "Google",
+        "Deloitte"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 3.7,
+      "faculty": 3.6,
+      "infrastructure": 3.5,
+      "placements": 3.7,
+      "campusLife": 3.2
+    },
+    "reviewCount": 1931,
+    "searchKeywords": [
+      "college",
+      "pharmacy",
+      "progressive pune college of pharmacy",
+      "progressive",
+      "pune",
+      "of",
+      "maharashtra"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_003",
+    "name": "United Nagpur College of Engineering",
+    "slug": "united-nagpur-college-of-engineering-2",
+    "city": "Nagpur",
+    "state": "Maharashtra",
+    "address": "388 University Road, Nagpur",
+    "type": "government",
+    "courses": [
+      "MBBS",
+      "MD"
+    ],
+    "website": "https://www.college2.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 144800,
+      "tuitionMax": 401629,
+      "hostelAnnual": 122349
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 10.6,
+      "averagePackageLpa": 12.9,
+      "placementPercentage": 78,
+      "topRecruiters": [
+        "Infosys",
+        "Deloitte",
+        "Accenture",
+        "TCS"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.9,
+      "faculty": 4.8,
+      "infrastructure": 4.8,
+      "placements": 5.2,
+      "campusLife": 4.5
+    },
+    "reviewCount": 1505,
+    "searchKeywords": [
+      "college",
+      "united nagpur college of engineering",
+      "of",
+      "united",
+      "engineering",
+      "nagpur",
+      "maharashtra"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_004",
+    "name": "Central Nashik Polytechnic",
+    "slug": "central-nashik-polytechnic-3",
+    "city": "Nashik",
+    "state": "Maharashtra",
+    "address": "700 University Road, Nashik",
+    "type": "deemed",
+    "courses": [
+      "BBA",
+      "MBA"
+    ],
+    "website": "https://www.college3.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 94862,
+      "tuitionMax": 760086,
+      "hostelAnnual": 125568
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 17.1,
+      "averagePackageLpa": 9.9,
+      "placementPercentage": 77,
+      "topRecruiters": [
+        "Google",
+        "Amazon",
+        "Wipro",
+        "TCS"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.4,
+      "faculty": 4.2,
+      "infrastructure": 4.0,
+      "placements": 4.4,
+      "campusLife": 4.1
+    },
+    "reviewCount": 914,
+    "searchKeywords": [
+      "central nashik polytechnic",
+      "polytechnic",
+      "nashik",
+      "central",
+      "maharashtra"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_005",
+    "name": "Heritage Aurangabad Academy of Science",
+    "slug": "heritage-aurangabad-academy-of-science-4",
+    "city": "Aurangabad",
+    "state": "Maharashtra",
+    "address": "512 University Road, Aurangabad",
+    "type": "private",
+    "courses": [
+      "BA",
+      "MA"
+    ],
+    "website": "https://www.college4.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 87452,
+      "tuitionMax": 477746,
+      "hostelAnnual": 48301
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 17.1,
+      "averagePackageLpa": 11.4,
+      "placementPercentage": 76,
+      "topRecruiters": [
+        "Deloitte",
+        "Microsoft",
+        "Google",
+        "Wipro"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 3.6,
+      "faculty": 3.4,
+      "infrastructure": 3.8,
+      "placements": 3.7,
+      "campusLife": 3.2
+    },
+    "reviewCount": 242,
+    "searchKeywords": [
+      "aurangabad",
+      "heritage aurangabad academy of science",
+      "science",
+      "heritage",
+      "of",
+      "maharashtra",
+      "academy"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_006",
+    "name": "Global Bangalore University",
+    "slug": "global-bangalore-university-5",
+    "city": "Bangalore",
+    "state": "Karnataka",
+    "address": "812 University Road, Bangalore",
+    "type": "deemed",
+    "courses": [
+      "BCA",
+      "MCA"
+    ],
+    "website": "https://www.college5.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 66653,
+      "tuitionMax": 603457,
+      "hostelAnnual": 80019
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 30.0,
+      "averagePackageLpa": 10.0,
+      "placementPercentage": 76,
+      "topRecruiters": [
+        "TCS",
+        "Amazon",
+        "Deloitte",
+        "Accenture"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.3,
+      "faculty": 4.4,
+      "infrastructure": 4.2,
+      "placements": 4.3,
+      "campusLife": 4.3
+    },
+    "reviewCount": 506,
+    "searchKeywords": [
+      "bangalore",
+      "karnataka",
+      "university",
+      "global",
+      "global bangalore university"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_007",
+    "name": "Modern Mysore School of Business",
+    "slug": "modern-mysore-school-of-business-6",
+    "city": "Mysore",
+    "state": "Karnataka",
+    "address": "4 University Road, Mysore",
+    "type": "deemed",
+    "courses": [
+      "MBBS",
+      "MD"
+    ],
+    "website": "https://www.college6.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 181225,
+      "tuitionMax": 387330,
+      "hostelAnnual": 96542
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 41.8,
+      "averagePackageLpa": 16.1,
+      "placementPercentage": 79,
+      "topRecruiters": [
+        "Google",
+        "Infosys",
+        "Wipro",
+        "Deloitte"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 3.5,
+      "faculty": 3.5,
+      "infrastructure": 3.6,
+      "placements": 3.6,
+      "campusLife": 3.0
+    },
+    "reviewCount": 1377,
+    "searchKeywords": [
+      "business",
+      "karnataka",
+      "modern mysore school of business",
+      "of",
+      "mysore",
+      "school",
+      "modern"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_008",
+    "name": "Progressive Mangalore Institute of Technology",
+    "slug": "progressive-mangalore-institute-of-technology-7",
+    "city": "Mangalore",
+    "state": "Karnataka",
+    "address": "372 University Road, Mangalore",
+    "type": "private",
+    "courses": [
+      "B.Com",
+      "M.Com"
+    ],
+    "website": "https://www.college7.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 65184,
+      "tuitionMax": 452572,
+      "hostelAnnual": 145082
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 29.0,
+      "averagePackageLpa": 4.2,
+      "placementPercentage": 91,
+      "topRecruiters": [
+        "Infosys",
+        "Deloitte",
+        "Microsoft",
+        "Accenture"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 3.4,
+      "faculty": 3.2,
+      "infrastructure": 3.3,
+      "placements": 3.5,
+      "campusLife": 3.1
+    },
+    "reviewCount": 1783,
+    "searchKeywords": [
+      "institute",
+      "karnataka",
+      "progressive",
+      "of",
+      "technology",
+      "progressive mangalore institute of technology",
+      "mangalore"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_009",
+    "name": "Central Hubli Institute of Medical Sciences",
+    "slug": "central-hubli-institute-of-medical-sciences-8",
+    "city": "Hubli",
+    "state": "Karnataka",
+    "address": "707 University Road, Hubli",
+    "type": "government",
+    "courses": [
+      "MBBS",
+      "MD"
+    ],
+    "website": "https://www.college8.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 154593,
+      "tuitionMax": 591559,
+      "hostelAnnual": 87422
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 41.3,
+      "averagePackageLpa": 9.8,
+      "placementPercentage": 75,
+      "topRecruiters": [
+        "Google",
+        "TCS",
+        "Wipro",
+        "Deloitte"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.5,
+      "faculty": 4.6,
+      "infrastructure": 4.2,
+      "placements": 4.4,
+      "campusLife": 4.1
+    },
+    "reviewCount": 291,
+    "searchKeywords": [
+      "institute",
+      "hubli",
+      "karnataka",
+      "central hubli institute of medical sciences",
+      "of",
+      "sciences",
+      "medical",
+      "central"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_010",
+    "name": "Central Belgaum College of Engineering",
+    "slug": "central-belgaum-college-of-engineering-9",
+    "city": "Belgaum",
+    "state": "Karnataka",
+    "address": "881 University Road, Belgaum",
+    "type": "private",
+    "courses": [
+      "BBA",
+      "MBA"
+    ],
+    "website": "https://www.college9.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 184782,
+      "tuitionMax": 449565,
+      "hostelAnnual": 66500
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 32.8,
+      "averagePackageLpa": 6.2,
+      "placementPercentage": 68,
+      "topRecruiters": [
+        "Accenture",
+        "Infosys",
+        "Google",
+        "Amazon"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.7,
+      "faculty": 4.5,
+      "infrastructure": 4.4,
+      "placements": 4.8,
+      "campusLife": 4.5
+    },
+    "reviewCount": 1962,
+    "searchKeywords": [
+      "college",
+      "karnataka",
+      "of",
+      "engineering",
+      "central",
+      "belgaum",
+      "central belgaum college of engineering"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_011",
+    "name": "National Chennai College of Engineering",
+    "slug": "national-chennai-college-of-engineering-10",
+    "city": "Chennai",
+    "state": "Tamil Nadu",
+    "address": "746 University Road, Chennai",
+    "type": "private",
+    "courses": [
+      "BBA",
+      "MBA"
+    ],
+    "website": "https://www.college10.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 115183,
+      "tuitionMax": 400896,
+      "hostelAnnual": 54931
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 27.8,
+      "averagePackageLpa": 5.1,
+      "placementPercentage": 71,
+      "topRecruiters": [
+        "Microsoft",
+        "Google",
+        "Infosys",
+        "TCS"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 3.3,
+      "faculty": 3.3,
+      "infrastructure": 3.4,
+      "placements": 3.4,
+      "campusLife": 2.8
+    },
+    "reviewCount": 2264,
+    "searchKeywords": [
+      "college",
+      "tamil nadu",
+      "national chennai college of engineering",
+      "of",
+      "national",
+      "engineering",
+      "chennai"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_012",
+    "name": "National Coimbatore College of Engineering",
+    "slug": "national-coimbatore-college-of-engineering-11",
+    "city": "Coimbatore",
+    "state": "Tamil Nadu",
+    "address": "870 University Road, Coimbatore",
+    "type": "government",
+    "courses": [
+      "B.Sc",
+      "M.Sc"
+    ],
+    "website": "https://www.college11.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 156539,
+      "tuitionMax": 709231,
+      "hostelAnnual": 93092
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 15.9,
+      "averagePackageLpa": 9.0,
+      "placementPercentage": 63,
+      "topRecruiters": [
+        "Wipro",
+        "Google",
+        "TCS",
+        "Deloitte"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.8,
+      "faculty": 4.7,
+      "infrastructure": 4.9,
+      "placements": 4.9,
+      "campusLife": 4.6
+    },
+    "reviewCount": 2326,
+    "searchKeywords": [
+      "college",
+      "tamil nadu",
+      "coimbatore",
+      "of",
+      "national",
+      "engineering",
+      "national coimbatore college of engineering"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_013",
+    "name": "Progressive Madurai University",
+    "slug": "progressive-madurai-university-12",
+    "city": "Madurai",
+    "state": "Tamil Nadu",
+    "address": "223 University Road, Madurai",
+    "type": "government",
+    "courses": [
+      "B.Tech",
+      "M.Tech"
+    ],
+    "website": "https://www.college12.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 132209,
+      "tuitionMax": 259942,
+      "hostelAnnual": 36572
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 29.6,
+      "averagePackageLpa": 10.5,
+      "placementPercentage": 93,
+      "topRecruiters": [
+        "Wipro",
+        "TCS",
+        "Microsoft",
+        "Deloitte"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 3.5,
+      "faculty": 3.7,
+      "infrastructure": 3.1,
+      "placements": 3.3,
+      "campusLife": 3.7
+    },
+    "reviewCount": 1703,
+    "searchKeywords": [
+      "tamil nadu",
+      "madurai",
+      "progressive",
+      "university",
+      "progressive madurai university"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_014",
+    "name": "Global Trichy College of Pharmacy",
+    "slug": "global-trichy-college-of-pharmacy-13",
+    "city": "Trichy",
+    "state": "Tamil Nadu",
+    "address": "609 University Road, Trichy",
+    "type": "government",
+    "courses": [
+      "BBA",
+      "MBA"
+    ],
+    "website": "https://www.college13.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 159897,
+      "tuitionMax": 792683,
+      "hostelAnnual": 98522
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 19.7,
+      "averagePackageLpa": 6.9,
+      "placementPercentage": 80,
+      "topRecruiters": [
+        "Google",
+        "Wipro",
+        "Accenture",
+        "Infosys"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 3.6,
+      "faculty": 3.7,
+      "infrastructure": 3.4,
+      "placements": 3.6,
+      "campusLife": 3.7
+    },
+    "reviewCount": 347,
+    "searchKeywords": [
+      "global trichy college of pharmacy",
+      "college",
+      "pharmacy",
+      "tamil nadu",
+      "trichy",
+      "of",
+      "global"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_015",
+    "name": "National Salem College of Arts",
+    "slug": "national-salem-college-of-arts-14",
+    "city": "Salem",
+    "state": "Tamil Nadu",
+    "address": "577 University Road, Salem",
+    "type": "government",
+    "courses": [
+      "BBA",
+      "MBA"
+    ],
+    "website": "https://www.college14.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 190937,
+      "tuitionMax": 423508,
+      "hostelAnnual": 96307
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 17.8,
+      "averagePackageLpa": 17.0,
+      "placementPercentage": 64,
+      "topRecruiters": [
+        "Google",
+        "Wipro",
+        "Deloitte",
+        "Infosys"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.3,
+      "faculty": 4.3,
+      "infrastructure": 4.2,
+      "placements": 4.3,
+      "campusLife": 4.6
+    },
+    "reviewCount": 2216,
+    "searchKeywords": [
+      "college",
+      "tamil nadu",
+      "arts",
+      "of",
+      "national",
+      "salem",
+      "national salem college of arts"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_016",
+    "name": "National New Delhi Institute of Medical Sciences",
+    "slug": "national-new-delhi-institute-of-medical-sciences-15",
+    "city": "New Delhi",
+    "state": "Delhi",
+    "address": "680 University Road, New Delhi",
+    "type": "government",
+    "courses": [
+      "B.Sc",
+      "M.Sc"
+    ],
+    "website": "https://www.college15.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 119328,
+      "tuitionMax": 321035,
+      "hostelAnnual": 146616
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 12.0,
+      "averagePackageLpa": 11.3,
+      "placementPercentage": 77,
+      "topRecruiters": [
+        "Microsoft",
+        "Accenture",
+        "Infosys",
+        "Wipro"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 3.7,
+      "faculty": 3.5,
+      "infrastructure": 3.7,
+      "placements": 3.7,
+      "campusLife": 3.6
+    },
+    "reviewCount": 258,
+    "searchKeywords": [
+      "institute",
+      "national new delhi institute of medical sciences",
+      "of",
+      "national",
+      "delhi",
+      "new",
+      "medical",
+      "sciences",
+      "new delhi"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_017",
+    "name": "Global Dwarka School of Business",
+    "slug": "global-dwarka-school-of-business-16",
+    "city": "Dwarka",
+    "state": "Delhi",
+    "address": "46 University Road, Dwarka",
+    "type": "government",
+    "courses": [
+      "B.Pharm",
+      "M.Pharm"
+    ],
+    "website": "https://www.college16.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 84293,
+      "tuitionMax": 474680,
+      "hostelAnnual": 51178
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 35.4,
+      "averagePackageLpa": 11.3,
+      "placementPercentage": 87,
+      "topRecruiters": [
+        "TCS",
+        "Accenture",
+        "Deloitte",
+        "Infosys"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.6,
+      "faculty": 4.6,
+      "infrastructure": 4.7,
+      "placements": 4.7,
+      "campusLife": 4.2
+    },
+    "reviewCount": 572,
+    "searchKeywords": [
+      "business",
+      "dwarka",
+      "of",
+      "global",
+      "global dwarka school of business",
+      "delhi",
+      "school"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_018",
+    "name": "National Rohini Polytechnic",
+    "slug": "national-rohini-polytechnic-17",
+    "city": "Rohini",
+    "state": "Delhi",
+    "address": "956 University Road, Rohini",
+    "type": "government",
+    "courses": [
+      "B.Pharm",
+      "M.Pharm"
+    ],
+    "website": "https://www.college17.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 105070,
+      "tuitionMax": 461650,
+      "hostelAnnual": 117416
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 11.8,
+      "averagePackageLpa": 14.7,
+      "placementPercentage": 86,
+      "topRecruiters": [
+        "Wipro",
+        "Infosys",
+        "Deloitte",
+        "Amazon"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 3.8,
+      "faculty": 4.0,
+      "infrastructure": 3.4,
+      "placements": 4.0,
+      "campusLife": 3.6
+    },
+    "reviewCount": 1736,
+    "searchKeywords": [
+      "rohini",
+      "national rohini polytechnic",
+      "polytechnic",
+      "national",
+      "delhi"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_019",
+    "name": "Central Lucknow Polytechnic",
+    "slug": "central-lucknow-polytechnic-18",
+    "city": "Lucknow",
+    "state": "Uttar Pradesh",
+    "address": "719 University Road, Lucknow",
+    "type": "government",
+    "courses": [
+      "BCA",
+      "MCA"
+    ],
+    "website": "https://www.college18.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 60151,
+      "tuitionMax": 693554,
+      "hostelAnnual": 59154
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 15.4,
+      "averagePackageLpa": 16.8,
+      "placementPercentage": 82,
+      "topRecruiters": [
+        "Microsoft",
+        "Deloitte",
+        "Infosys",
+        "Amazon"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 3.5,
+      "faculty": 3.2,
+      "infrastructure": 3.2,
+      "placements": 3.5,
+      "campusLife": 3.7
+    },
+    "reviewCount": 1193,
+    "searchKeywords": [
+      "polytechnic",
+      "uttar pradesh",
+      "central lucknow polytechnic",
+      "central",
+      "lucknow"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_020",
+    "name": "Royal Kanpur Institute of Medical Sciences",
+    "slug": "royal-kanpur-institute-of-medical-sciences-19",
+    "city": "Kanpur",
+    "state": "Uttar Pradesh",
+    "address": "864 University Road, Kanpur",
+    "type": "deemed",
+    "courses": [
+      "B.Pharm",
+      "M.Pharm"
+    ],
+    "website": "https://www.college19.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 57235,
+      "tuitionMax": 320944,
+      "hostelAnnual": 144955
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 43.9,
+      "averagePackageLpa": 5.7,
+      "placementPercentage": 76,
+      "topRecruiters": [
+        "TCS",
+        "Accenture",
+        "Microsoft",
+        "Google"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 3.9,
+      "faculty": 3.8,
+      "infrastructure": 4.0,
+      "placements": 4.0,
+      "campusLife": 4.2
+    },
+    "reviewCount": 523,
+    "searchKeywords": [
+      "institute",
+      "of",
+      "uttar pradesh",
+      "sciences",
+      "royal kanpur institute of medical sciences",
+      "medical",
+      "kanpur",
+      "royal"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_021",
+    "name": "Elite Noida College of Pharmacy",
+    "slug": "elite-noida-college-of-pharmacy-20",
+    "city": "Noida",
+    "state": "Uttar Pradesh",
+    "address": "46 University Road, Noida",
+    "type": "deemed",
+    "courses": [
+      "BCA",
+      "MCA"
+    ],
+    "website": "https://www.college20.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 50443,
+      "tuitionMax": 745175,
+      "hostelAnnual": 135710
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 27.9,
+      "averagePackageLpa": 13.8,
+      "placementPercentage": 72,
+      "topRecruiters": [
+        "Amazon",
+        "Google",
+        "TCS",
+        "Wipro"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 3.5,
+      "faculty": 3.6,
+      "infrastructure": 3.5,
+      "placements": 3.4,
+      "campusLife": 3.7
+    },
+    "reviewCount": 2127,
+    "searchKeywords": [
+      "elite",
+      "college",
+      "pharmacy",
+      "noida",
+      "of",
+      "uttar pradesh",
+      "elite noida college of pharmacy"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_022",
+    "name": "Modern Varanasi School of Business",
+    "slug": "modern-varanasi-school-of-business-21",
+    "city": "Varanasi",
+    "state": "Uttar Pradesh",
+    "address": "714 University Road, Varanasi",
+    "type": "private",
+    "courses": [
+      "B.Sc",
+      "M.Sc"
+    ],
+    "website": "https://www.college21.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 100289,
+      "tuitionMax": 640869,
+      "hostelAnnual": 117153
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 42.8,
+      "averagePackageLpa": 13.2,
+      "placementPercentage": 71,
+      "topRecruiters": [
+        "Microsoft",
+        "Google",
+        "Accenture",
+        "TCS"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 3.8,
+      "faculty": 3.7,
+      "infrastructure": 3.5,
+      "placements": 4.1,
+      "campusLife": 3.8
+    },
+    "reviewCount": 1369,
+    "searchKeywords": [
+      "business",
+      "modern varanasi school of business",
+      "of",
+      "uttar pradesh",
+      "varanasi",
+      "school",
+      "modern"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_023",
+    "name": "Progressive Agra College of Arts",
+    "slug": "progressive-agra-college-of-arts-22",
+    "city": "Agra",
+    "state": "Uttar Pradesh",
+    "address": "219 University Road, Agra",
+    "type": "deemed",
+    "courses": [
+      "BA",
+      "MA"
+    ],
+    "website": "https://www.college22.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 94483,
+      "tuitionMax": 288914,
+      "hostelAnnual": 67196
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 27.1,
+      "averagePackageLpa": 12.5,
+      "placementPercentage": 81,
+      "topRecruiters": [
+        "Infosys",
+        "Deloitte",
+        "Accenture",
+        "Wipro"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.0,
+      "faculty": 3.8,
+      "infrastructure": 3.7,
+      "placements": 3.8,
+      "campusLife": 3.7
+    },
+    "reviewCount": 1996,
+    "searchKeywords": [
+      "college",
+      "agra",
+      "progressive",
+      "progressive agra college of arts",
+      "of",
+      "arts",
+      "uttar pradesh"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_024",
+    "name": "Heritage Ahmedabad College of Engineering",
+    "slug": "heritage-ahmedabad-college-of-engineering-23",
+    "city": "Ahmedabad",
+    "state": "Gujarat",
+    "address": "908 University Road, Ahmedabad",
+    "type": "deemed",
+    "courses": [
+      "B.Com",
+      "M.Com"
+    ],
+    "website": "https://www.college23.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 150657,
+      "tuitionMax": 718392,
+      "hostelAnnual": 82383
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 17.0,
+      "averagePackageLpa": 12.8,
+      "placementPercentage": 60,
+      "topRecruiters": [
+        "Infosys",
+        "Deloitte",
+        "Google",
+        "Accenture"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.0,
+      "faculty": 3.8,
+      "infrastructure": 4.2,
+      "placements": 4.1,
+      "campusLife": 3.5
+    },
+    "reviewCount": 1070,
+    "searchKeywords": [
+      "college",
+      "of",
+      "heritage ahmedabad college of engineering",
+      "engineering",
+      "ahmedabad",
+      "gujarat",
+      "heritage"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_025",
+    "name": "Global Surat College of Arts",
+    "slug": "global-surat-college-of-arts-24",
+    "city": "Surat",
+    "state": "Gujarat",
+    "address": "476 University Road, Surat",
+    "type": "deemed",
+    "courses": [
+      "B.Pharm",
+      "M.Pharm"
+    ],
+    "website": "https://www.college24.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 166017,
+      "tuitionMax": 729298,
+      "hostelAnnual": 85933
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 38.7,
+      "averagePackageLpa": 11.2,
+      "placementPercentage": 70,
+      "topRecruiters": [
+        "Accenture",
+        "Google",
+        "Wipro",
+        "Infosys"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 3.4,
+      "faculty": 3.6,
+      "infrastructure": 3.2,
+      "placements": 3.7,
+      "campusLife": 3.3
+    },
+    "reviewCount": 1029,
+    "searchKeywords": [
+      "college",
+      "arts",
+      "of",
+      "global",
+      "global surat college of arts",
+      "surat",
+      "gujarat"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_026",
+    "name": "Modern Vadodara College of Arts",
+    "slug": "modern-vadodara-college-of-arts-25",
+    "city": "Vadodara",
+    "state": "Gujarat",
+    "address": "293 University Road, Vadodara",
+    "type": "government",
+    "courses": [
+      "MBBS",
+      "MD"
+    ],
+    "website": "https://www.college25.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 138040,
+      "tuitionMax": 535239,
+      "hostelAnnual": 147050
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 28.0,
+      "averagePackageLpa": 5.1,
+      "placementPercentage": 74,
+      "topRecruiters": [
+        "Deloitte",
+        "Amazon",
+        "Infosys",
+        "Accenture"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 3.3,
+      "faculty": 3.0,
+      "infrastructure": 3.1,
+      "placements": 3.4,
+      "campusLife": 3.1
+    },
+    "reviewCount": 897,
+    "searchKeywords": [
+      "college",
+      "modern vadodara college of arts",
+      "arts",
+      "of",
+      "vadodara",
+      "gujarat",
+      "modern"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_027",
+    "name": "Elite Rajkot School of Business",
+    "slug": "elite-rajkot-school-of-business-26",
+    "city": "Rajkot",
+    "state": "Gujarat",
+    "address": "599 University Road, Rajkot",
+    "type": "deemed",
+    "courses": [
+      "B.Tech",
+      "M.Tech"
+    ],
+    "website": "https://www.college26.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 149714,
+      "tuitionMax": 700149,
+      "hostelAnnual": 30772
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 42.9,
+      "averagePackageLpa": 7.5,
+      "placementPercentage": 84,
+      "topRecruiters": [
+        "Deloitte",
+        "Microsoft",
+        "Amazon",
+        "Accenture"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.7,
+      "faculty": 4.9,
+      "infrastructure": 4.8,
+      "placements": 4.8,
+      "campusLife": 4.4
+    },
+    "reviewCount": 2039,
+    "searchKeywords": [
+      "elite",
+      "business",
+      "rajkot",
+      "of",
+      "elite rajkot school of business",
+      "school",
+      "gujarat"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_028",
+    "name": "National Jaipur School of Business",
+    "slug": "national-jaipur-school-of-business-27",
+    "city": "Jaipur",
+    "state": "Rajasthan",
+    "address": "696 University Road, Jaipur",
+    "type": "private",
+    "courses": [
+      "B.Sc",
+      "M.Sc"
+    ],
+    "website": "https://www.college27.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 172523,
+      "tuitionMax": 333827,
+      "hostelAnnual": 111560
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 27.8,
+      "averagePackageLpa": 16.6,
+      "placementPercentage": 97,
+      "topRecruiters": [
+        "TCS",
+        "Accenture",
+        "Amazon",
+        "Google"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 3.8,
+      "faculty": 3.6,
+      "infrastructure": 3.7,
+      "placements": 3.6,
+      "campusLife": 3.6
+    },
+    "reviewCount": 916,
+    "searchKeywords": [
+      "rajasthan",
+      "business",
+      "of",
+      "national",
+      "national jaipur school of business",
+      "school",
+      "jaipur"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_029",
+    "name": "Progressive Udaipur Academy of Science",
+    "slug": "progressive-udaipur-academy-of-science-28",
+    "city": "Udaipur",
+    "state": "Rajasthan",
+    "address": "901 University Road, Udaipur",
+    "type": "private",
+    "courses": [
+      "MBBS",
+      "MD"
+    ],
+    "website": "https://www.college28.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 160510,
+      "tuitionMax": 464525,
+      "hostelAnnual": 139433
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 11.0,
+      "averagePackageLpa": 3.3,
+      "placementPercentage": 94,
+      "topRecruiters": [
+        "TCS",
+        "Wipro",
+        "Infosys",
+        "Accenture"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 3.8,
+      "faculty": 4.0,
+      "infrastructure": 3.8,
+      "placements": 4.1,
+      "campusLife": 4.1
+    },
+    "reviewCount": 866,
+    "searchKeywords": [
+      "rajasthan",
+      "science",
+      "progressive",
+      "of",
+      "progressive udaipur academy of science",
+      "udaipur",
+      "academy"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_030",
+    "name": "National Jodhpur College of Pharmacy",
+    "slug": "national-jodhpur-college-of-pharmacy-29",
+    "city": "Jodhpur",
+    "state": "Rajasthan",
+    "address": "130 University Road, Jodhpur",
+    "type": "private",
+    "courses": [
+      "BBA",
+      "MBA"
+    ],
+    "website": "https://www.college29.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 197841,
+      "tuitionMax": 428552,
+      "hostelAnnual": 90952
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 33.9,
+      "averagePackageLpa": 14.5,
+      "placementPercentage": 70,
+      "topRecruiters": [
+        "Infosys",
+        "Deloitte",
+        "Accenture",
+        "Wipro"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 3.5,
+      "faculty": 3.3,
+      "infrastructure": 3.1,
+      "placements": 3.5,
+      "campusLife": 3.5
+    },
+    "reviewCount": 1587,
+    "searchKeywords": [
+      "rajasthan",
+      "college",
+      "jodhpur",
+      "pharmacy",
+      "of",
+      "national",
+      "national jodhpur college of pharmacy"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_031",
+    "name": "Elite Kota Institute of Management",
+    "slug": "elite-kota-institute-of-management-30",
+    "city": "Kota",
+    "state": "Rajasthan",
+    "address": "708 University Road, Kota",
+    "type": "deemed",
+    "courses": [
+      "B.Com",
+      "M.Com"
+    ],
+    "website": "https://www.college30.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 76712,
+      "tuitionMax": 516232,
+      "hostelAnnual": 141449
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 33.3,
+      "averagePackageLpa": 15.1,
+      "placementPercentage": 96,
+      "topRecruiters": [
+        "TCS",
+        "Wipro",
+        "Microsoft",
+        "Google"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 3.3,
+      "faculty": 3.4,
+      "infrastructure": 2.9,
+      "placements": 3.5,
+      "campusLife": 2.8
+    },
+    "reviewCount": 1770,
+    "searchKeywords": [
+      "elite",
+      "institute",
+      "rajasthan",
+      "elite kota institute of management",
+      "of",
+      "kota",
+      "management"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_032",
+    "name": "Progressive Kolkata College of Engineering",
+    "slug": "progressive-kolkata-college-of-engineering-31",
+    "city": "Kolkata",
+    "state": "West Bengal",
+    "address": "371 University Road, Kolkata",
+    "type": "deemed",
+    "courses": [
+      "BA",
+      "MA"
+    ],
+    "website": "https://www.college31.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 90105,
+      "tuitionMax": 656641,
+      "hostelAnnual": 53086
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 35.2,
+      "averagePackageLpa": 17.5,
+      "placementPercentage": 77,
+      "topRecruiters": [
+        "Accenture",
+        "Google",
+        "Deloitte",
+        "Microsoft"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 3.9,
+      "faculty": 3.8,
+      "infrastructure": 4.0,
+      "placements": 4.2,
+      "campusLife": 3.5
+    },
+    "reviewCount": 1896,
+    "searchKeywords": [
+      "college",
+      "kolkata",
+      "progressive",
+      "of",
+      "west bengal",
+      "engineering",
+      "progressive kolkata college of engineering"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_033",
+    "name": "Central Howrah College of Arts",
+    "slug": "central-howrah-college-of-arts-32",
+    "city": "Howrah",
+    "state": "West Bengal",
+    "address": "685 University Road, Howrah",
+    "type": "private",
+    "courses": [
+      "B.Pharm",
+      "M.Pharm"
+    ],
+    "website": "https://www.college32.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 57523,
+      "tuitionMax": 718317,
+      "hostelAnnual": 141536
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 20.0,
+      "averagePackageLpa": 10.3,
+      "placementPercentage": 82,
+      "topRecruiters": [
+        "Microsoft",
+        "Wipro",
+        "Deloitte",
+        "Accenture"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.2,
+      "faculty": 4.3,
+      "infrastructure": 4.0,
+      "placements": 4.0,
+      "campusLife": 4.5
+    },
+    "reviewCount": 400,
+    "searchKeywords": [
+      "college",
+      "arts",
+      "of",
+      "west bengal",
+      "howrah",
+      "central",
+      "central howrah college of arts"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_034",
+    "name": "Central Durgapur School of Business",
+    "slug": "central-durgapur-school-of-business-33",
+    "city": "Durgapur",
+    "state": "West Bengal",
+    "address": "777 University Road, Durgapur",
+    "type": "government",
+    "courses": [
+      "BA",
+      "MA"
+    ],
+    "website": "https://www.college33.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 178665,
+      "tuitionMax": 669945,
+      "hostelAnnual": 133931
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 8.6,
+      "averagePackageLpa": 7.4,
+      "placementPercentage": 85,
+      "topRecruiters": [
+        "Google",
+        "Wipro",
+        "Amazon",
+        "Microsoft"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.0,
+      "faculty": 3.9,
+      "infrastructure": 3.9,
+      "placements": 4.0,
+      "campusLife": 4.3
+    },
+    "reviewCount": 2304,
+    "searchKeywords": [
+      "business",
+      "of",
+      "west bengal",
+      "central durgapur school of business",
+      "central",
+      "school",
+      "durgapur"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_035",
+    "name": "Royal Siliguri Academy of Science",
+    "slug": "royal-siliguri-academy-of-science-34",
+    "city": "Siliguri",
+    "state": "West Bengal",
+    "address": "278 University Road, Siliguri",
+    "type": "private",
+    "courses": [
+      "MBBS",
+      "MD"
+    ],
+    "website": "https://www.college34.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 110434,
+      "tuitionMax": 326516,
+      "hostelAnnual": 124540
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 15.1,
+      "averagePackageLpa": 4.8,
+      "placementPercentage": 94,
+      "topRecruiters": [
+        "Wipro",
+        "Infosys",
+        "Deloitte",
+        "Google"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.4,
+      "faculty": 4.3,
+      "infrastructure": 4.4,
+      "placements": 4.7,
+      "campusLife": 4.4
+    },
+    "reviewCount": 461,
+    "searchKeywords": [
+      "siliguri",
+      "science",
+      "royal siliguri academy of science",
+      "of",
+      "west bengal",
+      "royal",
+      "academy"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_036",
+    "name": "Central Hyderabad Polytechnic",
+    "slug": "central-hyderabad-polytechnic-35",
+    "city": "Hyderabad",
+    "state": "Telangana",
+    "address": "184 University Road, Hyderabad",
+    "type": "private",
+    "courses": [
+      "B.Tech",
+      "M.Tech"
+    ],
+    "website": "https://www.college35.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 190020,
+      "tuitionMax": 332731,
+      "hostelAnnual": 65954
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 9.7,
+      "averagePackageLpa": 3.8,
+      "placementPercentage": 78,
+      "topRecruiters": [
+        "Wipro",
+        "Amazon",
+        "Google",
+        "TCS"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 3.6,
+      "faculty": 3.8,
+      "infrastructure": 3.5,
+      "placements": 3.7,
+      "campusLife": 3.5
+    },
+    "reviewCount": 805,
+    "searchKeywords": [
+      "telangana",
+      "hyderabad",
+      "polytechnic",
+      "central hyderabad polytechnic",
+      "central"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_037",
+    "name": "National Warangal Polytechnic",
+    "slug": "national-warangal-polytechnic-36",
+    "city": "Warangal",
+    "state": "Telangana",
+    "address": "490 University Road, Warangal",
+    "type": "government",
+    "courses": [
+      "BBA",
+      "MBA"
+    ],
+    "website": "https://www.college36.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 155043,
+      "tuitionMax": 715633,
+      "hostelAnnual": 39710
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 29.3,
+      "averagePackageLpa": 13.3,
+      "placementPercentage": 69,
+      "topRecruiters": [
+        "Wipro",
+        "Deloitte",
+        "Microsoft",
+        "Accenture"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.8,
+      "faculty": 4.6,
+      "infrastructure": 4.5,
+      "placements": 4.9,
+      "campusLife": 4.6
+    },
+    "reviewCount": 2491,
+    "searchKeywords": [
+      "telangana",
+      "polytechnic",
+      "national",
+      "warangal",
+      "national warangal polytechnic"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_038",
+    "name": "Heritage Karimnagar Institute of Management",
+    "slug": "heritage-karimnagar-institute-of-management-37",
+    "city": "Karimnagar",
+    "state": "Telangana",
+    "address": "390 University Road, Karimnagar",
+    "type": "private",
+    "courses": [
+      "BA",
+      "MA"
+    ],
+    "website": "https://www.college37.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 127949,
+      "tuitionMax": 649660,
+      "hostelAnnual": 70026
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 29.0,
+      "averagePackageLpa": 3.9,
+      "placementPercentage": 66,
+      "topRecruiters": [
+        "Google",
+        "Amazon",
+        "Infosys",
+        "Wipro"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.5,
+      "faculty": 4.6,
+      "infrastructure": 4.2,
+      "placements": 4.4,
+      "campusLife": 4.1
+    },
+    "reviewCount": 60,
+    "searchKeywords": [
+      "telangana",
+      "institute",
+      "of",
+      "management",
+      "karimnagar",
+      "heritage karimnagar institute of management",
+      "heritage"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_039",
+    "name": "Elite Visakhapatnam College of Arts",
+    "slug": "elite-visakhapatnam-college-of-arts-38",
+    "city": "Visakhapatnam",
+    "state": "Andhra Pradesh",
+    "address": "482 University Road, Visakhapatnam",
+    "type": "private",
+    "courses": [
+      "B.Tech",
+      "M.Tech"
+    ],
+    "website": "https://www.college38.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 110680,
+      "tuitionMax": 502099,
+      "hostelAnnual": 122662
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 18.5,
+      "averagePackageLpa": 15.9,
+      "placementPercentage": 64,
+      "topRecruiters": [
+        "Google",
+        "Wipro",
+        "Amazon",
+        "Microsoft"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.4,
+      "faculty": 4.5,
+      "infrastructure": 4.6,
+      "placements": 4.5,
+      "campusLife": 4.3
+    },
+    "reviewCount": 660,
+    "searchKeywords": [
+      "elite",
+      "college",
+      "elite visakhapatnam college of arts",
+      "arts",
+      "of",
+      "andhra pradesh",
+      "visakhapatnam"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_040",
+    "name": "Modern Vijayawada University",
+    "slug": "modern-vijayawada-university-39",
+    "city": "Vijayawada",
+    "state": "Andhra Pradesh",
+    "address": "170 University Road, Vijayawada",
+    "type": "private",
+    "courses": [
+      "MBBS",
+      "MD"
+    ],
+    "website": "https://www.college39.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 165121,
+      "tuitionMax": 330394,
+      "hostelAnnual": 91433
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 33.5,
+      "averagePackageLpa": 13.5,
+      "placementPercentage": 77,
+      "topRecruiters": [
+        "Accenture",
+        "Google",
+        "TCS",
+        "Microsoft"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 3.3,
+      "faculty": 3.0,
+      "infrastructure": 3.2,
+      "placements": 3.3,
+      "campusLife": 3.0
+    },
+    "reviewCount": 424,
+    "searchKeywords": [
+      "modern vijayawada university",
+      "university",
+      "vijayawada",
+      "andhra pradesh",
+      "modern"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_041",
+    "name": "Central Guntur College of Pharmacy",
+    "slug": "central-guntur-college-of-pharmacy-40",
+    "city": "Guntur",
+    "state": "Andhra Pradesh",
+    "address": "22 University Road, Guntur",
+    "type": "deemed",
+    "courses": [
+      "MBBS",
+      "MD"
+    ],
+    "website": "https://www.college40.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 60546,
+      "tuitionMax": 383700,
+      "hostelAnnual": 91669
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 27.2,
+      "averagePackageLpa": 9.6,
+      "placementPercentage": 77,
+      "topRecruiters": [
+        "Wipro",
+        "Microsoft",
+        "Google",
+        "Amazon"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.2,
+      "faculty": 4.5,
+      "infrastructure": 4.1,
+      "placements": 4.2,
+      "campusLife": 4.0
+    },
+    "reviewCount": 478,
+    "searchKeywords": [
+      "central guntur college of pharmacy",
+      "guntur",
+      "college",
+      "pharmacy",
+      "of",
+      "central",
+      "andhra pradesh"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_042",
+    "name": "Premier Tirupati Academy of Science",
+    "slug": "premier-tirupati-academy-of-science-41",
+    "city": "Tirupati",
+    "state": "Andhra Pradesh",
+    "address": "508 University Road, Tirupati",
+    "type": "private",
+    "courses": [
+      "BCA",
+      "MCA"
+    ],
+    "website": "https://www.college41.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 194204,
+      "tuitionMax": 238479,
+      "hostelAnnual": 89614
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 11.3,
+      "averagePackageLpa": 6.8,
+      "placementPercentage": 67,
+      "topRecruiters": [
+        "Deloitte",
+        "Accenture",
+        "Microsoft",
+        "TCS"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 3.9,
+      "faculty": 4.0,
+      "infrastructure": 3.8,
+      "placements": 3.9,
+      "campusLife": 3.6
+    },
+    "reviewCount": 1531,
+    "searchKeywords": [
+      "science",
+      "premier",
+      "of",
+      "premier tirupati academy of science",
+      "andhra pradesh",
+      "tirupati",
+      "academy"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_043",
+    "name": "Heritage Kochi College of Arts",
+    "slug": "heritage-kochi-college-of-arts-42",
+    "city": "Kochi",
+    "state": "Kerala",
+    "address": "779 University Road, Kochi",
+    "type": "government",
+    "courses": [
+      "B.Com",
+      "M.Com"
+    ],
+    "website": "https://www.college42.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 120007,
+      "tuitionMax": 775898,
+      "hostelAnnual": 47172
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 42.3,
+      "averagePackageLpa": 9.6,
+      "placementPercentage": 91,
+      "topRecruiters": [
+        "Infosys",
+        "TCS",
+        "Amazon",
+        "Microsoft"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.3,
+      "faculty": 4.5,
+      "infrastructure": 4.3,
+      "placements": 4.3,
+      "campusLife": 3.8
+    },
+    "reviewCount": 1721,
+    "searchKeywords": [
+      "college",
+      "kochi",
+      "arts",
+      "of",
+      "heritage kochi college of arts",
+      "kerala",
+      "heritage"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_044",
+    "name": "Global Thiruvananthapuram Institute of Management",
+    "slug": "global-thiruvananthapuram-institute-of-management-43",
+    "city": "Thiruvananthapuram",
+    "state": "Kerala",
+    "address": "935 University Road, Thiruvananthapuram",
+    "type": "government",
+    "courses": [
+      "BA",
+      "MA"
+    ],
+    "website": "https://www.college43.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 80793,
+      "tuitionMax": 361450,
+      "hostelAnnual": 95323
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 42.5,
+      "averagePackageLpa": 7.4,
+      "placementPercentage": 77,
+      "topRecruiters": [
+        "Deloitte",
+        "Accenture",
+        "Google",
+        "Amazon"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.9,
+      "faculty": 4.7,
+      "infrastructure": 4.8,
+      "placements": 4.9,
+      "campusLife": 5.1
+    },
+    "reviewCount": 2131,
+    "searchKeywords": [
+      "institute",
+      "of",
+      "global",
+      "management",
+      "kerala",
+      "global thiruvananthapuram institute of management",
+      "thiruvananthapuram"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_045",
+    "name": "Premier Kozhikode College of Engineering",
+    "slug": "premier-kozhikode-college-of-engineering-44",
+    "city": "Kozhikode",
+    "state": "Kerala",
+    "address": "809 University Road, Kozhikode",
+    "type": "private",
+    "courses": [
+      "B.Pharm",
+      "M.Pharm"
+    ],
+    "website": "https://www.college44.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 183100,
+      "tuitionMax": 480150,
+      "hostelAnnual": 137551
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 8.1,
+      "averagePackageLpa": 13.9,
+      "placementPercentage": 97,
+      "topRecruiters": [
+        "Accenture",
+        "Deloitte",
+        "Infosys",
+        "Google"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 3.7,
+      "faculty": 3.7,
+      "infrastructure": 3.5,
+      "placements": 3.8,
+      "campusLife": 3.6
+    },
+    "reviewCount": 1915,
+    "searchKeywords": [
+      "college",
+      "premier",
+      "kozhikode",
+      "of",
+      "premier kozhikode college of engineering",
+      "kerala",
+      "engineering"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_046",
+    "name": "Royal Thrissur Institute of Management",
+    "slug": "royal-thrissur-institute-of-management-45",
+    "city": "Thrissur",
+    "state": "Kerala",
+    "address": "245 University Road, Thrissur",
+    "type": "deemed",
+    "courses": [
+      "BCA",
+      "MCA"
+    ],
+    "website": "https://www.college45.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 111226,
+      "tuitionMax": 630728,
+      "hostelAnnual": 35720
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 19.8,
+      "averagePackageLpa": 10.1,
+      "placementPercentage": 84,
+      "topRecruiters": [
+        "Deloitte",
+        "Amazon",
+        "Accenture",
+        "Infosys"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.9,
+      "faculty": 4.9,
+      "infrastructure": 4.5,
+      "placements": 5.0,
+      "campusLife": 4.9
+    },
+    "reviewCount": 461,
+    "searchKeywords": [
+      "institute",
+      "of",
+      "management",
+      "kerala",
+      "royal thrissur institute of management",
+      "thrissur",
+      "royal"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_047",
+    "name": "Progressive Chandigarh College of Engineering",
+    "slug": "progressive-chandigarh-college-of-engineering-46",
+    "city": "Chandigarh",
+    "state": "Punjab",
+    "address": "468 University Road, Chandigarh",
+    "type": "government",
+    "courses": [
+      "B.Sc",
+      "M.Sc"
+    ],
+    "website": "https://www.college46.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 157473,
+      "tuitionMax": 361859,
+      "hostelAnnual": 39807
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 25.4,
+      "averagePackageLpa": 17.5,
+      "placementPercentage": 81,
+      "topRecruiters": [
+        "Deloitte",
+        "Amazon",
+        "TCS",
+        "Wipro"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.1,
+      "faculty": 4.3,
+      "infrastructure": 4.2,
+      "placements": 4.1,
+      "campusLife": 3.9
+    },
+    "reviewCount": 2048,
+    "searchKeywords": [
+      "chandigarh",
+      "college",
+      "progressive chandigarh college of engineering",
+      "progressive",
+      "of",
+      "engineering",
+      "punjab"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_048",
+    "name": "United Ludhiana Institute of Technology",
+    "slug": "united-ludhiana-institute-of-technology-47",
+    "city": "Ludhiana",
+    "state": "Punjab",
+    "address": "241 University Road, Ludhiana",
+    "type": "deemed",
+    "courses": [
+      "MBBS",
+      "MD"
+    ],
+    "website": "https://www.college47.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 109634,
+      "tuitionMax": 294769,
+      "hostelAnnual": 86881
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 44.2,
+      "averagePackageLpa": 14.4,
+      "placementPercentage": 66,
+      "topRecruiters": [
+        "Accenture",
+        "Infosys",
+        "Amazon",
+        "Wipro"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.2,
+      "faculty": 4.4,
+      "infrastructure": 3.8,
+      "placements": 4.5,
+      "campusLife": 3.9
+    },
+    "reviewCount": 1585,
+    "searchKeywords": [
+      "institute",
+      "united ludhiana institute of technology",
+      "of",
+      "technology",
+      "ludhiana",
+      "united",
+      "punjab"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_049",
+    "name": "Elite Amritsar University",
+    "slug": "elite-amritsar-university-48",
+    "city": "Amritsar",
+    "state": "Punjab",
+    "address": "422 University Road, Amritsar",
+    "type": "deemed",
+    "courses": [
+      "B.Sc",
+      "M.Sc"
+    ],
+    "website": "https://www.college48.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 94560,
+      "tuitionMax": 383573,
+      "hostelAnnual": 40350
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 30.6,
+      "averagePackageLpa": 8.7,
+      "placementPercentage": 75,
+      "topRecruiters": [
+        "Accenture",
+        "Microsoft",
+        "Infosys",
+        "Amazon"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 3.6,
+      "faculty": 3.6,
+      "infrastructure": 3.4,
+      "placements": 3.6,
+      "campusLife": 3.1
+    },
+    "reviewCount": 1955,
+    "searchKeywords": [
+      "elite",
+      "university",
+      "amritsar",
+      "elite amritsar university",
+      "punjab"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_050",
+    "name": "Modern Jalandhar Institute of Medical Sciences",
+    "slug": "modern-jalandhar-institute-of-medical-sciences-49",
+    "city": "Jalandhar",
+    "state": "Punjab",
+    "address": "453 University Road, Jalandhar",
+    "type": "private",
+    "courses": [
+      "MBBS",
+      "MD"
+    ],
+    "website": "https://www.college49.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 161230,
+      "tuitionMax": 462246,
+      "hostelAnnual": 89878
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 39.3,
+      "averagePackageLpa": 6.0,
+      "placementPercentage": 84,
+      "topRecruiters": [
+        "Accenture",
+        "TCS",
+        "Infosys",
+        "Google"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 3.5,
+      "faculty": 3.5,
+      "infrastructure": 3.4,
+      "placements": 3.9,
+      "campusLife": 3.2
+    },
+    "reviewCount": 1671,
+    "searchKeywords": [
+      "institute",
+      "modern jalandhar institute of medical sciences",
+      "of",
+      "medical",
+      "sciences",
+      "jalandhar",
+      "punjab",
+      "modern"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_051",
+    "name": "Modern Gurgaon Institute of Technology",
+    "slug": "modern-gurgaon-institute-of-technology-50",
+    "city": "Gurgaon",
+    "state": "Haryana",
+    "address": "703 University Road, Gurgaon",
+    "type": "deemed",
+    "courses": [
+      "B.Tech",
+      "M.Tech"
+    ],
+    "website": "https://www.college50.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 180214,
+      "tuitionMax": 500096,
+      "hostelAnnual": 131677
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 37.6,
+      "averagePackageLpa": 12.1,
+      "placementPercentage": 82,
+      "topRecruiters": [
+        "Google",
+        "Amazon",
+        "Infosys",
+        "Microsoft"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.2,
+      "faculty": 4.1,
+      "infrastructure": 4.3,
+      "placements": 4.5,
+      "campusLife": 4.2
+    },
+    "reviewCount": 610,
+    "searchKeywords": [
+      "haryana",
+      "institute",
+      "of",
+      "technology",
+      "gurgaon",
+      "modern",
+      "modern gurgaon institute of technology"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_052",
+    "name": "Global Faridabad Institute of Technology",
+    "slug": "global-faridabad-institute-of-technology-51",
+    "city": "Faridabad",
+    "state": "Haryana",
+    "address": "452 University Road, Faridabad",
+    "type": "government",
+    "courses": [
+      "B.Pharm",
+      "M.Pharm"
+    ],
+    "website": "https://www.college51.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 84448,
+      "tuitionMax": 294511,
+      "hostelAnnual": 149226
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 18.9,
+      "averagePackageLpa": 14.2,
+      "placementPercentage": 71,
+      "topRecruiters": [
+        "Google",
+        "Infosys",
+        "Microsoft",
+        "Wipro"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 3.7,
+      "faculty": 3.7,
+      "infrastructure": 3.8,
+      "placements": 4.0,
+      "campusLife": 3.4
+    },
+    "reviewCount": 2023,
+    "searchKeywords": [
+      "haryana",
+      "institute",
+      "faridabad",
+      "of",
+      "global",
+      "technology",
+      "global faridabad institute of technology"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_053",
+    "name": "Modern Panipat Academy of Science",
+    "slug": "modern-panipat-academy-of-science-52",
+    "city": "Panipat",
+    "state": "Haryana",
+    "address": "480 University Road, Panipat",
+    "type": "government",
+    "courses": [
+      "B.Sc",
+      "M.Sc"
+    ],
+    "website": "https://www.college52.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 109143,
+      "tuitionMax": 616716,
+      "hostelAnnual": 140853
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 37.8,
+      "averagePackageLpa": 8.5,
+      "placementPercentage": 85,
+      "topRecruiters": [
+        "TCS",
+        "Wipro",
+        "Microsoft",
+        "Accenture"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.6,
+      "faculty": 4.6,
+      "infrastructure": 4.6,
+      "placements": 4.8,
+      "campusLife": 4.6
+    },
+    "reviewCount": 1571,
+    "searchKeywords": [
+      "haryana",
+      "panipat",
+      "science",
+      "of",
+      "modern panipat academy of science",
+      "modern",
+      "academy"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_054",
+    "name": "Global Rohtak Institute of Management",
+    "slug": "global-rohtak-institute-of-management-53",
+    "city": "Rohtak",
+    "state": "Haryana",
+    "address": "635 University Road, Rohtak",
+    "type": "deemed",
+    "courses": [
+      "B.Pharm",
+      "M.Pharm"
+    ],
+    "website": "https://www.college53.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 108030,
+      "tuitionMax": 266287,
+      "hostelAnnual": 113283
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 38.5,
+      "averagePackageLpa": 16.6,
+      "placementPercentage": 79,
+      "topRecruiters": [
+        "Deloitte",
+        "TCS",
+        "Infosys",
+        "Accenture"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.0,
+      "faculty": 4.3,
+      "infrastructure": 3.8,
+      "placements": 4.1,
+      "campusLife": 3.6
+    },
+    "reviewCount": 2251,
+    "searchKeywords": [
+      "haryana",
+      "institute",
+      "of",
+      "global",
+      "global rohtak institute of management",
+      "management",
+      "rohtak"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_055",
+    "name": "Premier Bhopal School of Business",
+    "slug": "premier-bhopal-school-of-business-54",
+    "city": "Bhopal",
+    "state": "Madhya Pradesh",
+    "address": "687 University Road, Bhopal",
+    "type": "deemed",
+    "courses": [
+      "BCA",
+      "MCA"
+    ],
+    "website": "https://www.college54.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 90507,
+      "tuitionMax": 635037,
+      "hostelAnnual": 115841
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 11.7,
+      "averagePackageLpa": 10.3,
+      "placementPercentage": 86,
+      "topRecruiters": [
+        "Microsoft",
+        "TCS",
+        "Amazon",
+        "Wipro"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.0,
+      "faculty": 3.8,
+      "infrastructure": 3.9,
+      "placements": 3.9,
+      "campusLife": 3.8
+    },
+    "reviewCount": 1554,
+    "searchKeywords": [
+      "business",
+      "premier bhopal school of business",
+      "premier",
+      "madhya pradesh",
+      "bhopal",
+      "of",
+      "school"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_056",
+    "name": "United Indore Academy of Science",
+    "slug": "united-indore-academy-of-science-55",
+    "city": "Indore",
+    "state": "Madhya Pradesh",
+    "address": "283 University Road, Indore",
+    "type": "government",
+    "courses": [
+      "BBA",
+      "MBA"
+    ],
+    "website": "https://www.college55.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 169201,
+      "tuitionMax": 296126,
+      "hostelAnnual": 116870
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 15.8,
+      "averagePackageLpa": 12.6,
+      "placementPercentage": 61,
+      "topRecruiters": [
+        "TCS",
+        "Deloitte",
+        "Wipro",
+        "Infosys"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 3.3,
+      "faculty": 3.6,
+      "infrastructure": 3.4,
+      "placements": 3.2,
+      "campusLife": 3.5
+    },
+    "reviewCount": 2320,
+    "searchKeywords": [
+      "science",
+      "united indore academy of science",
+      "of",
+      "madhya pradesh",
+      "united",
+      "indore",
+      "academy"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_057",
+    "name": "Central Gwalior College of Pharmacy",
+    "slug": "central-gwalior-college-of-pharmacy-56",
+    "city": "Gwalior",
+    "state": "Madhya Pradesh",
+    "address": "891 University Road, Gwalior",
+    "type": "government",
+    "courses": [
+      "B.Pharm",
+      "M.Pharm"
+    ],
+    "website": "https://www.college56.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 88680,
+      "tuitionMax": 202973,
+      "hostelAnnual": 66342
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 39.8,
+      "averagePackageLpa": 5.2,
+      "placementPercentage": 68,
+      "topRecruiters": [
+        "Microsoft",
+        "Deloitte",
+        "Infosys",
+        "TCS"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 3.6,
+      "faculty": 3.7,
+      "infrastructure": 3.2,
+      "placements": 3.4,
+      "campusLife": 3.7
+    },
+    "reviewCount": 1024,
+    "searchKeywords": [
+      "college",
+      "pharmacy",
+      "central gwalior college of pharmacy",
+      "of",
+      "madhya pradesh",
+      "gwalior",
+      "central"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_058",
+    "name": "Heritage Jabalpur Academy of Science",
+    "slug": "heritage-jabalpur-academy-of-science-57",
+    "city": "Jabalpur",
+    "state": "Madhya Pradesh",
+    "address": "272 University Road, Jabalpur",
+    "type": "government",
+    "courses": [
+      "B.Sc",
+      "M.Sc"
+    ],
+    "website": "https://www.college57.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 160352,
+      "tuitionMax": 751640,
+      "hostelAnnual": 44896
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 35.6,
+      "averagePackageLpa": 10.1,
+      "placementPercentage": 83,
+      "topRecruiters": [
+        "Infosys",
+        "Google",
+        "Microsoft",
+        "Accenture"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 3.2,
+      "faculty": 3.5,
+      "infrastructure": 2.8,
+      "placements": 3.5,
+      "campusLife": 3.4
+    },
+    "reviewCount": 2185,
+    "searchKeywords": [
+      "science",
+      "heritage",
+      "of",
+      "madhya pradesh",
+      "jabalpur",
+      "heritage jabalpur academy of science",
+      "academy"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_059",
+    "name": "Modern Patna College of Arts",
+    "slug": "modern-patna-college-of-arts-58",
+    "city": "Patna",
+    "state": "Bihar",
+    "address": "32 University Road, Patna",
+    "type": "government",
+    "courses": [
+      "BA",
+      "MA"
+    ],
+    "website": "https://www.college58.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 155281,
+      "tuitionMax": 646980,
+      "hostelAnnual": 119928
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 12.0,
+      "averagePackageLpa": 13.7,
+      "placementPercentage": 88,
+      "topRecruiters": [
+        "Infosys",
+        "TCS",
+        "Wipro",
+        "Microsoft"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.3,
+      "faculty": 4.1,
+      "infrastructure": 4.0,
+      "placements": 4.5,
+      "campusLife": 4.3
+    },
+    "reviewCount": 1381,
+    "searchKeywords": [
+      "college",
+      "modern patna college of arts",
+      "arts",
+      "of",
+      "bihar",
+      "patna",
+      "modern"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_060",
+    "name": "Elite Gaya College of Pharmacy",
+    "slug": "elite-gaya-college-of-pharmacy-59",
+    "city": "Gaya",
+    "state": "Bihar",
+    "address": "465 University Road, Gaya",
+    "type": "deemed",
+    "courses": [
+      "BCA",
+      "MCA"
+    ],
+    "website": "https://www.college59.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 75999,
+      "tuitionMax": 319971,
+      "hostelAnnual": 141777
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 32.2,
+      "averagePackageLpa": 16.2,
+      "placementPercentage": 95,
+      "topRecruiters": [
+        "Google",
+        "Accenture",
+        "Deloitte",
+        "Infosys"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.1,
+      "faculty": 4.0,
+      "infrastructure": 4.2,
+      "placements": 4.1,
+      "campusLife": 4.2
+    },
+    "reviewCount": 1330,
+    "searchKeywords": [
+      "elite",
+      "gaya",
+      "college",
+      "pharmacy",
+      "elite gaya college of pharmacy",
+      "of",
+      "bihar"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_061",
+    "name": "Elite Muzaffarpur Academy of Science",
+    "slug": "elite-muzaffarpur-academy-of-science-60",
+    "city": "Muzaffarpur",
+    "state": "Bihar",
+    "address": "384 University Road, Muzaffarpur",
+    "type": "government",
+    "courses": [
+      "BA",
+      "MA"
+    ],
+    "website": "https://www.college60.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 67598,
+      "tuitionMax": 295656,
+      "hostelAnnual": 139022
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 11.2,
+      "averagePackageLpa": 9.5,
+      "placementPercentage": 83,
+      "topRecruiters": [
+        "Wipro",
+        "Microsoft",
+        "TCS",
+        "Deloitte"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.3,
+      "faculty": 4.6,
+      "infrastructure": 4.2,
+      "placements": 4.5,
+      "campusLife": 4.1
+    },
+    "reviewCount": 1782,
+    "searchKeywords": [
+      "elite",
+      "science",
+      "muzaffarpur",
+      "of",
+      "elite muzaffarpur academy of science",
+      "bihar",
+      "academy"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_062",
+    "name": "National Bhubaneswar Polytechnic",
+    "slug": "national-bhubaneswar-polytechnic-61",
+    "city": "Bhubaneswar",
+    "state": "Odisha",
+    "address": "361 University Road, Bhubaneswar",
+    "type": "government",
+    "courses": [
+      "B.Com",
+      "M.Com"
+    ],
+    "website": "https://www.college61.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 90561,
+      "tuitionMax": 705612,
+      "hostelAnnual": 59392
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 39.3,
+      "averagePackageLpa": 8.3,
+      "placementPercentage": 95,
+      "topRecruiters": [
+        "Amazon",
+        "TCS",
+        "Wipro",
+        "Microsoft"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.2,
+      "faculty": 4.0,
+      "infrastructure": 4.1,
+      "placements": 4.3,
+      "campusLife": 4.3
+    },
+    "reviewCount": 2330,
+    "searchKeywords": [
+      "bhubaneswar",
+      "national bhubaneswar polytechnic",
+      "polytechnic",
+      "national",
+      "odisha"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_063",
+    "name": "National Cuttack College of Pharmacy",
+    "slug": "national-cuttack-college-of-pharmacy-62",
+    "city": "Cuttack",
+    "state": "Odisha",
+    "address": "850 University Road, Cuttack",
+    "type": "deemed",
+    "courses": [
+      "MBBS",
+      "MD"
+    ],
+    "website": "https://www.college62.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 57589,
+      "tuitionMax": 389179,
+      "hostelAnnual": 65818
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 34.0,
+      "averagePackageLpa": 7.6,
+      "placementPercentage": 81,
+      "topRecruiters": [
+        "Amazon",
+        "TCS",
+        "Infosys",
+        "Accenture"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.8,
+      "faculty": 4.8,
+      "infrastructure": 4.6,
+      "placements": 4.7,
+      "campusLife": 4.8
+    },
+    "reviewCount": 175,
+    "searchKeywords": [
+      "college",
+      "pharmacy",
+      "national cuttack college of pharmacy",
+      "of",
+      "national",
+      "odisha",
+      "cuttack"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_064",
+    "name": "Global Rourkela Institute of Medical Sciences",
+    "slug": "global-rourkela-institute-of-medical-sciences-63",
+    "city": "Rourkela",
+    "state": "Odisha",
+    "address": "430 University Road, Rourkela",
+    "type": "private",
+    "courses": [
+      "B.Pharm",
+      "M.Pharm"
+    ],
+    "website": "https://www.college63.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 91263,
+      "tuitionMax": 588028,
+      "hostelAnnual": 70846
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 34.7,
+      "averagePackageLpa": 14.7,
+      "placementPercentage": 96,
+      "topRecruiters": [
+        "Infosys",
+        "TCS",
+        "Accenture",
+        "Amazon"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 3.6,
+      "faculty": 3.8,
+      "infrastructure": 3.2,
+      "placements": 3.4,
+      "campusLife": 3.5
+    },
+    "reviewCount": 1786,
+    "searchKeywords": [
+      "institute",
+      "of",
+      "global rourkela institute of medical sciences",
+      "global",
+      "odisha",
+      "medical",
+      "sciences",
+      "rourkela"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_065",
+    "name": "Progressive Guwahati College of Pharmacy",
+    "slug": "progressive-guwahati-college-of-pharmacy-64",
+    "city": "Guwahati",
+    "state": "Assam",
+    "address": "280 University Road, Guwahati",
+    "type": "government",
+    "courses": [
+      "BBA",
+      "MBA"
+    ],
+    "website": "https://www.college64.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 140484,
+      "tuitionMax": 650797,
+      "hostelAnnual": 44534
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 18.5,
+      "averagePackageLpa": 13.2,
+      "placementPercentage": 91,
+      "topRecruiters": [
+        "Microsoft",
+        "TCS",
+        "Infosys",
+        "Google"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.0,
+      "faculty": 4.3,
+      "infrastructure": 3.6,
+      "placements": 3.9,
+      "campusLife": 4.3
+    },
+    "reviewCount": 612,
+    "searchKeywords": [
+      "assam",
+      "college",
+      "pharmacy",
+      "guwahati",
+      "progressive",
+      "of",
+      "progressive guwahati college of pharmacy"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_066",
+    "name": "Modern Silchar Polytechnic",
+    "slug": "modern-silchar-polytechnic-65",
+    "city": "Silchar",
+    "state": "Assam",
+    "address": "8 University Road, Silchar",
+    "type": "private",
+    "courses": [
+      "BCA",
+      "MCA"
+    ],
+    "website": "https://www.college65.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 96057,
+      "tuitionMax": 335461,
+      "hostelAnnual": 79834
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 27.7,
+      "averagePackageLpa": 6.5,
+      "placementPercentage": 95,
+      "topRecruiters": [
+        "Amazon",
+        "TCS",
+        "Google",
+        "Deloitte"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 3.8,
+      "faculty": 3.8,
+      "infrastructure": 3.7,
+      "placements": 3.6,
+      "campusLife": 3.6
+    },
+    "reviewCount": 1808,
+    "searchKeywords": [
+      "assam",
+      "silchar",
+      "modern silchar polytechnic",
+      "polytechnic",
+      "modern"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_067",
+    "name": "Heritage Dibrugarh School of Business",
+    "slug": "heritage-dibrugarh-school-of-business-66",
+    "city": "Dibrugarh",
+    "state": "Assam",
+    "address": "428 University Road, Dibrugarh",
+    "type": "private",
+    "courses": [
+      "BBA",
+      "MBA"
+    ],
+    "website": "https://www.college66.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 156176,
+      "tuitionMax": 221869,
+      "hostelAnnual": 72568
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 14.4,
+      "averagePackageLpa": 17.2,
+      "placementPercentage": 89,
+      "topRecruiters": [
+        "Amazon",
+        "TCS",
+        "Google",
+        "Deloitte"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.4,
+      "faculty": 4.2,
+      "infrastructure": 4.4,
+      "placements": 4.5,
+      "campusLife": 4.2
+    },
+    "reviewCount": 1320,
+    "searchKeywords": [
+      "assam",
+      "business",
+      "school",
+      "of",
+      "dibrugarh",
+      "heritage dibrugarh school of business",
+      "heritage"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_068",
+    "name": "Royal Ranchi Institute of Management",
+    "slug": "royal-ranchi-institute-of-management-67",
+    "city": "Ranchi",
+    "state": "Jharkhand",
+    "address": "173 University Road, Ranchi",
+    "type": "government",
+    "courses": [
+      "BBA",
+      "MBA"
+    ],
+    "website": "https://www.college67.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 189094,
+      "tuitionMax": 734723,
+      "hostelAnnual": 55415
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 41.5,
+      "averagePackageLpa": 8.2,
+      "placementPercentage": 69,
+      "topRecruiters": [
+        "Google",
+        "TCS",
+        "Infosys",
+        "Wipro"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 3.8,
+      "faculty": 3.6,
+      "infrastructure": 3.8,
+      "placements": 4.1,
+      "campusLife": 3.8
+    },
+    "reviewCount": 775,
+    "searchKeywords": [
+      "institute",
+      "ranchi",
+      "of",
+      "jharkhand",
+      "management",
+      "royal ranchi institute of management",
+      "royal"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_069",
+    "name": "Progressive Jamshedpur College of Arts",
+    "slug": "progressive-jamshedpur-college-of-arts-68",
+    "city": "Jamshedpur",
+    "state": "Jharkhand",
+    "address": "779 University Road, Jamshedpur",
+    "type": "deemed",
+    "courses": [
+      "BA",
+      "MA"
+    ],
+    "website": "https://www.college68.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 197978,
+      "tuitionMax": 538908,
+      "hostelAnnual": 143278
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 43.9,
+      "averagePackageLpa": 7.7,
+      "placementPercentage": 88,
+      "topRecruiters": [
+        "Infosys",
+        "Google",
+        "Deloitte",
+        "Wipro"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.5,
+      "faculty": 4.7,
+      "infrastructure": 4.5,
+      "placements": 4.5,
+      "campusLife": 4.1
+    },
+    "reviewCount": 1941,
+    "searchKeywords": [
+      "college",
+      "progressive",
+      "arts",
+      "of",
+      "jharkhand",
+      "jamshedpur",
+      "progressive jamshedpur college of arts"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_070",
+    "name": "Progressive Dhanbad Institute of Technology",
+    "slug": "progressive-dhanbad-institute-of-technology-69",
+    "city": "Dhanbad",
+    "state": "Jharkhand",
+    "address": "852 University Road, Dhanbad",
+    "type": "private",
+    "courses": [
+      "BBA",
+      "MBA"
+    ],
+    "website": "https://www.college69.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 73670,
+      "tuitionMax": 731699,
+      "hostelAnnual": 80394
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 25.1,
+      "averagePackageLpa": 11.3,
+      "placementPercentage": 62,
+      "topRecruiters": [
+        "Accenture",
+        "Deloitte",
+        "Microsoft",
+        "Infosys"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 3.3,
+      "faculty": 3.2,
+      "infrastructure": 3.2,
+      "placements": 3.2,
+      "campusLife": 2.8
+    },
+    "reviewCount": 473,
+    "searchKeywords": [
+      "institute",
+      "progressive",
+      "of",
+      "progressive dhanbad institute of technology",
+      "technology",
+      "jharkhand",
+      "dhanbad"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_071",
+    "name": "Royal Raipur College of Engineering",
+    "slug": "royal-raipur-college-of-engineering-70",
+    "city": "Raipur",
+    "state": "Chhattisgarh",
+    "address": "177 University Road, Raipur",
+    "type": "government",
+    "courses": [
+      "B.Com",
+      "M.Com"
+    ],
+    "website": "https://www.college70.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 164755,
+      "tuitionMax": 660767,
+      "hostelAnnual": 98690
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 27.3,
+      "averagePackageLpa": 5.4,
+      "placementPercentage": 83,
+      "topRecruiters": [
+        "Microsoft",
+        "Google",
+        "Deloitte",
+        "Wipro"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.1,
+      "faculty": 4.2,
+      "infrastructure": 3.7,
+      "placements": 4.3,
+      "campusLife": 3.9
+    },
+    "reviewCount": 1400,
+    "searchKeywords": [
+      "college",
+      "raipur",
+      "of",
+      "chhattisgarh",
+      "engineering",
+      "royal raipur college of engineering",
+      "royal"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_072",
+    "name": "Global Bhilai Institute of Medical Sciences",
+    "slug": "global-bhilai-institute-of-medical-sciences-71",
+    "city": "Bhilai",
+    "state": "Chhattisgarh",
+    "address": "291 University Road, Bhilai",
+    "type": "private",
+    "courses": [
+      "B.Sc",
+      "M.Sc"
+    ],
+    "website": "https://www.college71.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 137388,
+      "tuitionMax": 285461,
+      "hostelAnnual": 106380
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 32.6,
+      "averagePackageLpa": 16.8,
+      "placementPercentage": 79,
+      "topRecruiters": [
+        "Deloitte",
+        "Infosys",
+        "Microsoft",
+        "TCS"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.4,
+      "faculty": 4.3,
+      "infrastructure": 4.2,
+      "placements": 4.7,
+      "campusLife": 4.6
+    },
+    "reviewCount": 2206,
+    "searchKeywords": [
+      "institute",
+      "global bhilai institute of medical sciences",
+      "bhilai",
+      "of",
+      "global",
+      "chhattisgarh",
+      "medical",
+      "sciences"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_073",
+    "name": "Global Bilaspur School of Business",
+    "slug": "global-bilaspur-school-of-business-72",
+    "city": "Bilaspur",
+    "state": "Chhattisgarh",
+    "address": "19 University Road, Bilaspur",
+    "type": "private",
+    "courses": [
+      "MBBS",
+      "MD"
+    ],
+    "website": "https://www.college72.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 97254,
+      "tuitionMax": 424597,
+      "hostelAnnual": 74791
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 43.1,
+      "averagePackageLpa": 10.3,
+      "placementPercentage": 74,
+      "topRecruiters": [
+        "Wipro",
+        "Infosys",
+        "TCS",
+        "Accenture"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.1,
+      "faculty": 4.3,
+      "infrastructure": 3.8,
+      "placements": 4.4,
+      "campusLife": 4.3
+    },
+    "reviewCount": 2206,
+    "searchKeywords": [
+      "business",
+      "of",
+      "bilaspur",
+      "global",
+      "global bilaspur school of business",
+      "chhattisgarh",
+      "school"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_074",
+    "name": "National Shimla Academy of Science",
+    "slug": "national-shimla-academy-of-science-73",
+    "city": "Shimla",
+    "state": "Himachal Pradesh",
+    "address": "633 University Road, Shimla",
+    "type": "government",
+    "courses": [
+      "BCA",
+      "MCA"
+    ],
+    "website": "https://www.college73.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 90436,
+      "tuitionMax": 370128,
+      "hostelAnnual": 53703
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 38.8,
+      "averagePackageLpa": 14.6,
+      "placementPercentage": 70,
+      "topRecruiters": [
+        "Accenture",
+        "TCS",
+        "Google",
+        "Wipro"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.7,
+      "faculty": 4.8,
+      "infrastructure": 4.4,
+      "placements": 4.8,
+      "campusLife": 4.4
+    },
+    "reviewCount": 1888,
+    "searchKeywords": [
+      "science",
+      "national shimla academy of science",
+      "shimla",
+      "of",
+      "himachal pradesh",
+      "national",
+      "academy"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_075",
+    "name": "Central Mandi Institute of Medical Sciences",
+    "slug": "central-mandi-institute-of-medical-sciences-74",
+    "city": "Mandi",
+    "state": "Himachal Pradesh",
+    "address": "989 University Road, Mandi",
+    "type": "private",
+    "courses": [
+      "B.Com",
+      "M.Com"
+    ],
+    "website": "https://www.college74.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 146427,
+      "tuitionMax": 798128,
+      "hostelAnnual": 87749
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 25.1,
+      "averagePackageLpa": 7.2,
+      "placementPercentage": 84,
+      "topRecruiters": [
+        "Deloitte",
+        "Infosys",
+        "Accenture",
+        "Microsoft"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 3.6,
+      "faculty": 3.4,
+      "infrastructure": 3.4,
+      "placements": 3.8,
+      "campusLife": 3.8
+    },
+    "reviewCount": 2321,
+    "searchKeywords": [
+      "mandi",
+      "institute",
+      "central mandi institute of medical sciences",
+      "of",
+      "himachal pradesh",
+      "sciences",
+      "medical",
+      "central"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_076",
+    "name": "Global Solan Institute of Medical Sciences",
+    "slug": "global-solan-institute-of-medical-sciences-75",
+    "city": "Solan",
+    "state": "Himachal Pradesh",
+    "address": "292 University Road, Solan",
+    "type": "government",
+    "courses": [
+      "B.Sc",
+      "M.Sc"
+    ],
+    "website": "https://www.college75.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 121510,
+      "tuitionMax": 671145,
+      "hostelAnnual": 148660
+    },
+    "scholarships": [
+      {
+        "name": "Merit Scholarship",
+        "eligibility": "Above 90% in 12th",
+        "amount": "Up to 50% fee waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 27.0,
+      "averagePackageLpa": 15.5,
+      "placementPercentage": 65,
+      "topRecruiters": [
+        "Google",
+        "Deloitte",
+        "Accenture",
+        "Wipro"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.6,
+      "faculty": 4.9,
+      "infrastructure": 4.4,
+      "placements": 4.6,
+      "campusLife": 4.4
+    },
+    "reviewCount": 1631,
+    "searchKeywords": [
+      "institute",
+      "global solan institute of medical sciences",
+      "solan",
+      "of",
+      "himachal pradesh",
+      "global",
+      "medical",
+      "sciences"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_077",
+    "name": "Central Madurai Institute of Technology",
+    "slug": "central-madurai-institute-of-technology-76",
+    "city": "Madurai",
+    "state": "Tamil Nadu",
+    "address": "102 Campus Road, Madurai",
+    "type": "deemed",
+    "courses": [
+      "B.Pharm",
+      "M.Pharm"
+    ],
+    "website": "https://www.college76.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 80000,
+      "tuitionMax": 400000,
+      "hostelAnnual": 60000
+    },
+    "scholarships": [
+      {
+        "name": "Need-based Aid",
+        "eligibility": "Family income below 5 LPA",
+        "amount": "25% waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 20.0,
+      "averagePackageLpa": 8.5,
+      "placementPercentage": 75,
+      "topRecruiters": [
+        "TCS",
+        "Infosys",
+        "Wipro"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 3.7,
+      "faculty": 3.7,
+      "infrastructure": 3.7,
+      "placements": 3.7,
+      "campusLife": 3.7
+    },
+    "reviewCount": 200,
+    "searchKeywords": [
+      "central madurai institute of technology",
+      "madurai",
+      "tamil nadu"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_078",
+    "name": "National Kanpur Polytechnic",
+    "slug": "national-kanpur-polytechnic-77",
+    "city": "Kanpur",
+    "state": "Uttar Pradesh",
+    "address": "484 Campus Road, Kanpur",
+    "type": "deemed",
+    "courses": [
+      "B.Sc",
+      "M.Sc"
+    ],
+    "website": "https://www.college77.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 80000,
+      "tuitionMax": 400000,
+      "hostelAnnual": 60000
+    },
+    "scholarships": [
+      {
+        "name": "Need-based Aid",
+        "eligibility": "Family income below 5 LPA",
+        "amount": "25% waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 20.0,
+      "averagePackageLpa": 8.5,
+      "placementPercentage": 75,
+      "topRecruiters": [
+        "TCS",
+        "Infosys",
+        "Wipro"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.8,
+      "faculty": 4.8,
+      "infrastructure": 4.8,
+      "placements": 4.8,
+      "campusLife": 4.8
+    },
+    "reviewCount": 200,
+    "searchKeywords": [
+      "national kanpur polytechnic",
+      "kanpur",
+      "uttar pradesh"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_079",
+    "name": "Heritage Cuttack Institute of Technology",
+    "slug": "heritage-cuttack-institute-of-technology-78",
+    "city": "Cuttack",
+    "state": "Odisha",
+    "address": "20 Campus Road, Cuttack",
+    "type": "private",
+    "courses": [
+      "B.Com",
+      "M.Com"
+    ],
+    "website": "https://www.college78.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 80000,
+      "tuitionMax": 400000,
+      "hostelAnnual": 60000
+    },
+    "scholarships": [
+      {
+        "name": "Need-based Aid",
+        "eligibility": "Family income below 5 LPA",
+        "amount": "25% waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 20.0,
+      "averagePackageLpa": 8.5,
+      "placementPercentage": 75,
+      "topRecruiters": [
+        "TCS",
+        "Infosys",
+        "Wipro"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.7,
+      "faculty": 4.7,
+      "infrastructure": 4.7,
+      "placements": 4.7,
+      "campusLife": 4.7
+    },
+    "reviewCount": 200,
+    "searchKeywords": [
+      "heritage cuttack institute of technology",
+      "cuttack",
+      "odisha"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_080",
+    "name": "Heritage Agra Institute of Medical Sciences",
+    "slug": "heritage-agra-institute-of-medical-sciences-79",
+    "city": "Agra",
+    "state": "Uttar Pradesh",
+    "address": "795 Campus Road, Agra",
+    "type": "private",
+    "courses": [
+      "B.Com",
+      "M.Com"
+    ],
+    "website": "https://www.college79.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 80000,
+      "tuitionMax": 400000,
+      "hostelAnnual": 60000
+    },
+    "scholarships": [
+      {
+        "name": "Need-based Aid",
+        "eligibility": "Family income below 5 LPA",
+        "amount": "25% waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 20.0,
+      "averagePackageLpa": 8.5,
+      "placementPercentage": 75,
+      "topRecruiters": [
+        "TCS",
+        "Infosys",
+        "Wipro"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 3.9,
+      "faculty": 3.9,
+      "infrastructure": 3.9,
+      "placements": 3.9,
+      "campusLife": 3.9
+    },
+    "reviewCount": 200,
+    "searchKeywords": [
+      "heritage agra institute of medical sciences",
+      "agra",
+      "uttar pradesh"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_081",
+    "name": "National Visakhapatnam Institute of Management",
+    "slug": "national-visakhapatnam-institute-of-management-80",
+    "city": "Visakhapatnam",
+    "state": "Andhra Pradesh",
+    "address": "813 Campus Road, Visakhapatnam",
+    "type": "deemed",
+    "courses": [
+      "BA",
+      "MA"
+    ],
+    "website": "https://www.college80.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 80000,
+      "tuitionMax": 400000,
+      "hostelAnnual": 60000
+    },
+    "scholarships": [
+      {
+        "name": "Need-based Aid",
+        "eligibility": "Family income below 5 LPA",
+        "amount": "25% waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 20.0,
+      "averagePackageLpa": 8.5,
+      "placementPercentage": 75,
+      "topRecruiters": [
+        "TCS",
+        "Infosys",
+        "Wipro"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 3.9,
+      "faculty": 3.9,
+      "infrastructure": 3.9,
+      "placements": 3.9,
+      "campusLife": 3.9
+    },
+    "reviewCount": 200,
+    "searchKeywords": [
+      "national visakhapatnam institute of management",
+      "visakhapatnam",
+      "andhra pradesh"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_082",
+    "name": "Progressive Chennai College of Pharmacy",
+    "slug": "progressive-chennai-college-of-pharmacy-81",
+    "city": "Chennai",
+    "state": "Tamil Nadu",
+    "address": "648 Campus Road, Chennai",
+    "type": "deemed",
+    "courses": [
+      "B.Com",
+      "M.Com"
+    ],
+    "website": "https://www.college81.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 80000,
+      "tuitionMax": 400000,
+      "hostelAnnual": 60000
+    },
+    "scholarships": [
+      {
+        "name": "Need-based Aid",
+        "eligibility": "Family income below 5 LPA",
+        "amount": "25% waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 20.0,
+      "averagePackageLpa": 8.5,
+      "placementPercentage": 75,
+      "topRecruiters": [
+        "TCS",
+        "Infosys",
+        "Wipro"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.1,
+      "faculty": 4.1,
+      "infrastructure": 4.1,
+      "placements": 4.1,
+      "campusLife": 4.1
+    },
+    "reviewCount": 200,
+    "searchKeywords": [
+      "progressive chennai college of pharmacy",
+      "chennai",
+      "tamil nadu"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_083",
+    "name": "Elite Noida Institute of Technology",
+    "slug": "elite-noida-institute-of-technology-82",
+    "city": "Noida",
+    "state": "Uttar Pradesh",
+    "address": "247 Campus Road, Noida",
+    "type": "deemed",
+    "courses": [
+      "BCA",
+      "MCA"
+    ],
+    "website": "https://www.college82.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 80000,
+      "tuitionMax": 400000,
+      "hostelAnnual": 60000
+    },
+    "scholarships": [
+      {
+        "name": "Need-based Aid",
+        "eligibility": "Family income below 5 LPA",
+        "amount": "25% waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 20.0,
+      "averagePackageLpa": 8.5,
+      "placementPercentage": 75,
+      "topRecruiters": [
+        "TCS",
+        "Infosys",
+        "Wipro"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.2,
+      "faculty": 4.2,
+      "infrastructure": 4.2,
+      "placements": 4.2,
+      "campusLife": 4.2
+    },
+    "reviewCount": 200,
+    "searchKeywords": [
+      "elite noida institute of technology",
+      "noida",
+      "uttar pradesh"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_084",
+    "name": "United Ahmedabad Academy of Science",
+    "slug": "united-ahmedabad-academy-of-science-83",
+    "city": "Ahmedabad",
+    "state": "Gujarat",
+    "address": "539 Campus Road, Ahmedabad",
+    "type": "deemed",
+    "courses": [
+      "B.Tech",
+      "M.Tech"
+    ],
+    "website": "https://www.college83.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 80000,
+      "tuitionMax": 400000,
+      "hostelAnnual": 60000
+    },
+    "scholarships": [
+      {
+        "name": "Need-based Aid",
+        "eligibility": "Family income below 5 LPA",
+        "amount": "25% waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 20.0,
+      "averagePackageLpa": 8.5,
+      "placementPercentage": 75,
+      "topRecruiters": [
+        "TCS",
+        "Infosys",
+        "Wipro"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 3.3,
+      "faculty": 3.3,
+      "infrastructure": 3.3,
+      "placements": 3.3,
+      "campusLife": 3.3
+    },
+    "reviewCount": 200,
+    "searchKeywords": [
+      "united ahmedabad academy of science",
+      "ahmedabad",
+      "gujarat"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_085",
+    "name": "National Rohtak School of Business",
+    "slug": "national-rohtak-school-of-business-84",
+    "city": "Rohtak",
+    "state": "Haryana",
+    "address": "260 Campus Road, Rohtak",
+    "type": "deemed",
+    "courses": [
+      "B.Tech",
+      "M.Tech"
+    ],
+    "website": "https://www.college84.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 80000,
+      "tuitionMax": 400000,
+      "hostelAnnual": 60000
+    },
+    "scholarships": [
+      {
+        "name": "Need-based Aid",
+        "eligibility": "Family income below 5 LPA",
+        "amount": "25% waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 20.0,
+      "averagePackageLpa": 8.5,
+      "placementPercentage": 75,
+      "topRecruiters": [
+        "TCS",
+        "Infosys",
+        "Wipro"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.9,
+      "faculty": 4.9,
+      "infrastructure": 4.9,
+      "placements": 4.9,
+      "campusLife": 4.9
+    },
+    "reviewCount": 200,
+    "searchKeywords": [
+      "national rohtak school of business",
+      "rohtak",
+      "haryana"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_086",
+    "name": "Royal Chandigarh Institute of Management",
+    "slug": "royal-chandigarh-institute-of-management-85",
+    "city": "Chandigarh",
+    "state": "Punjab",
+    "address": "644 Campus Road, Chandigarh",
+    "type": "government",
+    "courses": [
+      "B.Pharm",
+      "M.Pharm"
+    ],
+    "website": "https://www.college85.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 80000,
+      "tuitionMax": 400000,
+      "hostelAnnual": 60000
+    },
+    "scholarships": [
+      {
+        "name": "Need-based Aid",
+        "eligibility": "Family income below 5 LPA",
+        "amount": "25% waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 20.0,
+      "averagePackageLpa": 8.5,
+      "placementPercentage": 75,
+      "topRecruiters": [
+        "TCS",
+        "Infosys",
+        "Wipro"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.4,
+      "faculty": 4.4,
+      "infrastructure": 4.4,
+      "placements": 4.4,
+      "campusLife": 4.4
+    },
+    "reviewCount": 200,
+    "searchKeywords": [
+      "royal chandigarh institute of management",
+      "chandigarh",
+      "punjab"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_087",
+    "name": "Royal Lucknow Institute of Medical Sciences",
+    "slug": "royal-lucknow-institute-of-medical-sciences-86",
+    "city": "Lucknow",
+    "state": "Uttar Pradesh",
+    "address": "659 Campus Road, Lucknow",
+    "type": "government",
+    "courses": [
+      "BA",
+      "MA"
+    ],
+    "website": "https://www.college86.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 80000,
+      "tuitionMax": 400000,
+      "hostelAnnual": 60000
+    },
+    "scholarships": [
+      {
+        "name": "Need-based Aid",
+        "eligibility": "Family income below 5 LPA",
+        "amount": "25% waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 20.0,
+      "averagePackageLpa": 8.5,
+      "placementPercentage": 75,
+      "topRecruiters": [
+        "TCS",
+        "Infosys",
+        "Wipro"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 3.8,
+      "faculty": 3.8,
+      "infrastructure": 3.8,
+      "placements": 3.8,
+      "campusLife": 3.8
+    },
+    "reviewCount": 200,
+    "searchKeywords": [
+      "royal lucknow institute of medical sciences",
+      "lucknow",
+      "uttar pradesh"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_088",
+    "name": "Premier Rourkela University",
+    "slug": "premier-rourkela-university-87",
+    "city": "Rourkela",
+    "state": "Odisha",
+    "address": "795 Campus Road, Rourkela",
+    "type": "private",
+    "courses": [
+      "B.Tech",
+      "M.Tech"
+    ],
+    "website": "https://www.college87.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 80000,
+      "tuitionMax": 400000,
+      "hostelAnnual": 60000
+    },
+    "scholarships": [
+      {
+        "name": "Need-based Aid",
+        "eligibility": "Family income below 5 LPA",
+        "amount": "25% waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 20.0,
+      "averagePackageLpa": 8.5,
+      "placementPercentage": 75,
+      "topRecruiters": [
+        "TCS",
+        "Infosys",
+        "Wipro"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 3.3,
+      "faculty": 3.3,
+      "infrastructure": 3.3,
+      "placements": 3.3,
+      "campusLife": 3.3
+    },
+    "reviewCount": 200,
+    "searchKeywords": [
+      "premier rourkela university",
+      "rourkela",
+      "odisha"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_089",
+    "name": "National Vijayawada Institute of Management",
+    "slug": "national-vijayawada-institute-of-management-88",
+    "city": "Vijayawada",
+    "state": "Andhra Pradesh",
+    "address": "324 Campus Road, Vijayawada",
+    "type": "private",
+    "courses": [
+      "BCA",
+      "MCA"
+    ],
+    "website": "https://www.college88.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 80000,
+      "tuitionMax": 400000,
+      "hostelAnnual": 60000
+    },
+    "scholarships": [
+      {
+        "name": "Need-based Aid",
+        "eligibility": "Family income below 5 LPA",
+        "amount": "25% waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 20.0,
+      "averagePackageLpa": 8.5,
+      "placementPercentage": 75,
+      "topRecruiters": [
+        "TCS",
+        "Infosys",
+        "Wipro"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.7,
+      "faculty": 4.7,
+      "infrastructure": 4.7,
+      "placements": 4.7,
+      "campusLife": 4.7
+    },
+    "reviewCount": 200,
+    "searchKeywords": [
+      "national vijayawada institute of management",
+      "vijayawada",
+      "andhra pradesh"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_090",
+    "name": "Modern Jamshedpur Institute of Technology",
+    "slug": "modern-jamshedpur-institute-of-technology-89",
+    "city": "Jamshedpur",
+    "state": "Jharkhand",
+    "address": "196 Campus Road, Jamshedpur",
+    "type": "private",
+    "courses": [
+      "B.Pharm",
+      "M.Pharm"
+    ],
+    "website": "https://www.college89.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 80000,
+      "tuitionMax": 400000,
+      "hostelAnnual": 60000
+    },
+    "scholarships": [
+      {
+        "name": "Need-based Aid",
+        "eligibility": "Family income below 5 LPA",
+        "amount": "25% waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 20.0,
+      "averagePackageLpa": 8.5,
+      "placementPercentage": 75,
+      "topRecruiters": [
+        "TCS",
+        "Infosys",
+        "Wipro"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.5,
+      "faculty": 4.5,
+      "infrastructure": 4.5,
+      "placements": 4.5,
+      "campusLife": 4.5
+    },
+    "reviewCount": 200,
+    "searchKeywords": [
+      "modern jamshedpur institute of technology",
+      "jamshedpur",
+      "jharkhand"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_091",
+    "name": "Modern Mangalore College of Engineering",
+    "slug": "modern-mangalore-college-of-engineering-90",
+    "city": "Mangalore",
+    "state": "Karnataka",
+    "address": "448 Campus Road, Mangalore",
+    "type": "private",
+    "courses": [
+      "BA",
+      "MA"
+    ],
+    "website": "https://www.college90.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 80000,
+      "tuitionMax": 400000,
+      "hostelAnnual": 60000
+    },
+    "scholarships": [
+      {
+        "name": "Need-based Aid",
+        "eligibility": "Family income below 5 LPA",
+        "amount": "25% waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 20.0,
+      "averagePackageLpa": 8.5,
+      "placementPercentage": 75,
+      "topRecruiters": [
+        "TCS",
+        "Infosys",
+        "Wipro"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.6,
+      "faculty": 4.6,
+      "infrastructure": 4.6,
+      "placements": 4.6,
+      "campusLife": 4.6
+    },
+    "reviewCount": 200,
+    "searchKeywords": [
+      "modern mangalore college of engineering",
+      "mangalore",
+      "karnataka"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_092",
+    "name": "Premier Panipat College of Arts",
+    "slug": "premier-panipat-college-of-arts-91",
+    "city": "Panipat",
+    "state": "Haryana",
+    "address": "377 Campus Road, Panipat",
+    "type": "deemed",
+    "courses": [
+      "MBBS",
+      "MD"
+    ],
+    "website": "https://www.college91.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 80000,
+      "tuitionMax": 400000,
+      "hostelAnnual": 60000
+    },
+    "scholarships": [
+      {
+        "name": "Need-based Aid",
+        "eligibility": "Family income below 5 LPA",
+        "amount": "25% waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 20.0,
+      "averagePackageLpa": 8.5,
+      "placementPercentage": 75,
+      "topRecruiters": [
+        "TCS",
+        "Infosys",
+        "Wipro"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.4,
+      "faculty": 4.4,
+      "infrastructure": 4.4,
+      "placements": 4.4,
+      "campusLife": 4.4
+    },
+    "reviewCount": 200,
+    "searchKeywords": [
+      "premier panipat college of arts",
+      "panipat",
+      "haryana"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_093",
+    "name": "Global Trichy School of Business",
+    "slug": "global-trichy-school-of-business-92",
+    "city": "Trichy",
+    "state": "Tamil Nadu",
+    "address": "843 Campus Road, Trichy",
+    "type": "government",
+    "courses": [
+      "MBBS",
+      "MD"
+    ],
+    "website": "https://www.college92.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 80000,
+      "tuitionMax": 400000,
+      "hostelAnnual": 60000
+    },
+    "scholarships": [
+      {
+        "name": "Need-based Aid",
+        "eligibility": "Family income below 5 LPA",
+        "amount": "25% waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 20.0,
+      "averagePackageLpa": 8.5,
+      "placementPercentage": 75,
+      "topRecruiters": [
+        "TCS",
+        "Infosys",
+        "Wipro"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.2,
+      "faculty": 4.2,
+      "infrastructure": 4.2,
+      "placements": 4.2,
+      "campusLife": 4.2
+    },
+    "reviewCount": 200,
+    "searchKeywords": [
+      "global trichy school of business",
+      "trichy",
+      "tamil nadu"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_094",
+    "name": "Global Kochi Academy of Science",
+    "slug": "global-kochi-academy-of-science-93",
+    "city": "Kochi",
+    "state": "Kerala",
+    "address": "314 Campus Road, Kochi",
+    "type": "private",
+    "courses": [
+      "BCA",
+      "MCA"
+    ],
+    "website": "https://www.college93.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 80000,
+      "tuitionMax": 400000,
+      "hostelAnnual": 60000
+    },
+    "scholarships": [
+      {
+        "name": "Need-based Aid",
+        "eligibility": "Family income below 5 LPA",
+        "amount": "25% waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 20.0,
+      "averagePackageLpa": 8.5,
+      "placementPercentage": 75,
+      "topRecruiters": [
+        "TCS",
+        "Infosys",
+        "Wipro"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.3,
+      "faculty": 4.3,
+      "infrastructure": 4.3,
+      "placements": 4.3,
+      "campusLife": 4.3
+    },
+    "reviewCount": 200,
+    "searchKeywords": [
+      "global kochi academy of science",
+      "kochi",
+      "kerala"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_095",
+    "name": "Royal Rajkot College of Arts",
+    "slug": "royal-rajkot-college-of-arts-94",
+    "city": "Rajkot",
+    "state": "Gujarat",
+    "address": "891 Campus Road, Rajkot",
+    "type": "private",
+    "courses": [
+      "BCA",
+      "MCA"
+    ],
+    "website": "https://www.college94.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 80000,
+      "tuitionMax": 400000,
+      "hostelAnnual": 60000
+    },
+    "scholarships": [
+      {
+        "name": "Need-based Aid",
+        "eligibility": "Family income below 5 LPA",
+        "amount": "25% waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 20.0,
+      "averagePackageLpa": 8.5,
+      "placementPercentage": 75,
+      "topRecruiters": [
+        "TCS",
+        "Infosys",
+        "Wipro"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 3.3,
+      "faculty": 3.3,
+      "infrastructure": 3.3,
+      "placements": 3.3,
+      "campusLife": 3.3
+    },
+    "reviewCount": 200,
+    "searchKeywords": [
+      "royal rajkot college of arts",
+      "rajkot",
+      "gujarat"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_096",
+    "name": "National Karimnagar College of Engineering",
+    "slug": "national-karimnagar-college-of-engineering-95",
+    "city": "Karimnagar",
+    "state": "Telangana",
+    "address": "416 Campus Road, Karimnagar",
+    "type": "private",
+    "courses": [
+      "B.Sc",
+      "M.Sc"
+    ],
+    "website": "https://www.college95.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 80000,
+      "tuitionMax": 400000,
+      "hostelAnnual": 60000
+    },
+    "scholarships": [
+      {
+        "name": "Need-based Aid",
+        "eligibility": "Family income below 5 LPA",
+        "amount": "25% waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 20.0,
+      "averagePackageLpa": 8.5,
+      "placementPercentage": 75,
+      "topRecruiters": [
+        "TCS",
+        "Infosys",
+        "Wipro"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.3,
+      "faculty": 4.3,
+      "infrastructure": 4.3,
+      "placements": 4.3,
+      "campusLife": 4.3
+    },
+    "reviewCount": 200,
+    "searchKeywords": [
+      "national karimnagar college of engineering",
+      "karimnagar",
+      "telangana"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_097",
+    "name": "Heritage Pune College of Arts",
+    "slug": "heritage-pune-college-of-arts-96",
+    "city": "Pune",
+    "state": "Maharashtra",
+    "address": "69 Campus Road, Pune",
+    "type": "government",
+    "courses": [
+      "B.Pharm",
+      "M.Pharm"
+    ],
+    "website": "https://www.college96.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 80000,
+      "tuitionMax": 400000,
+      "hostelAnnual": 60000
+    },
+    "scholarships": [
+      {
+        "name": "Need-based Aid",
+        "eligibility": "Family income below 5 LPA",
+        "amount": "25% waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 20.0,
+      "averagePackageLpa": 8.5,
+      "placementPercentage": 75,
+      "topRecruiters": [
+        "TCS",
+        "Infosys",
+        "Wipro"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 3.3,
+      "faculty": 3.3,
+      "infrastructure": 3.3,
+      "placements": 3.3,
+      "campusLife": 3.3
+    },
+    "reviewCount": 200,
+    "searchKeywords": [
+      "heritage pune college of arts",
+      "pune",
+      "maharashtra"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_098",
+    "name": "Heritage Jalandhar Institute of Technology",
+    "slug": "heritage-jalandhar-institute-of-technology-97",
+    "city": "Jalandhar",
+    "state": "Punjab",
+    "address": "696 Campus Road, Jalandhar",
+    "type": "private",
+    "courses": [
+      "B.Pharm",
+      "M.Pharm"
+    ],
+    "website": "https://www.college97.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 80000,
+      "tuitionMax": 400000,
+      "hostelAnnual": 60000
+    },
+    "scholarships": [
+      {
+        "name": "Need-based Aid",
+        "eligibility": "Family income below 5 LPA",
+        "amount": "25% waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 20.0,
+      "averagePackageLpa": 8.5,
+      "placementPercentage": 75,
+      "topRecruiters": [
+        "TCS",
+        "Infosys",
+        "Wipro"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.2,
+      "faculty": 4.2,
+      "infrastructure": 4.2,
+      "placements": 4.2,
+      "campusLife": 4.2
+    },
+    "reviewCount": 200,
+    "searchKeywords": [
+      "heritage jalandhar institute of technology",
+      "jalandhar",
+      "punjab"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_099",
+    "name": "Global Jalandhar College of Pharmacy",
+    "slug": "global-jalandhar-college-of-pharmacy-98",
+    "city": "Jalandhar",
+    "state": "Punjab",
+    "address": "376 Campus Road, Jalandhar",
+    "type": "private",
+    "courses": [
+      "B.Pharm",
+      "M.Pharm"
+    ],
+    "website": "https://www.college98.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 80000,
+      "tuitionMax": 400000,
+      "hostelAnnual": 60000
+    },
+    "scholarships": [
+      {
+        "name": "Need-based Aid",
+        "eligibility": "Family income below 5 LPA",
+        "amount": "25% waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 20.0,
+      "averagePackageLpa": 8.5,
+      "placementPercentage": 75,
+      "topRecruiters": [
+        "TCS",
+        "Infosys",
+        "Wipro"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 3.4,
+      "faculty": 3.4,
+      "infrastructure": 3.4,
+      "placements": 3.4,
+      "campusLife": 3.4
+    },
+    "reviewCount": 200,
+    "searchKeywords": [
+      "global jalandhar college of pharmacy",
+      "jalandhar",
+      "punjab"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "college_100",
+    "name": "Global Hyderabad Institute of Technology",
+    "slug": "global-hyderabad-institute-of-technology-99",
+    "city": "Hyderabad",
+    "state": "Telangana",
+    "address": "512 Campus Road, Hyderabad",
+    "type": "deemed",
+    "courses": [
+      "BCA",
+      "MCA"
+    ],
+    "website": "https://www.college99.edu.in",
+    "coverPhotoUrl": null,
+    "photoUrls": [],
+    "fees": {
+      "tuitionMin": 80000,
+      "tuitionMax": 400000,
+      "hostelAnnual": 60000
+    },
+    "scholarships": [
+      {
+        "name": "Need-based Aid",
+        "eligibility": "Family income below 5 LPA",
+        "amount": "25% waiver"
+      }
+    ],
+    "placements": {
+      "highestPackageLpa": 20.0,
+      "averagePackageLpa": 8.5,
+      "placementPercentage": 75,
+      "topRecruiters": [
+        "TCS",
+        "Infosys",
+        "Wipro"
+      ]
+    },
+    "aggregatedRatings": {
+      "overall": 4.5,
+      "faculty": 4.5,
+      "infrastructure": 4.5,
+      "placements": 4.5,
+      "campusLife": 4.5
+    },
+    "reviewCount": 200,
+    "searchKeywords": [
+      "global hyderabad institute of technology",
+      "hyderabad",
+      "telangana"
+    ],
+    "isActive": true
+  }
+]
