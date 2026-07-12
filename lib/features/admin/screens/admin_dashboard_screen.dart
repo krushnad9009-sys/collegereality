@@ -80,6 +80,12 @@ class AdminDashboardScreen extends ConsumerWidget {
             onTap: () => context.go(RouteNames.adminReviews),
           ),
           _AdminMenuTile(
+            icon: Icons.work_outline,
+            title: 'Placement Approvals',
+            subtitle: 'Review verified student placement submissions',
+            onTap: () => context.go(RouteNames.adminPlacements),
+          ),
+          _AdminMenuTile(
             icon: Icons.people_outline,
             title: 'Users',
             subtitle: 'View registered students',

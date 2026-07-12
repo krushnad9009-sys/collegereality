@@ -134,6 +134,28 @@ service cloud.firestore {
       allow create: if isAuthenticated();
     }
 
+    match /placement_submissions/{submissionId} {
+      allow read: if isAuthenticated() &&
+        (isAdmin() ||
+         resource.data.userId == request.auth.uid ||
+         resource.data.status == 'approved');
+      allow create: if isVerifiedStudent() &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.isVerifiedStudent == true &&
+        request.resource.data.status == 'pending_review';
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+
+      match /private/{docId} {
+        allow read: if isAdmin() ||
+          (isAuthenticated() &&
+           get(/databases/$(database)/documents/placement_submissions/$(submissionId)).data.userId == request.auth.uid);
+        allow create: if isAuthenticated() &&
+          get(/databases/$(database)/documents/placement_submissions/$(submissionId)).data.userId == request.auth.uid;
+        allow update, delete: if isAdmin();
+      }
+    }
+
     match /community_conversations/{conversationId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated();

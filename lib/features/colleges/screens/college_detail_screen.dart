@@ -17,6 +17,7 @@ import '../../reviews/widgets/review_summary_panel.dart';
 import '../../reviews/widgets/star_rating_widget.dart';
 import '../../compare/providers/compare_basket_provider.dart';
 import '../../compare/widgets/compare_basket_bar.dart';
+import '../../placements/widgets/placements_tab_content.dart';
 import '../widgets/accreditation_badges.dart';
 import '../widgets/college_gallery_widget.dart';
 import '../widgets/college_map_section.dart';
@@ -225,7 +226,7 @@ class _CollegeDetailScreenState extends ConsumerState<CollegeDetailScreen> {
               body: TabBarView(
                 children: [
                   _OverviewTab(college: college),
-                  _PlacementsTab(college: college),
+                  PlacementsTabContent(college: college),
                   _FacultyTab(college: college),
                   _HostelTab(college: college),
                   _FeesTab(college: college, currency: currency),
@@ -423,71 +424,6 @@ class _OverviewTab extends StatelessWidget {
                 .join('\n'),
             icon: Icons.card_giftcard_outlined,
           ),
-      ],
-    );
-  }
-}
-
-class _PlacementsTab extends StatelessWidget {
-  final CollegeModel college;
-
-  const _PlacementsTab({required this.college});
-
-  @override
-  Widget build(BuildContext context) {
-    final p = college.placements;
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: _StatCard(
-                label: 'Highest Package',
-                value: '${p.highestPackageLpa} LPA',
-                icon: Icons.trending_up,
-                color: AppTheme.accentColor,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _StatCard(
-                label: 'Average Package',
-                value: '${p.averagePackageLpa} LPA',
-                icon: Icons.analytics_outlined,
-                color: AppTheme.secondaryColor,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        _StatCard(
-          label: 'Placement Rate',
-          value: '${p.placementPercentage}%',
-          icon: Icons.work_outline,
-          color: AppTheme.primaryColor,
-        ),
-        const SizedBox(height: 24),
-        Text(
-          'Top Recruiters',
-          style: GoogleFonts.poppins(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: p.topRecruiters
-              .map(
-                (r) => Chip(
-                  label: Text(r),
-                  avatar: const Icon(Icons.business, size: 16),
-                ),
-              )
-              .toList(),
-        ),
       ],
     );
   }

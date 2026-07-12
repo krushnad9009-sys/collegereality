@@ -10,6 +10,7 @@ class RouteNames {
   static const String compare = '/compare';
   static const String collegeDetails = '/college-details/:id';
   static const String writeReview = '/college-details/:id/write-review';
+  static const String submitPlacement = '/college-details/:id/submit-placement';
   static const String profile = '/profile';
   static const String myReviews = '/my-reviews';
   static const String favorites = '/favorites';
@@ -18,6 +19,7 @@ class RouteNames {
   static const String adminCollegeNew = '/admin/colleges/new';
   static const String adminCollegeEdit = '/admin/colleges/:id/edit';
   static const String adminReviews = '/admin/reviews';
+  static const String adminPlacements = '/admin/placements';
   static const String adminUsers = '/admin/users';
   static const String adminCommunication = '/admin/communication';
   static const String adminVerification = '/admin/verification';
@@ -40,6 +42,8 @@ class RouteNames {
   }
   static String writeReviewPath(String collegeId) =>
       '/college-details/$collegeId/write-review';
+  static String submitPlacementPath(String collegeId, String collegeName) =>
+      '/college-details/$collegeId/submit-placement?name=${Uri.encodeComponent(collegeName)}';
   static String guideProfilePath(String uid) => '/guides/$uid';
   static String activeCallPath(String sessionId) => '/call/$sessionId';
   static String communityChatPath(String id) => '/community/chat/$id';

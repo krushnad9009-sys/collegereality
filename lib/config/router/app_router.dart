@@ -28,6 +28,8 @@ import '../../features/community/screens/private_chats_screen.dart';
 import '../../features/community/screens/chat_screen.dart';
 import '../../features/community/screens/ask_seniors_screen.dart';
 import '../../features/community/screens/qa_board_screen.dart';
+import '../../features/placements/screens/submit_placement_screen.dart';
+import '../../features/admin/screens/admin_placements_screen.dart';
 import '../../features/admin/screens/admin_community_screen.dart';
 import '../../features/admin/screens/admin_communication_screen.dart';
 import '../../features/communication/screens/guides_directory_screen.dart';
@@ -171,6 +173,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
+        path: RouteNames.submitPlacement,
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          final collegeName = state.uri.queryParameters['name'] ?? 'College';
+          return SubmitPlacementScreen(
+            collegeId: id,
+            collegeName: collegeName,
+          );
+        },
+      ),
+      GoRoute(
         path: RouteNames.admin,
         builder: (context, state) => const AdminDashboardScreen(),
       ),
@@ -192,6 +205,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RouteNames.adminReviews,
         builder: (context, state) => const AdminReviewsScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.adminPlacements,
+        builder: (context, state) => const AdminPlacementsScreen(),
       ),
       GoRoute(
         path: RouteNames.adminUsers,

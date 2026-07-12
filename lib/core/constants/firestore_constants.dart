@@ -18,4 +18,6 @@ class FirestoreConstants {
   static const String communityReportsCollection = 'community_reports';
   static const String reviewReportsCollection = 'review_reports';
   static const String reviewHelpfulSubcollection = 'helpful';
+  static const String placementSubmissionsCollection = 'placement_submissions';
+  static const String placementPrivateSubcollection = 'private';
 }
