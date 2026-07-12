@@ -19,6 +19,13 @@ service firebase.storage {
         request.resource.size < 10 * 1024 * 1024;
     }
 
+    match /community_media/{conversationId}/{userId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() &&
+        request.auth.uid == userId &&
+        request.resource.size < 8 * 1024 * 1024;
+    }
+
     match /{allPaths=**} {
       allow read, write: if false;
     }

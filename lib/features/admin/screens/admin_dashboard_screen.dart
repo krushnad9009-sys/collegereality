@@ -97,6 +97,12 @@ class AdminDashboardScreen extends ConsumerWidget {
             subtitle: 'Review flagged documents and approve badges',
             onTap: () => context.go(RouteNames.adminVerification),
           ),
+          _AdminMenuTile(
+            icon: Icons.forum_outlined,
+            title: 'Community Moderation',
+            subtitle: 'Review reported messages and content',
+            onTap: () => context.go(RouteNames.adminCommunity),
+          ),
         ],
       ),
     );

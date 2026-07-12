@@ -7,6 +7,9 @@ import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/communication_constants.dart';
 import '../../../core/widgets/index.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../auth/providers/user_provider.dart';
+import '../../community/providers/community_provider.dart';
+import '../../community/services/community_firestore_service.dart';
 import '../providers/communication_provider.dart';
 import '../services/communication_firestore_service.dart';
 import '../widgets/guide_stats_display.dart';
@@ -24,6 +27,33 @@ class GuidePublicProfileScreen extends ConsumerStatefulWidget {
 class _GuidePublicProfileScreenState
     extends ConsumerState<GuidePublicProfileScreen> {
   bool _isRequestingCall = false;
+  bool _isStartingChat = false;
+
+  Future<void> _startPrivateChat(String guideName) async {
+    final authUser = ref.read(currentUserProvider);
+    final userDetail = ref.read(currentUserDetailProvider).valueOrNull;
+    if (authUser == null || userDetail == null) return;
+    if (authUser.uid == widget.guideUid) return;
+
+    setState(() => _isStartingChat = true);
+    try {
+      final conversation =
+          await ref.read(communityServiceProvider).getOrCreatePrivateChat(
+                currentUser: userDetail,
+                peerId: widget.guideUid,
+                peerName: guideName,
+              );
+      if (mounted) {
+        context.push(RouteNames.communityChatPath(conversation.id));
+      }
+    } on CommunityException catch (e) {
+      if (mounted) {
+        SnackBarHelper.showErrorSnackBar(context, message: e.message);
+      }
+    } finally {
+      if (mounted) setState(() => _isStartingChat = false);
+    }
+  }
 
   Future<void> _startCall(String callType) async {
     final user = ref.read(currentUserProvider);
@@ -260,6 +290,17 @@ class _GuidePublicProfileScreenState
                   ),
                 ),
                 const SizedBox(height: 16),
+                OutlinedButton.icon(
+                  onPressed: _isStartingChat
+                      ? null
+                      : () => _startPrivateChat(guide.displayName),
+                  icon: const Icon(Icons.chat_outlined),
+                  label: const Text('Free Private Chat'),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 48),
+                  ),
+                ),
+                const SizedBox(height: 12),
                 PrimaryButton(
                   label: 'Voice Call',
                   isLoading: _isRequestingCall,

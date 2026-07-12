@@ -67,6 +67,13 @@ class HomeScreen extends ConsumerWidget {
                             scrollDirection: Axis.horizontal,
                             children: [
                               _QuickAccessCard(
+                                icon: Icons.groups_rounded,
+                                label: 'Community',
+                                color: const Color(0xFF7C3AED),
+                                onTap: () => context.go(RouteNames.community),
+                              ),
+                              const SizedBox(width: 12),
+                              _QuickAccessCard(
                                 icon: Icons.support_agent_rounded,
                                 label: 'Guides',
                                 color: AppTheme.primaryColor,

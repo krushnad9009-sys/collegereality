@@ -2,6 +2,7 @@
 import '../../../core/constants/verification_constants.dart';
 import '../../communication/models/guide_stats_model.dart';
 import '../../communication/utils/guide_stats_calculator.dart';
+import '../../community/models/user_presence_model.dart';
 
 class UserModel {
   final String uid;
@@ -25,6 +26,7 @@ class UserModel {
   final String anonymousGuideAlias;
   final GuideStatsModel guideStats;
   final GuideCommunicationSettings communicationSettings;
+  final UserPresenceModel presence;
   final DateTime createdAt;
   final DateTime updatedAt;
   final Map<String, dynamic>? metadata;
@@ -51,6 +53,7 @@ class UserModel {
     String? anonymousGuideAlias,
     GuideStatsModel? guideStats,
     GuideCommunicationSettings? communicationSettings,
+    UserPresenceModel? presence,
     required this.createdAt,
     required this.updatedAt,
     this.metadata,
@@ -58,7 +61,8 @@ class UserModel {
             anonymousGuideAlias ?? buildAnonymousGuideAlias(uid),
         guideStats = guideStats ?? const GuideStatsModel(),
         communicationSettings =
-            communicationSettings ?? const GuideCommunicationSettings();
+            communicationSettings ?? const GuideCommunicationSettings(),
+        presence = presence ?? const UserPresenceModel();
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     final uid = json['uid'] as String;
@@ -96,6 +100,9 @@ class UserModel {
       communicationSettings: GuideCommunicationSettings.fromJson(
         json['communicationSettings'] as Map<String, dynamic>?,
       ),
+      presence: UserPresenceModel.fromJson(
+        json['presence'] as Map<String, dynamic>?,
+      ),
       createdAt: json['createdAt'] is DateTime
           ? json['createdAt'] as DateTime
           : DateTime.parse(json['createdAt'] as String),
@@ -129,6 +136,7 @@ class UserModel {
       'anonymousGuideAlias': anonymousGuideAlias,
       'guideStats': guideStats.toJson(),
       'communicationSettings': communicationSettings.toJson(),
+      'presence': presence.toJson(),
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
       'metadata': metadata,
@@ -157,6 +165,7 @@ class UserModel {
     String? anonymousGuideAlias,
     GuideStatsModel? guideStats,
     GuideCommunicationSettings? communicationSettings,
+    UserPresenceModel? presence,
     DateTime? createdAt,
     DateTime? updatedAt,
     Map<String, dynamic>? metadata,
@@ -184,6 +193,7 @@ class UserModel {
       guideStats: guideStats ?? this.guideStats,
       communicationSettings:
           communicationSettings ?? this.communicationSettings,
+      presence: presence ?? this.presence,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       metadata: metadata ?? this.metadata,

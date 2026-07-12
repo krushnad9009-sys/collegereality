@@ -19,6 +19,12 @@ import '../../features/admin/screens/admin_users_screen.dart';
 import '../../features/admin/providers/admin_provider.dart';
 import '../../features/admin/screens/admin_verification_screen.dart';
 import '../../features/verification/screens/verification_screen.dart';
+import '../../features/community/screens/community_hub_screen.dart';
+import '../../features/community/screens/private_chats_screen.dart';
+import '../../features/community/screens/chat_screen.dart';
+import '../../features/community/screens/ask_seniors_screen.dart';
+import '../../features/community/screens/qa_board_screen.dart';
+import '../../features/admin/screens/admin_community_screen.dart';
 import '../../features/admin/screens/admin_communication_screen.dart';
 import '../../features/communication/screens/guides_directory_screen.dart';
 import '../../features/communication/screens/guide_public_profile_screen.dart';
@@ -151,6 +157,33 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RouteNames.adminVerification,
         builder: (context, state) => const AdminVerificationScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.adminCommunity,
+        builder: (context, state) => const AdminCommunityScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.community,
+        builder: (context, state) => const CommunityHubScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.communityPrivateChats,
+        builder: (context, state) => const PrivateChatsScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.communityAskSeniors,
+        builder: (context, state) => const AskSeniorsScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.communityQa,
+        builder: (context, state) => const QaBoardScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.communityChat,
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return ChatScreen(conversationId: id);
+        },
       ),
       GoRoute(
         path: RouteNames.guidesDirectory,

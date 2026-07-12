@@ -13,4 +13,7 @@ class FirestoreConstants {
   static const String verificationRequestsCollection = 'verification_requests';
   static const String verificationDocumentHashesCollection =
       'verification_document_hashes';
+  static const String communityConversationsCollection = 'community_conversations';
+  static const String communityMessagesCollection = 'community_messages';
+  static const String communityReportsCollection = 'community_reports';
 }
