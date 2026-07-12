@@ -1,5 +1,6 @@
 import '../../../core/constants/verification_constants.dart';
 import '../../auth/models/user_model.dart';
+import '../../profile/models/premium_student_profile.dart';
 
 /// Public-facing student profile — never exposes phone, email, or documents.
 class PublicStudentProfile {
@@ -29,20 +30,20 @@ class PublicStudentProfile {
   bool get isVerifiedAlumni =>
       verificationBadge == VerificationConstants.badgeVerifiedAlumni;
 
-  bool get hasVerificationBadge => verificationBadge != VerificationConstants.badgeNone;
+  bool get hasVerificationBadge =>
+      verificationBadge != VerificationConstants.badgeNone;
 
   factory PublicStudentProfile.fromUser(UserModel user) {
+    final premium = PremiumStudentProfile.fromUser(user);
     return PublicStudentProfile(
-      uid: user.uid,
-      displayName: user.displayName?.trim().isNotEmpty == true
-          ? user.displayName!.trim()
-          : 'Student',
-      photoURL: user.photoURL,
-      collegeName: user.collegeName,
-      course: user.course,
-      batchYear: user.batchYear,
-      languagesKnown: user.languagesKnown,
-      verificationBadge: user.verificationBadge,
+      uid: premium.uid,
+      displayName: premium.displayName,
+      photoURL: premium.photoURL,
+      collegeName: premium.collegeName,
+      course: premium.course,
+      batchYear: premium.batchYear,
+      languagesKnown: premium.languagesKnown,
+      verificationBadge: premium.verificationBadge,
     );
   }
 }

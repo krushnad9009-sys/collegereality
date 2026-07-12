@@ -1,3 +1,4 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -5,15 +6,21 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/rating_parameters.dart';
-import '../../../core/constants/verification_constants.dart';
+import '../../../core/constants/review_constants.dart';
 import '../../../core/widgets/index.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/providers/user_provider.dart';
 import '../../colleges/providers/college_provider.dart';
+import '../../verification/providers/verification_provider.dart';
 import '../models/review_model.dart';
 import '../providers/review_provider.dart';
 import '../services/firestore_review_service.dart';
+import '../services/review_storage_service.dart';
 import '../widgets/star_rating_widget.dart';
+
+final reviewStorageServiceProvider = Provider<ReviewStorageService>((ref) {
+  return ReviewStorageService();
+});
 
 class WriteReviewScreen extends ConsumerStatefulWidget {
   final String collegeId;
@@ -38,7 +45,11 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
   int? _batchYear;
   final Map<String, double> _ratings = RatingParameters.emptyRatings();
   bool _isSubmitting = false;
+  bool _isAnonymous = true;
+  bool _isUploadingMedia = false;
   ReviewModel? _existingReview;
+  List<String> _photoUrls = [];
+  List<String> _videoUrls = [];
 
   @override
   void initState() {
@@ -72,6 +83,9 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
         _consController.text = review.cons.join(', ');
         _courseController.text = review.course ?? '';
         _batchYear = review.batchYear;
+        _isAnonymous = review.isAnonymous;
+        _photoUrls = List.from(review.photoUrls);
+        _videoUrls = List.from(review.videoUrls);
         _ratings.addAll(review.ratings);
       });
       return;
@@ -86,9 +100,80 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
     }
   }
 
+  Future<void> _pickPhotos() async {
+    if (_photoUrls.length >= ReviewConstants.maxPhotos) return;
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      withData: true,
+      allowMultiple: true,
+    );
+    if (result == null) return;
+
+    setState(() => _isUploadingMedia = true);
+    try {
+      final user = ref.read(currentUserProvider)!;
+      final storage = ref.read(reviewStorageServiceProvider);
+      final reviewId = _existingReview?.id ?? 'draft_${user.uid}';
+
+      for (final file in result.files) {
+        if (_photoUrls.length >= ReviewConstants.maxPhotos) break;
+        final bytes = file.bytes;
+        if (bytes == null) continue;
+        final url = await storage.uploadPhoto(
+          userId: user.uid,
+          reviewId: reviewId,
+          bytes: bytes,
+          extension: file.extension ?? 'jpg',
+        );
+        _photoUrls.add(url);
+      }
+      if (mounted) setState(() {});
+    } finally {
+      if (mounted) setState(() => _isUploadingMedia = false);
+    }
+  }
+
+  Future<void> _pickVideo() async {
+    if (_videoUrls.length >= ReviewConstants.maxVideos) return;
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.video,
+      withData: true,
+    );
+    if (result == null || result.files.isEmpty) return;
+    final file = result.files.first;
+    final bytes = file.bytes;
+    if (bytes == null) return;
+
+    setState(() => _isUploadingMedia = true);
+    try {
+      final user = ref.read(currentUserProvider)!;
+      final storage = ref.read(reviewStorageServiceProvider);
+      final reviewId = _existingReview?.id ?? 'draft_${user.uid}';
+      final url = await storage.uploadVideo(
+        userId: user.uid,
+        reviewId: reviewId,
+        bytes: bytes,
+        extension: file.extension ?? 'mp4',
+      );
+      _videoUrls.add(url);
+      if (mounted) setState(() {});
+    } finally {
+      if (mounted) setState(() => _isUploadingMedia = false);
+    }
+  }
+
   Future<void> _submit() async {
     final user = ref.read(currentUserProvider);
     if (user == null) return;
+
+    final userDetail = await ref.read(userRepositoryProvider).getUser(user.uid);
+    if (userDetail == null || !isUserFullyVerified(userDetail)) {
+      SnackBarHelper.showErrorSnackBar(
+        context,
+        message: 'Only verified students can write reviews.',
+      );
+      return;
+    }
 
     final unrated = RatingParameters.allKeys.where((k) => (_ratings[k] ?? 0) == 0);
     if (unrated.isNotEmpty) {
@@ -99,10 +184,10 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
       return;
     }
 
-    if (_textController.text.trim().length < 20) {
+    if (_textController.text.trim().length < ReviewConstants.minTextLength) {
       SnackBarHelper.showErrorSnackBar(
         context,
-        message: 'Review must be at least 20 characters.',
+        message: 'Review must be at least ${ReviewConstants.minTextLength} characters.',
       );
       return;
     }
@@ -110,21 +195,20 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
     setState(() => _isSubmitting = true);
 
     try {
-      final userDetail = await ref.read(userRepositoryProvider).getUser(user.uid);
-      final isVerified = userDetail != null &&
-          userDetail.verificationBadge != VerificationConstants.badgeNone &&
-          userDetail.verificationStatus == VerificationConstants.statusApproved;
-
       final review = ReviewModel(
         id: _existingReview?.id ?? '',
         collegeId: widget.collegeId.trim(),
         collegeName: widget.collegeName,
         userId: user.uid,
-        anonymousAlias: generateAnonymousAlias(user.uid),
+        anonymousAlias: generateAnonymousAlias(
+          user.uid,
+          isAnonymous: _isAnonymous,
+        ),
+        isAnonymous: _isAnonymous,
         course: _courseController.text.trim().isEmpty
-            ? userDetail?.course
+            ? userDetail.course
             : _courseController.text.trim(),
-        batchYear: _batchYear ?? userDetail?.batchYear,
+        batchYear: _batchYear ?? userDetail.batchYear,
         ratings: Map.from(_ratings),
         textReview: _textController.text.trim(),
         pros: _prosController.text
@@ -137,7 +221,9 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
             .map((e) => e.trim())
             .where((e) => e.isNotEmpty)
             .toList(),
-        isVerifiedStudent: isVerified,
+        photoUrls: _photoUrls,
+        videoUrls: _videoUrls,
+        isVerifiedStudent: true,
         status: ReviewModel.statusPublished,
         createdAt: _existingReview?.createdAt ?? DateTime.now(),
         updatedAt: DateTime.now(),
@@ -180,102 +266,211 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_existingReview != null ? 'Edit Review' : 'Write Review'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-          onPressed: () =>
-              context.go(RouteNames.collegeDetailsPath(widget.collegeId)),
-        ),
+    final userDetailAsync = ref.watch(currentUserDetailProvider);
+
+    return userDetailAsync.when(
+      loading: () => const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
       ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            Text(
-              widget.collegeName,
-              style: GoogleFonts.poppins(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
+      error: (e, _) => Scaffold(
+        appBar: AppBar(),
+        body: Center(child: Text('Error: $e')),
+      ),
+      data: (userDetail) {
+        if (userDetail == null) {
+          return const Scaffold(
+            body: Center(child: Text('Please log in to write a review')),
+          );
+        }
+
+        if (!isUserFullyVerified(userDetail)) {
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text('Write Review'),
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new, size: 18),
+                onPressed: () =>
+                    context.go(RouteNames.collegeDetailsPath(widget.collegeId)),
               ),
             ),
-            const SizedBox(height: 8),
-            Text(
-              'Your review will be posted anonymously as a verified student alias.',
-              style: GoogleFonts.poppins(
-                fontSize: 13,
-                color: AppTheme.gray600,
+            body: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.verified_user_outlined,
+                      size: 64, color: AppTheme.primaryColor.withValues(alpha: 0.5)),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Verified Students Only',
+                    style: GoogleFonts.poppins(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Complete student verification to share honest, trusted reviews.',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(color: AppTheme.gray600),
+                  ),
+                  const SizedBox(height: 24),
+                  PrimaryButton(
+                    label: 'Get Verified',
+                    onPressed: () => context.go(RouteNames.verification),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 24),
-            ...RatingParameters.categories.expand((category) {
-              return [
+          );
+        }
+
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(_existingReview != null ? 'Edit Review' : 'Write Review'),
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back_ios_new, size: 18),
+              onPressed: () =>
+                  context.go(RouteNames.collegeDetailsPath(widget.collegeId)),
+            ),
+          ),
+          body: Form(
+            key: _formKey,
+            child: ListView(
+              padding: const EdgeInsets.all(20),
+              children: [
                 Text(
-                  category.label,
+                  widget.collegeName,
                   style: GoogleFonts.poppins(
-                    fontSize: 16,
+                    fontSize: 18,
                     fontWeight: FontWeight.w700,
-                    color: AppTheme.primaryColor,
                   ),
                 ),
                 const SizedBox(height: 8),
-                ...category.parameters.map(
-                  (param) => RatingInputRow(
-                    label: param.label,
-                    value: _ratings[param.key] ?? 0,
-                    onChanged: (v) =>
-                        setState(() => _ratings[param.key] = v),
-                  ),
+                Row(
+                  children: [
+                    const Icon(Icons.verified, size: 16, color: AppTheme.accentColor),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'India\'s Best Review — verified students only',
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          color: AppTheme.gray600,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 16),
-              ];
-            }),
-            CustomTextField(
-              label: 'Course',
-              hint: 'e.g. B.Tech CSE',
-              controller: _courseController,
-              prefixIcon: Icons.menu_book_outlined,
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Post anonymously'),
+                  subtitle: const Text(
+                    'Your name is never shown. Only a verified student alias appears.',
+                  ),
+                  value: _isAnonymous,
+                  onChanged: (v) => setState(() => _isAnonymous = v),
+                ),
+                const SizedBox(height: 16),
+                ...RatingParameters.categories.expand((category) {
+                  return [
+                    Text(
+                      category.label,
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.primaryColor,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ...category.parameters.map(
+                      (param) => RatingInputRow(
+                        label: param.label,
+                        value: _ratings[param.key] ?? 0,
+                        onChanged: (v) =>
+                            setState(() => _ratings[param.key] = v),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ];
+                }),
+                CustomTextField(
+                  label: 'Course',
+                  hint: 'e.g. B.Tech CSE',
+                  controller: _courseController,
+                  prefixIcon: Icons.menu_book_outlined,
+                ),
+                const SizedBox(height: 16),
+                YearPickerField(
+                  label: 'Batch Year',
+                  value: _batchYear,
+                  onChanged: (year) => setState(() => _batchYear = year),
+                ),
+                const SizedBox(height: 16),
+                CustomTextField(
+                  label: 'Your Review',
+                  hint: 'Share your honest experience (min ${ReviewConstants.minTextLength} characters)...',
+                  controller: _textController,
+                  maxLines: 5,
+                  prefixIcon: Icons.rate_review_outlined,
+                  isRequired: true,
+                ),
+                const SizedBox(height: 16),
+                CustomTextField(
+                  label: 'Pros (comma separated)',
+                  hint: 'Good faculty, Great placements',
+                  controller: _prosController,
+                  prefixIcon: Icons.thumb_up_outlined,
+                ),
+                const SizedBox(height: 16),
+                CustomTextField(
+                  label: 'Cons (comma separated)',
+                  hint: 'Strict attendance, Old hostel',
+                  controller: _consController,
+                  prefixIcon: Icons.thumb_down_outlined,
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Photos & Videos',
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _isUploadingMedia ? null : _pickPhotos,
+                        icon: const Icon(Icons.photo_outlined),
+                        label: Text('Photos (${_photoUrls.length}/${ReviewConstants.maxPhotos})'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _isUploadingMedia ? null : _pickVideo,
+                        icon: const Icon(Icons.videocam_outlined),
+                        label: Text('Videos (${_videoUrls.length}/${ReviewConstants.maxVideos})'),
+                      ),
+                    ),
+                  ],
+                ),
+                if (_isUploadingMedia)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 8),
+                    child: LinearProgressIndicator(minHeight: 2),
+                  ),
+                const SizedBox(height: 32),
+                PrimaryButton(
+                  label: _existingReview != null ? 'Update Review' : 'Submit Review',
+                  isLoading: _isSubmitting,
+                  onPressed: _submit,
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            YearPickerField(
-              label: 'Batch Year',
-              value: _batchYear,
-              onChanged: (year) => setState(() => _batchYear = year),
-            ),
-            const SizedBox(height: 16),
-            CustomTextField(
-              label: 'Your Review',
-              hint: 'Share your honest experience (min 20 characters)...',
-              controller: _textController,
-              maxLines: 5,
-              prefixIcon: Icons.rate_review_outlined,
-              isRequired: true,
-            ),
-            const SizedBox(height: 16),
-            CustomTextField(
-              label: 'Pros (comma separated)',
-              hint: 'Good faculty, Great placements',
-              controller: _prosController,
-              prefixIcon: Icons.thumb_up_outlined,
-            ),
-            const SizedBox(height: 16),
-            CustomTextField(
-              label: 'Cons (comma separated)',
-              hint: 'Strict attendance, Old hostel',
-              controller: _consController,
-              prefixIcon: Icons.thumb_down_outlined,
-            ),
-            const SizedBox(height: 32),
-            PrimaryButton(
-              label: _existingReview != null ? 'Update Review' : 'Submit Review',
-              isLoading: _isSubmitting,
-              onPressed: _submit,
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

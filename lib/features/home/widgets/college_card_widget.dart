@@ -12,6 +12,7 @@ class CollegeCardWidget extends StatelessWidget {
   final double rating;
   final int reviewCount;
   final String? imageUrl;
+  final String? logoUrl;
   final VoidCallback? onTap;
 
   const CollegeCardWidget({
@@ -22,6 +23,7 @@ class CollegeCardWidget extends StatelessWidget {
     required this.rating,
     required this.reviewCount,
     this.imageUrl,
+    this.logoUrl,
     this.onTap,
     super.key,
   });
@@ -57,15 +59,30 @@ class CollegeCardWidget extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      collegeName,
-                      style: GoogleFonts.poppins(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        height: 1.3,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (logoUrl != null && logoUrl!.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 10),
+                            child: CircleAvatar(
+                              radius: 18,
+                              backgroundImage: NetworkImage(logoUrl!),
+                            ),
+                          ),
+                        Expanded(
+                          child: Text(
+                            collegeName,
+                            style: GoogleFonts.poppins(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              height: 1.3,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 8),
                     Row(

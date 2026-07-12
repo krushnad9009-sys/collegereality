@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user_model.dart';
 import '../../communication/models/guide_stats_model.dart';
+import '../../community/models/user_presence_model.dart';
 import '../services/firestore_user_service.dart';
 
 abstract class UserRepository {
@@ -11,14 +12,19 @@ abstract class UserRepository {
     required String uid,
     String? displayName,
     String? photoURL,
+    String? coverPhotoURL,
     String? phone,
     String? collegeId,
     String? collegeName,
     String? course,
+    String? branch,
     int? batchYear,
+    String? aboutMe,
+    List<String>? interests,
     List<String>? languagesKnown,
     GuideCommunicationSettings? communicationSettings,
     String? subscriptionTier,
+    UserPresenceModel? presence,
     Map<String, dynamic>? metadata,
   });
   Future<void> verifyEmail(String uid);
@@ -53,28 +59,38 @@ class UserRepositoryImpl implements UserRepository {
     required String uid,
     String? displayName,
     String? photoURL,
+    String? coverPhotoURL,
     String? phone,
     String? collegeId,
     String? collegeName,
     String? course,
+    String? branch,
     int? batchYear,
+    String? aboutMe,
+    List<String>? interests,
     List<String>? languagesKnown,
     GuideCommunicationSettings? communicationSettings,
     String? subscriptionTier,
+    UserPresenceModel? presence,
     Map<String, dynamic>? metadata,
   }) async {
     await _firestoreUserService.updateUserProfile(
       uid: uid,
       displayName: displayName,
       photoURL: photoURL,
+      coverPhotoURL: coverPhotoURL,
       phone: phone,
       collegeId: collegeId,
       collegeName: collegeName,
       course: course,
+      branch: branch,
       batchYear: batchYear,
+      aboutMe: aboutMe,
+      interests: interests,
       languagesKnown: languagesKnown,
       communicationSettings: communicationSettings,
       subscriptionTier: subscriptionTier,
+      presence: presence,
       metadata: metadata,
     );
   }

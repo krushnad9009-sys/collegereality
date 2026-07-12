@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
+import '../../../core/constants/profile_constants.dart';
 import '../../../core/constants/verification_constants.dart';
 import '../../../core/widgets/index.dart';
 import '../../admin/providers/admin_provider.dart';
@@ -12,10 +13,14 @@ import '../../auth/models/user_model.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/providers/user_provider.dart';
 import '../../auth/utils/validation_util.dart';
-import '../../colleges/providers/college_provider.dart';
+import '../../colleges/widgets/college_autocomplete_field.dart';
 import '../../communication/models/guide_stats_model.dart';
 import '../../communication/widgets/language_multi_select_field.dart';
 import '../../verification/widgets/verification_badge_widget.dart';
+import '../../community/models/user_presence_model.dart';
+import '../../profile/widgets/premium_profile_edit_section.dart';
+import '../../profile/widgets/trust_score_card.dart';
+import '../../profile/models/student_trust_model.dart';
 import '../widgets/phone_verification_section.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -29,10 +34,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _courseController = TextEditingController();
+  final _branchController = TextEditingController();
+  final _aboutController = TextEditingController();
   String? _selectedCollegeId;
   String? _selectedCollegeName;
   int? _batchYear;
   List<String> _languagesKnown = [];
+  List<String> _interests = [];
+  String _availabilityStatus = ProfileConstants.availabilityAvailable;
+  String? _photoURL;
+  String? _coverPhotoURL;
   GuideCommunicationSettings? _communicationSettings;
   bool _isPhoneVerified = false;
   String? _verifiedPhone;
@@ -42,16 +53,24 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   void dispose() {
     _nameController.dispose();
     _courseController.dispose();
+    _branchController.dispose();
+    _aboutController.dispose();
     super.dispose();
   }
 
   void _populateFromUser(UserModel user) {
     _nameController.text = user.displayName ?? '';
     _courseController.text = user.course ?? '';
+    _branchController.text = user.branch ?? '';
+    _aboutController.text = user.aboutMe ?? '';
     _batchYear = user.batchYear;
     _selectedCollegeId = user.collegeId;
     _selectedCollegeName = user.collegeName;
     _languagesKnown = List<String>.from(user.languagesKnown);
+    _interests = List<String>.from(user.interests);
+    _availabilityStatus = user.presence.availabilityStatus;
+    _photoURL = user.photoURL;
+    _coverPhotoURL = user.coverPhotoURL;
     _communicationSettings = user.communicationSettings;
     _isPhoneVerified = user.isPhoneVerified;
     _verifiedPhone = user.phone;
@@ -62,22 +81,38 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
     setState(() => _isSaving = true);
     try {
+      final currentDetail = ref.read(currentUserDetailProvider).valueOrNull;
       final authService = ref.read(authServiceProvider);
       await authService.updateUserProfile(
         displayName: _nameController.text.trim(),
+        photoURL: _photoURL ?? currentDetail?.photoURL,
       );
 
       await ref.read(userRepositoryProvider).updateUserProfile(
             uid: uid,
             displayName: _nameController.text.trim(),
+            photoURL: _photoURL,
+            coverPhotoURL: _coverPhotoURL,
             collegeId: _selectedCollegeId,
             collegeName: _selectedCollegeName,
             course: _courseController.text.trim().isEmpty
                 ? null
                 : _courseController.text.trim(),
+            branch: _branchController.text.trim().isEmpty
+                ? null
+                : _branchController.text.trim(),
             batchYear: _batchYear,
+            aboutMe: _aboutController.text.trim().isEmpty
+                ? null
+                : _aboutController.text.trim(),
+            interests: _interests,
             languagesKnown: _languagesKnown,
             communicationSettings: _communicationSettings,
+            presence: UserPresenceModel(
+              isOnline: currentDetail?.presence.isOnline ?? false,
+              lastSeenAt: DateTime.now(),
+              availabilityStatus: _availabilityStatus,
+            ),
           );
 
       ref.invalidate(currentUserDetailProvider);
@@ -104,8 +139,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Widget build(BuildContext context) {
     final authUser = ref.watch(currentUserProvider);
     final userDetailAsync = ref.watch(currentUserDetailProvider);
-    final collegesAsync = ref.watch(collegesProvider);
-
     if (authUser == null) {
       return const Scaffold(
         body: Center(child: Text('Please log in to view your profile')),
@@ -149,10 +182,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       radius: 48,
                       backgroundColor:
                           AppTheme.primaryColor.withValues(alpha: 0.2),
-                      backgroundImage: userDetail?.photoURL != null
-                          ? NetworkImage(userDetail!.photoURL!)
+                      backgroundImage: (_photoURL ?? userDetail?.photoURL) != null
+                          ? NetworkImage((_photoURL ?? userDetail!.photoURL)!)
                           : null,
-                      child: userDetail?.photoURL == null
+                      child: (_photoURL ?? userDetail?.photoURL) == null
                           ? Text(
                               (_nameController.text.isNotEmpty
                                       ? _nameController.text[0]
@@ -177,6 +210,29 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       ),
                     ),
                   const SizedBox(height: 16),
+                  if (userDetail != null)
+                    TrustScoreCard(trust: StudentTrustModel.fromUser(userDetail)),
+                  const SizedBox(height: 16),
+                  PremiumProfileEditSection(
+                    user: userDetail ??
+                        UserModel(
+                          uid: authUser.uid,
+                          email: authUser.email ?? '',
+                          createdAt: DateTime.now(),
+                          updatedAt: DateTime.now(),
+                        ),
+                    branchController: _branchController,
+                    aboutController: _aboutController,
+                    interests: _interests,
+                    availabilityStatus: _availabilityStatus,
+                    onInterestsChanged: (v) => setState(() => _interests = v),
+                    onAvailabilityChanged: (v) =>
+                        setState(() => _availabilityStatus = v),
+                    onPhotoUrlChanged: (url) => setState(() => _photoURL = url),
+                    onCoverUrlChanged: (url) =>
+                        setState(() => _coverPhotoURL = url),
+                  ),
+                  const SizedBox(height: 24),
                   CustomTextField(
                     label: 'Full Name',
                     hint: 'Your name',
@@ -198,53 +254,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     },
                   ),
                   const SizedBox(height: 16),
-                  collegesAsync.when(
-                    loading: () => const LinearProgressIndicator(),
-                    error: (e, _) => const Text('Could not load colleges'),
-                    data: (colleges) {
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'College',
-                            style: GoogleFonts.poppins(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          DropdownButtonFormField<String>(
-                            initialValue: _selectedCollegeId,
-                            decoration: InputDecoration(
-                              hintText: 'Select your college',
-                              filled: true,
-                              fillColor: AppTheme.gray100,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            items: colleges
-                                .map(
-                                  (c) => DropdownMenuItem(
-                                    value: c.id,
-                                    child: Text(
-                                      c.name,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                )
-                                .toList(),
-                            onChanged: (value) {
-                              setState(() {
-                                _selectedCollegeId = value;
-                                _selectedCollegeName = colleges
-                                    .firstWhere((c) => c.id == value)
-                                    .name;
-                              });
-                            },
-                          ),
-                        ],
-                      );
+                  CollegeAutocompleteField(
+                    selectedCollegeId: _selectedCollegeId,
+                    selectedCollegeName: _selectedCollegeName,
+                    onChanged: (college) {
+                      setState(() {
+                        _selectedCollegeId = college?.id;
+                        _selectedCollegeName = college?.name;
+                      });
                     },
                   ),
                   const SizedBox(height: 16),
@@ -325,6 +342,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     label: 'Save Profile',
                     isLoading: _isSaving,
                     onPressed: () => _saveProfile(authUser.uid),
+                  ),
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    onPressed: () => context.push(
+                      RouteNames.studentProfilePath(authUser.uid),
+                    ),
+                    icon: const Icon(Icons.visibility_outlined),
+                    label: const Text('View Public Profile'),
                   ),
                   const SizedBox(height: 12),
                   OutlinedButton.icon(

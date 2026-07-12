@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:uuid/uuid.dart';
 import '../../../core/constants/firestore_constants.dart';
 import '../../../core/constants/rating_parameters.dart';
+import '../../../core/constants/review_constants.dart';
+import '../../../core/constants/verification_constants.dart';
 import '../../colleges/models/college_model.dart';
 import '../models/review_model.dart';
 
@@ -15,9 +17,24 @@ class FirestoreReviewService {
   CollectionReference<Map<String, dynamic>> get _colleges =>
       _firestore.collection(FirestoreConstants.collegesCollection);
 
-  Future<ReviewModel> createReview({
-    required ReviewModel review,
-  }) async {
+  Future<bool> isUserVerified(String userId) async {
+    final doc = await _firestore
+        .collection(FirestoreConstants.usersCollection)
+        .doc(userId)
+        .get();
+    if (!doc.exists) return false;
+    final data = doc.data()!;
+    return data['verificationBadge'] != VerificationConstants.badgeNone &&
+        data['verificationStatus'] == VerificationConstants.statusApproved;
+  }
+
+  Future<ReviewModel> createReview({required ReviewModel review}) async {
+    if (!review.isVerifiedStudent) {
+      throw ReviewFirestoreException(
+        message: 'Only verified students can submit reviews.',
+      );
+    }
+
     final id = review.id.isEmpty ? _uuid.v4() : review.id;
     final now = DateTime.now();
     final data = review
@@ -25,6 +42,7 @@ class FirestoreReviewService {
           id: id,
           collegeId: review.collegeId.trim(),
           status: ReviewModel.statusPublished,
+          isVerifiedStudent: true,
           createdAt: review.createdAt,
           updatedAt: now,
         )
@@ -36,6 +54,11 @@ class FirestoreReviewService {
   }
 
   Future<void> updateReview(ReviewModel review) async {
+    if (!review.isVerifiedStudent) {
+      throw ReviewFirestoreException(
+        message: 'Only verified students can update reviews.',
+      );
+    }
     final data = review.copyWith(updatedAt: DateTime.now()).toJson();
     await _reviews.doc(review.id).update(data);
   }
@@ -95,12 +118,14 @@ class FirestoreReviewService {
     try {
       final snapshot = await _reviews
           .where('collegeId', isEqualTo: normalizedId)
+          .where('isVerifiedStudent', isEqualTo: true)
           .orderBy('createdAt', descending: true)
           .get();
       return _parseReviews(snapshot, publicOnly: true);
     } on FirebaseException {
-      final snapshot =
-          await _reviews.where('collegeId', isEqualTo: normalizedId).get();
+      final snapshot = await _reviews
+          .where('collegeId', isEqualTo: normalizedId)
+          .get();
       return _parseReviews(snapshot, publicOnly: true);
     }
   }
@@ -154,9 +179,59 @@ class FirestoreReviewService {
     }
   }
 
-  Future<void> incrementLikeCount(String reviewId) async {
-    await _reviews.doc(reviewId).update({
-      'likeCount': FieldValue.increment(1),
+  Future<bool> hasMarkedHelpful(String reviewId, String userId) async {
+    final doc = await _reviews
+        .doc(reviewId)
+        .collection(FirestoreConstants.reviewHelpfulSubcollection)
+        .doc(userId)
+        .get();
+    return doc.exists;
+  }
+
+  Future<void> markHelpful(String reviewId, String userId) async {
+    final helpfulRef = _reviews
+        .doc(reviewId)
+        .collection(FirestoreConstants.reviewHelpfulSubcollection)
+        .doc(userId);
+
+    final existing = await helpfulRef.get();
+    if (existing.exists) {
+      throw ReviewFirestoreException(message: 'You already marked this helpful.');
+    }
+
+    await _firestore.runTransaction((transaction) async {
+      final reviewRef = _reviews.doc(reviewId);
+      final reviewSnap = await transaction.get(reviewRef);
+      if (!reviewSnap.exists) {
+        throw ReviewFirestoreException(message: 'Review not found.');
+      }
+
+      transaction.set(helpfulRef, {
+        'userId': userId,
+        'createdAt': DateTime.now().toIso8601String(),
+      });
+      transaction.update(reviewRef, {
+        'helpfulCount': FieldValue.increment(1),
+        'updatedAt': DateTime.now().toIso8601String(),
+      });
+    });
+  }
+
+  Future<void> reportReview({
+    required String reviewId,
+    required String collegeId,
+    required String reporterId,
+    required String reason,
+  }) async {
+    await _firestore
+        .collection(FirestoreConstants.reviewReportsCollection)
+        .add({
+      'reviewId': reviewId,
+      'collegeId': collegeId.trim(),
+      'reporterId': reporterId,
+      'reason': reason.trim(),
+      'status': ReviewConstants.reportStatusOpen,
+      'createdAt': DateTime.now().toIso8601String(),
     });
   }
 
@@ -164,10 +239,13 @@ class FirestoreReviewService {
     String collegeId,
     List<ReviewModel> reviews,
   ) async {
-    final aggregates = _computeAggregates(reviews);
+    final verifiedPublished = reviews
+        .where((r) => r.isPublicVisible)
+        .toList();
+    final aggregates = _computeAggregates(verifiedPublished);
     await _colleges.doc(collegeId.trim()).update({
       'aggregatedRatings': aggregates,
-      'reviewCount': reviews.length,
+      'reviewCount': verifiedPublished.length,
       'updatedAt': DateTime.now().toIso8601String(),
     });
   }
@@ -192,13 +270,7 @@ class FirestoreReviewService {
     }
 
     return {
-      'overall': avg(RatingParameters.overall),
-      'faculty': avg(RatingParameters.faculty),
-      'hostel': avg(RatingParameters.hostel),
-      'placements': avg(RatingParameters.placements),
-      'fees': avg(RatingParameters.fees),
-      'infrastructure': avg(RatingParameters.infrastructure),
-      'campusLife': avg(RatingParameters.campusLife),
+      for (final key in RatingParameters.allKeys) key: avg(key),
     };
   }
 }
@@ -208,6 +280,14 @@ class ReviewFirestoreException implements Exception {
   ReviewFirestoreException({required this.message});
   @override
   String toString() => message;
+}
+
+String generateAnonymousAlias(String userId, {required bool isAnonymous}) {
+  final hash = userId.hashCode.abs() % 10000;
+  if (isAnonymous) {
+    return 'Verified Student #$hash';
+  }
+  return 'Student #$hash';
 }
 
 CollegeRatings computeCollegeRatingsFromReviews(List<ReviewModel> reviews) {
@@ -237,11 +317,15 @@ CollegeRatings computeCollegeRatingsFromReviews(List<ReviewModel> reviews) {
     faculty: avg(RatingParameters.faculty),
     infrastructure: avg(RatingParameters.infrastructure),
     placements: avg(RatingParameters.placements),
-    campusLife: avg(RatingParameters.campusLife),
+    campusLife: avg(RatingParameters.sports),
+    hostel: avg(RatingParameters.hostel),
+    fees: avg(RatingParameters.food),
+    teaching: avg(RatingParameters.teaching),
+    labs: avg(RatingParameters.labs),
+    library: avg(RatingParameters.library),
+    sports: avg(RatingParameters.sports),
+    food: avg(RatingParameters.food),
+    attendance: avg(RatingParameters.attendance),
+    safety: avg(RatingParameters.safety),
   );
-}
-
-String generateAnonymousAlias(String userId) {
-  final hash = userId.hashCode.abs() % 10000;
-  return 'Verified Student #$hash';
 }

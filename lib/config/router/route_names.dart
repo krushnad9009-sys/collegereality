@@ -13,6 +13,8 @@ class RouteNames {
   static const String favorites = '/favorites';
   static const String admin = '/admin';
   static const String adminColleges = '/admin/colleges';
+  static const String adminCollegeNew = '/admin/colleges/new';
+  static const String adminCollegeEdit = '/admin/colleges/:id/edit';
   static const String adminReviews = '/admin/reviews';
   static const String adminUsers = '/admin/users';
   static const String adminCommunication = '/admin/communication';
@@ -27,6 +29,7 @@ class RouteNames {
   static const String communityAskSeniors = '/community/ask-seniors';
   static const String communityQa = '/community/qa';
   static const String adminCommunity = '/admin/community';
+  static const String studentProfile = '/student/:uid';
 
   static String collegeDetailsPath(String id, {String? tab}) {
     final path = '/college-details/$id';
@@ -38,4 +41,6 @@ class RouteNames {
   static String guideProfilePath(String uid) => '/guides/$uid';
   static String activeCallPath(String sessionId) => '/call/$sessionId';
   static String communityChatPath(String id) => '/community/chat/$id';
+  static String studentProfilePath(String uid) => '/student/$uid';
+  static String adminCollegeEditPath(String id) => '/admin/colleges/$id/edit';
 }

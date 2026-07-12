@@ -64,7 +64,6 @@ class MyReviewsScreen extends ConsumerWidget {
               return ReviewCardWidget(
                 review: review,
                 showCollegeName: true,
-                onLike: null,
               );
             },
           );

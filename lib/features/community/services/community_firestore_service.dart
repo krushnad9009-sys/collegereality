@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../core/constants/community_constants.dart';
 import '../../../core/constants/firestore_constants.dart';
+import '../../../core/constants/profile_constants.dart';
 import '../../auth/models/user_model.dart';
 import '../../auth/services/firestore_user_service.dart';
 import '../../communication/services/communication_firestore_service.dart';
@@ -27,10 +28,18 @@ class CommunityFirestoreService {
       _firestore.collection(FirestoreConstants.communityMessagesCollection);
 
   Future<void> updatePresence(String userId, {required bool isOnline}) async {
+    final doc =
+        await _firestore.collection(FirestoreConstants.usersCollection).doc(userId).get();
+    final existingPresence = doc.data()?['presence'] as Map<String, dynamic>?;
+    final availabilityStatus =
+        existingPresence?['availabilityStatus'] as String? ??
+            ProfileConstants.availabilityOffline;
+
     await _firestore.collection(FirestoreConstants.usersCollection).doc(userId).update({
       'presence': {
         'isOnline': isOnline,
         'lastSeenAt': DateTime.now().toIso8601String(),
+        'availabilityStatus': availabilityStatus,
       },
       'updatedAt': DateTime.now().toIso8601String(),
     });

@@ -30,9 +30,8 @@ class HomeScreen extends ConsumerWidget {
             ? const Center(child: CircularProgressIndicator())
             : RefreshIndicator(
                 onRefresh: () async {
-                  ref.invalidate(collegesProvider);
-                  ref.invalidate(collegeSeederProvider);
-                  await ref.read(collegesProvider.future);
+                  ref.invalidate(featuredCollegesProvider);
+                  await ref.read(featuredCollegesProvider.future);
                 },
                 child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),

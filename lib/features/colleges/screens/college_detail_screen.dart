@@ -3,13 +3,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../../core/constants/rating_parameters.dart';
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/widgets/college_image_widget.dart';
 import '../../../core/widgets/skeleton_loader.dart';
+import '../../auth/providers/auth_provider.dart';
+import '../../reviews/models/review_model.dart';
 import '../../reviews/providers/review_provider.dart';
 import '../../reviews/widgets/review_card_widget.dart';
 import '../../reviews/widgets/star_rating_widget.dart';
+import '../widgets/accreditation_badges.dart';
+import '../widgets/college_gallery_widget.dart';
+import '../widgets/college_map_section.dart';
 import '../models/college_model.dart';
 import '../providers/college_provider.dart';
 
@@ -69,17 +76,32 @@ class _CollegeDetailScreenState extends ConsumerState<CollegeDetailScreen> {
           );
         }
 
+        final verifiedAsync = ref.watch(isVerifiedForReviewProvider);
+
         return DefaultTabController(
           initialIndex: _initialTabIndex(),
           length: 7,
           child: Scaffold(
-            floatingActionButton: FloatingActionButton.extended(
-              elevation: 4,
-              onPressed: () => context.go(
-                '${RouteNames.writeReviewPath(college.id)}?name=${Uri.encodeComponent(college.name)}',
-              ),
-              icon: const Icon(Icons.rate_review),
-              label: const Text('Write Review'),
+            floatingActionButton: verifiedAsync.when(
+              loading: () => null,
+              error: (_, __) => null,
+              data: (isVerified) {
+                if (!isVerified) {
+                  return FloatingActionButton.extended(
+                    onPressed: () => context.go(RouteNames.verification),
+                    icon: const Icon(Icons.verified_user_outlined),
+                    label: const Text('Verify to Review'),
+                  );
+                }
+                return FloatingActionButton.extended(
+                  elevation: 4,
+                  onPressed: () => context.go(
+                    '${RouteNames.writeReviewPath(college.id)}?name=${Uri.encodeComponent(college.name)}',
+                  ),
+                  icon: const Icon(Icons.rate_review),
+                  label: const Text('Write Review'),
+                );
+              },
             ),
             body: NestedScrollView(
               headerSliverBuilder: (context, innerBoxIsScrolled) => [
@@ -184,6 +206,14 @@ class _CollegeHeader extends StatelessWidget {
         children: [
           Row(
             children: [
+              if (college.logoUrl != null && college.logoUrl!.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(right: 12),
+                  child: CircleAvatar(
+                    radius: 24,
+                    backgroundImage: NetworkImage(college.logoUrl!),
+                  ),
+                ),
               const Icon(Icons.location_on_outlined,
                   size: 16, color: AppTheme.gray500),
               const SizedBox(width: 4),
@@ -222,10 +252,15 @@ class _CollegeHeader extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
+          AccreditationBadges(
+            accreditation: college.accreditation,
+            universityName: college.universityName,
+          ),
+          const SizedBox(height: 12),
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: college.courses
+            children: college.displayCourses
                 .map(
                   (c) => Chip(
                     label: Text(c, style: GoogleFonts.poppins(fontSize: 12)),
@@ -246,27 +281,90 @@ class _OverviewTab extends StatelessWidget {
 
   const _OverviewTab({required this.college});
 
+  Future<void> _openWebsite(BuildContext context, String url) async {
+    final uri = Uri.parse(url.startsWith('http') ? url : 'https://$url');
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open website')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        Text(
+          'Gallery',
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 15),
+        ),
+        const SizedBox(height: 10),
+        CollegeGalleryWidget(photoUrls: college.photoUrls),
+        const SizedBox(height: 20),
+        Text(
+          'Accreditation & Affiliation',
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 15),
+        ),
+        const SizedBox(height: 10),
+        AccreditationBadges(
+          accreditation: college.accreditation,
+          universityName: college.universityName,
+        ),
+        const SizedBox(height: 20),
+        CollegeMapSection(
+          mapsLink: college.mapsLink,
+          address: college.address,
+          latitude: college.latitude,
+          longitude: college.longitude,
+        ),
+        const SizedBox(height: 16),
         _InfoCard(
           title: 'Address',
           content: college.address,
           icon: Icons.place_outlined,
         ),
-        if (college.website != null)
-          _InfoCard(
-            title: 'Website',
-            content: college.website!,
-            icon: Icons.language,
+        if (college.website != null && college.website!.trim().isNotEmpty)
+          Card(
+            margin: const EdgeInsets.only(bottom: 12),
+            child: ListTile(
+              leading: const Icon(Icons.language, color: AppTheme.primaryColor),
+              title: Text('Website', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+              subtitle: Text(college.website!),
+              trailing: const Icon(Icons.open_in_new, size: 18),
+              onTap: () => _openWebsite(context, college.website!),
+            ),
           ),
-        _InfoCard(
-          title: 'Courses Offered',
-          content: college.courses.join(', '),
-          icon: Icons.menu_book_outlined,
-        ),
+        if (college.coursesDetailed.isNotEmpty) ...[
+          Text(
+            'Courses',
+            style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 15),
+          ),
+          const SizedBox(height: 8),
+          ...college.coursesDetailed.map(
+            (c) => Card(
+              margin: const EdgeInsets.only(bottom: 8),
+              child: ListTile(
+                title: Text(c.name, style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                subtitle: Text(
+                  [
+                    if (c.degree.isNotEmpty) c.degree,
+                    if (c.duration.isNotEmpty) c.duration,
+                    if (c.seats > 0) '${c.seats} seats',
+                    if (c.annualFees != null) '₹${c.annualFees}/yr',
+                  ].join(' · '),
+                ),
+              ),
+            ),
+          ),
+        ] else
+          _InfoCard(
+            title: 'Courses Offered',
+            content: college.displayCourses.join(', '),
+            icon: Icons.menu_book_outlined,
+          ),
         if (college.scholarships.isNotEmpty)
           _InfoCard(
             title: 'Scholarships',
@@ -389,7 +487,11 @@ class _HostelTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ratings = college.aggregatedRatings;
+    final hostel = college.hostel;
     final currency = NumberFormat.compactCurrency(locale: 'en_IN', symbol: '₹');
+    final annualFee = hostel.annualFee > 0
+        ? hostel.annualFee
+        : college.fees.hostelAnnual;
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -404,18 +506,44 @@ class _HostelTab extends StatelessWidget {
         const SizedBox(height: 16),
         _StatCard(
           label: 'Hostel Fee (Annual)',
-          value: currency.format(college.fees.hostelAnnual),
+          value: currency.format(annualFee),
           icon: Icons.hotel_outlined,
           color: AppTheme.accentColor,
         ),
         const SizedBox(height: 12),
-        _InfoCard(
-          title: 'Hostel Notes',
-          content: ratings.hostel > 0
-              ? 'Rating based on ${college.reviewCount} student reviews.'
-              : 'No hostel reviews yet. Be the first to review!',
-          icon: Icons.info_outline,
-        ),
+        if (hostel.available) ...[
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              if (hostel.boysHostel) const Chip(label: Text('Boys Hostel')),
+              if (hostel.girlsHostel) const Chip(label: Text('Girls Hostel')),
+              if (hostel.acAvailable) const Chip(label: Text('AC Rooms')),
+              if (hostel.messIncluded) const Chip(label: Text('Mess Included')),
+            ],
+          ),
+          if (hostel.amenities.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            _InfoCard(
+              title: 'Amenities',
+              content: hostel.amenities.join(', '),
+              icon: Icons.checklist_outlined,
+            ),
+          ],
+          if (hostel.description != null && hostel.description!.trim().isNotEmpty)
+            _InfoCard(
+              title: 'Hostel Details',
+              content: hostel.description!,
+              icon: Icons.info_outline,
+            ),
+        ] else
+          _InfoCard(
+            title: 'Hostel Notes',
+            content: ratings.hostel > 0
+                ? 'Rating based on ${college.reviewCount} student reviews.'
+                : 'Hostel information not available yet.',
+            icon: Icons.info_outline,
+          ),
       ],
     );
   }
@@ -480,7 +608,7 @@ class _ReviewsTab extends ConsumerWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Be the first to share your experience!',
+                    'Only verified student reviews are shown here.',
                     style: GoogleFonts.poppins(color: AppTheme.gray500),
                     textAlign: TextAlign.center,
                   ),
@@ -508,10 +636,24 @@ class _ReviewsTab extends ConsumerWidget {
               ),
               child: ReviewCardWidget(
                 review: review,
-                onLike: () async {
-                  await ref.read(reviewRepositoryProvider).likeReview(review.id);
-                  ref.invalidate(collegeReviewsProvider(normalizedId));
+                onHelpful: () async {
+                  final user = ref.read(currentUserProvider);
+                  if (user == null) return;
+                  try {
+                    await ref
+                        .read(reviewRepositoryProvider)
+                        .markHelpful(review.id, user.uid);
+                    ref.invalidate(reviewHelpfulMarkedProvider(review.id));
+                    ref.invalidate(collegeReviewsProvider(normalizedId));
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('$e')),
+                      );
+                    }
+                  }
                 },
+                onReport: () => _showReportDialog(context, ref, review),
               ),
             );
           },
@@ -605,6 +747,51 @@ class _RatingBar extends StatelessWidget {
   }
 }
 
+Future<void> _showReportDialog(
+  BuildContext context,
+  WidgetRef ref,
+  ReviewModel review,
+) async {
+  final controller = TextEditingController();
+  final reason = await showDialog<String>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Report Review'),
+      content: TextField(
+        controller: controller,
+        maxLines: 3,
+        decoration: const InputDecoration(
+          hintText: 'Why is this review inappropriate?',
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+          child: const Text('Report'),
+        ),
+      ],
+    ),
+  );
+  controller.dispose();
+  if (reason == null || reason.isEmpty) return;
+
+  final user = ref.read(currentUserProvider);
+  if (user == null) return;
+
+  await ref.read(reviewRepositoryProvider).reportReview(
+        reviewId: review.id,
+        collegeId: review.collegeId,
+        reporterId: user.uid,
+        reason: reason,
+      );
+  if (context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Review reported. Our team will review it.')),
+    );
+  }
+}
+
 class _RatingsTab extends StatelessWidget {
   final CollegeModel college;
 
@@ -613,15 +800,19 @@ class _RatingsTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ratings = college.aggregatedRatings;
-    final items = [
-      ('Overall', ratings.overall),
-      ('Faculty', ratings.faculty),
-      ('Hostel', ratings.hostel),
-      ('Placements', ratings.placements),
-      ('Fees (Value)', ratings.fees),
-      ('Infrastructure', ratings.infrastructure),
-      ('Campus Life', ratings.campusLife),
-    ];
+    final items = RatingParameters.allKeys
+        .map((key) => (RatingParameters.labelFor(key), ratings.ratingFor(key)))
+        .where((item) => item.$2 > 0)
+        .toList();
+
+    if (items.isEmpty) {
+      return Center(
+        child: Text(
+          'No verified ratings yet',
+          style: GoogleFonts.poppins(color: AppTheme.gray500),
+        ),
+      );
+    }
 
     return ListView(
       padding: const EdgeInsets.all(16),

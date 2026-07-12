@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/college_model.dart';
 import '../repositories/college_repository.dart';
+import '../services/college_storage_service.dart';
 import '../services/firestore_college_service.dart';
 
 final firestoreCollegeServiceProvider =
@@ -8,24 +9,18 @@ final firestoreCollegeServiceProvider =
   return FirestoreCollegeService();
 });
 
+final collegeStorageServiceProvider = Provider<CollegeStorageService>((ref) {
+  return CollegeStorageService();
+});
+
 final collegeRepositoryProvider = Provider<CollegeRepository>((ref) {
   return CollegeRepositoryImpl(ref.watch(firestoreCollegeServiceProvider));
 });
 
-final collegeSeederProvider = FutureProvider<void>((ref) async {
+final featuredCollegesProvider =
+    FutureProvider<List<CollegeModel>>((ref) async {
   final repository = ref.watch(collegeRepositoryProvider);
-  await repository.seedCollegesIfNeeded();
-});
-
-final collegesProvider = FutureProvider<List<CollegeModel>>((ref) async {
-  await ref.watch(collegeSeederProvider.future);
-  final repository = ref.watch(collegeRepositoryProvider);
-  return repository.getColleges();
-});
-
-final collegesStreamProvider = StreamProvider<List<CollegeModel>>((ref) {
-  final repository = ref.watch(collegeRepositoryProvider);
-  return repository.watchColleges();
+  return repository.getFeaturedColleges();
 });
 
 final collegeByIdProvider =
@@ -34,18 +29,41 @@ final collegeByIdProvider =
   return repository.getCollegeById(id);
 });
 
+final collegeDirectoryMetaProvider =
+    FutureProvider<CollegeDirectoryMeta>((ref) async {
+  final repository = ref.watch(collegeRepositoryProvider);
+  return repository.getDirectoryMeta();
+});
+
+final collegeCountProvider = FutureProvider<int>((ref) async {
+  final repository = ref.watch(collegeRepositoryProvider);
+  return repository.getCollegeCount();
+});
+
 class CollegeSearchParams {
   final String? query;
   final String? city;
   final String? state;
   final String? course;
+  final String? startAfterDocumentId;
 
   const CollegeSearchParams({
     this.query,
     this.city,
     this.state,
     this.course,
+    this.startAfterDocumentId,
   });
+
+  CollegeSearchParams nextPage(String lastDocumentId) {
+    return CollegeSearchParams(
+      query: query,
+      city: city,
+      state: state,
+      course: course,
+      startAfterDocumentId: lastDocumentId,
+    );
+  }
 
   @override
   bool operator ==(Object other) =>
@@ -54,36 +72,77 @@ class CollegeSearchParams {
           query == other.query &&
           city == other.city &&
           state == other.state &&
-          course == other.course;
+          course == other.course &&
+          startAfterDocumentId == other.startAfterDocumentId;
 
   @override
-  int get hashCode => Object.hash(query, city, state, course);
+  int get hashCode =>
+      Object.hash(query, city, state, course, startAfterDocumentId);
 }
 
-final collegeSearchProvider =
-    FutureProvider.family<List<CollegeModel>, CollegeSearchParams>(
+final collegeSearchPageProvider =
+    FutureProvider.family<CollegeSearchPage, CollegeSearchParams>(
         (ref, params) async {
-  await ref.watch(collegeSeederProvider.future);
   final repository = ref.watch(collegeRepositoryProvider);
-  return repository.search(
+  return repository.searchColleges(
     query: params.query,
     city: params.city,
     state: params.state,
     course: params.course,
+    startAfterDocumentId: params.startAfterDocumentId,
   );
 });
 
-final indianStatesProvider = FutureProvider<List<String>>((ref) async {
-  final colleges = await ref.watch(collegesProvider.future);
-  return colleges.map((c) => c.state).toSet().toList()..sort();
+final collegeAutocompleteProvider =
+    FutureProvider.family<List<CollegeModel>, String>((ref, query) async {
+  if (query.trim().length < 2) return [];
+  final repository = ref.watch(collegeRepositoryProvider);
+  return repository.autocomplete(query);
 });
 
-final indianCitiesProvider = FutureProvider<List<String>>((ref) async {
-  final colleges = await ref.watch(collegesProvider.future);
-  return colleges.map((c) => c.city).toSet().toList()..sort();
+/// Backward-compatible alias for home featured list.
+final collegesProvider = featuredCollegesProvider;
+
+final indianStatesProvider = FutureProvider<List<String>>((ref) async {
+  final meta = await ref.watch(collegeDirectoryMetaProvider.future);
+  return meta.states;
 });
 
 final indianCoursesProvider = FutureProvider<List<String>>((ref) async {
-  final colleges = await ref.watch(collegesProvider.future);
-  return colleges.expand((c) => c.courses).toSet().toList()..sort();
+  final meta = await ref.watch(collegeDirectoryMetaProvider.future);
+  return meta.courses;
+});
+
+final indianCitiesProvider = FutureProvider<List<String>>((ref) async {
+  // Cities are loaded on demand via search; no full scan at 40k scale.
+  return const [];
+});
+
+class AdminCollegeSearchParams {
+  final String? query;
+  final String? startAfterDocumentId;
+
+  const AdminCollegeSearchParams({this.query, this.startAfterDocumentId});
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AdminCollegeSearchParams &&
+          query == other.query &&
+          startAfterDocumentId == other.startAfterDocumentId;
+
+  @override
+  int get hashCode => Object.hash(query, startAfterDocumentId);
+}
+
+final adminCollegeSearchProvider =
+    FutureProvider.family<CollegeSearchPage, AdminCollegeSearchParams>(
+        (ref, params) async {
+  final repository = ref.watch(collegeRepositoryProvider);
+  return repository.searchColleges(
+    query: params.query,
+    startAfterDocumentId: params.startAfterDocumentId,
+    limit: 30,
+    includeInactive: true,
+  );
 });

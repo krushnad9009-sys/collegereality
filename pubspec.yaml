@@ -33,6 +33,7 @@ dependencies:
   file_picker: ^8.1.2
   image_picker: ^1.1.2
   intl: ^0.19.0
+  url_launcher: ^6.3.1
   uuid: ^4.0.0
   animations: ^2.0.11
   lottie: ^3.1.2
@@ -57,4 +58,3 @@ flutter:
     - assets/animations/
     - assets/icons/
     - assets/onboarding/
-    - assets/data/colleges_seed.json

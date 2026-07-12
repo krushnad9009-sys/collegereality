@@ -12,7 +12,7 @@ class AdminDashboardScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final collegesAsync = ref.watch(collegesProvider);
+    final collegeCountAsync = ref.watch(collegeCountProvider);
     final reviewsAsync = ref.watch(allReviewsAdminProvider(null));
 
     return Scaffold(
@@ -44,8 +44,8 @@ class AdminDashboardScreen extends ConsumerWidget {
               Expanded(
                 child: _StatTile(
                   label: 'Colleges',
-                  value: collegesAsync.maybeWhen(
-                    data: (c) => '${c.length}',
+                  value: collegeCountAsync.maybeWhen(
+                    data: (count) => '$count',
                     orElse: () => '...',
                   ),
                   icon: Icons.school,

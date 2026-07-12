@@ -164,3 +164,16 @@ final reviewCountProvider = FutureProvider<int>((ref) async {
   final reviews = await ref.watch(allReviewsAdminProvider(null).future);
   return reviews.length;
 });
+
+final reviewHelpfulMarkedProvider =
+    FutureProvider.family<bool, String>((ref, reviewId) async {
+  final user = ref.watch(currentUserProvider);
+  if (user == null) return false;
+  return ref.read(reviewRepositoryProvider).hasMarkedHelpful(reviewId, user.uid);
+});
+
+final isVerifiedForReviewProvider = FutureProvider<bool>((ref) async {
+  final user = ref.watch(currentUserProvider);
+  if (user == null) return false;
+  return ref.read(reviewRepositoryProvider).isUserVerified(user.uid);
+});

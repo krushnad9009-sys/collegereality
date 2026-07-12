@@ -123,7 +123,7 @@ class _GuideListTile extends StatelessWidget {
     return Card(
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () => context.push(RouteNames.guideProfilePath(guide.uid)),
+                        onTap: () => context.push(RouteNames.studentProfilePath(guide.uid)),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(

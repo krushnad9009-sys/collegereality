@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/community_constants.dart';
 import '../../../core/widgets/index.dart';
@@ -177,10 +178,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               if (peerId != null)
                 PopupMenuButton<String>(
                   onSelected: (v) {
+                    if (v == 'profile') {
+                      context.push(RouteNames.studentProfilePath(peerId));
+                    }
                     if (v == 'report') _reportPeer(peerId);
                     if (v == 'block') _blockPeer(peerId);
                   },
                   itemBuilder: (_) => const [
+                    PopupMenuItem(value: 'profile', child: Text('View Profile')),
                     PopupMenuItem(value: 'report', child: Text('Report')),
                     PopupMenuItem(value: 'block', child: Text('Block')),
                   ],

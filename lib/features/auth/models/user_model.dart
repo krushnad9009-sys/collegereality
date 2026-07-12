@@ -10,6 +10,7 @@ class UserModel {
   final String? phone;
   final String? displayName;
   final String? photoURL;
+  final String? coverPhotoURL;
   final String userType;
   final bool isVerified;
   final bool isEmailVerified;
@@ -19,7 +20,10 @@ class UserModel {
   final String? collegeId;
   final String? collegeName;
   final String? course;
+  final String? branch;
   final int? batchYear;
+  final String? aboutMe;
+  final List<String> interests;
   final List<String> favoriteCollegeIds;
   final List<String> languagesKnown;
   final String subscriptionTier;
@@ -37,6 +41,7 @@ class UserModel {
     this.phone,
     this.displayName,
     this.photoURL,
+    this.coverPhotoURL,
     this.userType = 'student',
     this.isVerified = false,
     this.isEmailVerified = false,
@@ -46,7 +51,10 @@ class UserModel {
     this.collegeId,
     this.collegeName,
     this.course,
+    this.branch,
     this.batchYear,
+    this.aboutMe,
+    this.interests = const [],
     this.favoriteCollegeIds = const [],
     this.languagesKnown = const [],
     this.subscriptionTier = 'free',
@@ -72,6 +80,7 @@ class UserModel {
       phone: json['phone'] as String?,
       displayName: json['displayName'] as String?,
       photoURL: json['photoURL'] as String?,
+      coverPhotoURL: json['coverPhotoURL'] as String?,
       userType: json['userType'] as String? ?? 'student',
       isVerified: json['isVerified'] as bool? ?? false,
       isEmailVerified: json['isEmailVerified'] as bool? ?? false,
@@ -83,7 +92,13 @@ class UserModel {
       collegeId: json['collegeId'] as String?,
       collegeName: json['collegeName'] as String?,
       course: json['course'] as String?,
+      branch: json['branch'] as String?,
       batchYear: (json['batchYear'] as num?)?.toInt(),
+      aboutMe: json['aboutMe'] as String?,
+      interests: (json['interests'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
       favoriteCollegeIds: (json['favoriteCollegeIds'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??
@@ -120,6 +135,7 @@ class UserModel {
       'phone': phone,
       'displayName': displayName,
       'photoURL': photoURL,
+      'coverPhotoURL': coverPhotoURL,
       'userType': userType,
       'isVerified': isVerified,
       'isEmailVerified': isEmailVerified,
@@ -129,7 +145,10 @@ class UserModel {
       'collegeId': collegeId,
       'collegeName': collegeName,
       'course': course,
+      'branch': branch,
       'batchYear': batchYear,
+      'aboutMe': aboutMe,
+      'interests': interests,
       'favoriteCollegeIds': favoriteCollegeIds,
       'languagesKnown': languagesKnown,
       'subscriptionTier': subscriptionTier,
@@ -149,6 +168,7 @@ class UserModel {
     String? phone,
     String? displayName,
     String? photoURL,
+    String? coverPhotoURL,
     String? userType,
     bool? isVerified,
     bool? isEmailVerified,
@@ -158,7 +178,10 @@ class UserModel {
     String? collegeId,
     String? collegeName,
     String? course,
+    String? branch,
     int? batchYear,
+    String? aboutMe,
+    List<String>? interests,
     List<String>? favoriteCollegeIds,
     List<String>? languagesKnown,
     String? subscriptionTier,
@@ -176,6 +199,7 @@ class UserModel {
       phone: phone ?? this.phone,
       displayName: displayName ?? this.displayName,
       photoURL: photoURL ?? this.photoURL,
+      coverPhotoURL: coverPhotoURL ?? this.coverPhotoURL,
       userType: userType ?? this.userType,
       isVerified: isVerified ?? this.isVerified,
       isEmailVerified: isEmailVerified ?? this.isEmailVerified,
@@ -185,7 +209,10 @@ class UserModel {
       collegeId: collegeId ?? this.collegeId,
       collegeName: collegeName ?? this.collegeName,
       course: course ?? this.course,
+      branch: branch ?? this.branch,
       batchYear: batchYear ?? this.batchYear,
+      aboutMe: aboutMe ?? this.aboutMe,
+      interests: interests ?? this.interests,
       favoriteCollegeIds: favoriteCollegeIds ?? this.favoriteCollegeIds,
       languagesKnown: languagesKnown ?? this.languagesKnown,
       subscriptionTier: subscriptionTier ?? this.subscriptionTier,

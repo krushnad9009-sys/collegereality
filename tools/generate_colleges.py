@@ -1,133 +1,138 @@
+#!/usr/bin/env python3
+"""Generate production-ready college JSON for bulk Firestore import.
+
+This replaces the old 100-college demo seeder bundled in the Flutter app.
+Use import_colleges_bulk.py to upload the output to Firestore.
+
+  python tools/generate_colleges.py --count 40000 --output tools/colleges_export.json
+"""
+
+from __future__ import annotations
+
+import argparse
 import json
 import random
+import re
+from pathlib import Path
 
-random.seed(42)
-
-states_cities = {
-    "Maharashtra": ["Mumbai", "Pune", "Nagpur", "Nashik", "Aurangabad"],
-    "Karnataka": ["Bangalore", "Mysore", "Mangalore", "Hubli", "Belgaum"],
-    "Tamil Nadu": ["Chennai", "Coimbatore", "Madurai", "Trichy", "Salem"],
-    "Delhi": ["New Delhi", "Dwarka", "Rohini"],
-    "Uttar Pradesh": ["Lucknow", "Kanpur", "Noida", "Varanasi", "Agra"],
-    "Gujarat": ["Ahmedabad", "Surat", "Vadodara", "Rajkot"],
-    "Rajasthan": ["Jaipur", "Udaipur", "Jodhpur", "Kota"],
-    "West Bengal": ["Kolkata", "Howrah", "Durgapur", "Siliguri"],
-    "Telangana": ["Hyderabad", "Warangal", "Karimnagar"],
-    "Andhra Pradesh": ["Visakhapatnam", "Vijayawada", "Guntur", "Tirupati"],
-    "Kerala": ["Kochi", "Thiruvananthapuram", "Kozhikode", "Thrissur"],
-    "Punjab": ["Chandigarh", "Ludhiana", "Amritsar", "Jalandhar"],
-    "Haryana": ["Gurgaon", "Faridabad", "Panipat", "Rohtak"],
-    "Madhya Pradesh": ["Bhopal", "Indore", "Gwalior", "Jabalpur"],
-    "Bihar": ["Patna", "Gaya", "Muzaffarpur"],
-    "Odisha": ["Bhubaneswar", "Cuttack", "Rourkela"],
-    "Assam": ["Guwahati", "Silchar", "Dibrugarh"],
-    "Jharkhand": ["Ranchi", "Jamshedpur", "Dhanbad"],
-    "Chhattisgarh": ["Raipur", "Bhilai", "Bilaspur"],
-    "Himachal Pradesh": ["Shimla", "Mandi", "Solan"],
-}
-
-prefixes = [
-    "National", "Global", "Premier", "Central", "Modern", "Royal",
-    "Elite", "Progressive", "United", "Heritage",
+STATES = [
+    ("Mumbai", "Maharashtra"),
+    ("Pune", "Maharashtra"),
+    ("Delhi", "Delhi"),
+    ("Bangalore", "Karnataka"),
+    ("Chennai", "Tamil Nadu"),
+    ("Hyderabad", "Telangana"),
+    ("Kolkata", "West Bengal"),
+    ("Ahmedabad", "Gujarat"),
+    ("Jaipur", "Rajasthan"),
+    ("Lucknow", "Uttar Pradesh"),
 ]
-suffixes = [
-    "Institute of Technology", "College of Engineering", "University",
-    "Institute of Management", "Polytechnic", "Academy of Science",
-    "School of Business", "College of Arts", "Institute of Medical Sciences",
-    "College of Pharmacy",
+
+PREFIXES = [
+    "National", "Global", "Indian", "Central", "Premier", "City", "Metro",
+    "Institute of", "College of", "School of",
 ]
-types = ["government", "private", "deemed"]
-courses_pool = [
-    ["B.Tech", "M.Tech"], ["BBA", "MBA"], ["B.Sc", "M.Sc"],
-    ["B.Com", "M.Com"], ["MBBS", "MD"], ["B.Pharm", "M.Pharm"],
-    ["BCA", "MCA"], ["BA", "MA"],
+SUFFIXES = [
+    "Engineering", "Technology", "Management", "Arts & Science", "Commerce",
+    "Medical Sciences", "Pharmacy", "Law", "Education",
 ]
-recruiters = ["TCS", "Infosys", "Wipro", "Google", "Microsoft", "Amazon", "Deloitte", "Accenture"]
+TYPES = ["government", "private", "deemed", "autonomous"]
+COURSES = ["B.Tech", "BBA", "BCA", "B.Com", "B.Sc", "MBA", "M.Tech", "MBBS"]
 
-colleges = []
-index = 0
 
-for state, cities in states_cities.items():
-    for city in cities:
-        if index >= 100:
-            break
-        name = f"{random.choice(prefixes)} {city} {random.choice(suffixes)}"
-        slug = name.lower().replace(" ", "-").replace(".", "")[:50] + f"-{index}"
-        rating = round(random.uniform(3.2, 4.9), 1)
-        colleges.append({
-            "id": f"college_{index + 1:03d}",
-            "name": name,
-            "slug": slug,
-            "city": city,
-            "state": state,
-            "address": f"{random.randint(1, 999)} University Road, {city}",
-            "type": random.choice(types),
-            "courses": random.choice(courses_pool),
-            "website": f"https://www.college{index}.edu.in",
-            "coverPhotoUrl": None,
-            "photoUrls": [],
-            "fees": {
-                "tuitionMin": random.randint(50000, 200000),
-                "tuitionMax": random.randint(200000, 800000),
-                "hostelAnnual": random.randint(30000, 150000),
-            },
-            "scholarships": [{
-                "name": "Merit Scholarship",
-                "eligibility": "Above 90% in 12th",
-                "amount": "Up to 50% fee waiver",
-            }],
-            "placements": {
-                "highestPackageLpa": round(random.uniform(8, 45), 1),
-                "averagePackageLpa": round(random.uniform(3, 18), 1),
-                "placementPercentage": random.randint(60, 98),
-                "topRecruiters": random.sample(recruiters, 4),
-            },
-            "aggregatedRatings": {
-                "overall": rating,
-                "faculty": round(rating + random.uniform(-0.3, 0.3), 1),
-                "infrastructure": round(rating + random.uniform(-0.4, 0.2), 1),
-                "placements": round(rating + random.uniform(-0.2, 0.4), 1),
-                "campusLife": round(rating + random.uniform(-0.5, 0.3), 1),
-            },
-            "reviewCount": random.randint(50, 2500),
-            "searchKeywords": list({name.lower(), city.lower(), state.lower(), *name.lower().split()}),
-            "isActive": True,
-        })
-        index += 1
-    if index >= 100:
-        break
+def slugify(name: str, city: str) -> str:
+    base = f"{name}-{city}".lower()
+    base = re.sub(r"[^a-z0-9]+", "-", base).strip("-")
+    return base or "college"
 
-while index < 100:
-    state = random.choice(list(states_cities.keys()))
-    city = random.choice(states_cities[state])
-    name = f"{random.choice(prefixes)} {city} {random.choice(suffixes)}"
-    slug = name.lower().replace(" ", "-")[:50] + f"-{index}"
-    rating = round(random.uniform(3.2, 4.9), 1)
-    colleges.append({
-        "id": f"college_{index + 1:03d}",
+
+def build_college(index: int) -> dict:
+    city, state = random.choice(STATES)
+    name = f"{random.choice(PREFIXES)} {random.choice(SUFFIXES)} {index:05d}"
+    name_lower = name.lower()
+    college_type = random.choice(TYPES)
+    courses = random.sample(COURSES, k=random.randint(2, 5))
+    tuition_min = random.randint(40000, 150000)
+    tuition_max = tuition_min + random.randint(20000, 120000)
+
+    return {
+        "id": f"college_{index:06d}",
         "name": name,
-        "slug": slug,
+        "nameLower": name_lower,
+        "slug": slugify(name, city),
         "city": city,
         "state": state,
-        "address": f"{random.randint(1, 999)} Campus Road, {city}",
-        "type": random.choice(types),
-        "courses": random.choice(courses_pool),
-        "website": f"https://www.college{index}.edu.in",
+        "address": f"{random.randint(1, 200)} University Road, {city}, {state}",
+        "type": college_type,
+        "universityName": f"{state} Technical University",
+        "website": f"https://www.example-college-{index}.edu.in",
+        "logoUrl": None,
         "coverPhotoUrl": None,
         "photoUrls": [],
-        "fees": {"tuitionMin": 80000, "tuitionMax": 400000, "hostelAnnual": 60000},
-        "scholarships": [{"name": "Need-based Aid", "eligibility": "Family income below 5 LPA", "amount": "25% waiver"}],
-        "placements": {"highestPackageLpa": 20.0, "averagePackageLpa": 8.5, "placementPercentage": 75, "topRecruiters": recruiters[:3]},
-        "aggregatedRatings": {"overall": rating, "faculty": rating, "infrastructure": rating, "placements": rating, "campusLife": rating},
-        "reviewCount": 200,
-        "searchKeywords": [name.lower(), city.lower(), state.lower()],
+        "latitude": round(random.uniform(8.0, 32.0), 5),
+        "longitude": round(random.uniform(72.0, 88.0), 5),
+        "courses": courses,
+        "fees": {
+            "tuitionMin": tuition_min,
+            "tuitionMax": tuition_max,
+            "hostelAnnual": random.randint(30000, 120000),
+        },
+        "hostel": {
+            "available": random.choice([True, False]),
+            "boysHostel": True,
+            "girlsHostel": True,
+            "acAvailable": random.choice([True, False]),
+            "messIncluded": True,
+            "annualFee": random.randint(30000, 120000),
+            "amenities": ["Wi-Fi", "Mess", "Library"],
+        },
+        "placements": {
+            "highestPackageLpa": round(random.uniform(5, 40), 1),
+            "averagePackageLpa": round(random.uniform(3, 12), 1),
+            "placementPercentage": random.randint(40, 95),
+            "topRecruiters": random.sample(
+                ["TCS", "Infosys", "Wipro", "Amazon", "Deloitte"], k=3
+            ),
+        },
+        "accreditation": {
+            "naacGrade": random.choice(["A++", "A+", "A", "B++", "B+"]),
+            "nirfRank": random.randint(1, 500) if random.random() > 0.5 else None,
+            "nirfCategory": random.choice(["Engineering", "University", "Management"]),
+            "ugcRecognized": True,
+            "aicteApproved": college_type in {"private", "deemed"},
+        },
+        "aggregatedRatings": {
+            "overall": round(random.uniform(2.5, 4.8), 1),
+            "faculty": round(random.uniform(2.5, 4.8), 1),
+            "infrastructure": round(random.uniform(2.5, 4.8), 1),
+            "placements": round(random.uniform(2.5, 4.8), 1),
+            "campusLife": round(random.uniform(2.5, 4.8), 1),
+            "hostel": round(random.uniform(2.0, 4.5), 1),
+            "fees": round(random.uniform(2.0, 4.5), 1),
+        },
+        "reviewCount": 0,
+        "scholarships": [],
+        "searchKeywords": [city.lower(), state.lower(), *courses],
         "isActive": True,
-    })
-    index += 1
+    }
 
-import os
-os.makedirs("assets/data", exist_ok=True)
-with open("assets/data/colleges_seed.json", "w", encoding="utf-8") as f:
-    json.dump(colleges, f, indent=2)
 
-print(f"Generated {len(colleges)} colleges")
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--count", type=int, default=100, help="Number of colleges")
+    parser.add_argument(
+        "--output",
+        default="tools/colleges_export.json",
+        help="Output JSON path",
+    )
+    args = parser.parse_args()
+
+    colleges = [build_college(i + 1) for i in range(args.count)]
+    out = Path(args.output)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(colleges, indent=2), encoding="utf-8")
+    print(f"Wrote {len(colleges)} colleges to {out}")
+
+
+if __name__ == "__main__":
+    main()

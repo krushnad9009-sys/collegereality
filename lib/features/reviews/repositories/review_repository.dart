@@ -11,13 +11,24 @@ abstract class ReviewRepository {
   Stream<List<ReviewModel>> watchReviewsByCollege(String collegeId);
   Future<List<ReviewModel>> getReviewsByUser(String userId);
   Future<List<ReviewModel>> getAllReviews({int limit = 100, String? statusFilter});
-  Future<void> likeReview(String reviewId);
+  Future<bool> hasMarkedHelpful(String reviewId, String userId);
+  Future<void> markHelpful(String reviewId, String userId);
+  Future<void> reportReview({
+    required String reviewId,
+    required String collegeId,
+    required String reporterId,
+    required String reason,
+  });
+  Future<bool> isUserVerified(String userId);
 }
 
 class ReviewRepositoryImpl implements ReviewRepository {
   final FirestoreReviewService _service;
 
   ReviewRepositoryImpl(this._service);
+
+  @override
+  Future<bool> isUserVerified(String userId) => _service.isUserVerified(userId);
 
   @override
   Future<ReviewModel> submitReview(ReviewModel review) async {
@@ -80,8 +91,28 @@ class ReviewRepositoryImpl implements ReviewRepository {
   }
 
   @override
-  Future<void> likeReview(String reviewId) {
-    return _service.incrementLikeCount(reviewId);
+  Future<bool> hasMarkedHelpful(String reviewId, String userId) {
+    return _service.hasMarkedHelpful(reviewId, userId);
+  }
+
+  @override
+  Future<void> markHelpful(String reviewId, String userId) {
+    return _service.markHelpful(reviewId, userId);
+  }
+
+  @override
+  Future<void> reportReview({
+    required String reviewId,
+    required String collegeId,
+    required String reporterId,
+    required String reason,
+  }) {
+    return _service.reportReview(
+      reviewId: reviewId,
+      collegeId: collegeId,
+      reporterId: reporterId,
+      reason: reason,
+    );
   }
 
   Future<void> _refreshCollegeAggregates(String collegeId) async {

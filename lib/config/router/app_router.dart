@@ -13,11 +13,13 @@ import '../../features/colleges/screens/college_detail_screen.dart';
 import '../../features/reviews/screens/write_review_screen.dart';
 import '../../features/reviews/screens/my_reviews_screen.dart';
 import '../../features/admin/screens/admin_dashboard_screen.dart';
+import '../../features/admin/screens/admin_college_edit_screen.dart';
 import '../../features/admin/screens/admin_colleges_screen.dart';
 import '../../features/admin/screens/admin_reviews_screen.dart';
 import '../../features/admin/screens/admin_users_screen.dart';
 import '../../features/admin/providers/admin_provider.dart';
 import '../../features/admin/screens/admin_verification_screen.dart';
+import '../../features/profile/screens/premium_student_profile_screen.dart';
 import '../../features/verification/screens/verification_screen.dart';
 import '../../features/community/screens/community_hub_screen.dart';
 import '../../features/community/screens/private_chats_screen.dart';
@@ -100,6 +102,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const VerificationScreen(),
       ),
       GoRoute(
+        path: RouteNames.studentProfile,
+        builder: (context, state) {
+          final uid = state.pathParameters['uid']!;
+          return PremiumStudentProfileScreen(studentUid: uid);
+        },
+      ),
+      GoRoute(
         path: RouteNames.myReviews,
         builder: (context, state) => const MyReviewsScreen(),
       ),
@@ -141,6 +150,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RouteNames.adminColleges,
         builder: (context, state) => const AdminCollegesScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.adminCollegeNew,
+        builder: (context, state) => const AdminCollegeEditScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.adminCollegeEdit,
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return AdminCollegeEditScreen(collegeId: id);
+        },
       ),
       GoRoute(
         path: RouteNames.adminReviews,

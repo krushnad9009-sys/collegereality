@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user_model.dart';
 import '../../communication/models/guide_stats_model.dart';
+import '../../community/models/user_presence_model.dart';
 
 class FirestoreUserService {
   static const String usersCollection = 'users';
@@ -61,14 +62,19 @@ class FirestoreUserService {
     required String uid,
     String? displayName,
     String? photoURL,
+    String? coverPhotoURL,
     String? phone,
     String? collegeId,
     String? collegeName,
     String? course,
+    String? branch,
     int? batchYear,
+    String? aboutMe,
+    List<String>? interests,
     List<String>? languagesKnown,
     GuideCommunicationSettings? communicationSettings,
     String? subscriptionTier,
+    UserPresenceModel? presence,
     Map<String, dynamic>? metadata,
   }) async {
     try {
@@ -82,6 +88,9 @@ class FirestoreUserService {
       if (photoURL != null) {
         updateData['photoURL'] = photoURL;
       }
+      if (coverPhotoURL != null) {
+        updateData['coverPhotoURL'] = coverPhotoURL;
+      }
       if (phone != null) {
         updateData['phone'] = phone;
       }
@@ -94,8 +103,17 @@ class FirestoreUserService {
       if (course != null) {
         updateData['course'] = course;
       }
+      if (branch != null) {
+        updateData['branch'] = branch;
+      }
       if (batchYear != null) {
         updateData['batchYear'] = batchYear;
+      }
+      if (aboutMe != null) {
+        updateData['aboutMe'] = aboutMe;
+      }
+      if (interests != null) {
+        updateData['interests'] = interests;
       }
       if (languagesKnown != null) {
         updateData['languagesKnown'] = languagesKnown;
@@ -105,6 +123,9 @@ class FirestoreUserService {
       }
       if (subscriptionTier != null) {
         updateData['subscriptionTier'] = subscriptionTier;
+      }
+      if (presence != null) {
+        updateData['presence'] = presence.toJson();
       }
       if (metadata != null) {
         updateData['metadata'] = metadata;
