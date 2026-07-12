@@ -11,6 +11,7 @@ import '../../auth/providers/auth_provider.dart';
 import '../../auth/providers/user_provider.dart';
 import '../../auth/utils/validation_util.dart';
 import '../../colleges/providers/college_provider.dart';
+import '../widgets/phone_verification_section.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -22,29 +23,29 @@ class ProfileScreen extends ConsumerStatefulWidget {
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final _phoneController = TextEditingController();
   final _courseController = TextEditingController();
-  final _batchYearController = TextEditingController();
   String? _selectedCollegeId;
   String? _selectedCollegeName;
+  int? _batchYear;
+  bool _isPhoneVerified = false;
+  String? _verifiedPhone;
   bool _isSaving = false;
 
   @override
   void dispose() {
     _nameController.dispose();
-    _phoneController.dispose();
     _courseController.dispose();
-    _batchYearController.dispose();
     super.dispose();
   }
 
   void _populateFromUser(UserModel user) {
     _nameController.text = user.displayName ?? '';
-    _phoneController.text = user.phone ?? '';
     _courseController.text = user.course ?? '';
-    _batchYearController.text = user.batchYear?.toString() ?? '';
+    _batchYear = user.batchYear;
     _selectedCollegeId = user.collegeId;
     _selectedCollegeName = user.collegeName;
+    _isPhoneVerified = user.isPhoneVerified;
+    _verifiedPhone = user.phone;
   }
 
   Future<void> _saveProfile(String uid) async {
@@ -60,15 +61,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       await ref.read(userRepositoryProvider).updateUserProfile(
             uid: uid,
             displayName: _nameController.text.trim(),
-            phone: _phoneController.text.trim().isEmpty
-                ? null
-                : _phoneController.text.trim(),
             collegeId: _selectedCollegeId,
             collegeName: _selectedCollegeName,
             course: _courseController.text.trim().isEmpty
                 ? null
                 : _courseController.text.trim(),
-            batchYear: int.tryParse(_batchYearController.text.trim()),
+            batchYear: _batchYear,
           );
 
       ref.invalidate(currentUserDetailProvider);
@@ -158,7 +156,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               _nameController.text.isEmpty &&
               userDetail.displayName != null) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              _populateFromUser(userDetail);
+              if (mounted) {
+                setState(() => _populateFromUser(userDetail));
+              }
             });
           }
 
@@ -276,18 +276,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     isRequired: true,
                   ),
                   const SizedBox(height: 16),
-                  CustomTextField(
-                    label: 'Phone',
-                    hint: '10-digit mobile number',
-                    controller: _phoneController,
-                    keyboardType: TextInputType.phone,
-                    validator: (v) {
-                      if (v == null || v.isEmpty) return null;
-                      return ValidationUtil.validatePhone(v);
+                  PhoneVerificationSection(
+                    userId: authUser.uid,
+                    currentPhone: _verifiedPhone ?? userDetail?.phone,
+                    isPhoneVerified: _isPhoneVerified,
+                    onVerified: (phone) {
+                      setState(() {
+                        _isPhoneVerified = true;
+                        _verifiedPhone = phone;
+                      });
                     },
-                    prefixIcon: Icons.phone_outlined,
                   ),
-                  const SizedBox(height: 16),
                   Text(
                     'College',
                     style: GoogleFonts.poppins(
@@ -340,12 +339,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     prefixIcon: Icons.menu_book_outlined,
                   ),
                   const SizedBox(height: 16),
-                  CustomTextField(
+                  YearPickerField(
                     label: 'Batch Year',
-                    hint: 'e.g. 2024',
-                    controller: _batchYearController,
-                    keyboardType: TextInputType.number,
-                    prefixIcon: Icons.calendar_today_outlined,
+                    value: _batchYear,
+                    onChanged: (year) => setState(() => _batchYear = year),
                   ),
                   const SizedBox(height: 32),
                   PrimaryButton(

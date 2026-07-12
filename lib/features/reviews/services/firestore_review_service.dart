@@ -53,46 +53,75 @@ class FirestoreReviewService {
     return ReviewModel.fromJson(doc.data(), docId: doc.id);
   }
 
-  Future<List<ReviewModel>> getReviewsByCollege(String collegeId) async {
-    final snapshot = await _reviews
-        .where('collegeId', isEqualTo: collegeId)
-        .where('status', isEqualTo: 'published')
-        .orderBy('createdAt', descending: true)
-        .get();
-    return snapshot.docs
+  List<ReviewModel> _parseAndFilterReviews(
+    QuerySnapshot<Map<String, dynamic>> snapshot, {
+    String? statusFilter,
+  }) {
+    final reviews = snapshot.docs
         .map((doc) => ReviewModel.fromJson(doc.data(), docId: doc.id))
-        .toList();
+        .where((r) => statusFilter == null || r.status == statusFilter)
+        .toList()
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return reviews;
+  }
+
+  Future<List<ReviewModel>> getReviewsByCollege(String collegeId) async {
+    try {
+      final snapshot = await _reviews
+          .where('collegeId', isEqualTo: collegeId)
+          .where('status', isEqualTo: 'published')
+          .orderBy('createdAt', descending: true)
+          .get();
+      return snapshot.docs
+          .map((doc) => ReviewModel.fromJson(doc.data(), docId: doc.id))
+          .toList();
+    } on FirebaseException {
+      final snapshot = await _reviews
+          .where('collegeId', isEqualTo: collegeId)
+          .get();
+      return _parseAndFilterReviews(snapshot, statusFilter: 'published');
+    }
   }
 
   Stream<List<ReviewModel>> watchReviewsByCollege(String collegeId) {
     return _reviews
         .where('collegeId', isEqualTo: collegeId)
-        .where('status', isEqualTo: 'published')
-        .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => ReviewModel.fromJson(doc.data(), docId: doc.id))
-            .toList());
+        .map((snapshot) => _parseAndFilterReviews(
+              snapshot,
+              statusFilter: 'published',
+            ));
   }
 
   Future<List<ReviewModel>> getReviewsByUser(String userId) async {
-    final snapshot = await _reviews
-        .where('userId', isEqualTo: userId)
-        .orderBy('createdAt', descending: true)
-        .get();
-    return snapshot.docs
-        .map((doc) => ReviewModel.fromJson(doc.data(), docId: doc.id))
-        .toList();
+    try {
+      final snapshot = await _reviews
+          .where('userId', isEqualTo: userId)
+          .orderBy('createdAt', descending: true)
+          .get();
+      return snapshot.docs
+          .map((doc) => ReviewModel.fromJson(doc.data(), docId: doc.id))
+          .toList();
+    } on FirebaseException {
+      final snapshot =
+          await _reviews.where('userId', isEqualTo: userId).get();
+      return _parseAndFilterReviews(snapshot);
+    }
   }
 
   Future<List<ReviewModel>> getAllReviews({int limit = 100}) async {
-    final snapshot = await _reviews
-        .orderBy('createdAt', descending: true)
-        .limit(limit)
-        .get();
-    return snapshot.docs
-        .map((doc) => ReviewModel.fromJson(doc.data(), docId: doc.id))
-        .toList();
+    try {
+      final snapshot = await _reviews
+          .orderBy('createdAt', descending: true)
+          .limit(limit)
+          .get();
+      return snapshot.docs
+          .map((doc) => ReviewModel.fromJson(doc.data(), docId: doc.id))
+          .toList();
+    } on FirebaseException {
+      final snapshot = await _reviews.limit(limit).get();
+      return _parseAndFilterReviews(snapshot).take(limit).toList();
+    }
   }
 
   Future<void> incrementLikeCount(String reviewId) async {
@@ -153,7 +182,6 @@ class ReviewFirestoreException implements Exception {
   String toString() => message;
 }
 
-/// Recompute aggregates from reviews and return updated ratings map.
 CollegeRatings computeCollegeRatingsFromReviews(List<ReviewModel> reviews) {
   if (reviews.isEmpty) {
     return const CollegeRatings(

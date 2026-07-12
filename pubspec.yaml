@@ -19,6 +19,7 @@ dependencies:
   riverpod_generator: ^2.4.0
   firebase_core: ^3.3.0
   firebase_auth: ^5.1.1
+  firebase_auth_platform_interface: ^7.7.3
   cloud_firestore: ^5.1.0
   firebase_storage: ^12.1.1
   firebase_messaging: ^15.0.2

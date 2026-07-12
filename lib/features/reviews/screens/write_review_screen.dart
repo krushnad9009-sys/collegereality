@@ -34,7 +34,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
   final _prosController = TextEditingController();
   final _consController = TextEditingController();
   final _courseController = TextEditingController();
-  final _batchController = TextEditingController();
+  int? _batchYear;
   final Map<String, double> _ratings = RatingParameters.emptyRatings();
   bool _isSubmitting = false;
   ReviewModel? _existingReview;
@@ -51,7 +51,6 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
     _prosController.dispose();
     _consController.dispose();
     _courseController.dispose();
-    _batchController.dispose();
     super.dispose();
   }
 
@@ -71,7 +70,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
         _prosController.text = review.pros.join(', ');
         _consController.text = review.cons.join(', ');
         _courseController.text = review.course ?? '';
-        _batchController.text = review.batchYear?.toString() ?? '';
+        _batchYear = review.batchYear;
         _ratings.addAll(review.ratings);
       });
     }
@@ -113,8 +112,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
         course: _courseController.text.trim().isEmpty
             ? userDetail?.course
             : _courseController.text.trim(),
-        batchYear: int.tryParse(_batchController.text.trim()) ??
-            userDetail?.batchYear,
+        batchYear: _batchYear ?? userDetail?.batchYear,
         ratings: Map.from(_ratings),
         textReview: _textController.text.trim(),
         pros: _prosController.text
@@ -222,12 +220,10 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
               prefixIcon: Icons.menu_book_outlined,
             ),
             const SizedBox(height: 16),
-            CustomTextField(
+            YearPickerField(
               label: 'Batch Year',
-              hint: 'e.g. 2024',
-              controller: _batchController,
-              keyboardType: TextInputType.number,
-              prefixIcon: Icons.calendar_today_outlined,
+              value: _batchYear,
+              onChanged: (year) => setState(() => _batchYear = year),
             ),
             const SizedBox(height: 16),
             CustomTextField(

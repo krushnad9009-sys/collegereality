@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../config/theme/app_theme.dart';
+import 'google_logo_icon.dart';
 
 class PrimaryButton extends StatelessWidget {
   final String label;
@@ -158,11 +159,7 @@ class GoogleSignInButton extends StatelessWidget {
                   ),
                 ),
               )
-            : Image.asset(
-                'assets/icons/google_icon.png',
-                width: 20,
-                height: 20,
-              ),
+            : const GoogleLogoIcon(size: 20),
         label: Text(
           'Continue with Google',
           style: GoogleFonts.poppins(

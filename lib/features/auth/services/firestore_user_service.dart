@@ -123,12 +123,16 @@ class FirestoreUserService {
   }
 
   // Verify phone
-  Future<void> verifyPhone(String uid) async {
+  Future<void> verifyPhone(String uid, {String? phone}) async {
     try {
-      await _firestore.collection(usersCollection).doc(uid).update({
+      final updateData = <String, dynamic>{
         'isPhoneVerified': true,
         'updatedAt': DateTime.now().toIso8601String(),
-      });
+      };
+      if (phone != null && phone.isNotEmpty) {
+        updateData['phone'] = phone;
+      }
+      await _firestore.collection(usersCollection).doc(uid).update(updateData);
     } catch (e) {
       throw FirestoreException(
         message: 'Failed to verify phone: $e',

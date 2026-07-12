@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../config/theme/app_theme.dart';
+import '../../reviews/widgets/star_rating_widget.dart';
+import '../../../core/widgets/college_image_widget.dart';
 
 class CollegeCardWidget extends StatelessWidget {
   final String collegeId;
@@ -39,40 +41,15 @@ class CollegeCardWidget extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Image
-              ClipRRect(
+              CollegeImageWidget(
+                collegeId: collegeId,
+                imageUrl: imageUrl,
+                height: 160,
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(12),
                   topRight: Radius.circular(12),
                 ),
-                child: Container(
-                  width: double.infinity,
-                  height: 160,
-                  color: AppTheme.gray200,
-                  child: imageUrl != null
-                      ? Image.network(
-                          imageUrl!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return const Center(
-                              child: Icon(
-                                Icons.image_not_supported_outlined,
-                                color: AppTheme.gray400,
-                                size: 40,
-                              ),
-                            );
-                          },
-                        )
-                      : const Center(
-                          child: Icon(
-                            Icons.image_not_supported_outlined,
-                            color: AppTheme.gray400,
-                            size: 40,
-                          ),
-                        ),
-                ),
               ),
-              // Content
               Padding(
                 padding: const EdgeInsets.all(12),
                 child: Column(
@@ -114,33 +91,12 @@ class CollegeCardWidget extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.star_rounded,
-                              color: AppTheme.warningColor,
-                              size: 16,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '$rating',
-                              style: GoogleFonts.poppins(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '($reviewCount)',
-                              style: GoogleFonts.poppins(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w500,
-                                color: AppTheme.gray500,
-                              ),
-                            ),
-                          ],
+                        StarRatingDisplay(
+                          rating: rating,
+                          reviewCount: reviewCount,
+                          starSize: 14,
                         ),
-                        Icon(
+                        const Icon(
                           Icons.favorite_border_rounded,
                           size: 18,
                           color: AppTheme.gray500,

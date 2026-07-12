@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
+import '../../../core/widgets/college_image_widget.dart';
 import '../../reviews/providers/review_provider.dart';
 import '../../reviews/widgets/review_card_widget.dart';
 import '../../reviews/widgets/star_rating_widget.dart';
@@ -66,24 +67,28 @@ class CollegeDetailScreen extends ConsumerWidget {
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    background: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            AppTheme.primaryColor,
-                            AppTheme.primaryDark,
-                          ],
+                    background: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        CollegeImageWidget(
+                          collegeId: college.id,
+                          imageUrl: college.coverPhotoUrl,
+                          height: 220,
+                          fit: BoxFit.cover,
                         ),
-                      ),
-                      child: Center(
-                        child: Icon(
-                          Icons.school_rounded,
-                          size: 80,
-                          color: AppTheme.white.withValues(alpha: 0.3),
+                        Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.transparent,
+                                Colors.black.withValues(alpha: 0.55),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                   ),
                 ),

@@ -18,7 +18,7 @@ abstract class UserRepository {
     Map<String, dynamic>? metadata,
   });
   Future<void> verifyEmail(String uid);
-  Future<void> verifyPhone(String uid);
+  Future<void> verifyPhone(String uid, {String? phone});
   Future<void> deleteUser(String uid);
   Future<bool> userExists(String uid);
   Future<UserModel?> getUserByEmail(String email);
@@ -75,8 +75,8 @@ class UserRepositoryImpl implements UserRepository {
   }
 
   @override
-  Future<void> verifyPhone(String uid) async {
-    await _firestoreUserService.verifyPhone(uid);
+  Future<void> verifyPhone(String uid, {String? phone}) async {
+    await _firestoreUserService.verifyPhone(uid, phone: phone);
   }
 
   @override
