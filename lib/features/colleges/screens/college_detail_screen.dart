@@ -428,7 +428,17 @@ class _ReviewsTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final reviewsAsync = ref.watch(mergedCollegeReviewsProvider(collegeId));
+    final normalizedId = collegeId.trim();
+
+    ref.listen(collegeReviewsProvider(normalizedId), (previous, next) {
+      next.whenData((reviews) {
+        ref
+            .read(optimisticReviewsProvider.notifier)
+            .syncWithStream(normalizedId, reviews);
+      });
+    });
+
+    final reviewsAsync = ref.watch(mergedCollegeReviewsProvider(normalizedId));
 
     return reviewsAsync.when(
       loading: () => const ReviewListSkeleton(),
@@ -500,7 +510,7 @@ class _ReviewsTab extends ConsumerWidget {
                 review: review,
                 onLike: () async {
                   await ref.read(reviewRepositoryProvider).likeReview(review.id);
-                  ref.invalidate(collegeReviewsProvider(collegeId));
+                  ref.invalidate(collegeReviewsProvider(normalizedId));
                 },
               ),
             );

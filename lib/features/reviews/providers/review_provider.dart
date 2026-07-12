@@ -12,13 +12,15 @@ final reviewRepositoryProvider = Provider<ReviewRepository>((ref) {
   return ReviewRepositoryImpl(ref.watch(firestoreReviewServiceProvider));
 });
 
+String _normalizeCollegeId(String collegeId) => collegeId.trim();
+
 /// Holds freshly submitted reviews until the Firestore stream catches up.
 class OptimisticReviewsNotifier
     extends StateNotifier<Map<String, List<ReviewModel>>> {
   OptimisticReviewsNotifier() : super(const {});
 
   void addReview(String collegeId, ReviewModel review) {
-    final key = collegeId.trim();
+    final key = _normalizeCollegeId(collegeId);
     final existing = state[key] ?? [];
     final withoutDup = existing.where((r) => r.id != review.id).toList();
     state = {
@@ -27,8 +29,27 @@ class OptimisticReviewsNotifier
     };
   }
 
+  void syncWithStream(String collegeId, List<ReviewModel> streamReviews) {
+    final key = _normalizeCollegeId(collegeId);
+    final pending = state[key];
+    if (pending == null || pending.isEmpty) return;
+
+    final streamIds = streamReviews.map((r) => r.id).toSet();
+    final remaining =
+        pending.where((r) => !streamIds.contains(r.id)).toList();
+    if (remaining.length == pending.length) return;
+
+    if (remaining.isEmpty) {
+      final next = Map<String, List<ReviewModel>>.from(state);
+      next.remove(key);
+      state = next;
+    } else {
+      state = {...state, key: remaining};
+    }
+  }
+
   void removeReview(String collegeId, String reviewId) {
-    final key = collegeId.trim();
+    final key = _normalizeCollegeId(collegeId);
     final existing = state[key];
     if (existing == null) return;
     state = {
@@ -38,7 +59,7 @@ class OptimisticReviewsNotifier
   }
 
   void clearCollege(String collegeId) {
-    final key = collegeId.trim();
+    final key = _normalizeCollegeId(collegeId);
     if (!state.containsKey(key)) return;
     final next = Map<String, List<ReviewModel>>.from(state);
     next.remove(key);
@@ -70,18 +91,33 @@ List<ReviewModel> mergeReviews({
 final collegeReviewsProvider =
     StreamProvider.family<List<ReviewModel>, String>((ref, collegeId) {
   final repository = ref.watch(reviewRepositoryProvider);
-  return repository.watchReviewsByCollege(collegeId);
+  return repository.watchReviewsByCollege(_normalizeCollegeId(collegeId));
 });
 
 final mergedCollegeReviewsProvider =
     Provider.family<AsyncValue<List<ReviewModel>>, String>((ref, collegeId) {
-  final streamAsync = ref.watch(collegeReviewsProvider(collegeId));
-  final optimistic = ref.watch(optimisticReviewsProvider)[collegeId.trim()] ?? [];
+  final normalizedId = _normalizeCollegeId(collegeId);
+  final streamAsync = ref.watch(collegeReviewsProvider(normalizedId));
+  final optimistic =
+      ref.watch(optimisticReviewsProvider)[normalizedId] ?? const [];
 
-  return streamAsync.whenData((streamReviews) {
-    if (optimistic.isEmpty) return streamReviews;
-    return mergeReviews(streamReviews: streamReviews, optimistic: optimistic);
-  });
+  return streamAsync.when(
+    data: (streamReviews) {
+      final merged = optimistic.isEmpty
+          ? streamReviews
+          : mergeReviews(
+              streamReviews: streamReviews,
+              optimistic: optimistic,
+            );
+      return AsyncValue.data(merged);
+    },
+    loading: () => optimistic.isEmpty
+        ? const AsyncValue.loading()
+        : AsyncValue.data(optimistic),
+    error: (error, stack) => optimistic.isEmpty
+        ? AsyncValue.error(error, stack)
+        : AsyncValue.data(optimistic),
+  );
 });
 
 final userReviewsProvider = FutureProvider<List<ReviewModel>>((ref) async {

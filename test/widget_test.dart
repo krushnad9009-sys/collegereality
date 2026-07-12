@@ -9,6 +9,8 @@ import 'package:college_reality_india/core/constants/rating_parameters.dart';
 import 'package:college_reality_india/core/utils/college_image_helper.dart';
 import 'package:college_reality_india/core/widgets/google_logo_icon.dart';
 import 'package:college_reality_india/core/widgets/year_picker_field.dart';
+import 'package:college_reality_india/features/reviews/models/review_model.dart';
+import 'package:college_reality_india/features/reviews/providers/review_provider.dart';
 import 'package:college_reality_india/main.dart';
 
 void main() {
@@ -47,6 +49,37 @@ void main() {
   test('RatingParameters defines 10 rating keys', () {
     expect(RatingParameters.allKeys.length, 10);
     expect(RatingParameters.emptyRatings().length, 10);
+  });
+
+  test('mergeReviews combines optimistic and stream reviews', () {
+    final optimistic = [
+      ReviewModel(
+        id: 'new-1',
+        collegeId: 'college_001',
+        collegeName: 'Test College',
+        userId: 'u1',
+        anonymousAlias: 'Student #1',
+        ratings: const {'overall': 4.0},
+        createdAt: DateTime(2026, 1, 2),
+        updatedAt: DateTime(2026, 1, 2),
+      ),
+    ];
+    final stream = [
+      ReviewModel(
+        id: 'old-1',
+        collegeId: 'college_001',
+        collegeName: 'Test College',
+        userId: 'u2',
+        anonymousAlias: 'Student #2',
+        ratings: const {'overall': 3.0},
+        createdAt: DateTime(2026, 1, 1),
+        updatedAt: DateTime(2026, 1, 1),
+      ),
+    ];
+
+    final merged = mergeReviews(streamReviews: stream, optimistic: optimistic);
+    expect(merged.length, 2);
+    expect(merged.first.id, 'new-1');
   });
 
   test('CollegeImageHelper returns null when cover is missing', () {

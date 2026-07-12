@@ -6,6 +6,7 @@ import '../../../config/theme/app_theme.dart';
 import '../../../config/router/route_names.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../colleges/providers/college_provider.dart';
+import '../../../core/widgets/skeleton_loader.dart';
 import '../widgets/home_header_widget.dart';
 import '../widgets/college_card_widget.dart';
 
@@ -123,10 +124,13 @@ class HomeScreen extends ConsumerWidget {
                         ),
                         const SizedBox(height: 12),
                         collegesAsync.when(
-                          loading: () => const Center(
-                            child: Padding(
-                              padding: EdgeInsets.all(32),
-                              child: CircularProgressIndicator(),
+                          loading: () => Column(
+                            children: List.generate(
+                              3,
+                              (_) => const Padding(
+                                padding: EdgeInsets.only(bottom: 12),
+                                child: CollegeCardSkeleton(),
+                              ),
                             ),
                           ),
                           error: (e, _) => Text('Failed to load colleges: $e'),

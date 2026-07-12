@@ -152,8 +152,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
       ref
           .read(optimisticReviewsProvider.notifier)
           .addReview(widget.collegeId.trim(), savedReview);
-      ref.invalidate(collegeReviewsProvider(widget.collegeId));
-      ref.invalidate(collegeByIdProvider(widget.collegeId));
+      ref.invalidate(collegeByIdProvider(widget.collegeId.trim()));
       ref.invalidate(userReviewsProvider);
 
       if (mounted) {
