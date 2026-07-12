@@ -2,23 +2,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../core/services/auth_service.dart';
 
-// Auth service provider
 final authServiceProvider = Provider<AuthService>((ref) {
   return AuthService();
 });
 
-// Firebase auth instance provider
 final firebaseAuthProvider = Provider<FirebaseAuth>((ref) {
   return FirebaseAuth.instance;
 });
 
-// Current user stream provider
 final authStateProvider = StreamProvider<User?>((ref) {
   final firebaseAuth = ref.watch(firebaseAuthProvider);
   return firebaseAuth.authStateChanges();
 });
 
-// Current authenticated user
 final currentUserProvider = Provider<User?>((ref) {
   final authState = ref.watch(authStateProvider);
   return authState.maybeWhen(
@@ -27,7 +23,6 @@ final currentUserProvider = Provider<User?>((ref) {
   );
 });
 
-// Auth exception handling
 class AuthException implements Exception {
   final String message;
   final String? code;
@@ -70,7 +65,6 @@ class AuthException implements Exception {
   String toString() => message;
 }
 
-// Auth state class
 class AuthState {
   final bool isLoading;
   final User? user;
@@ -99,7 +93,6 @@ class AuthState {
   }
 }
 
-// Auth notifier
 class AuthNotifier extends StateNotifier<AuthState> {
   final AuthService _authService;
   final Ref ref;
@@ -122,6 +115,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(isLoading: true, error: null);
     try {
       final credential = await _authService.signUpWithEmail(email, password);
+      await _authService.sendEmailVerification();
       state = state.copyWith(
         user: credential.user,
         isAuthenticated: true,
@@ -147,8 +141,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(isLoading: true, error: null);
     try {
       final credential = await _authService.signInWithEmail(email, password);
+      await _authService.reloadUser();
       state = state.copyWith(
-        user: credential.user,
+        user: _authService.currentUser ?? credential.user,
         isAuthenticated: true,
         isLoading: false,
       );
@@ -235,12 +230,38 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  Future<void> sendEmailVerification() async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      await _authService.sendEmailVerification();
+      state = state.copyWith(isLoading: false);
+    } on FirebaseAuthException catch (e) {
+      final exception = AuthException.fromFirebaseException(e);
+      state = state.copyWith(
+        error: exception.message,
+        isLoading: false,
+      );
+      rethrow;
+    } catch (e) {
+      state = state.copyWith(
+        error: 'Failed to send verification email',
+        isLoading: false,
+      );
+      rethrow;
+    }
+  }
+
+  Future<bool> refreshEmailVerificationStatus() async {
+    final verified = await _authService.reloadUser();
+    state = state.copyWith(user: _authService.currentUser);
+    return verified;
+  }
+
   void clearError() {
     state = state.copyWith(error: null);
   }
 }
 
-// Auth provider
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   final authService = ref.watch(authServiceProvider);
   return AuthNotifier(authService, ref);

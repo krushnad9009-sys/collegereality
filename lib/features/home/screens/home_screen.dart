@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../config/theme/app_theme.dart';
+import '../../../config/router/route_names.dart';
 import '../../../core/widgets/index.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../colleges/providers/college_provider.dart';
 import '../widgets/home_header_widget.dart';
-import '../widgets/search_bar_widget.dart';
+import '../widgets/college_card_widget.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -15,6 +18,7 @@ class HomeScreen extends ConsumerWidget {
     final isMobile = MediaQuery.of(context).size.width < 600;
     final authState = ref.watch(authProvider);
     final currentUser = authState.user;
+    final collegesAsync = ref.watch(collegesProvider);
 
     return Scaffold(
       backgroundColor: Theme.of(context).brightness == Brightness.dark
@@ -22,268 +26,281 @@ class HomeScreen extends ConsumerWidget {
           : AppTheme.white,
       body: SafeArea(
         child: currentUser == null
-            ? Center(
-                child: Text(
-                  'Loading...',
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              )
-            : SingleChildScrollView(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: isMobile ? 16 : 24,
-                    vertical: 16,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Header with user profile
-                      HomeHeaderWidget(user: currentUser),
-                      const SizedBox(height: 24),
-
-                      // Search Bar
-                      SearchBarWidget(
-                        onTap: () {
-                          // TODO: Navigate to college search screen
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'College search coming soon!',
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 32),
-
-                      // Quick Access Section
-                      Text(
-                        'Quick Access',
-                        style: GoogleFonts.poppins(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
+            ? const Center(child: CircularProgressIndicator())
+            : RefreshIndicator(
+                onRefresh: () async {
+                  ref.invalidate(collegesProvider);
+                  ref.invalidate(collegeSeederProvider);
+                  await ref.read(collegesProvider.future);
+                },
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isMobile ? 16 : 24,
+                      vertical: 16,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        HomeHeaderWidget(user: currentUser),
+                        if (!currentUser.emailVerified) ...[
+                          const SizedBox(height: 12),
+                          _EmailVerificationBanner(userId: currentUser.uid),
+                        ],
+                        const SizedBox(height: 24),
+                        _SearchBar(onTap: () => context.go(RouteNames.collegeSearch)),
+                        const SizedBox(height: 32),
+                        Text(
+                          'Quick Access',
+                          style: GoogleFonts.poppins(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        height: 100,
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          height: 100,
+                          child: ListView(
+                            scrollDirection: Axis.horizontal,
                             children: [
                               _QuickAccessCard(
                                 icon: Icons.location_city_rounded,
                                 label: 'By City',
                                 color: AppTheme.primaryColor,
-                                onTap: () {
-                                  SnackBarHelper.showInfoSnackBar(
-                                    context,
-                                    message:
-                                        'City search coming soon!',
-                                  );
-                                },
+                                onTap: () => context.go(
+                                  '${RouteNames.collegeSearch}?filter=city',
+                                ),
                               ),
                               const SizedBox(width: 12),
                               _QuickAccessCard(
                                 icon: Icons.map_rounded,
                                 label: 'By State',
                                 color: AppTheme.secondaryColor,
-                                onTap: () {
-                                  SnackBarHelper.showInfoSnackBar(
-                                    context,
-                                    message:
-                                        'State search coming soon!',
-                                  );
-                                },
+                                onTap: () => context.go(
+                                  '${RouteNames.collegeSearch}?filter=state',
+                                ),
                               ),
                               const SizedBox(width: 12),
                               _QuickAccessCard(
                                 icon: Icons.star_rounded,
                                 label: 'Top Rated',
                                 color: AppTheme.accentColor,
-                                onTap: () {
-                                  SnackBarHelper.showInfoSnackBar(
-                                    context,
-                                    message:
-                                        'Top rated colleges coming soon!',
-                                  );
-                                },
+                                onTap: () => context.go(RouteNames.collegeSearch),
                               ),
                               const SizedBox(width: 12),
                               _QuickAccessCard(
                                 icon: Icons.trending_up_rounded,
-                                label: 'Trending',
+                                label: 'All Colleges',
                                 color: AppTheme.warningColor,
-                                onTap: () {
-                                  SnackBarHelper.showInfoSnackBar(
-                                    context,
-                                    message:
-                                        'Trending colleges coming soon!',
-                                  );
-                                },
+                                onTap: () => context.go(RouteNames.collegeSearch),
                               ),
                             ],
                           ),
                         ),
-                      ),
-
-                      const SizedBox(height: 32),
-
-                      // Featured Colleges Section
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Featured Colleges',
-                            style: GoogleFonts.poppins(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          TextButton(
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content:
-                                      Text('View all coming soon!'),
-                                ),
-                              );
-                            },
-                            child: Text(
-                              'View All',
-                              style: GoogleFonts.poppins(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.primaryColor,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-
-                      // Sample College Cards (placeholder)
-                      _buildCollegeCardsPlaceholder(context),
-
-                      const SizedBox(height: 32),
-
-                      // Call to Action
-                      Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              AppTheme.primaryColor,
-                              AppTheme.primaryDark,
-                            ],
-                          ),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        const SizedBox(height: 32),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'Share Your Experience',
+                              'Featured Colleges',
                               style: GoogleFonts.poppins(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w700,
-                                color: AppTheme.white,
                               ),
                             ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Help thousands of students by sharing your honest college review',
-                              style: GoogleFonts.poppins(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                                color: AppTheme.white.withValues(alpha: 0.9),
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor:
-                                      AppTheme.white,
-                                  foregroundColor:
-                                      AppTheme.primaryColor,
-                                ),
-                                onPressed: () {
-                                  SnackBarHelper.showInfoSnackBar(
-                                    context,
-                                    message:
-                                        'Review submission coming soon!',
-                                  );
-                                },
-                                child: Text(
-                                  'Write a Review',
-                                  style: GoogleFonts.poppins(
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                            TextButton(
+                              onPressed: () => context.go(RouteNames.collegeSearch),
+                              child: Text(
+                                'View All',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppTheme.primaryColor,
                                 ),
                               ),
                             ),
                           ],
                         ),
-                      ),
-
-                      const SizedBox(height: 24),
-                    ],
+                        const SizedBox(height: 12),
+                        collegesAsync.when(
+                          loading: () => const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(32),
+                              child: CircularProgressIndicator(),
+                            ),
+                          ),
+                          error: (e, _) => Text('Failed to load colleges: $e'),
+                          data: (colleges) {
+                            final featured = colleges.take(6).toList();
+                            return Column(
+                              children: featured
+                                  .map(
+                                    (college) => Padding(
+                                      padding: const EdgeInsets.only(bottom: 12),
+                                      child: CollegeCardWidget(
+                                        collegeId: college.id,
+                                        collegeName: college.name,
+                                        location: college.state,
+                                        city: college.city,
+                                        rating: college.aggregatedRatings.overall,
+                                        reviewCount: college.reviewCount,
+                                        imageUrl: college.coverPhotoUrl,
+                                        onTap: () => context.go(
+                                          RouteNames.collegeDetailsPath(college.id),
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                  .toList(),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 32),
+                        Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                AppTheme.primaryColor,
+                                AppTheme.primaryDark,
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Share Your Experience',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppTheme.white,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Help thousands of students by sharing your honest college review',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppTheme.white.withValues(alpha: 0.9),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppTheme.white,
+                                    foregroundColor: AppTheme.primaryColor,
+                                  ),
+                                  onPressed: () {
+                                    SnackBarHelper.showInfoSnackBar(
+                                      context,
+                                      message: 'Review submission coming in Phase 4!',
+                                    );
+                                  },
+                                  child: Text(
+                                    'Write a Review',
+                                    style: GoogleFonts.poppins(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+                    ),
                   ),
                 ),
               ),
       ),
     );
   }
+}
 
-  Widget _buildCollegeCardsPlaceholder(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
+class _SearchBar extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _SearchBar({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppTheme.gray800
+                : AppTheme.gray100,
+            border: Border.all(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? AppTheme.gray700
+                  : AppTheme.gray200,
+            ),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.search_rounded, color: AppTheme.gray500, size: 20),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Search colleges by name, city, or state...',
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: AppTheme.gray500,
+                  ),
+                ),
+              ),
+              const Icon(Icons.tune_rounded, color: AppTheme.primaryColor, size: 20),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EmailVerificationBanner extends ConsumerWidget {
+  final String userId;
+
+  const _EmailVerificationBanner({required this.userId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppTheme.warningColor.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppTheme.warningColor.withValues(alpha: 0.3)),
+      ),
       child: Row(
         children: [
-          _SampleCollegeCard(
-            name: 'IIT Bombay',
-            location: 'Mumbai, Maharashtra',
-            rating: 4.8,
-            reviews: 1250,
-            onTap: () {
-              SnackBarHelper.showInfoSnackBar(
-                context,
-                message: 'College details coming soon!',
-              );
-            },
-          ),
+          const Icon(Icons.mark_email_unread_outlined, color: AppTheme.warningColor),
           const SizedBox(width: 12),
-          _SampleCollegeCard(
-            name: 'Delhi University',
-            location: 'Delhi',
-            rating: 4.5,
-            reviews: 980,
-            onTap: () {
-              SnackBarHelper.showInfoSnackBar(
-                context,
-                message: 'College details coming soon!',
-              );
-            },
+          Expanded(
+            child: Text(
+              'Verify your email to unlock all features',
+              style: GoogleFonts.poppins(fontSize: 13),
+            ),
           ),
-          const SizedBox(width: 12),
-          _SampleCollegeCard(
-            name: 'Bangalore Institute',
-            location: 'Bangalore, Karnataka',
-            rating: 4.6,
-            reviews: 756,
-            onTap: () {
-              SnackBarHelper.showInfoSnackBar(
-                context,
-                message: 'College details coming soon!',
-              );
-            },
+          TextButton(
+            onPressed: () => context.go(RouteNames.profile),
+            child: const Text('Verify'),
           ),
         ],
       ),
@@ -333,111 +350,6 @@ class _QuickAccessCard extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SampleCollegeCard extends StatelessWidget {
-  final String name;
-  final String location;
-  final double rating;
-  final int reviews;
-  final VoidCallback onTap;
-
-  const _SampleCollegeCard({
-    required this.name,
-    required this.location,
-    required this.rating,
-    required this.reviews,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: SizedBox(
-          width: 200,
-          child: Card(
-            elevation: 2,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    height: 120,
-                    decoration: BoxDecoration(
-                      color: AppTheme.gray200,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Center(
-                      child: Icon(
-                        Icons.image_not_supported_outlined,
-                        color: AppTheme.gray400,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    name,
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    location,
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: AppTheme.gray600,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.star_rounded,
-                        color: AppTheme.warningColor,
-                        size: 16,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '$rating',
-                        style: GoogleFonts.poppins(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '($reviews reviews)',
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                          color: AppTheme.gray500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
           ),
         ),
       ),

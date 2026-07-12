@@ -3,9 +3,12 @@ class RouteNames {
   static const String onboarding = '/onboarding';
   static const String login = '/login';
   static const String signup = '/signup';
+  static const String forgotPassword = '/forgot-password';
   static const String home = '/home';
   static const String collegeSearch = '/college-search';
   static const String collegeDetails = '/college-details/:id';
   static const String profile = '/profile';
   static const String favorites = '/favorites';
+
+  static String collegeDetailsPath(String id) => '/college-details/$id';
 }

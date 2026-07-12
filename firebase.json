@@ -1,0 +1,29 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "college-reality",
+          "appId": "1:244446156099:android:0471c18323c4bdf5bf0bf6",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "college-reality",
+          "configurations": {
+            "android": "1:244446156099:android:0471c18323c4bdf5bf0bf6",
+            "ios": "1:244446156099:ios:34c193b0e798f5f0bf0bf6",
+            "macos": "1:244446156099:ios:34c193b0e798f5f0bf0bf6",
+            "web": "1:244446156099:web:bb6c7e0dabe7a5efbf0bf6",
+            "windows": "1:244446156099:web:e8ebbd6d74d629bdbf0bf6"
+          }
+        }
+      }
+    }
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  }
+}

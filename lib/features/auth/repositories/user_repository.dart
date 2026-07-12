@@ -10,6 +10,11 @@ abstract class UserRepository {
     required String uid,
     String? displayName,
     String? photoURL,
+    String? phone,
+    String? collegeId,
+    String? collegeName,
+    String? course,
+    int? batchYear,
     Map<String, dynamic>? metadata,
   });
   Future<void> verifyEmail(String uid);
@@ -44,12 +49,22 @@ class UserRepositoryImpl implements UserRepository {
     required String uid,
     String? displayName,
     String? photoURL,
+    String? phone,
+    String? collegeId,
+    String? collegeName,
+    String? course,
+    int? batchYear,
     Map<String, dynamic>? metadata,
   }) async {
     await _firestoreUserService.updateUserProfile(
       uid: uid,
       displayName: displayName,
       photoURL: photoURL,
+      phone: phone,
+      collegeId: collegeId,
+      collegeName: collegeName,
+      course: course,
+      batchYear: batchYear,
       metadata: metadata,
     );
   }

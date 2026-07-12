@@ -5,86 +5,66 @@ class AuthService {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
 
-  // Get current user
   User? get currentUser => _firebaseAuth.currentUser;
 
-  // Stream of auth state changes
   Stream<User?> get authStateChanges => _firebaseAuth.authStateChanges();
 
-  // Sign up with email and password
   Future<UserCredential> signUpWithEmail(String email, String password) async {
-    try {
-      return await _firebaseAuth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-    } catch (e) {
-      rethrow;
-    }
+    return _firebaseAuth.createUserWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
   }
 
-  // Sign in with email and password
   Future<UserCredential> signInWithEmail(String email, String password) async {
-    try {
-      return await _firebaseAuth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-    } catch (e) {
-      rethrow;
-    }
+    return _firebaseAuth.signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
   }
 
-  // Sign in with Google
   Future<UserCredential?> signInWithGoogle() async {
-    try {
-      final googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) return null;
+    final googleUser = await _googleSignIn.signIn();
+    if (googleUser == null) return null;
 
-      final googleAuth = await googleUser.authentication;
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
+    final googleAuth = await googleUser.authentication;
+    final credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    );
 
-      return await _firebaseAuth.signInWithCredential(credential);
-    } catch (e) {
-      rethrow;
-    }
+    return _firebaseAuth.signInWithCredential(credential);
   }
 
-  // Sign out
   Future<void> signOut() async {
-    try {
-      await Future.wait([
-        _firebaseAuth.signOut(),
-        _googleSignIn.signOut(),
-      ]);
-    } catch (e) {
-      rethrow;
-    }
+    await Future.wait([
+      _firebaseAuth.signOut(),
+      _googleSignIn.signOut(),
+    ]);
   }
 
-  // Update user profile
   Future<void> updateUserProfile({
     String? displayName,
     String? photoURL,
   }) async {
-    try {
-      await currentUser?.updateDisplayName(displayName);
-      await currentUser?.updatePhotoURL(photoURL);
-    } catch (e) {
-      rethrow;
-    }
+    await currentUser?.updateDisplayName(displayName);
+    await currentUser?.updatePhotoURL(photoURL);
+    await currentUser?.reload();
   }
 
-  // Send password reset email
   Future<void> sendPasswordResetEmail(String email) async {
-    try {
-      await _firebaseAuth.sendPasswordResetEmail(email: email);
-    } catch (e) {
-      rethrow;
+    await _firebaseAuth.sendPasswordResetEmail(email: email);
+  }
+
+  Future<void> sendEmailVerification() async {
+    final user = currentUser;
+    if (user != null && !user.emailVerified) {
+      await user.sendEmailVerification();
     }
   }
 
+  Future<bool> reloadUser() async {
+    await currentUser?.reload();
+    return currentUser?.emailVerified ?? false;
+  }
 }

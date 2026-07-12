@@ -59,6 +59,11 @@ final updateUserProfileProvider = FutureProvider.family<void, UpdateUserProfileP
     uid: params.uid,
     displayName: params.displayName,
     photoURL: params.photoURL,
+    phone: params.phone,
+    collegeId: params.collegeId,
+    collegeName: params.collegeName,
+    course: params.course,
+    batchYear: params.batchYear,
     metadata: params.metadata,
   );
 });
@@ -67,12 +72,22 @@ class UpdateUserProfileParams {
   final String uid;
   final String? displayName;
   final String? photoURL;
+  final String? phone;
+  final String? collegeId;
+  final String? collegeName;
+  final String? course;
+  final int? batchYear;
   final Map<String, dynamic>? metadata;
 
   UpdateUserProfileParams({
     required this.uid,
     this.displayName,
     this.photoURL,
+    this.phone,
+    this.collegeId,
+    this.collegeName,
+    this.course,
+    this.batchYear,
     this.metadata,
   });
 }

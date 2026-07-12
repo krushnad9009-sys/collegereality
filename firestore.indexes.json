@@ -1,0 +1,29 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "colleges",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "state", "order": "ASCENDING" },
+        { "fieldPath": "aggregatedRatings.overall", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "colleges",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "city", "order": "ASCENDING" },
+        { "fieldPath": "aggregatedRatings.overall", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "colleges",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "isActive", "order": "ASCENDING" },
+        { "fieldPath": "aggregatedRatings.overall", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

@@ -1,48 +1,71 @@
-import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
+import 'package:flutter/foundation.dart'
+    show defaultTargetPlatform, kIsWeb, TargetPlatform;
 
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
-    return web;
+    if (kIsWeb) {
+      return web;
+    }
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+        return android;
+      case TargetPlatform.iOS:
+        return ios;
+      case TargetPlatform.macOS:
+        return macos;
+      case TargetPlatform.windows:
+        return windows;
+      case TargetPlatform.linux:
+        return web;
+      default:
+        return web;
+    }
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyD...',
-    appId: '1:...:web:...',
-    messagingSenderId: '...',
+    apiKey: 'AIzaSyCo3lhM89dSdcZhSBqdeIZbC1UkFr8ESBg',
+    appId: '1:244446156099:web:bb6c7e0dabe7a5efbf0bf6',
+    messagingSenderId: '244446156099',
     projectId: 'college-reality',
     authDomain: 'college-reality.firebaseapp.com',
-    storageBucket: 'college-reality.appspot.com',
+    storageBucket: 'college-reality.firebasestorage.app',
+    measurementId: 'G-641KD4M03V',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyD...',
-    appId: '1:...:android:...',
-    messagingSenderId: '...',
+    apiKey: 'AIzaSyCF11KTKt0yHRon2McwwYvIRtIgO4qYJ8U',
+    appId: '1:244446156099:android:0471c18323c4bdf5bf0bf6',
+    messagingSenderId: '244446156099',
     projectId: 'college-reality',
-    storageBucket: 'college-reality.appspot.com',
+    storageBucket: 'college-reality.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyD...',
-    appId: '1:...:ios:...',
-    messagingSenderId: '...',
+    apiKey: 'AIzaSyAMF-xYgHtAx4zV17uAI2BAs183GoO3Kdg',
+    appId: '1:244446156099:ios:34c193b0e798f5f0bf0bf6',
+    messagingSenderId: '244446156099',
     projectId: 'college-reality',
-    storageBucket: 'college-reality.appspot.com',
+    storageBucket: 'college-reality.firebasestorage.app',
+    iosBundleId: 'com.example.collegeRealityIndia',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyD...',
-    appId: '1:...:macos:...',
-    messagingSenderId: '...',
+    apiKey: 'AIzaSyAMF-xYgHtAx4zV17uAI2BAs183GoO3Kdg',
+    appId: '1:244446156099:ios:34c193b0e798f5f0bf0bf6',
+    messagingSenderId: '244446156099',
     projectId: 'college-reality',
-    storageBucket: 'college-reality.appspot.com',
+    storageBucket: 'college-reality.firebasestorage.app',
+    iosBundleId: 'com.example.collegeRealityIndia',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyD...',
-    appId: '1:...:windows:...',
-    messagingSenderId: '...',
+    apiKey: 'AIzaSyCo3lhM89dSdcZhSBqdeIZbC1UkFr8ESBg',
+    appId: '1:244446156099:web:e8ebbd6d74d629bdbf0bf6',
+    messagingSenderId: '244446156099',
     projectId: 'college-reality',
-    storageBucket: 'college-reality.appspot.com',
+    authDomain: 'college-reality.firebaseapp.com',
+    storageBucket: 'college-reality.firebasestorage.app',
+    measurementId: 'G-HHS55JNP74',
   );
 }

@@ -5,7 +5,10 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../config/router/route_names.dart';
 import '../../../core/widgets/index.dart';
+import '../../../core/services/preferences_service.dart';
 import '../providers/auth_provider.dart';
+import '../providers/user_provider.dart';
+import '../repositories/user_repository.dart';
 import '../utils/validation_util.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -20,6 +23,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _rememberMe = false;
+  bool _emailLoaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadSavedEmail());
+  }
+
+  Future<void> _loadSavedEmail() async {
+    if (_emailLoaded) return;
+    _emailLoaded = true;
+    final prefs = ref.read(preferencesServiceProvider);
+    final rememberMe = await prefs.getRememberMe();
+    final savedEmail = await prefs.getSavedEmail();
+    if (rememberMe && savedEmail != null && mounted) {
+      setState(() {
+        _rememberMe = true;
+        _emailController.text = savedEmail;
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -39,6 +63,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         _emailController.text.trim(),
         _passwordController.text,
       );
+
+      final prefs = ref.read(preferencesServiceProvider);
+      await prefs.setRememberMe(_rememberMe);
+      if (_rememberMe) {
+        await prefs.saveEmail(_emailController.text.trim());
+      } else {
+        await prefs.clearSavedEmail();
+      }
 
       if (mounted) {
         SnackBarHelper.showSuccessSnackBar(
@@ -61,6 +93,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     try {
       final authNotifier = ref.read(authProvider.notifier);
       await authNotifier.signInWithGoogle();
+
+      final firebaseUser = ref.read(authProvider).user;
+      if (firebaseUser != null) {
+        final userRepository = ref.read(userRepositoryProvider);
+        final exists = await userRepository.userExists(firebaseUser.uid);
+        if (!exists) {
+          await userRepository.createUser(
+            createUserModelFromFirebaseUser(firebaseUser),
+          );
+        }
+      }
 
       if (mounted) {
         SnackBarHelper.showSuccessSnackBar(
@@ -172,9 +215,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     TextLink(
                       text: 'Forgot password?',
                       fontSize: 13,
-                      onPressed: () {
-                        // TODO: Navigate to forgot password screen
-                      },
+                      onPressed: () => context.go(RouteNames.forgotPassword),
                     ),
                   ],
                 ),

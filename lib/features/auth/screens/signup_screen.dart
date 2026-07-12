@@ -80,7 +80,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       if (mounted) {
         SnackBarHelper.showSuccessSnackBar(
           context,
-          message: 'Account created successfully!',
+          message:
+              'Account created! Please verify your email from your inbox.',
         );
         context.go(RouteNames.home);
       }

@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../config/theme/app_theme.dart';
+import '../../../config/router/route_names.dart';
 import '../../../core/widgets/index.dart';
+import '../../auth/providers/auth_provider.dart';
 
-class HomeHeaderWidget extends StatelessWidget {
+class HomeHeaderWidget extends ConsumerWidget {
   final User user;
 
   const HomeHeaderWidget({
@@ -13,9 +17,10 @@ class HomeHeaderWidget extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final displayName = user.displayName ?? 'Student';
-    final firstLetter = displayName.isNotEmpty ? displayName[0].toUpperCase() : 'S';
+    final firstLetter =
+        displayName.isNotEmpty ? displayName[0].toUpperCase() : 'S';
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -49,9 +54,7 @@ class HomeHeaderWidget extends StatelessWidget {
         Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: () {
-              _showProfileMenu(context);
-            },
+            onTap: () => _showProfileMenu(context, ref),
             borderRadius: BorderRadius.circular(50),
             child: Container(
               width: 48,
@@ -96,7 +99,7 @@ class HomeHeaderWidget extends StatelessWidget {
     );
   }
 
-  void _showProfileMenu(BuildContext context) {
+  void _showProfileMenu(BuildContext context, WidgetRef ref) {
     showModalBottomSheet(
       context: context,
       builder: (context) {
@@ -119,10 +122,15 @@ class HomeHeaderWidget extends StatelessWidget {
                 title: const Text('My Profile'),
                 onTap: () {
                   Navigator.pop(context);
-                  SnackBarHelper.showInfoSnackBar(
-                    context,
-                    message: 'Profile page coming soon!',
-                  );
+                  context.go(RouteNames.profile);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.search),
+                title: const Text('Search Colleges'),
+                onTap: () {
+                  Navigator.pop(context);
+                  context.go(RouteNames.collegeSearch);
                 },
               ),
               ListTile(
@@ -132,29 +140,7 @@ class HomeHeaderWidget extends StatelessWidget {
                   Navigator.pop(context);
                   SnackBarHelper.showInfoSnackBar(
                     context,
-                    message: 'Favorites page coming soon!',
-                  );
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.history),
-                title: const Text('My Reviews'),
-                onTap: () {
-                  Navigator.pop(context);
-                  SnackBarHelper.showInfoSnackBar(
-                    context,
-                    message: 'My reviews page coming soon!',
-                  );
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.settings_outlined),
-                title: const Text('Settings'),
-                onTap: () {
-                  Navigator.pop(context);
-                  SnackBarHelper.showInfoSnackBar(
-                    context,
-                    message: 'Settings page coming soon!',
+                    message: 'Favorites coming in Phase 6!',
                   );
                 },
               ),
@@ -167,7 +153,7 @@ class HomeHeaderWidget extends StatelessWidget {
                 ),
                 onTap: () {
                   Navigator.pop(context);
-                  _showSignOutConfirmation(context);
+                  _showSignOutConfirmation(context, ref);
                 },
               ),
               const SizedBox(height: 16),
@@ -178,17 +164,19 @@ class HomeHeaderWidget extends StatelessWidget {
     );
   }
 
-  void _showSignOutConfirmation(BuildContext context) {
+  void _showSignOutConfirmation(BuildContext context, WidgetRef ref) {
     DialogHelper.showConfirmDialog(
       context,
       title: 'Sign Out',
       message: 'Are you sure you want to sign out?',
       confirmText: 'Yes, Sign Out',
       cancelText: 'Cancel',
-    ).then((confirmed) {
-      if (confirmed) {
-        // Sign out logic will be implemented here
-        // ref.read(authProvider.notifier).signOut();
+    ).then((confirmed) async {
+      if (confirmed == true && context.mounted) {
+        await ref.read(authProvider.notifier).signOut();
+        if (context.mounted) {
+          context.go(RouteNames.login);
+        }
       }
     });
   }

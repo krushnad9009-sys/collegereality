@@ -1,5 +1,4 @@
 // Manual JSON serialization without code generation
-// To regenerate: flutter pub run build_runner build
 
 class UserModel {
   final String uid;
@@ -7,10 +6,15 @@ class UserModel {
   final String? phone;
   final String? displayName;
   final String? photoURL;
-  final String userType; // 'student' or 'admin'
+  final String userType;
   final bool isVerified;
   final bool isEmailVerified;
   final bool isPhoneVerified;
+  final String? collegeId;
+  final String? collegeName;
+  final String? course;
+  final int? batchYear;
+  final List<String> favoriteCollegeIds;
   final DateTime createdAt;
   final DateTime updatedAt;
   final Map<String, dynamic>? metadata;
@@ -25,12 +29,16 @@ class UserModel {
     this.isVerified = false,
     this.isEmailVerified = false,
     this.isPhoneVerified = false,
+    this.collegeId,
+    this.collegeName,
+    this.course,
+    this.batchYear,
+    this.favoriteCollegeIds = const [],
     required this.createdAt,
     required this.updatedAt,
     this.metadata,
   });
 
-  // Manual fromJson implementation
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
       uid: json['uid'] as String,
@@ -42,6 +50,14 @@ class UserModel {
       isVerified: json['isVerified'] as bool? ?? false,
       isEmailVerified: json['isEmailVerified'] as bool? ?? false,
       isPhoneVerified: json['isPhoneVerified'] as bool? ?? false,
+      collegeId: json['collegeId'] as String?,
+      collegeName: json['collegeName'] as String?,
+      course: json['course'] as String?,
+      batchYear: json['batchYear'] as int?,
+      favoriteCollegeIds: (json['favoriteCollegeIds'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
       createdAt: json['createdAt'] is DateTime
           ? json['createdAt'] as DateTime
           : DateTime.parse(json['createdAt'] as String),
@@ -52,7 +68,6 @@ class UserModel {
     );
   }
 
-  // Manual toJson implementation
   Map<String, dynamic> toJson() {
     return {
       'uid': uid,
@@ -64,6 +79,11 @@ class UserModel {
       'isVerified': isVerified,
       'isEmailVerified': isEmailVerified,
       'isPhoneVerified': isPhoneVerified,
+      'collegeId': collegeId,
+      'collegeName': collegeName,
+      'course': course,
+      'batchYear': batchYear,
+      'favoriteCollegeIds': favoriteCollegeIds,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
       'metadata': metadata,
@@ -80,6 +100,11 @@ class UserModel {
     bool? isVerified,
     bool? isEmailVerified,
     bool? isPhoneVerified,
+    String? collegeId,
+    String? collegeName,
+    String? course,
+    int? batchYear,
+    List<String>? favoriteCollegeIds,
     DateTime? createdAt,
     DateTime? updatedAt,
     Map<String, dynamic>? metadata,
@@ -94,6 +119,11 @@ class UserModel {
       isVerified: isVerified ?? this.isVerified,
       isEmailVerified: isEmailVerified ?? this.isEmailVerified,
       isPhoneVerified: isPhoneVerified ?? this.isPhoneVerified,
+      collegeId: collegeId ?? this.collegeId,
+      collegeName: collegeName ?? this.collegeName,
+      course: course ?? this.course,
+      batchYear: batchYear ?? this.batchYear,
+      favoriteCollegeIds: favoriteCollegeIds ?? this.favoriteCollegeIds,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       metadata: metadata ?? this.metadata,

@@ -60,6 +60,11 @@ class FirestoreUserService {
     required String uid,
     String? displayName,
     String? photoURL,
+    String? phone,
+    String? collegeId,
+    String? collegeName,
+    String? course,
+    int? batchYear,
     Map<String, dynamic>? metadata,
   }) async {
     try {
@@ -72,6 +77,21 @@ class FirestoreUserService {
       }
       if (photoURL != null) {
         updateData['photoURL'] = photoURL;
+      }
+      if (phone != null) {
+        updateData['phone'] = phone;
+      }
+      if (collegeId != null) {
+        updateData['collegeId'] = collegeId;
+      }
+      if (collegeName != null) {
+        updateData['collegeName'] = collegeName;
+      }
+      if (course != null) {
+        updateData['course'] = course;
+      }
+      if (batchYear != null) {
+        updateData['batchYear'] = batchYear;
       }
       if (metadata != null) {
         updateData['metadata'] = metadata;
