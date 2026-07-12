@@ -6,6 +6,7 @@ class RouteNames {
   static const String forgotPassword = '/forgot-password';
   static const String home = '/home';
   static const String collegeSearch = '/college-search';
+  static const String assistant = '/assistant';
   static const String collegeDetails = '/college-details/:id';
   static const String writeReview = '/college-details/:id/write-review';
   static const String profile = '/profile';
@@ -43,4 +44,21 @@ class RouteNames {
   static String communityChatPath(String id) => '/community/chat/$id';
   static String studentProfilePath(String uid) => '/student/$uid';
   static String adminCollegeEditPath(String id) => '/admin/colleges/$id/edit';
+
+  static String assistantPath({
+    String? query,
+    String? collegeId,
+    String? collegeName,
+  }) {
+    final params = <String, String>{};
+    if (query != null && query.isNotEmpty) params['q'] = query;
+    if (collegeId != null && collegeId.isNotEmpty) {
+      params['collegeId'] = collegeId;
+    }
+    if (collegeName != null && collegeName.isNotEmpty) {
+      params['collegeName'] = collegeName;
+    }
+    if (params.isEmpty) return assistant;
+    return Uri(path: assistant, queryParameters: params).toString();
+  }
 }

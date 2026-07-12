@@ -114,6 +114,24 @@ class _CollegeDetailScreenState extends ConsumerState<CollegeDetailScreen> {
                     icon: const Icon(Icons.arrow_back_ios_new, size: 18),
                     onPressed: () => context.go(RouteNames.home),
                   ),
+                  actions: [
+                    TextButton.icon(
+                      onPressed: () => context.go(
+                        RouteNames.assistantPath(
+                          collegeId: college.id,
+                          collegeName: college.name,
+                        ),
+                      ),
+                      icon: const Icon(Icons.auto_awesome_rounded, size: 18),
+                      label: Text(
+                        'Ask AI',
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  ],
                   flexibleSpace: FlexibleSpaceBar(
                     title: Text(
                       college.name,

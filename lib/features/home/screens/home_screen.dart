@@ -10,6 +10,7 @@ import '../../../core/widgets/skeleton_loader.dart';
 import '../../communication/widgets/incoming_call_banner.dart';
 import '../widgets/home_header_widget.dart';
 import '../widgets/college_card_widget.dart';
+import '../../assistant/widgets/ai_search_bar.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -50,6 +51,8 @@ class HomeScreen extends ConsumerWidget {
                           _EmailVerificationBanner(userId: currentUser.uid),
                         ],
                         const SizedBox(height: 24),
+                        const AiSearchBar(),
+                        const SizedBox(height: 12),
                         _SearchBar(onTap: () => context.go(RouteNames.collegeSearch)),
                         const SizedBox(height: 32),
                         Text(

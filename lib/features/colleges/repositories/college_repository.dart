@@ -1,9 +1,11 @@
 import '../models/college_model.dart';
 import '../services/firestore_college_service.dart';
+import '../../../core/constants/college_constants.dart';
 
 abstract class CollegeRepository {
-  Future<List<CollegeModel>> getFeaturedColleges();
+  Future<List<CollegeModel>> getFeaturedColleges({int limit});
   Future<CollegeModel?> getCollegeById(String id);
+  Future<List<CollegeModel>> getCollegesByIds(List<String> ids);
   Future<CollegeSearchPage> searchColleges({
     String? query,
     String? state,
@@ -27,12 +29,16 @@ class CollegeRepositoryImpl implements CollegeRepository {
   CollegeRepositoryImpl(this._service);
 
   @override
-  Future<List<CollegeModel>> getFeaturedColleges() =>
-      _service.getFeaturedColleges();
+  Future<List<CollegeModel>> getFeaturedColleges({int limit = CollegeConstants.featuredLimit}) =>
+      _service.getFeaturedColleges(limit: limit);
 
   @override
   Future<CollegeModel?> getCollegeById(String id) =>
       _service.getCollegeById(id);
+
+  @override
+  Future<List<CollegeModel>> getCollegesByIds(List<String> ids) =>
+      _service.getCollegesByIds(ids);
 
   @override
   Future<CollegeSearchPage> searchColleges({

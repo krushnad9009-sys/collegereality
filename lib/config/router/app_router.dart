@@ -10,6 +10,7 @@ import '../../features/home/screens/home_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
 import '../../features/colleges/screens/college_search_screen.dart';
 import '../../features/colleges/screens/college_detail_screen.dart';
+import '../../features/assistant/screens/ai_assistant_screen.dart';
 import '../../features/reviews/screens/write_review_screen.dart';
 import '../../features/reviews/screens/my_reviews_screen.dart';
 import '../../features/admin/screens/admin_dashboard_screen.dart';
@@ -111,6 +112,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RouteNames.myReviews,
         builder: (context, state) => const MyReviewsScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.assistant,
+        builder: (context, state) {
+          final query = state.uri.queryParameters['q'];
+          final collegeId = state.uri.queryParameters['collegeId'];
+          final collegeName = state.uri.queryParameters['collegeName'];
+          return AiAssistantScreen(
+            initialQuery: query,
+            anchorCollegeId: collegeId,
+            anchorCollegeName: collegeName,
+          );
+        },
       ),
       GoRoute(
         path: RouteNames.collegeSearch,

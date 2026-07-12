@@ -36,6 +36,28 @@ class FirestoreCollegeService {
     return CollegeModel.fromJson(doc.data()!, docId: doc.id);
   }
 
+  Future<List<CollegeModel>> getCollegesByIds(List<String> ids) async {
+    if (ids.isEmpty) return [];
+    final unique = ids.toSet().toList();
+    final results = <CollegeModel>[];
+    const chunkSize = 30;
+    for (var i = 0; i < unique.length; i += chunkSize) {
+      final chunk = unique.skip(i).take(chunkSize).toList();
+      final futures = chunk.map((id) => _colleges.doc(id).get());
+      final docs = await Future.wait(futures);
+      for (final doc in docs) {
+        if (doc.exists) {
+          results.add(CollegeModel.fromJson(doc.data()!, docId: doc.id));
+        }
+      }
+    }
+    final order = {for (var i = 0; i < unique.length; i++) unique[i]: i};
+    results.sort(
+      (a, b) => (order[a.id] ?? 999).compareTo(order[b.id] ?? 999),
+    );
+    return results;
+  }
+
   Future<CollegeDirectoryMeta> getDirectoryMeta() async {
     final doc = await _firestore
         .collection(FirestoreConstants.metaCollection)
