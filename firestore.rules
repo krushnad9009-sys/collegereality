@@ -20,10 +20,22 @@ service cloud.firestore {
         .hasOnly(['aggregatedRatings', 'reviewCount', 'updatedAt']);
     }
 
+    function isGuideStatsOnlyUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys()
+        .hasOnly(['guideStats', 'updatedAt']);
+    }
+
+    function isCallParticipant(sessionId) {
+      let session = get(/databases/$(database)/documents/call_sessions/$(sessionId)).data;
+      return isAuthenticated() &&
+        (session.callerId == request.auth.uid || session.calleeId == request.auth.uid);
+    }
+
     match /users/{userId} {
       allow read: if isAuthenticated();
       allow create: if isOwner(userId);
-      allow update, delete: if isOwner(userId) || isAdmin();
+      allow update, delete: if isOwner(userId) || isAdmin() ||
+        (isAuthenticated() && isGuideStatsOnlyUpdate());
     }
 
     match /colleges/{collegeId} {
@@ -44,6 +56,41 @@ service cloud.firestore {
         request.resource.data.userId == request.auth.uid;
       allow update, delete: if isAuthenticated() &&
         (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    match /call_sessions/{sessionId} {
+      allow read: if isAuthenticated() &&
+        (resource.data.callerId == request.auth.uid ||
+         resource.data.calleeId == request.auth.uid);
+      allow create: if isAuthenticated() &&
+        request.resource.data.callerId == request.auth.uid;
+      allow update: if isAuthenticated() &&
+        (resource.data.callerId == request.auth.uid ||
+         resource.data.calleeId == request.auth.uid);
+    }
+
+    match /interaction_ratings/{ratingId} {
+      allow read: if isAuthenticated() &&
+        (resource.data.raterId == request.auth.uid ||
+         resource.data.rateeId == request.auth.uid ||
+         isAdmin());
+      allow create: if isAuthenticated() &&
+        request.resource.data.raterId == request.auth.uid;
+    }
+
+    match /user_blocks/{blockId} {
+      allow read: if isAuthenticated() &&
+        resource.data.blockerId == request.auth.uid;
+      allow create: if isAuthenticated() &&
+        request.resource.data.blockerId == request.auth.uid;
+    }
+
+    match /user_reports/{reportId} {
+      allow read: if isAdmin() ||
+        (isAuthenticated() && resource.data.reporterId == request.auth.uid);
+      allow create: if isAuthenticated() &&
+        request.resource.data.reporterId == request.auth.uid;
+      allow update: if isAdmin();
     }
 
     match /{document=**} {

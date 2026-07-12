@@ -15,6 +15,10 @@ class RouteNames {
   static const String adminColleges = '/admin/colleges';
   static const String adminReviews = '/admin/reviews';
   static const String adminUsers = '/admin/users';
+  static const String adminCommunication = '/admin/communication';
+  static const String guidesDirectory = '/guides';
+  static const String guideProfile = '/guides/:uid';
+  static const String activeCall = '/call/:sessionId';
 
   static String collegeDetailsPath(String id, {String? tab}) {
     final path = '/college-details/$id';
@@ -23,4 +27,6 @@ class RouteNames {
   }
   static String writeReviewPath(String collegeId) =>
       '/college-details/$collegeId/write-review';
+  static String guideProfilePath(String uid) => '/guides/$uid';
+  static String activeCallPath(String sessionId) => '/call/$sessionId';
 }

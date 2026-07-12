@@ -1,4 +1,6 @@
 // Manual JSON serialization without code generation
+import '../../communication/models/guide_stats_model.dart';
+import '../../communication/utils/guide_stats_calculator.dart';
 
 class UserModel {
   final String uid;
@@ -15,6 +17,11 @@ class UserModel {
   final String? course;
   final int? batchYear;
   final List<String> favoriteCollegeIds;
+  final List<String> languagesKnown;
+  final String subscriptionTier;
+  final String anonymousGuideAlias;
+  final GuideStatsModel guideStats;
+  final GuideCommunicationSettings communicationSettings;
   final DateTime createdAt;
   final DateTime updatedAt;
   final Map<String, dynamic>? metadata;
@@ -34,14 +41,24 @@ class UserModel {
     this.course,
     this.batchYear,
     this.favoriteCollegeIds = const [],
+    this.languagesKnown = const [],
+    this.subscriptionTier = 'free',
+    String? anonymousGuideAlias,
+    GuideStatsModel? guideStats,
+    GuideCommunicationSettings? communicationSettings,
     required this.createdAt,
     required this.updatedAt,
     this.metadata,
-  });
+  })  : anonymousGuideAlias =
+            anonymousGuideAlias ?? buildAnonymousGuideAlias(uid),
+        guideStats = guideStats ?? const GuideStatsModel(),
+        communicationSettings =
+            communicationSettings ?? const GuideCommunicationSettings();
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
+    final uid = json['uid'] as String;
     return UserModel(
-      uid: json['uid'] as String,
+      uid: uid,
       email: json['email'] as String,
       phone: json['phone'] as String?,
       displayName: json['displayName'] as String?,
@@ -53,11 +70,23 @@ class UserModel {
       collegeId: json['collegeId'] as String?,
       collegeName: json['collegeName'] as String?,
       course: json['course'] as String?,
-      batchYear: json['batchYear'] as int?,
+      batchYear: (json['batchYear'] as num?)?.toInt(),
       favoriteCollegeIds: (json['favoriteCollegeIds'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??
           [],
+      languagesKnown: (json['languagesKnown'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
+      subscriptionTier: json['subscriptionTier'] as String? ?? 'free',
+      anonymousGuideAlias: json['anonymousGuideAlias'] as String?,
+      guideStats: GuideStatsModel.fromJson(
+        json['guideStats'] as Map<String, dynamic>?,
+      ),
+      communicationSettings: GuideCommunicationSettings.fromJson(
+        json['communicationSettings'] as Map<String, dynamic>?,
+      ),
       createdAt: json['createdAt'] is DateTime
           ? json['createdAt'] as DateTime
           : DateTime.parse(json['createdAt'] as String),
@@ -84,6 +113,11 @@ class UserModel {
       'course': course,
       'batchYear': batchYear,
       'favoriteCollegeIds': favoriteCollegeIds,
+      'languagesKnown': languagesKnown,
+      'subscriptionTier': subscriptionTier,
+      'anonymousGuideAlias': anonymousGuideAlias,
+      'guideStats': guideStats.toJson(),
+      'communicationSettings': communicationSettings.toJson(),
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
       'metadata': metadata,
@@ -105,6 +139,11 @@ class UserModel {
     String? course,
     int? batchYear,
     List<String>? favoriteCollegeIds,
+    List<String>? languagesKnown,
+    String? subscriptionTier,
+    String? anonymousGuideAlias,
+    GuideStatsModel? guideStats,
+    GuideCommunicationSettings? communicationSettings,
     DateTime? createdAt,
     DateTime? updatedAt,
     Map<String, dynamic>? metadata,
@@ -124,6 +163,12 @@ class UserModel {
       course: course ?? this.course,
       batchYear: batchYear ?? this.batchYear,
       favoriteCollegeIds: favoriteCollegeIds ?? this.favoriteCollegeIds,
+      languagesKnown: languagesKnown ?? this.languagesKnown,
+      subscriptionTier: subscriptionTier ?? this.subscriptionTier,
+      anonymousGuideAlias: anonymousGuideAlias ?? this.anonymousGuideAlias,
+      guideStats: guideStats ?? this.guideStats,
+      communicationSettings:
+          communicationSettings ?? this.communicationSettings,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       metadata: metadata ?? this.metadata,

@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user_model.dart';
+import '../../communication/models/guide_stats_model.dart';
 import '../services/firestore_user_service.dart';
 
 abstract class UserRepository {
@@ -15,6 +16,9 @@ abstract class UserRepository {
     String? collegeName,
     String? course,
     int? batchYear,
+    List<String>? languagesKnown,
+    GuideCommunicationSettings? communicationSettings,
+    String? subscriptionTier,
     Map<String, dynamic>? metadata,
   });
   Future<void> verifyEmail(String uid);
@@ -54,6 +58,9 @@ class UserRepositoryImpl implements UserRepository {
     String? collegeName,
     String? course,
     int? batchYear,
+    List<String>? languagesKnown,
+    GuideCommunicationSettings? communicationSettings,
+    String? subscriptionTier,
     Map<String, dynamic>? metadata,
   }) async {
     await _firestoreUserService.updateUserProfile(
@@ -65,6 +72,9 @@ class UserRepositoryImpl implements UserRepository {
       collegeName: collegeName,
       course: course,
       batchYear: batchYear,
+      languagesKnown: languagesKnown,
+      communicationSettings: communicationSettings,
+      subscriptionTier: subscriptionTier,
       metadata: metadata,
     );
   }

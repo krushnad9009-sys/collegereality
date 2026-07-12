@@ -4,4 +4,10 @@ class FirestoreConstants {
   static const String reviewsCollection = 'reviews';
   static const String metaCollection = '_meta';
   static const String collegesSeededDoc = 'collegesSeeded';
+
+  static const String callSessionsCollection = 'call_sessions';
+  static const String interactionRatingsCollection = 'interaction_ratings';
+  static const String userBlocksCollection = 'user_blocks';
+  static const String userReportsCollection = 'user_reports';
+  static const String callSignalingSubcollection = 'signaling';
 }

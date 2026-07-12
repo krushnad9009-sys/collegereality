@@ -11,6 +11,8 @@ import '../../auth/providers/auth_provider.dart';
 import '../../auth/providers/user_provider.dart';
 import '../../auth/utils/validation_util.dart';
 import '../../colleges/providers/college_provider.dart';
+import '../../communication/models/guide_stats_model.dart';
+import '../../communication/widgets/language_multi_select_field.dart';
 import '../widgets/phone_verification_section.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -27,6 +29,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   String? _selectedCollegeId;
   String? _selectedCollegeName;
   int? _batchYear;
+  List<String> _languagesKnown = [];
+  GuideCommunicationSettings _communicationSettings =
+      const GuideCommunicationSettings();
   bool _isPhoneVerified = false;
   String? _verifiedPhone;
   bool _isSaving = false;
@@ -44,6 +49,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     _batchYear = user.batchYear;
     _selectedCollegeId = user.collegeId;
     _selectedCollegeName = user.collegeName;
+    _languagesKnown = List<String>.from(user.languagesKnown);
+    _communicationSettings = user.communicationSettings;
     _isPhoneVerified = user.isPhoneVerified;
     _verifiedPhone = user.phone;
   }
@@ -67,6 +74,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ? null
                 : _courseController.text.trim(),
             batchYear: _batchYear,
+            languagesKnown: _languagesKnown,
+            communicationSettings: _communicationSettings,
           );
 
       ref.invalidate(currentUserDetailProvider);
@@ -344,6 +353,76 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     value: _batchYear,
                     onChanged: (year) => setState(() => _batchYear = year),
                   ),
+                  const SizedBox(height: 16),
+                  LanguageMultiSelectField(
+                    selected: _languagesKnown,
+                    onChanged: (langs) =>
+                        setState(() => _languagesKnown = langs),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'Guide Settings',
+                    style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Help students anonymously. Your phone and email stay private.',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: AppTheme.gray600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Available as a guide'),
+                    subtitle: Text(
+                      userDetail?.anonymousGuideAlias ?? 'Guide #----',
+                    ),
+                    value: _communicationSettings.isGuideAvailable,
+                    onChanged: (value) {
+                      setState(() {
+                        _communicationSettings = _communicationSettings
+                            .copyWith(isGuideAvailable: value);
+                      });
+                    },
+                  ),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Allow video calls'),
+                    value: _communicationSettings.videoCallsEnabled,
+                    onChanged: (value) {
+                      setState(() {
+                        _communicationSettings = _communicationSettings
+                            .copyWith(videoCallsEnabled: value);
+                      });
+                    },
+                  ),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Camera on by default'),
+                    value: _communicationSettings.cameraDefaultOn,
+                    onChanged: (value) {
+                      setState(() {
+                        _communicationSettings = _communicationSettings
+                            .copyWith(cameraDefaultOn: value);
+                      });
+                    },
+                  ),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Blur background on video'),
+                    value: _communicationSettings.blurBackground,
+                    onChanged: (value) {
+                      setState(() {
+                        _communicationSettings = _communicationSettings
+                            .copyWith(blurBackground: value);
+                      });
+                    },
+                  ),
                   const SizedBox(height: 32),
                   PrimaryButton(
                     label: 'Save Profile',
@@ -351,6 +430,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     onPressed: () => _saveProfile(authUser.uid),
                   ),
                   const SizedBox(height: 16),
+                  OutlinedButton.icon(
+                    onPressed: () => context.go(RouteNames.guidesDirectory),
+                    icon: const Icon(Icons.support_agent_outlined),
+                    label: const Text('Browse Guides'),
+                  ),
+                  const SizedBox(height: 12),
                   OutlinedButton.icon(
                     onPressed: () => context.go(RouteNames.myReviews),
                     icon: const Icon(Icons.rate_review_outlined),

@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user_model.dart';
+import '../../communication/models/guide_stats_model.dart';
 
 class FirestoreUserService {
   static const String usersCollection = 'users';
@@ -65,6 +66,9 @@ class FirestoreUserService {
     String? collegeName,
     String? course,
     int? batchYear,
+    List<String>? languagesKnown,
+    GuideCommunicationSettings? communicationSettings,
+    String? subscriptionTier,
     Map<String, dynamic>? metadata,
   }) async {
     try {
@@ -92,6 +96,15 @@ class FirestoreUserService {
       }
       if (batchYear != null) {
         updateData['batchYear'] = batchYear;
+      }
+      if (languagesKnown != null) {
+        updateData['languagesKnown'] = languagesKnown;
+      }
+      if (communicationSettings != null) {
+        updateData['communicationSettings'] = communicationSettings.toJson();
+      }
+      if (subscriptionTier != null) {
+        updateData['subscriptionTier'] = subscriptionTier;
       }
       if (metadata != null) {
         updateData['metadata'] = metadata;

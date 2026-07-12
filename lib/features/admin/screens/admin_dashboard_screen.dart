@@ -85,6 +85,12 @@ class AdminDashboardScreen extends ConsumerWidget {
             subtitle: 'View registered students',
             onTap: () => context.go(RouteNames.adminUsers),
           ),
+          _AdminMenuTile(
+            icon: Icons.report_outlined,
+            title: 'Communication Reports',
+            subtitle: 'Moderate call and chat reports',
+            onTap: () => context.go(RouteNames.adminCommunication),
+          ),
         ],
       ),
     );

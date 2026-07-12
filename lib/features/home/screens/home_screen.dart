@@ -7,6 +7,7 @@ import '../../../config/router/route_names.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../colleges/providers/college_provider.dart';
 import '../../../core/widgets/skeleton_loader.dart';
+import '../../communication/widgets/incoming_call_banner.dart';
 import '../widgets/home_header_widget.dart';
 import '../widgets/college_card_widget.dart';
 
@@ -44,6 +45,7 @@ class HomeScreen extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         HomeHeaderWidget(user: currentUser),
+                        const IncomingCallBanner(),
                         if (!currentUser.emailVerified) ...[
                           const SizedBox(height: 12),
                           _EmailVerificationBanner(userId: currentUser.uid),
@@ -64,6 +66,13 @@ class HomeScreen extends ConsumerWidget {
                           child: ListView(
                             scrollDirection: Axis.horizontal,
                             children: [
+                              _QuickAccessCard(
+                                icon: Icons.support_agent_rounded,
+                                label: 'Guides',
+                                color: AppTheme.primaryColor,
+                                onTap: () => context.go(RouteNames.guidesDirectory),
+                              ),
+                              const SizedBox(width: 12),
                               _QuickAccessCard(
                                 icon: Icons.location_city_rounded,
                                 label: 'By City',

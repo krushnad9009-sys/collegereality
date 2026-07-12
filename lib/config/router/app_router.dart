@@ -17,6 +17,10 @@ import '../../features/admin/screens/admin_colleges_screen.dart';
 import '../../features/admin/screens/admin_reviews_screen.dart';
 import '../../features/admin/screens/admin_users_screen.dart';
 import '../../features/admin/providers/admin_provider.dart';
+import '../../features/admin/screens/admin_communication_screen.dart';
+import '../../features/communication/screens/guides_directory_screen.dart';
+import '../../features/communication/screens/guide_public_profile_screen.dart';
+import '../../features/communication/screens/active_call_screen.dart';
 import 'route_names.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -133,6 +137,28 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RouteNames.adminUsers,
         builder: (context, state) => const AdminUsersScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.adminCommunication,
+        builder: (context, state) => const AdminCommunicationScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.guidesDirectory,
+        builder: (context, state) => const GuidesDirectoryScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.guideProfile,
+        builder: (context, state) {
+          final uid = state.pathParameters['uid']!;
+          return GuidePublicProfileScreen(guideUid: uid);
+        },
+      ),
+      GoRoute(
+        path: RouteNames.activeCall,
+        builder: (context, state) {
+          final sessionId = state.pathParameters['sessionId']!;
+          return ActiveCallScreen(sessionId: sessionId);
+        },
       ),
     ],
   );
