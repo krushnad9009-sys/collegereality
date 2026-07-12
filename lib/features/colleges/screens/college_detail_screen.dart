@@ -5,6 +5,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
+import '../../reviews/providers/review_provider.dart';
+import '../../reviews/widgets/review_card_widget.dart';
+import '../../reviews/widgets/star_rating_widget.dart';
 import '../models/college_model.dart';
 import '../providers/college_provider.dart';
 
@@ -35,8 +38,15 @@ class CollegeDetailScreen extends ConsumerWidget {
         }
 
         return DefaultTabController(
-          length: 4,
+          length: 7,
           child: Scaffold(
+            floatingActionButton: FloatingActionButton.extended(
+              onPressed: () => context.go(
+                '${RouteNames.writeReviewPath(college.id)}?name=${Uri.encodeComponent(college.name)}',
+              ),
+              icon: const Icon(Icons.rate_review),
+              label: const Text('Write Review'),
+            ),
             body: NestedScrollView(
               headerSliverBuilder: (context, innerBoxIsScrolled) => [
                 SliverAppBar(
@@ -91,8 +101,11 @@ class CollegeDetailScreen extends ConsumerWidget {
                       tabs: const [
                         Tab(text: 'Overview'),
                         Tab(text: 'Placements'),
-                        Tab(text: 'Ratings'),
+                        Tab(text: 'Faculty'),
+                        Tab(text: 'Hostel'),
                         Tab(text: 'Fees'),
+                        Tab(text: 'Ratings'),
+                        Tab(text: 'Reviews'),
                       ],
                     ),
                   ),
@@ -102,8 +115,11 @@ class CollegeDetailScreen extends ConsumerWidget {
                 children: [
                   _OverviewTab(college: college),
                   _PlacementsTab(college: college),
-                  _RatingsTab(college: college),
+                  _FacultyTab(college: college),
+                  _HostelTab(college: college),
                   _FeesTab(college: college, currency: currency),
+                  _RatingsTab(college: college),
+                  _ReviewsTab(collegeId: college.id),
                 ],
               ),
             ),
@@ -289,6 +305,226 @@ class _PlacementsTab extends StatelessWidget {
   }
 }
 
+class _FacultyTab extends StatelessWidget {
+  final CollegeModel college;
+
+  const _FacultyTab({required this.college});
+
+  @override
+  Widget build(BuildContext context) {
+    final ratings = college.aggregatedRatings;
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        _SectionRatingHeader(
+          title: 'Faculty & Academics',
+          rating: ratings.faculty,
+          icon: Icons.person_outline,
+        ),
+        const SizedBox(height: 16),
+        _RatingBar(label: 'Faculty Quality', value: ratings.faculty),
+        _RatingBar(label: 'Infrastructure', value: ratings.infrastructure),
+        _RatingBar(label: 'Campus Life', value: ratings.campusLife),
+        const SizedBox(height: 16),
+        _InfoCard(
+          title: 'Courses Offered',
+          content: college.courses.join(', '),
+          icon: Icons.menu_book_outlined,
+        ),
+        _InfoCard(
+          title: 'College Type',
+          content: college.type.toUpperCase(),
+          icon: Icons.account_balance_outlined,
+        ),
+      ],
+    );
+  }
+}
+
+class _HostelTab extends StatelessWidget {
+  final CollegeModel college;
+
+  const _HostelTab({required this.college});
+
+  @override
+  Widget build(BuildContext context) {
+    final ratings = college.aggregatedRatings;
+    final currency = NumberFormat.compactCurrency(locale: 'en_IN', symbol: '₹');
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        _SectionRatingHeader(
+          title: 'Hostel & Accommodation',
+          rating: ratings.hostel,
+          icon: Icons.hotel_outlined,
+        ),
+        const SizedBox(height: 16),
+        _RatingBar(label: 'Hostel Quality', value: ratings.hostel),
+        const SizedBox(height: 16),
+        _StatCard(
+          label: 'Hostel Fee (Annual)',
+          value: currency.format(college.fees.hostelAnnual),
+          icon: Icons.hotel_outlined,
+          color: AppTheme.accentColor,
+        ),
+        const SizedBox(height: 12),
+        _InfoCard(
+          title: 'Hostel Notes',
+          content: ratings.hostel > 0
+              ? 'Rating based on ${college.reviewCount} student reviews.'
+              : 'No hostel reviews yet. Be the first to review!',
+          icon: Icons.info_outline,
+        ),
+      ],
+    );
+  }
+}
+
+class _ReviewsTab extends ConsumerWidget {
+  final String collegeId;
+
+  const _ReviewsTab({required this.collegeId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final reviewsAsync = ref.watch(collegeReviewsProvider(collegeId));
+
+    return reviewsAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text('Failed to load reviews: $e')),
+      data: (reviews) {
+        if (reviews.isEmpty) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.rate_review_outlined,
+                      size: 64, color: AppTheme.gray400),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No reviews yet',
+                    style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Be the first to share your experience!',
+                    style: GoogleFonts.poppins(color: AppTheme.gray500),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: reviews.length,
+          itemBuilder: (context, index) {
+            final review = reviews[index];
+            return ReviewCardWidget(
+              review: review,
+              onLike: () async {
+                await ref.read(reviewRepositoryProvider).likeReview(review.id);
+                ref.invalidate(collegeReviewsProvider(collegeId));
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+class _SectionRatingHeader extends StatelessWidget {
+  final String title;
+  final double rating;
+  final IconData icon;
+
+  const _SectionRatingHeader({
+    required this.title,
+    required this.rating,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.primaryColor.withValues(alpha: 0.1),
+            AppTheme.secondaryColor.withValues(alpha: 0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: AppTheme.primaryColor, size: 32),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              title,
+              style: GoogleFonts.poppins(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          StarRatingDisplay(rating: rating),
+        ],
+      ),
+    );
+  }
+}
+
+class _RatingBar extends StatelessWidget {
+  final String label;
+  final double value;
+
+  const _RatingBar({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(label, style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+              Text(
+                value > 0 ? '${value.toStringAsFixed(1)}/5' : 'N/A',
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.primaryColor,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          LinearProgressIndicator(
+            value: value > 0 ? value / 5 : 0,
+            minHeight: 8,
+            borderRadius: BorderRadius.circular(4),
+            backgroundColor: AppTheme.gray200,
+            color: AppTheme.warningColor,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _RatingsTab extends StatelessWidget {
   final CollegeModel college;
 
@@ -300,8 +536,10 @@ class _RatingsTab extends StatelessWidget {
     final items = [
       ('Overall', ratings.overall),
       ('Faculty', ratings.faculty),
-      ('Infrastructure', ratings.infrastructure),
+      ('Hostel', ratings.hostel),
       ('Placements', ratings.placements),
+      ('Fees (Value)', ratings.fees),
+      ('Infrastructure', ratings.infrastructure),
       ('Campus Life', ratings.campusLife),
     ];
 

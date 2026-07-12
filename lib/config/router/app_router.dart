@@ -10,6 +10,13 @@ import '../../features/home/screens/home_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
 import '../../features/colleges/screens/college_search_screen.dart';
 import '../../features/colleges/screens/college_detail_screen.dart';
+import '../../features/reviews/screens/write_review_screen.dart';
+import '../../features/reviews/screens/my_reviews_screen.dart';
+import '../../features/admin/screens/admin_dashboard_screen.dart';
+import '../../features/admin/screens/admin_colleges_screen.dart';
+import '../../features/admin/screens/admin_reviews_screen.dart';
+import '../../features/admin/screens/admin_users_screen.dart';
+import '../../features/admin/providers/admin_provider.dart';
 import 'route_names.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -18,7 +25,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: RouteNames.splash,
     debugLogDiagnostics: true,
-    redirect: (context, state) {
+    redirect: (context, state) async {
       final isLoggedIn = firebaseAuth.currentUser != null;
       final path = state.uri.path;
       final isPublicRoute = path == RouteNames.splash ||
@@ -37,6 +44,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               path == RouteNames.onboarding ||
               path == RouteNames.forgotPassword)) {
         return RouteNames.home;
+      }
+
+      final isAdminRoute = path.startsWith('/admin');
+      if (isAdminRoute && isLoggedIn) {
+        final isAdmin = await ref.read(isAdminProvider.future);
+        if (!isAdmin) return RouteNames.home;
       }
 
       return null;
@@ -71,15 +84,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const ProfileScreen(),
       ),
       GoRoute(
+        path: RouteNames.myReviews,
+        builder: (context, state) => const MyReviewsScreen(),
+      ),
+      GoRoute(
         path: RouteNames.collegeSearch,
         builder: (context, state) {
           final query = state.uri.queryParameters['q'];
           final city = state.uri.queryParameters['city'];
           final stateParam = state.uri.queryParameters['state'];
+          final course = state.uri.queryParameters['course'];
           return CollegeSearchScreen(
             initialQuery: query,
             initialCity: city,
             initialState: stateParam,
+            initialCourse: course,
           );
         },
       ),
@@ -89,6 +108,30 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           final id = state.pathParameters['id']!;
           return CollegeDetailScreen(collegeId: id);
         },
+      ),
+      GoRoute(
+        path: RouteNames.writeReview,
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          final collegeName = state.uri.queryParameters['name'] ?? 'College';
+          return WriteReviewScreen(collegeId: id, collegeName: collegeName);
+        },
+      ),
+      GoRoute(
+        path: RouteNames.admin,
+        builder: (context, state) => const AdminDashboardScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.adminColleges,
+        builder: (context, state) => const AdminCollegesScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.adminReviews,
+        builder: (context, state) => const AdminReviewsScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.adminUsers,
+        builder: (context, state) => const AdminUsersScreen(),
       ),
     ],
   );

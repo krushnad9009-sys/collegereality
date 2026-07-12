@@ -12,6 +12,7 @@ abstract class CollegeRepository {
     String? query,
     String? city,
     String? state,
+    String? course,
   });
   Future<void> seedCollegesIfNeeded();
 }
@@ -61,6 +62,7 @@ class CollegeRepositoryImpl implements CollegeRepository {
     String? query,
     String? city,
     String? state,
+    String? course,
   }) async {
     List<CollegeModel> colleges;
     try {
@@ -79,8 +81,13 @@ class CollegeRepositoryImpl implements CollegeRepository {
       colleges = colleges.where((c) => c.matchesQuery(query)).toList();
     }
 
+    if (course != null && course.isNotEmpty) {
+      colleges = colleges.where((c) => c.matchesCourse(course)).toList();
+    }
+
     colleges.sort(
-      (a, b) => b.aggregatedRatings.overall.compareTo(a.aggregatedRatings.overall),
+      (a, b) =>
+          b.aggregatedRatings.overall.compareTo(a.aggregatedRatings.overall),
     );
     return colleges;
   }

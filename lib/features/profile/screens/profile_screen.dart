@@ -5,11 +5,12 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/widgets/index.dart';
-import '../../colleges/providers/college_provider.dart';
+import '../../admin/providers/admin_provider.dart';
 import '../../auth/models/user_model.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/providers/user_provider.dart';
 import '../../auth/utils/validation_util.dart';
+import '../../colleges/providers/college_provider.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -351,6 +352,32 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     label: 'Save Profile',
                     isLoading: _isSaving,
                     onPressed: () => _saveProfile(authUser.uid),
+                  ),
+                  const SizedBox(height: 16),
+                  OutlinedButton.icon(
+                    onPressed: () => context.go(RouteNames.myReviews),
+                    icon: const Icon(Icons.rate_review_outlined),
+                    label: const Text('View My Reviews'),
+                  ),
+                  Consumer(
+                    builder: (context, ref, _) {
+                      final isAdminAsync = ref.watch(isAdminProvider);
+                      return isAdminAsync.when(
+                        loading: () => const SizedBox.shrink(),
+                        error: (e, _) => const SizedBox.shrink(),
+                        data: (isAdmin) {
+                          if (!isAdmin) return const SizedBox.shrink();
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 12),
+                            child: OutlinedButton.icon(
+                              onPressed: () => context.go(RouteNames.admin),
+                              icon: const Icon(Icons.admin_panel_settings_outlined),
+                              label: const Text('Admin Panel'),
+                            ),
+                          );
+                        },
+                      );
+                    },
                   ),
                 ],
               ),

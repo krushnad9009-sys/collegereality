@@ -38,8 +38,14 @@ class CollegeSearchParams {
   final String? query;
   final String? city;
   final String? state;
+  final String? course;
 
-  const CollegeSearchParams({this.query, this.city, this.state});
+  const CollegeSearchParams({
+    this.query,
+    this.city,
+    this.state,
+    this.course,
+  });
 
   @override
   bool operator ==(Object other) =>
@@ -47,10 +53,11 @@ class CollegeSearchParams {
       other is CollegeSearchParams &&
           query == other.query &&
           city == other.city &&
-          state == other.state;
+          state == other.state &&
+          course == other.course;
 
   @override
-  int get hashCode => Object.hash(query, city, state);
+  int get hashCode => Object.hash(query, city, state, course);
 }
 
 final collegeSearchProvider =
@@ -62,6 +69,7 @@ final collegeSearchProvider =
     query: params.query,
     city: params.city,
     state: params.state,
+    course: params.course,
   );
 });
 
@@ -73,4 +81,9 @@ final indianStatesProvider = FutureProvider<List<String>>((ref) async {
 final indianCitiesProvider = FutureProvider<List<String>>((ref) async {
   final colleges = await ref.watch(collegesProvider.future);
   return colleges.map((c) => c.city).toSet().toList()..sort();
+});
+
+final indianCoursesProvider = FutureProvider<List<String>>((ref) async {
+  final colleges = await ref.watch(collegesProvider.future);
+  return colleges.expand((c) => c.courses).toSet().toList()..sort();
 });

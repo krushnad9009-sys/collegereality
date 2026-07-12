@@ -89,6 +89,8 @@ class CollegeRatings {
   final double infrastructure;
   final double placements;
   final double campusLife;
+  final double hostel;
+  final double fees;
 
   const CollegeRatings({
     required this.overall,
@@ -96,6 +98,8 @@ class CollegeRatings {
     required this.infrastructure,
     required this.placements,
     required this.campusLife,
+    this.hostel = 0,
+    this.fees = 0,
   });
 
   factory CollegeRatings.fromJson(Map<String, dynamic> json) {
@@ -105,6 +109,8 @@ class CollegeRatings {
       infrastructure: (json['infrastructure'] as num?)?.toDouble() ?? 0,
       placements: (json['placements'] as num?)?.toDouble() ?? 0,
       campusLife: (json['campusLife'] as num?)?.toDouble() ?? 0,
+      hostel: (json['hostel'] as num?)?.toDouble() ?? 0,
+      fees: (json['fees'] as num?)?.toDouble() ?? 0,
     );
   }
 
@@ -114,6 +120,8 @@ class CollegeRatings {
         'infrastructure': infrastructure,
         'placements': placements,
         'campusLife': campusLife,
+        'hostel': hostel,
+        'fees': fees,
       };
 }
 
@@ -243,6 +251,13 @@ class CollegeModel {
     return name.toLowerCase().contains(q) ||
         city.toLowerCase().contains(q) ||
         state.toLowerCase().contains(q) ||
+        courses.any((c) => c.toLowerCase().contains(q)) ||
         searchKeywords.any((k) => k.contains(q));
+  }
+
+  bool matchesCourse(String? course) {
+    if (course == null || course.isEmpty) return true;
+    final c = course.toLowerCase();
+    return courses.any((item) => item.toLowerCase().contains(c));
   }
 }

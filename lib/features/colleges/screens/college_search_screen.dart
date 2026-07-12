@@ -11,12 +11,14 @@ class CollegeSearchScreen extends ConsumerStatefulWidget {
   final String? initialQuery;
   final String? initialCity;
   final String? initialState;
+  final String? initialCourse;
 
   const CollegeSearchScreen({
     super.key,
     this.initialQuery,
     this.initialCity,
     this.initialState,
+    this.initialCourse,
   });
 
   @override
@@ -28,6 +30,7 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
   late final TextEditingController _searchController;
   String? _selectedCity;
   String? _selectedState;
+  String? _selectedCourse;
   bool _showFilters = false;
 
   @override
@@ -36,7 +39,10 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
     _searchController = TextEditingController(text: widget.initialQuery ?? '');
     _selectedCity = widget.initialCity;
     _selectedState = widget.initialState;
-    if (widget.initialCity != null || widget.initialState != null) {
+    _selectedCourse = widget.initialCourse;
+    if (widget.initialCity != null ||
+        widget.initialState != null ||
+        widget.initialCourse != null) {
       _showFilters = true;
     }
   }
@@ -53,6 +59,7 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
             : _searchController.text.trim(),
         city: _selectedCity,
         state: _selectedState,
+        course: _selectedCourse,
       );
 
   void _applySearch() {
@@ -63,6 +70,7 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
     setState(() {
       _selectedCity = null;
       _selectedState = null;
+      _selectedCourse = null;
       _searchController.clear();
     });
   }
@@ -72,6 +80,7 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
     final searchAsync = ref.watch(collegeSearchProvider(_searchParams));
     final statesAsync = ref.watch(indianStatesProvider);
     final citiesAsync = ref.watch(indianCitiesProvider);
+    final coursesAsync = ref.watch(indianCoursesProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -197,6 +206,37 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
                         ),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 12),
+                  coursesAsync.when(
+                    loading: () => const SizedBox.shrink(),
+                    error: (e, _) => const SizedBox.shrink(),
+                    data: (courses) => DropdownButtonFormField<String>(
+                      initialValue: _selectedCourse,
+                      decoration: InputDecoration(
+                        labelText: 'Course',
+                        filled: true,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      items: [
+                        const DropdownMenuItem(
+                          value: null,
+                          child: Text('All Courses'),
+                        ),
+                        ...courses.map(
+                          (c) => DropdownMenuItem(
+                            value: c,
+                            child: Text(c),
+                          ),
+                        ),
+                      ],
+                      onChanged: (v) {
+                        setState(() => _selectedCourse = v);
+                        _applySearch();
+                      },
+                    ),
                   ),
                   Align(
                     alignment: Alignment.centerRight,

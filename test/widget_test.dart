@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:college_reality_india/config/router/app_router.dart';
 import 'package:college_reality_india/config/theme/app_theme.dart';
+import 'package:college_reality_india/core/constants/rating_parameters.dart';
 import 'package:college_reality_india/main.dart';
 
 void main() {
@@ -38,5 +39,10 @@ void main() {
   test('AppTheme exposes light and dark themes', () {
     expect(AppTheme.lightTheme.brightness, Brightness.light);
     expect(AppTheme.darkTheme.brightness, Brightness.dark);
+  });
+
+  test('RatingParameters defines 10 rating keys', () {
+    expect(RatingParameters.allKeys.length, 10);
+    expect(RatingParameters.emptyRatings().length, 10);
   });
 }

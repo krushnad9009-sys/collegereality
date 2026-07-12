@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../config/router/route_names.dart';
-import '../../../core/widgets/index.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../colleges/providers/college_provider.dart';
 import '../widgets/home_header_widget.dart';
@@ -198,12 +197,7 @@ class HomeScreen extends ConsumerWidget {
                                     backgroundColor: AppTheme.white,
                                     foregroundColor: AppTheme.primaryColor,
                                   ),
-                                  onPressed: () {
-                                    SnackBarHelper.showInfoSnackBar(
-                                      context,
-                                      message: 'Review submission coming in Phase 4!',
-                                    );
-                                  },
+                                  onPressed: () => context.go(RouteNames.collegeSearch),
                                   child: Text(
                                     'Write a Review',
                                     style: GoogleFonts.poppins(

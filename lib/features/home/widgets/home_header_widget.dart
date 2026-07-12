@@ -7,6 +7,7 @@ import '../../../config/theme/app_theme.dart';
 import '../../../config/router/route_names.dart';
 import '../../../core/widgets/index.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../admin/providers/admin_provider.dart';
 
 class HomeHeaderWidget extends ConsumerWidget {
   final User user;
@@ -134,6 +135,14 @@ class HomeHeaderWidget extends ConsumerWidget {
                 },
               ),
               ListTile(
+                leading: const Icon(Icons.rate_review_outlined),
+                title: const Text('My Reviews'),
+                onTap: () {
+                  Navigator.pop(context);
+                  context.go(RouteNames.myReviews);
+                },
+              ),
+              ListTile(
                 leading: const Icon(Icons.bookmark_outline),
                 title: const Text('Favorites'),
                 onTap: () {
@@ -141,6 +150,26 @@ class HomeHeaderWidget extends ConsumerWidget {
                   SnackBarHelper.showInfoSnackBar(
                     context,
                     message: 'Favorites coming in Phase 6!',
+                  );
+                },
+              ),
+              Consumer(
+                builder: (context, ref, _) {
+                  final isAdminAsync = ref.watch(isAdminProvider);
+                  return isAdminAsync.when(
+                    loading: () => const SizedBox.shrink(),
+                    error: (e, _) => const SizedBox.shrink(),
+                    data: (isAdmin) {
+                      if (!isAdmin) return const SizedBox.shrink();
+                      return ListTile(
+                        leading: const Icon(Icons.admin_panel_settings_outlined),
+                        title: const Text('Admin Panel'),
+                        onTap: () {
+                          Navigator.pop(context);
+                          context.go(RouteNames.admin);
+                        },
+                      );
+                    },
                   );
                 },
               ),
