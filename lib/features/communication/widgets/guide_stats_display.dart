@@ -1,19 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../config/theme/app_theme.dart';
+import '../../verification/widgets/verification_badge_widget.dart';
 import '../models/guide_stats_model.dart';
 import '../utils/communication_formatters.dart';
 import 'guide_badge_widget.dart';
 
 class GuideStatsDisplay extends StatelessWidget {
   final GuideStatsModel stats;
-  final bool showVerified;
-  final bool isVerified;
+  final String verificationBadge;
 
   const GuideStatsDisplay({
     required this.stats,
-    this.showVerified = true,
-    this.isVerified = false,
+    this.verificationBadge = 'none',
     super.key,
   });
 
@@ -26,12 +25,7 @@ class GuideStatsDisplay extends StatelessWidget {
           spacing: 8,
           runSpacing: 8,
           children: [
-            if (showVerified && isVerified)
-              _Chip(
-                icon: Icons.verified,
-                label: 'Verified',
-                color: AppTheme.accentColor,
-              ),
+            VerificationBadgeWidget(badge: verificationBadge),
             GuideBadgeWidget(badgeTier: stats.badgeTier),
           ],
         ),
@@ -70,44 +64,6 @@ class GuideStatsDisplay extends StatelessWidget {
           style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.gray600),
         ),
       ],
-    );
-  }
-}
-
-class _Chip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-
-  const _Chip({
-    required this.icon,
-    required this.label,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: color),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: GoogleFonts.poppins(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: color,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

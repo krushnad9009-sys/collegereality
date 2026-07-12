@@ -16,6 +16,8 @@ class RouteNames {
   static const String adminReviews = '/admin/reviews';
   static const String adminUsers = '/admin/users';
   static const String adminCommunication = '/admin/communication';
+  static const String adminVerification = '/admin/verification';
+  static const String verification = '/verification';
   static const String guidesDirectory = '/guides';
   static const String guideProfile = '/guides/:uid';
   static const String activeCall = '/call/:sessionId';

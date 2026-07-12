@@ -1,4 +1,5 @@
 // Manual JSON serialization without code generation
+import '../../../core/constants/verification_constants.dart';
 import '../../communication/models/guide_stats_model.dart';
 import '../../communication/utils/guide_stats_calculator.dart';
 
@@ -12,6 +13,8 @@ class UserModel {
   final bool isVerified;
   final bool isEmailVerified;
   final bool isPhoneVerified;
+  final String verificationBadge;
+  final String verificationStatus;
   final String? collegeId;
   final String? collegeName;
   final String? course;
@@ -36,6 +39,8 @@ class UserModel {
     this.isVerified = false,
     this.isEmailVerified = false,
     this.isPhoneVerified = false,
+    this.verificationBadge = VerificationConstants.badgeNone,
+    this.verificationStatus = VerificationConstants.statusIncomplete,
     this.collegeId,
     this.collegeName,
     this.course,
@@ -67,6 +72,10 @@ class UserModel {
       isVerified: json['isVerified'] as bool? ?? false,
       isEmailVerified: json['isEmailVerified'] as bool? ?? false,
       isPhoneVerified: json['isPhoneVerified'] as bool? ?? false,
+      verificationBadge:
+          json['verificationBadge'] as String? ?? VerificationConstants.badgeNone,
+      verificationStatus: json['verificationStatus'] as String? ??
+          VerificationConstants.statusIncomplete,
       collegeId: json['collegeId'] as String?,
       collegeName: json['collegeName'] as String?,
       course: json['course'] as String?,
@@ -108,6 +117,8 @@ class UserModel {
       'isVerified': isVerified,
       'isEmailVerified': isEmailVerified,
       'isPhoneVerified': isPhoneVerified,
+      'verificationBadge': verificationBadge,
+      'verificationStatus': verificationStatus,
       'collegeId': collegeId,
       'collegeName': collegeName,
       'course': course,
@@ -134,6 +145,8 @@ class UserModel {
     bool? isVerified,
     bool? isEmailVerified,
     bool? isPhoneVerified,
+    String? verificationBadge,
+    String? verificationStatus,
     String? collegeId,
     String? collegeName,
     String? course,
@@ -158,6 +171,8 @@ class UserModel {
       isVerified: isVerified ?? this.isVerified,
       isEmailVerified: isEmailVerified ?? this.isEmailVerified,
       isPhoneVerified: isPhoneVerified ?? this.isPhoneVerified,
+      verificationBadge: verificationBadge ?? this.verificationBadge,
+      verificationStatus: verificationStatus ?? this.verificationStatus,
       collegeId: collegeId ?? this.collegeId,
       collegeName: collegeName ?? this.collegeName,
       course: course ?? this.course,

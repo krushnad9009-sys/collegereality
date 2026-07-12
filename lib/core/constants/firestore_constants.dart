@@ -10,4 +10,7 @@ class FirestoreConstants {
   static const String userBlocksCollection = 'user_blocks';
   static const String userReportsCollection = 'user_reports';
   static const String callSignalingSubcollection = 'signaling';
+  static const String verificationRequestsCollection = 'verification_requests';
+  static const String verificationDocumentHashesCollection =
+      'verification_document_hashes';
 }

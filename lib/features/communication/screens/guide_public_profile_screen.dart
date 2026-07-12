@@ -196,15 +196,20 @@ class _GuidePublicProfileScreenState
                         radius: 40,
                         backgroundColor:
                             AppTheme.primaryColor.withValues(alpha: 0.15),
-                        child: Icon(
-                          Icons.person_outline,
-                          size: 40,
-                          color: AppTheme.primaryColor,
-                        ),
+                        backgroundImage: guide.photoURL != null
+                            ? NetworkImage(guide.photoURL!)
+                            : null,
+                        child: guide.photoURL == null
+                            ? Icon(
+                                Icons.person_outline,
+                                size: 40,
+                                color: AppTheme.primaryColor,
+                              )
+                            : null,
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        guide.anonymousAlias,
+                        guide.displayName,
                         style: GoogleFonts.poppins(
                           fontSize: 22,
                           fontWeight: FontWeight.w700,
@@ -212,7 +217,7 @@ class _GuidePublicProfileScreenState
                       ),
                       if (guide.collegeName != null)
                         Text(
-                          '${guide.collegeName}${guide.course != null ? ' · ${guide.course}' : ''}',
+                          '${guide.collegeName}${guide.course != null ? ' · ${guide.course}' : ''}${guide.batchYear != null ? ' · ${guide.batchYear}' : ''}',
                           style: GoogleFonts.poppins(color: AppTheme.gray600),
                         ),
                     ],
@@ -221,7 +226,7 @@ class _GuidePublicProfileScreenState
                 const SizedBox(height: 24),
                 GuideStatsDisplay(
                   stats: guide.stats,
-                  isVerified: guide.isVerified,
+                  verificationBadge: guide.verificationBadge,
                 ),
                 if (guide.languagesKnown.isNotEmpty) ...[
                   const SizedBox(height: 20),

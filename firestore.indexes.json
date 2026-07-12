@@ -90,10 +90,27 @@
       ]
     },
     {
-      "collectionGroup": "interaction_ratings",
+      "collectionGroup": "verification_requests",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "rateeId", "order": "ASCENDING" }
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "verification_requests",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "verification_requests",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
     }
   ],

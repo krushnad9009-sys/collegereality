@@ -91,6 +91,12 @@ class AdminDashboardScreen extends ConsumerWidget {
             subtitle: 'Moderate call and chat reports',
             onTap: () => context.go(RouteNames.adminCommunication),
           ),
+          _AdminMenuTile(
+            icon: Icons.verified_user_outlined,
+            title: 'Student Verification',
+            subtitle: 'Review flagged documents and approve badges',
+            onTap: () => context.go(RouteNames.adminVerification),
+          ),
         ],
       ),
     );

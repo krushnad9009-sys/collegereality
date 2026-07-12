@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/rating_parameters.dart';
+import '../../../core/constants/verification_constants.dart';
 import '../../../core/widgets/index.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/providers/user_provider.dart';
@@ -110,7 +111,9 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
 
     try {
       final userDetail = await ref.read(userRepositoryProvider).getUser(user.uid);
-      final isVerified = user.emailVerified;
+      final isVerified = userDetail != null &&
+          userDetail.verificationBadge != VerificationConstants.badgeNone &&
+          userDetail.verificationStatus == VerificationConstants.statusApproved;
 
       final review = ReviewModel(
         id: _existingReview?.id ?? '',

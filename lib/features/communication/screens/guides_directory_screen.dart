@@ -7,6 +7,7 @@ import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/communication_constants.dart';
 import '../models/public_guide_profile.dart';
 import '../providers/communication_provider.dart';
+import '../../verification/widgets/verification_badge_widget.dart';
 import '../widgets/guide_badge_widget.dart';
 
 class GuidesDirectoryScreen extends ConsumerStatefulWidget {
@@ -133,16 +134,20 @@ class _GuideListTile extends StatelessWidget {
                   CircleAvatar(
                     backgroundColor:
                         AppTheme.primaryColor.withValues(alpha: 0.15),
-                    child: Text(
-                      guide.anonymousAlias.replaceAll('Guide #', '').substring(
-                            0,
-                            guide.anonymousAlias.length > 8 ? 2 : 1,
-                          ),
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.w700,
-                        color: AppTheme.primaryColor,
-                      ),
-                    ),
+                    backgroundImage: guide.photoURL != null
+                        ? NetworkImage(guide.photoURL!)
+                        : null,
+                    child: guide.photoURL == null
+                        ? Text(
+                            guide.displayName.isNotEmpty
+                                ? guide.displayName[0].toUpperCase()
+                                : 'G',
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.primaryColor,
+                            ),
+                          )
+                        : null,
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -153,19 +158,16 @@ class _GuideListTile extends StatelessWidget {
                           children: [
                             Expanded(
                               child: Text(
-                                guide.anonymousAlias,
+                                guide.displayName,
                                 style: GoogleFonts.poppins(
                                   fontWeight: FontWeight.w700,
                                   fontSize: 16,
                                 ),
                               ),
                             ),
-                            if (guide.isVerified)
-                              const Icon(
-                                Icons.verified,
-                                size: 18,
-                                color: AppTheme.accentColor,
-                              ),
+                            VerificationBadgeWidget(
+                              badge: guide.verificationBadge,
+                            ),
                           ],
                         ),
                         if (guide.collegeName != null)

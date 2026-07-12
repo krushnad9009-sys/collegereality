@@ -17,6 +17,8 @@ import '../../features/admin/screens/admin_colleges_screen.dart';
 import '../../features/admin/screens/admin_reviews_screen.dart';
 import '../../features/admin/screens/admin_users_screen.dart';
 import '../../features/admin/providers/admin_provider.dart';
+import '../../features/admin/screens/admin_verification_screen.dart';
+import '../../features/verification/screens/verification_screen.dart';
 import '../../features/admin/screens/admin_communication_screen.dart';
 import '../../features/communication/screens/guides_directory_screen.dart';
 import '../../features/communication/screens/guide_public_profile_screen.dart';
@@ -88,6 +90,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const ProfileScreen(),
       ),
       GoRoute(
+        path: RouteNames.verification,
+        builder: (context, state) => const VerificationScreen(),
+      ),
+      GoRoute(
         path: RouteNames.myReviews,
         builder: (context, state) => const MyReviewsScreen(),
       ),
@@ -141,6 +147,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RouteNames.adminCommunication,
         builder: (context, state) => const AdminCommunicationScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.adminVerification,
+        builder: (context, state) => const AdminVerificationScreen(),
       ),
       GoRoute(
         path: RouteNames.guidesDirectory,
