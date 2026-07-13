@@ -1,6 +1,7 @@
 import '../models/college_model.dart';
 import '../services/firestore_college_service.dart';
 import '../../../core/constants/college_constants.dart';
+import '../../../core/cache/college_session_cache.dart';
 
 abstract class CollegeRepository {
   Future<List<CollegeModel>> getFeaturedColleges({int limit});
@@ -29,8 +30,13 @@ class CollegeRepositoryImpl implements CollegeRepository {
   CollegeRepositoryImpl(this._service);
 
   @override
-  Future<List<CollegeModel>> getFeaturedColleges({int limit = CollegeConstants.featuredLimit}) =>
-      _service.getFeaturedColleges(limit: limit);
+  Future<List<CollegeModel>> getFeaturedColleges({int limit = CollegeConstants.featuredLimit}) async {
+    final cached = CollegeSessionCache.getFeatured(limit);
+    if (cached != null) return cached;
+    final colleges = await _service.getFeaturedColleges(limit: limit);
+    CollegeSessionCache.setFeatured(colleges);
+    return colleges.length <= limit ? colleges : colleges.take(limit).toList();
+  }
 
   @override
   Future<CollegeModel?> getCollegeById(String id) =>

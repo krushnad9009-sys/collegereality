@@ -3,6 +3,8 @@ import '../models/college_model.dart';
 import '../repositories/college_repository.dart';
 import '../services/college_storage_service.dart';
 import '../services/firestore_college_service.dart';
+import '../../../core/bootstrap/startup_bootstrap.dart';
+import '../../../core/cache/college_session_cache.dart';
 
 final firestoreCollegeServiceProvider =
     Provider<FirestoreCollegeService>((ref) {
@@ -21,6 +23,16 @@ final featuredCollegesProvider =
     FutureProvider<List<CollegeModel>>((ref) async {
   final repository = ref.watch(collegeRepositoryProvider);
   return repository.getFeaturedColleges();
+});
+
+/// Loads a small featured slice only after Home has painted (startup deferral).
+final homeFeaturedCollegesProvider =
+    FutureProvider<List<CollegeModel>>((ref) async {
+  final ready = ref.watch(homeContentReadyProvider);
+  if (!ready) return const [];
+  await Future<void>.delayed(Duration.zero);
+  final repository = ref.watch(collegeRepositoryProvider);
+  return repository.getFeaturedColleges(limit: 6);
 });
 
 final collegeByIdProvider =

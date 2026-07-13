@@ -37,12 +37,18 @@ class CollegeImageWidget extends StatelessWidget {
       );
     }
 
+    final cacheWidth = width != null
+        ? (width! * 2).toInt()
+        : (MediaQuery.sizeOf(context).width * 2).toInt();
+
     Widget image = CachedNetworkImage(
       imageUrl: resolvedUrl,
       fit: fit,
       width: width ?? double.infinity,
       height: height,
       memCacheHeight: (height * 2).toInt(),
+      memCacheWidth: cacheWidth,
+      filterQuality: FilterQuality.medium,
       placeholder: (_, _) => _ComingSoonPlaceholder(
         height: height,
         width: width,

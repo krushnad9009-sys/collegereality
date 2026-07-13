@@ -1,26 +1,42 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../config/router/route_names.dart';
+import '../../../core/bootstrap/startup_bootstrap.dart';
+import '../../../core/cache/college_session_cache.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../colleges/providers/college_provider.dart';
-import '../../../core/widgets/skeleton_loader.dart';
-import '../../communication/widgets/incoming_call_banner.dart';
+import '../widgets/deferred_incoming_call_banner.dart';
+import '../widgets/featured_colleges_section.dart';
 import '../widgets/home_header_widget.dart';
-import '../widgets/college_card_widget.dart';
 import '../../assistant/widgets/ai_search_bar.dart';
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(homeContentReadyProvider.notifier).state = true;
+      StartupBootstrap.runAfterHomeVisible(ref);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 600;
     final authState = ref.watch(authProvider);
-    final currentUser = authState.user;
-    final collegesAsync = ref.watch(collegesProvider);
+    final currentUser = authState.user ?? FirebaseAuth.instance.currentUser;
 
     return Scaffold(
       backgroundColor: Theme.of(context).brightness == Brightness.dark
@@ -31,8 +47,10 @@ class HomeScreen extends ConsumerWidget {
             ? const Center(child: CircularProgressIndicator())
             : RefreshIndicator(
                 onRefresh: () async {
+                  CollegeSessionCache.clearFeatured();
+                  ref.invalidate(homeFeaturedCollegesProvider);
                   ref.invalidate(featuredCollegesProvider);
-                  await ref.read(featuredCollegesProvider.future);
+                  await ref.read(homeFeaturedCollegesProvider.future);
                 },
                 child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
@@ -45,7 +63,7 @@ class HomeScreen extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         HomeHeaderWidget(user: currentUser),
-                        const IncomingCallBanner(),
+                        const DeferredIncomingCallBanner(),
                         if (!currentUser.emailVerified) ...[
                           const SizedBox(height: 12),
                           _EmailVerificationBanner(userId: currentUser.uid),
@@ -138,66 +156,7 @@ class HomeScreen extends ConsumerWidget {
                           ),
                         ),
                         const SizedBox(height: 32),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Featured Colleges',
-                              style: GoogleFonts.poppins(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            TextButton(
-                              onPressed: () => context.go(RouteNames.collegeSearch),
-                              child: Text(
-                                'View All',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppTheme.primaryColor,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        collegesAsync.when(
-                          loading: () => Column(
-                            children: List.generate(
-                              3,
-                              (_) => const Padding(
-                                padding: EdgeInsets.only(bottom: 12),
-                                child: CollegeCardSkeleton(),
-                              ),
-                            ),
-                          ),
-                          error: (e, _) => Text('Failed to load colleges: $e'),
-                          data: (colleges) {
-                            final featured = colleges.take(6).toList();
-                            return Column(
-                              children: featured
-                                  .map(
-                                    (college) => Padding(
-                                      padding: const EdgeInsets.only(bottom: 12),
-                                      child: CollegeCardWidget(
-                                        collegeId: college.id,
-                                        collegeName: college.name,
-                                        location: college.state,
-                                        city: college.city,
-                                        rating: college.aggregatedRatings.overall,
-                                        reviewCount: college.reviewCount,
-                                        imageUrl: college.coverPhotoUrl,
-                                        onTap: () => context.go(
-                                          RouteNames.collegeDetailsPath(college.id),
-                                        ),
-                                      ),
-                                    ),
-                                  )
-                                  .toList(),
-                            );
-                          },
-                        ),
+                        const FeaturedCollegesSection(),
                         const SizedBox(height: 32),
                         Container(
                           decoration: BoxDecoration(

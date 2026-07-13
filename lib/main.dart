@@ -1,20 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'firebase_options.dart';
 import 'config/router/app_router.dart';
 import 'config/theme/app_theme.dart';
 import 'config/theme/theme_provider.dart';
+import 'core/bootstrap/firebase_bootstrap.dart';
 
-void main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  FirebaseFirestore.instance.settings = const Settings(
-    persistenceEnabled: true,
-  );
+  // Start Firebase in the background; splash awaits readiness before routing.
+  FirebaseBootstrap.ensureInitialized();
   runApp(
     const ProviderScope(
       child: CollegeRealityApp(),
