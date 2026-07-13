@@ -7,6 +7,7 @@ import 'package:uuid/uuid.dart';
 import '../../../core/constants/careers_constants.dart';
 import '../../../core/constants/firestore_constants.dart';
 import '../../../core/constants/verification_constants.dart';
+import '../../../core/utils/firestore_seed_guard.dart';
 import '../../social/services/notification_bridge_service.dart';
 import '../../engagement/services/firestore_engagement_service.dart';
 import '../models/careers_models.dart';
@@ -48,15 +49,10 @@ class FirestoreCareersService {
           );
 
   Future<void> ensureSeeded() async {
-    final meta = await _meta.get();
-    if (meta.exists && meta.data()?['seeded'] == true) return;
-    final snap = await _companies.limit(1).get();
-    if (snap.docs.isNotEmpty) {
-      await _meta.set({'seeded': true, 'updatedAt': DateTime.now().toIso8601String()});
-      return;
-    }
-    await _seedFromAssets();
-    await _meta.set({'seeded': true, 'updatedAt': DateTime.now().toIso8601String()});
+    final hasData =
+        await FirestoreSeedGuard.hasSampleData(_companies.limit(1).get());
+    if (hasData) return;
+    await FirestoreSeedGuard.skipClientSeedWrites();
   }
 
   Future<void> _seedFromAssets() async {

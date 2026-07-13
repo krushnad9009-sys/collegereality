@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import '../../../core/utils/indian_currency_formatter.dart';
 import '../../colleges/models/college_model.dart';
 import '../models/ranking_models.dart';
 
@@ -141,8 +142,7 @@ String formatScore(double score) => score.toStringAsFixed(1);
 String formatFees(CollegeModel college) {
   final fee = _averageAnnualFee(college);
   if (fee <= 0) return 'Not available';
-  if (fee >= 100000) return '₹${(fee / 100000).toStringAsFixed(1)}L/yr';
-  return '₹${(fee / 1000).round()}K/yr';
+  return IndianCurrencyFormatter.format(fee.round());
 }
 
 double computeRoiScore(CollegeModel college) {

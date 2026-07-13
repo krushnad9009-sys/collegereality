@@ -1,14 +1,10 @@
-import 'package:intl/intl.dart';
-
 import '../../../core/constants/compare_constants.dart';
+import '../../../core/utils/indian_currency_formatter.dart';
 import '../../colleges/models/college_model.dart';
 import '../models/college_comparison_result.dart';
 
 /// Full side-by-side comparison using verified Firestore data only.
 class CollegeComparisonService {
-  static final _currency =
-      NumberFormat.compactCurrency(locale: 'en_IN', symbol: '₹');
-
   CollegeComparisonResult compare(List<CollegeModel> colleges) {
     final limited = colleges.take(CompareConstants.maxColleges).toList();
     if (limited.isEmpty) {
@@ -264,13 +260,10 @@ class CollegeComparisonService {
   }
 
   static String _feeLabel(CollegeModel c) {
-    final min = c.fees.tuitionMin;
-    final max = c.fees.tuitionMax;
-    if (min <= 0 && max <= 0) return '—';
-    if (min > 0 && max > 0) {
-      return '${_currency.format(min)} – ${_currency.format(max)}';
-    }
-    return _currency.format(max > 0 ? max : min);
+    return IndianCurrencyFormatter.formatRange(
+      min: c.fees.tuitionMin,
+      max: c.fees.tuitionMax,
+    );
   }
 
   static double _averageFee(CollegeModel c) {

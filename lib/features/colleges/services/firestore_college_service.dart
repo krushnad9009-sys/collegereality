@@ -85,20 +85,30 @@ class FirestoreCollegeService {
       q = q.where('state', isEqualTo: state);
     }
     if (city != null && city.isNotEmpty) {
-      q = q.where('city', isEqualTo: city);
+      final normalizedCity = CollegeSearchUtils.normalizeCity(city);
+      q = q
+          .where('cityLower', isGreaterThanOrEqualTo: normalizedCity)
+          .where('cityLower', isLessThan: '$normalizedCity\uf8ff');
     }
     if (course != null && course.isNotEmpty) {
       q = q.where('courses', arrayContains: course);
     }
 
     final trimmedQuery = query?.trim().toLowerCase();
+    final hasCity = city != null && city.isNotEmpty;
+
     if (trimmedQuery != null && trimmedQuery.length >= CollegeConstants.minSearchChars) {
       q = q
           .where('nameLower', isGreaterThanOrEqualTo: trimmedQuery)
           .where('nameLower', isLessThan: '$trimmedQuery\uf8ff');
+      q = q.orderBy('nameLower');
+    } else if (hasCity) {
+      q = q.orderBy('cityLower').orderBy('nameLower');
+    } else {
+      q = q.orderBy('nameLower');
     }
 
-    q = q.orderBy('nameLower').limit(limit);
+    q = q.limit(limit);
 
     if (startAfterDocumentId != null && startAfterDocumentId.isNotEmpty) {
       final cursor = await _colleges.doc(startAfterDocumentId).get();
@@ -108,7 +118,10 @@ class FirestoreCollegeService {
     }
 
     final snapshot = await q.get();
-    final colleges = _mapDocs(snapshot.docs);
+    var colleges = _mapDocs(snapshot.docs);
+    if (colleges.isEmpty && city != null && city.isNotEmpty) {
+      colleges = await _searchByCityFallback(city);
+    }
     final lastId = snapshot.docs.isEmpty ? null : snapshot.docs.last.id;
 
     return CollegeSearchPage(
@@ -122,15 +135,58 @@ class FirestoreCollegeService {
     final trimmed = query.trim().toLowerCase();
     if (trimmed.length < CollegeConstants.minSearchChars) return [];
 
-    final snapshot = await _colleges
-        .where('isActive', isEqualTo: true)
-        .where('nameLower', isGreaterThanOrEqualTo: trimmed)
-        .where('nameLower', isLessThan: '$trimmed\uf8ff')
-        .orderBy('nameLower')
-        .limit(CollegeConstants.autocompleteLimit)
-        .get();
+    final results = <String, CollegeModel>{};
 
-    return _mapDocs(snapshot.docs);
+    Future<void> loadPrefix(String field) async {
+      final snap = await _colleges
+          .where('isActive', isEqualTo: true)
+          .where(field, isGreaterThanOrEqualTo: trimmed)
+          .where(field, isLessThan: '$trimmed\uf8ff')
+          .orderBy(field)
+          .limit(CollegeConstants.autocompleteLimit)
+          .get();
+      for (final doc in snap.docs) {
+        results[doc.id] = CollegeModel.fromJson(doc.data(), docId: doc.id);
+      }
+    }
+
+    await loadPrefix('nameLower');
+    if (results.length < CollegeConstants.autocompleteLimit) {
+      await loadPrefix('cityLower');
+    }
+    if (results.length < CollegeConstants.autocompleteLimit) {
+      await loadPrefix('universityLower');
+    }
+    if (results.length < CollegeConstants.autocompleteLimit) {
+      await loadPrefix('stateLower');
+    }
+
+    return results.values.take(CollegeConstants.autocompleteLimit).toList();
+  }
+
+  Future<List<CollegeModel>> _searchByCityFallback(String city) async {
+    final variants = <String>{
+      city.trim(),
+      CollegeSearchUtils.titleCaseCity(city),
+      CollegeSearchUtils.normalizeCity(city),
+    }.where((v) => v.isNotEmpty).toList();
+
+    final found = <String, CollegeModel>{};
+    for (final variant in variants) {
+      final snap = await _colleges
+          .where('isActive', isEqualTo: true)
+          .where('city', isEqualTo: variant)
+          .limit(CollegeConstants.searchPageSize)
+          .get();
+      for (final doc in snap.docs) {
+        found[doc.id] = CollegeModel.fromJson(doc.data(), docId: doc.id);
+      }
+    }
+    return found.values.toList();
+  }
+
+  Future<List<CollegeModel>> instantSearchColleges(String query) async {
+    return autocompleteColleges(query);
   }
 
   Future<void> createCollege(CollegeModel college) async {
@@ -198,6 +254,10 @@ class FirestoreCollegeService {
   Map<String, dynamic> _prepareForWrite(CollegeModel college) {
     final normalized = college.copyWith(
       nameLower: CollegeSearchUtils.normalizeName(college.name),
+      cityLower: CollegeSearchUtils.normalizeCity(college.city),
+      universityLower:
+          CollegeSearchUtils.normalizeUniversity(college.universityName),
+      stateLower: CollegeSearchUtils.normalizeState(college.state),
       slug: college.slug.isNotEmpty
           ? college.slug
           : CollegeSearchUtils.buildSlug(college.name, college.city),

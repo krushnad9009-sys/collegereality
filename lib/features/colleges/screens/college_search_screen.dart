@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -40,6 +42,8 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
   bool _hasMore = false;
   bool _isLoadingMore = false;
   CollegeSearchParams? _activeParams;
+  String _liveQuery = '';
+  Timer? _debounce;
 
   @override
   void initState() {
@@ -63,6 +67,7 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _searchController.dispose();
     _cityController.dispose();
     super.dispose();
@@ -132,6 +137,9 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
     final coursesAsync = ref.watch(indianCoursesProvider);
     final metaAsync = ref.watch(collegeDirectoryMetaProvider);
     final basket = ref.watch(compareBasketProvider);
+    final suggestionsAsync = _liveQuery.trim().isNotEmpty
+        ? ref.watch(collegeInstantSuggestProvider(_liveQuery.trim()))
+        : const AsyncValue<List<CollegeModel>>.data([]);
 
     return Scaffold(
       appBar: AppBar(
@@ -170,7 +178,7 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: 'Search by college name (min 2 chars)...',
+                hintText: 'Search college, city, state, university...',
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.arrow_forward),
@@ -182,8 +190,64 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
                   borderSide: BorderSide.none,
                 ),
               ),
+              onChanged: (value) {
+                _debounce?.cancel();
+                _debounce = Timer(const Duration(milliseconds: 250), () {
+                  if (!mounted) return;
+                  setState(() => _liveQuery = value);
+                  if (value.trim().length >= 1) _runSearch();
+                });
+              },
               onSubmitted: (_) => _runSearch(),
             ),
+          ),
+          suggestionsAsync.when(
+            loading: () => const LinearProgressIndicator(minHeight: 2),
+            error: (_, __) => const SizedBox.shrink(),
+            data: (suggestions) {
+              if (suggestions.isEmpty || _liveQuery.trim().isEmpty) {
+                return const SizedBox.shrink();
+              }
+              return Container(
+                margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                constraints: const BoxConstraints(maxHeight: 220),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardColor,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppTheme.gray200),
+                ),
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: suggestions.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  itemBuilder: (context, index) {
+                    final college = suggestions[index];
+                    return ListTile(
+                      dense: true,
+                      title: Text(
+                        college.name,
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      subtitle: Text(
+                        [
+                          college.locationLabel,
+                          if (college.universityName != null &&
+                              college.universityName!.isNotEmpty)
+                            college.universityName!,
+                        ].join(' · '),
+                        style: GoogleFonts.poppins(fontSize: 11),
+                      ),
+                      onTap: () => context.go(
+                        RouteNames.collegeDetailsPath(college.id),
+                      ),
+                    );
+                  },
+                ),
+              );
+            },
           ),
           if (_showFilters)
             Padding(
@@ -222,12 +286,16 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
                     controller: _cityController,
                     decoration: InputDecoration(
                       labelText: 'City',
-                      hintText: 'Exact city name',
+                      hintText: 'e.g. Mumbai, Pune, Delhi',
                       filled: true,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
+                    onChanged: (_) {
+                      _debounce?.cancel();
+                      _debounce = Timer(const Duration(milliseconds: 350), _runSearch);
+                    },
                     onSubmitted: (_) => _runSearch(),
                   ),
                   const SizedBox(height: 12),

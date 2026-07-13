@@ -1,11 +1,9 @@
-import 'package:intl/intl.dart';
-
+import '../../../core/utils/indian_currency_formatter.dart';
 import '../../colleges/models/college_model.dart';
 import '../models/ai_query_intent.dart';
 
 /// Template-based explanations citing only verified Firestore fields.
 class AiExplanationBuilder {
-  static final _currency = NumberFormat.compactCurrency(locale: 'en_IN', symbol: '₹');
 
   List<String> buildReasons(CollegeModel college, AiQueryIntent intent) {
     final reasons = <String>[];
@@ -50,7 +48,7 @@ class AiExplanationBuilder {
           reasons.add('Hostel available on campus.');
           if (hostel.annualFee > 0) {
             reasons.add(
-              'Hostel fee: ${_currency.format(hostel.annualFee)}/year.',
+              'Hostel fee: ${IndianCurrencyFormatter.format(hostel.annualFee)}.',
             );
           }
           if (ratings.hostel > 0) {
@@ -141,7 +139,7 @@ class AiExplanationBuilder {
       parts.add('(${_capitalize(intent.collegeType!)} only)');
     }
     if (intent.maxFees != null) {
-      parts.add('under ${_currency.format(intent.maxFees)}');
+      parts.add('under ${IndianCurrencyFormatter.format(intent.maxFees!)}');
     }
     if (intent.requireHostel) parts.add('with hostel');
     if (intent.naacGrade != null) parts.add('NAAC ${intent.naacGrade}');
@@ -157,11 +155,9 @@ class AiExplanationBuilder {
 
   static String? _feeRangeLabel(CollegeFees fees) {
     if (fees.tuitionMin <= 0 && fees.tuitionMax <= 0) return null;
-    if (fees.tuitionMin > 0 && fees.tuitionMax > 0) {
-      return '${_currency.format(fees.tuitionMin)} – ${_currency.format(fees.tuitionMax)}';
-    }
-    return _currency.format(
-      fees.tuitionMax > 0 ? fees.tuitionMax : fees.tuitionMin,
+    return IndianCurrencyFormatter.formatRange(
+      min: fees.tuitionMin,
+      max: fees.tuitionMax,
     );
   }
 

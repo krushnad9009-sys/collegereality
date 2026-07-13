@@ -393,6 +393,12 @@ class CollegeModel {
   final double? longitude;
   final String? googleMapsUrl;
   final String? universityName;
+  final String? phone;
+  final String? email;
+  final List<String> officialLinks;
+  final String cityLower;
+  final String universityLower;
+  final String stateLower;
   final CollegeFees fees;
   final List<CollegeScholarship> scholarships;
   final CollegePlacements placements;
@@ -410,7 +416,7 @@ class CollegeModel {
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
-  const CollegeModel({
+  CollegeModel({
     required this.id,
     required this.name,
     required this.nameLower,
@@ -429,6 +435,12 @@ class CollegeModel {
     this.longitude,
     this.googleMapsUrl,
     this.universityName,
+    this.phone,
+    this.email,
+    this.officialLinks = const [],
+    String? cityLower,
+    String? universityLower,
+    String? stateLower,
     required this.fees,
     this.scholarships = const [],
     required this.placements,
@@ -445,7 +457,10 @@ class CollegeModel {
     this.updatedBy,
     this.createdAt,
     this.updatedAt,
-  });
+  })  : cityLower = cityLower ?? CollegeSearchUtils.normalizeCity(city),
+        universityLower =
+            universityLower ?? CollegeSearchUtils.normalizeUniversity(universityName),
+        stateLower = stateLower ?? CollegeSearchUtils.normalizeState(state);
 
   String get locationLabel => '$city, $state';
 
@@ -498,6 +513,18 @@ class CollegeModel {
       longitude: (json['longitude'] as num?)?.toDouble(),
       googleMapsUrl: json['googleMapsUrl'] as String?,
       universityName: json['universityName'] as String?,
+      phone: json['phone'] as String?,
+      email: json['email'] as String?,
+      officialLinks: (json['officialLinks'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
+      cityLower: json['cityLower'] as String? ??
+          CollegeSearchUtils.normalizeCity(json['city'] as String? ?? ''),
+      universityLower: json['universityLower'] as String? ??
+          CollegeSearchUtils.normalizeUniversity(json['universityName'] as String?),
+      stateLower: json['stateLower'] as String? ??
+          CollegeSearchUtils.normalizeState(json['state'] as String? ?? ''),
       fees: CollegeFees.fromJson(
         (json['fees'] as Map<String, dynamic>?) ?? {},
       ),
@@ -574,6 +601,18 @@ class CollegeModel {
       'longitude': longitude,
       'googleMapsUrl': googleMapsUrl,
       'universityName': universityName,
+      'phone': phone,
+      'email': email,
+      'officialLinks': officialLinks,
+      'cityLower': cityLower.isNotEmpty
+          ? cityLower
+          : CollegeSearchUtils.normalizeCity(city),
+      'universityLower': universityLower.isNotEmpty
+          ? universityLower
+          : CollegeSearchUtils.normalizeUniversity(universityName),
+      'stateLower': stateLower.isNotEmpty
+          ? stateLower
+          : CollegeSearchUtils.normalizeState(state),
       'fees': fees.toJson(),
       'scholarships': scholarships.map((e) => e.toJson()).toList(),
       'placements': placements.toJson(),
@@ -612,6 +651,12 @@ class CollegeModel {
     double? longitude,
     String? googleMapsUrl,
     String? universityName,
+    String? phone,
+    String? email,
+    List<String>? officialLinks,
+    String? cityLower,
+    String? universityLower,
+    String? stateLower,
     CollegeFees? fees,
     List<CollegeScholarship>? scholarships,
     CollegePlacements? placements,
@@ -630,13 +675,16 @@ class CollegeModel {
     DateTime? updatedAt,
   }) {
     final nextName = name ?? this.name;
+    final nextCity = city ?? this.city;
+    final nextState = state ?? this.state;
+    final nextUniversity = universityName ?? this.universityName;
     return CollegeModel(
       id: id ?? this.id,
       name: nextName,
       nameLower: nameLower ?? CollegeSearchUtils.normalizeName(nextName),
       slug: slug ?? this.slug,
-      city: city ?? this.city,
-      state: state ?? this.state,
+      city: nextCity,
+      state: nextState,
       address: address ?? this.address,
       type: type ?? this.type,
       courses: courses ?? this.courses,
@@ -648,7 +696,14 @@ class CollegeModel {
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
       googleMapsUrl: googleMapsUrl ?? this.googleMapsUrl,
-      universityName: universityName ?? this.universityName,
+      universityName: nextUniversity,
+      phone: phone ?? this.phone,
+      email: email ?? this.email,
+      officialLinks: officialLinks ?? this.officialLinks,
+      cityLower: cityLower ?? CollegeSearchUtils.normalizeCity(nextCity),
+      universityLower: universityLower ??
+          CollegeSearchUtils.normalizeUniversity(nextUniversity),
+      stateLower: stateLower ?? CollegeSearchUtils.normalizeState(nextState),
       fees: fees ?? this.fees,
       scholarships: scholarships ?? this.scholarships,
       placements: placements ?? this.placements,

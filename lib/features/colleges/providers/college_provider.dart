@@ -107,7 +107,14 @@ final collegeSearchPageProvider =
 
 final collegeAutocompleteProvider =
     FutureProvider.family<List<CollegeModel>, String>((ref, query) async {
-  if (query.trim().length < 2) return [];
+  if (query.trim().length < 1) return [];
+  final repository = ref.watch(collegeRepositoryProvider);
+  return repository.autocomplete(query);
+});
+
+final collegeInstantSuggestProvider =
+    FutureProvider.family<List<CollegeModel>, String>((ref, query) async {
+  if (query.trim().isEmpty) return [];
   final repository = ref.watch(collegeRepositoryProvider);
   return repository.autocomplete(query);
 });

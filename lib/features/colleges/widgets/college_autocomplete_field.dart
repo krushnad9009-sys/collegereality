@@ -51,8 +51,8 @@ class _CollegeAutocompleteFieldState
   @override
   Widget build(BuildContext context) {
     final query = _controller.text.trim();
-    final suggestionsAsync = query.length >= 2 && query != widget.selectedCollegeName
-        ? ref.watch(collegeAutocompleteProvider(query))
+    final suggestionsAsync = query.length >= 1 && query != widget.selectedCollegeName
+        ? ref.watch(collegeInstantSuggestProvider(query))
         : const AsyncValue<List<CollegeModel>>.data([]);
 
     return Column(
@@ -96,7 +96,7 @@ class _CollegeAutocompleteFieldState
             ),
           ),
           data: (colleges) {
-            if (colleges.isEmpty || query.length < 2) {
+            if (colleges.isEmpty || query.length < 1) {
               return const SizedBox.shrink();
             }
             return Container(
@@ -145,11 +145,11 @@ class _CollegeAutocompleteFieldState
             );
           },
         ),
-        if (widget.selectedCollegeId == null && query.length >= 2)
+        if (widget.selectedCollegeId == null && query.isNotEmpty)
           Padding(
             padding: const EdgeInsets.only(top: 6),
             child: Text(
-              'Type at least 2 characters and pick your college from results',
+              'Pick your college from suggestions',
               style: GoogleFonts.poppins(fontSize: 11, color: AppTheme.gray500),
             ),
           ),

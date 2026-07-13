@@ -18,9 +18,17 @@ class CollegeGalleryWidget extends StatelessWidget {
           color: AppTheme.gray100,
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Text(
-          'Gallery photos coming soon',
-          style: GoogleFonts.poppins(color: AppTheme.gray500, fontSize: 13),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.photo_library_outlined,
+                size: 40, color: AppTheme.gray400),
+            const SizedBox(height: 8),
+            Text(
+              'No photos available',
+              style: GoogleFonts.poppins(color: AppTheme.gray500, fontSize: 13),
+            ),
+          ],
         ),
       );
     }

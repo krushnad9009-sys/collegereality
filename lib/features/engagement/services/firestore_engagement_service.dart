@@ -9,6 +9,7 @@ import '../../../core/constants/firestore_constants.dart';
 import '../models/engagement_models.dart';
 import '../utils/alert_scanner.dart';
 import '../utils/engagement_filter_utils.dart';
+import '../../../core/utils/firestore_seed_guard.dart';
 import '../../social/models/social_models.dart';
 
 class FirestoreEngagementService {
@@ -39,15 +40,9 @@ class FirestoreEngagementService {
           );
 
   Future<void> ensureSeeded() async {
-    final meta = await _meta.get();
-    if (meta.exists && meta.data()?['seeded'] == true) return;
-    final snap = await _calendar.limit(1).get();
-    if (snap.docs.isNotEmpty) {
-      await _meta.set({'seeded': true, 'updatedAt': DateTime.now().toIso8601String()});
-      return;
-    }
-    await _seedCalendarFromAssets();
-    await _meta.set({'seeded': true, 'updatedAt': DateTime.now().toIso8601String()});
+    final hasData = await FirestoreSeedGuard.hasSampleData(_calendar.limit(1).get());
+    if (hasData) return;
+    await FirestoreSeedGuard.skipClientSeedWrites();
   }
 
   Future<void> _seedCalendarFromAssets() async {

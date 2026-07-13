@@ -4,6 +4,24 @@ class CollegeSearchUtils {
 
   static String normalizeName(String name) => name.trim().toLowerCase();
 
+  static String normalizeCity(String city) => city.trim().toLowerCase();
+
+  static String normalizeState(String state) => state.trim().toLowerCase();
+
+  static String titleCaseCity(String city) {
+    if (city.trim().isEmpty) return city;
+    return city
+        .trim()
+        .split(RegExp(r'\s+'))
+        .map((w) => w.isEmpty
+            ? w
+            : '${w[0].toUpperCase()}${w.substring(1).toLowerCase()}')
+        .join(' ');
+  }
+
+  static String normalizeUniversity(String? university) =>
+      (university ?? '').trim().toLowerCase();
+
   static String buildSlug(String name, String city) {
     final base = '${name.trim()}-${city.trim()}'
         .toLowerCase()

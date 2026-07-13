@@ -92,12 +92,14 @@ class GuideCommunicationSettings {
   final bool videoCallsEnabled;
   final bool cameraDefaultOn;
   final bool blurBackground;
+  final bool allowPublicProfile;
 
   const GuideCommunicationSettings({
     this.isGuideAvailable = false,
     this.videoCallsEnabled = true,
     this.cameraDefaultOn = true,
     this.blurBackground = true,
+    this.allowPublicProfile = false,
   });
 
   factory GuideCommunicationSettings.fromJson(Map<String, dynamic>? json) {
@@ -107,6 +109,7 @@ class GuideCommunicationSettings {
       videoCallsEnabled: json['videoCallsEnabled'] as bool? ?? true,
       cameraDefaultOn: json['cameraDefaultOn'] as bool? ?? true,
       blurBackground: json['blurBackground'] as bool? ?? true,
+      allowPublicProfile: json['allowPublicProfile'] as bool? ?? false,
     );
   }
 
@@ -115,6 +118,7 @@ class GuideCommunicationSettings {
         'videoCallsEnabled': videoCallsEnabled,
         'cameraDefaultOn': cameraDefaultOn,
         'blurBackground': blurBackground,
+        'allowPublicProfile': allowPublicProfile,
       };
 
   GuideCommunicationSettings copyWith({
@@ -122,12 +126,14 @@ class GuideCommunicationSettings {
     bool? videoCallsEnabled,
     bool? cameraDefaultOn,
     bool? blurBackground,
+    bool? allowPublicProfile,
   }) {
     return GuideCommunicationSettings(
       isGuideAvailable: isGuideAvailable ?? this.isGuideAvailable,
       videoCallsEnabled: videoCallsEnabled ?? this.videoCallsEnabled,
       cameraDefaultOn: cameraDefaultOn ?? this.cameraDefaultOn,
       blurBackground: blurBackground ?? this.blurBackground,
+      allowPublicProfile: allowPublicProfile ?? this.allowPublicProfile,
     );
   }
 }

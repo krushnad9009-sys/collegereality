@@ -7,11 +7,11 @@ import 'config/theme/theme_provider.dart';
 import 'core/bootstrap/firebase_bootstrap.dart';
 import 'features/engagement/services/firebase_messaging_service.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-  // Start Firebase in the background; splash awaits readiness before routing.
-  FirebaseBootstrap.ensureInitialized();
+  // Await Firebase before router/auth access (required on web).
+  await FirebaseBootstrap.ensureInitialized();
   runApp(
     const ProviderScope(
       child: CollegeRealityApp(),

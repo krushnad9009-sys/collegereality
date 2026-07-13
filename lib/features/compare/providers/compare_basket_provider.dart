@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/cache/compare_session_cache.dart';
 import '../../../core/constants/compare_constants.dart';
 import '../../colleges/providers/college_provider.dart';
 import '../models/college_comparison_result.dart';
@@ -74,9 +75,15 @@ final compareCollegesProvider =
     FutureProvider.family<CollegeComparisonResult?, List<String>>(
         (ref, collegeIds) async {
   if (collegeIds.length < CompareConstants.minCollegesToCompare) return null;
+
+  final cached = CompareSessionCache.get(collegeIds);
+  if (cached != null) return cached;
+
   final repository = ref.watch(collegeRepositoryProvider);
   final service = ref.watch(collegeComparisonServiceProvider);
   final colleges = await repository.getCollegesByIds(collegeIds);
   if (colleges.length < CompareConstants.minCollegesToCompare) return null;
-  return service.compare(colleges);
+  final result = service.compare(colleges);
+  CompareSessionCache.set(collegeIds, result);
+  return result;
 });

@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/rating_parameters.dart';
+import '../../../core/utils/indian_currency_formatter.dart';
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/widgets/college_image_widget.dart';
@@ -23,6 +23,7 @@ import '../../questions/widgets/college_questions_tab_content.dart';
 import '../widgets/accreditation_badges.dart';
 import '../widgets/college_gallery_widget.dart';
 import '../widgets/college_map_section.dart';
+import '../widgets/connect_students_section.dart';
 import '../models/college_model.dart';
 import '../providers/college_provider.dart';
 
@@ -66,7 +67,6 @@ class _CollegeDetailScreenState extends ConsumerState<CollegeDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final collegeAsync = ref.watch(collegeByIdProvider(widget.collegeId));
-    final currency = NumberFormat.compactCurrency(locale: 'en_IN', symbol: '₹');
 
     return collegeAsync.when(
       loading: () => const Scaffold(
@@ -252,7 +252,7 @@ class _CollegeDetailScreenState extends ConsumerState<CollegeDetailScreen> {
                   CollegeQuestionsTabContent(college: college),
                   _FacultyTab(college: college),
                   _HostelTab(college: college),
-                  _FeesTab(college: college, currency: currency),
+                  _FeesTab(college: college),
                   _RatingsTab(college: college),
                   _ReviewsTab(college: college),
                 ],
@@ -355,12 +355,35 @@ class _OverviewTab extends StatelessWidget {
 
   const _OverviewTab({required this.college});
 
-  Future<void> _openWebsite(BuildContext context, String url) async {
+  Future<void> _openUrl(BuildContext context, String url) async {
     final uri = Uri.parse(url.startsWith('http') ? url : 'https://$url');
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not open website')),
+          const SnackBar(content: Text('Could not open link')),
+        );
+      }
+    }
+  }
+
+  Future<void> _openPhone(BuildContext context, String phone) async {
+    final digits = phone.replaceAll(RegExp(r'[^\d+]'), '');
+    final uri = Uri.parse('tel:$digits');
+    if (!await launchUrl(uri)) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open phone dialer')),
+        );
+      }
+    }
+  }
+
+  Future<void> _openEmail(BuildContext context, String email) async {
+    final uri = Uri.parse('mailto:$email');
+    if (!await launchUrl(uri)) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open email app')),
         );
       }
     }
@@ -408,9 +431,50 @@ class _OverviewTab extends StatelessWidget {
               title: Text('Website', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
               subtitle: Text(college.website!),
               trailing: const Icon(Icons.open_in_new, size: 18),
-              onTap: () => _openWebsite(context, college.website!),
+              onTap: () => _openUrl(context, college.website!),
             ),
           ),
+        if (college.phone != null && college.phone!.trim().isNotEmpty)
+          Card(
+            margin: const EdgeInsets.only(bottom: 12),
+            child: ListTile(
+              leading: const Icon(Icons.phone_outlined, color: AppTheme.primaryColor),
+              title: Text('Phone', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+              subtitle: Text(college.phone!),
+              onTap: () => _openPhone(context, college.phone!),
+            ),
+          ),
+        if (college.email != null && college.email!.trim().isNotEmpty)
+          Card(
+            margin: const EdgeInsets.only(bottom: 12),
+            child: ListTile(
+              leading: const Icon(Icons.email_outlined, color: AppTheme.primaryColor),
+              title: Text('Email', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+              subtitle: Text(college.email!),
+              onTap: () => _openEmail(context, college.email!),
+            ),
+          ),
+        if (college.officialLinks.isNotEmpty) ...[
+          Text(
+            'Official Links',
+            style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 15),
+          ),
+          const SizedBox(height: 8),
+          ...college.officialLinks.map(
+            (link) => Card(
+              margin: const EdgeInsets.only(bottom: 8),
+              child: ListTile(
+                leading: const Icon(Icons.link, color: AppTheme.secondaryColor),
+                title: Text(link, style: GoogleFonts.poppins(fontSize: 13)),
+                trailing: const Icon(Icons.open_in_new, size: 18),
+                onTap: () => _openUrl(context, link),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
+        ConnectStudentsSection(collegeId: college.id),
+        const SizedBox(height: 20),
         if (college.coursesDetailed.isNotEmpty) ...[
           Text(
             'Courses',
@@ -427,7 +491,8 @@ class _OverviewTab extends StatelessWidget {
                     if (c.degree.isNotEmpty) c.degree,
                     if (c.duration.isNotEmpty) c.duration,
                     if (c.seats > 0) '${c.seats} seats',
-                    if (c.annualFees != null) '₹${c.annualFees}/yr',
+                    if (c.annualFees != null)
+                      IndianCurrencyFormatter.format(c.annualFees!),
                   ].join(' · '),
                 ),
               ),
@@ -497,7 +562,6 @@ class _HostelTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final ratings = college.aggregatedRatings;
     final hostel = college.hostel;
-    final currency = NumberFormat.compactCurrency(locale: 'en_IN', symbol: '₹');
     final annualFee = hostel.annualFee > 0
         ? hostel.annualFee
         : college.fees.hostelAnnual;
@@ -515,7 +579,7 @@ class _HostelTab extends StatelessWidget {
         const SizedBox(height: 16),
         _StatCard(
           label: 'Hostel Fee (Annual)',
-          value: currency.format(annualFee),
+          value: IndianCurrencyFormatter.format(annualFee),
           icon: Icons.hotel_outlined,
           color: AppTheme.accentColor,
         ),
@@ -957,9 +1021,8 @@ class _RatingsTab extends StatelessWidget {
 
 class _FeesTab extends StatelessWidget {
   final CollegeModel college;
-  final NumberFormat currency;
 
-  const _FeesTab({required this.college, required this.currency});
+  const _FeesTab({required this.college});
 
   @override
   Widget build(BuildContext context) {
@@ -969,21 +1032,21 @@ class _FeesTab extends StatelessWidget {
       children: [
         _StatCard(
           label: 'Tuition (Min)',
-          value: currency.format(fees.tuitionMin),
+          value: IndianCurrencyFormatter.format(fees.tuitionMin),
           icon: Icons.payments_outlined,
           color: AppTheme.primaryColor,
         ),
         const SizedBox(height: 12),
         _StatCard(
           label: 'Tuition (Max)',
-          value: currency.format(fees.tuitionMax),
+          value: IndianCurrencyFormatter.format(fees.tuitionMax),
           icon: Icons.payments_outlined,
           color: AppTheme.secondaryColor,
         ),
         const SizedBox(height: 12),
         _StatCard(
           label: 'Hostel (Annual)',
-          value: currency.format(fees.hostelAnnual),
+          value: IndianCurrencyFormatter.format(fees.hostelAnnual),
           icon: Icons.hotel_outlined,
           color: AppTheme.accentColor,
         ),

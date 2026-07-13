@@ -7,6 +7,7 @@ import '../../auth/services/firestore_user_service.dart';
 import '../models/call_session_model.dart';
 import '../models/interaction_rating_model.dart';
 import '../models/public_guide_profile.dart';
+import '../models/public_student_profile.dart';
 import '../utils/guide_stats_calculator.dart';
 
 class CommunicationFirestoreService {
@@ -39,6 +40,32 @@ class CommunicationFirestoreService {
       return null;
     }
     return PublicGuideProfile.fromUser(user);
+  }
+
+  Future<List<PublicStudentProfile>> searchConnectableStudents({
+    required String collegeId,
+    String? excludeUserId,
+    int limit = 30,
+  }) async {
+    if (collegeId.isEmpty) return [];
+
+    final snapshot = await _firestore
+        .collection(FirestoreConstants.usersCollection)
+        .where('collegeId', isEqualTo: collegeId)
+        .where('communicationSettings.allowPublicProfile', isEqualTo: true)
+        .limit(limit)
+        .get();
+
+    final blockedIds = excludeUserId != null
+        ? await getBlockedUserIds(excludeUserId)
+        : <String>[];
+
+    return snapshot.docs
+        .map((doc) => UserModel.fromJson(doc.data()))
+        .where((user) =>
+            user.uid != excludeUserId && !blockedIds.contains(user.uid))
+        .map(PublicStudentProfile.fromUser)
+        .toList();
   }
 
   Future<bool> isBlocked(String userId, String otherUserId) async {

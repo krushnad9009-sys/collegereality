@@ -506,12 +506,11 @@ service cloud.firestore {
     match /user_notifications/{notificationId} {
       allow read: if isAuthenticated() &&
         resource.data.userId == request.auth.uid;
-      allow create: if isAuthenticated() &&
-        request.resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated();
       allow update: if isAuthenticated() &&
         resource.data.userId == request.auth.uid &&
         request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['isRead']);
+          .hasOnly(['isRead', 'updatedAt']);
       allow delete: if isAuthenticated() &&
         resource.data.userId == request.auth.uid;
     }

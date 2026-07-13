@@ -294,6 +294,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     ),
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
+                      title: const Text('Allow public profile for student connect'),
+                      subtitle: const Text(
+                        'Other students can chat with you. Your phone number stays private.',
+                      ),
+                      value: settings.allowPublicProfile,
+                      onChanged: (value) {
+                        setState(() {
+                          _communicationSettings =
+                              settings.copyWith(allowPublicProfile: value);
+                        });
+                      },
+                    ),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
                       title: const Text('Available as a guide'),
                       value: settings.isGuideAvailable,
                       onChanged: (value) {

@@ -10,6 +10,7 @@ import '../models/admission_prediction_model.dart';
 import '../models/cutoff_record_model.dart';
 import '../models/entrance_exam_model.dart';
 import '../models/scholarship_model.dart';
+import '../../../core/utils/firestore_seed_guard.dart';
 import '../utils/admission_utils.dart';
 
 class FirestoreAdmissionService {
@@ -32,17 +33,10 @@ class FirestoreAdmissionService {
           );
 
   Future<void> ensureSeeded() async {
-    final meta = await _meta.get();
-    if (meta.exists && meta.data()?['seeded'] == true) return;
-
-    final scholarshipSnap = await _scholarships.limit(1).get();
-    if (scholarshipSnap.docs.isNotEmpty) {
-      await _meta.set({'seeded': true, 'updatedAt': DateTime.now().toIso8601String()});
-      return;
-    }
-
-    await _seedFromAssets();
-    await _meta.set({'seeded': true, 'updatedAt': DateTime.now().toIso8601String()});
+    final hasData =
+        await FirestoreSeedGuard.hasSampleData(_scholarships.limit(1).get());
+    if (hasData) return;
+    await FirestoreSeedGuard.skipClientSeedWrites();
   }
 
   Future<void> _seedFromAssets() async {

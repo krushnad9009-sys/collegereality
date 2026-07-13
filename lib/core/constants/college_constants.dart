@@ -6,7 +6,8 @@ class CollegeConstants {
   static const int autocompleteLimit = 15;
   static const int featuredLimit = 12;
   static const int adminPageSize = 30;
-  static const int minSearchChars = 2;
+  static const int minSearchChars = 1;
+  static const int instantSuggestLimit = 12;
 
   static const String metaDirectoryDoc = 'collegeDirectory';
 

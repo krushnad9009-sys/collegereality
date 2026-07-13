@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/call_session_model.dart';
 import '../models/interaction_rating_model.dart';
 import '../models/public_guide_profile.dart';
+import '../models/public_student_profile.dart';
 import '../services/communication_firestore_service.dart';
 import '../utils/communication_formatters.dart';
 
@@ -19,6 +20,16 @@ final publicGuideProvider =
     FutureProvider.family<PublicGuideProfile?, String>((ref, uid) {
   return ref.watch(communicationServiceProvider).getPublicGuideProfile(uid);
 });
+
+final collegeConnectableStudentsProvider = FutureProvider.family<
+    List<PublicStudentProfile>, ({String collegeId, String? excludeUserId})>(
+  (ref, params) {
+    return ref.watch(communicationServiceProvider).searchConnectableStudents(
+          collegeId: params.collegeId,
+          excludeUserId: params.excludeUserId,
+        );
+  },
+);
 
 final callSessionProvider =
     StreamProvider.family<CallSessionModel?, String>((ref, sessionId) {
