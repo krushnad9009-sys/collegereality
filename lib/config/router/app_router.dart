@@ -29,6 +29,12 @@ import '../../features/community/screens/chat_screen.dart';
 import '../../features/community/screens/ask_seniors_screen.dart';
 import '../../features/community/screens/qa_board_screen.dart';
 import '../../features/social/screens/college_discussion_feed_screen.dart';
+import '../../features/ranking/screens/ranking_hub_screen.dart';
+import '../../features/ranking/screens/college_rankings_screen.dart';
+import '../../features/ranking/screens/smart_recommendations_screen.dart';
+import '../../features/ranking/screens/compare_recommendations_screen.dart';
+import '../../features/ranking/screens/college_insights_screen.dart';
+import '../../features/ranking/screens/college_analytics_screen.dart';
 import '../../features/placements/screens/submit_placement_screen.dart';
 import '../../features/questions/screens/question_detail_screen.dart';
 import '../../features/admission/screens/admission_hub_screen.dart';
@@ -184,6 +190,30 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             anchorCollegeName: collegeName,
           );
         },
+      ),
+      GoRoute(
+        path: RouteNames.rankingHub,
+        builder: (context, state) => const RankingHubScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.rankingColleges,
+        builder: (context, state) => const CollegeRankingsScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.rankingRecommendations,
+        builder: (context, state) => const SmartRecommendationsScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.rankingCompare,
+        builder: (context, state) => const CompareRecommendationsScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.rankingInsights,
+        builder: (context, state) => const CollegeInsightsScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.rankingAnalytics,
+        builder: (context, state) => const CollegeAnalyticsScreen(),
       ),
       GoRoute(
         path: RouteNames.collegeSearch,

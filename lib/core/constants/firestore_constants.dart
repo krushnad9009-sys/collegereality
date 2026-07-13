@@ -60,4 +60,5 @@ class FirestoreConstants {
   static const String admissionCalendarEventsCollection = 'admission_calendar_events';
   static const String savedEntranceExamsCollection = 'saved_entrance_exams';
   static const String savedQuestionsCollection = 'saved_questions';
+  static const String collegeAnalyticsEventsCollection = 'college_analytics_events';
 }

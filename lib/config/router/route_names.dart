@@ -71,6 +71,12 @@ class RouteNames {
   static const String studentLifeCommunityBoard = '/student-life/communities/:id';
   static const String studentLifeSaved = '/student-life/saved';
   static const String adminStudentLife = '/admin/student-life';
+  static const String rankingHub = '/rankings';
+  static const String rankingColleges = '/rankings/colleges';
+  static const String rankingRecommendations = '/rankings/recommendations';
+  static const String rankingCompare = '/rankings/compare';
+  static const String rankingInsights = '/rankings/insights';
+  static const String rankingAnalytics = '/rankings/analytics';
 
   static String collegeDetailsPath(String id, {String? tab}) {
     final path = '/college-details/$id';

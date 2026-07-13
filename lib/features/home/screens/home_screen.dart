@@ -87,6 +87,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             scrollDirection: Axis.horizontal,
                             children: [
                               _QuickAccessCard(
+                                icon: Icons.leaderboard_rounded,
+                                label: 'AI Rankings',
+                                color: const Color(0xFF6366F1),
+                                onTap: () => context.go(RouteNames.rankingHub),
+                              ),
+                              const SizedBox(width: 12),
+                              _QuickAccessCard(
                                 icon: Icons.groups_rounded,
                                 label: 'Community',
                                 color: const Color(0xFF7C3AED),
