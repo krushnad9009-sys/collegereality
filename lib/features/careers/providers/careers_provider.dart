@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/providers/auth_provider.dart';
@@ -5,10 +6,16 @@ import '../../auth/providers/user_provider.dart';
 import '../models/careers_models.dart';
 import '../repositories/careers_repository.dart';
 import '../services/firestore_careers_service.dart';
+import '../services/resume_storage_service.dart';
 import '../utils/careers_filter_utils.dart';
+import '../utils/careers_matching_utils.dart';
 
 final firestoreCareersServiceProvider = Provider<FirestoreCareersService>((ref) {
   return FirestoreCareersService();
+});
+
+final resumeStorageServiceProvider = Provider<ResumeStorageService>((ref) {
+  return ResumeStorageService();
 });
 
 final careersRepositoryProvider = Provider<CareersRepository>((ref) {
@@ -44,12 +51,18 @@ class InternshipFilterState {
   final String? city;
   final String? company;
   final String? payType;
+  final bool workFromHome;
+  final int? minStipend;
+  final String? durationBucket;
 
   const InternshipFilterState({
     this.searchQuery = '',
     this.city,
     this.company,
     this.payType,
+    this.workFromHome = false,
+    this.minStipend,
+    this.durationBucket,
   });
 
   InternshipFilterState copyWith({
@@ -57,15 +70,23 @@ class InternshipFilterState {
     String? city,
     String? company,
     String? payType,
+    bool? workFromHome,
+    int? minStipend,
+    String? durationBucket,
     bool clearCity = false,
     bool clearCompany = false,
     bool clearPayType = false,
+    bool clearStipend = false,
+    bool clearDuration = false,
   }) {
     return InternshipFilterState(
       searchQuery: searchQuery ?? this.searchQuery,
       city: clearCity ? null : (city ?? this.city),
       company: clearCompany ? null : (company ?? this.company),
       payType: clearPayType ? null : (payType ?? this.payType),
+      workFromHome: workFromHome ?? this.workFromHome,
+      minStipend: clearStipend ? null : (minStipend ?? this.minStipend),
+      durationBucket: clearDuration ? null : (durationBucket ?? this.durationBucket),
     );
   }
 }
@@ -89,6 +110,9 @@ final filteredInternshipsProvider = Provider<AsyncValue<List<InternshipModel>>>(
       city: filters.city,
       company: filters.company,
       payType: filters.payType,
+      workFromHome: filters.workFromHome ? true : null,
+      minStipend: filters.minStipend,
+      durationBucket: filters.durationBucket,
     );
   });
 });
@@ -228,4 +252,195 @@ final alumniByIdProvider =
 
 final currentUserDetailForCareersProvider = Provider((ref) {
   return ref.watch(currentUserDetailProvider);
+});
+
+final studentResumeProvider = StreamProvider<StudentResumeModel?>((ref) {
+  final user = ref.watch(authStateProvider).valueOrNull;
+  if (user == null) return Stream.value(null);
+  return ref.watch(careersRepositoryProvider).watchStudentResume(user.uid);
+});
+
+final companyAccountProvider = StreamProvider<CompanyAccountModel?>((ref) {
+  final user = ref.watch(authStateProvider).valueOrNull;
+  if (user == null) return Stream.value(null);
+  return ref.watch(careersRepositoryProvider).watchCompanyAccount(user.uid);
+});
+
+final recommendedJobsProvider = Provider<AsyncValue<List<CareerMatchResult<JobModel>>>>((ref) {
+  final jobsAsync = ref.watch(jobsProvider);
+  final userAsync = ref.watch(currentUserDetailProvider);
+  return jobsAsync.whenData((jobs) {
+    final user = userAsync.valueOrNull;
+    final skills = [
+      ...?user?.interests,
+      ...?ref.watch(studentResumeProvider).valueOrNull?.extractedSkills,
+    ];
+    return recommendJobs(
+      jobs: jobs,
+      degree: user?.course,
+      branch: user?.branch,
+      skills: skills,
+    );
+  });
+});
+
+final recommendedInternshipsProvider =
+    Provider<AsyncValue<List<CareerMatchResult<InternshipModel>>>>((ref) {
+  final internshipsAsync = ref.watch(internshipsProvider);
+  final userAsync = ref.watch(currentUserDetailProvider);
+  return internshipsAsync.whenData((internships) {
+    final user = userAsync.valueOrNull;
+    final skills = [
+      ...?user?.interests,
+      ...?ref.watch(studentResumeProvider).valueOrNull?.extractedSkills,
+    ];
+    return recommendInternships(internships: internships, skills: skills);
+  });
+});
+
+final careerSuggestionsProvider = Provider<AsyncValue<List<String>>>((ref) {
+  final jobsAsync = ref.watch(jobsProvider);
+  final internshipsAsync = ref.watch(internshipsProvider);
+  final userAsync = ref.watch(currentUserDetailProvider);
+  if (jobsAsync.isLoading || internshipsAsync.isLoading) {
+    return const AsyncValue.loading();
+  }
+  final user = userAsync.valueOrNull;
+  final skills = [
+    ...?user?.interests,
+    ...?ref.watch(studentResumeProvider).valueOrNull?.extractedSkills,
+  ];
+  return AsyncValue.data(
+    generateCareerSuggestions(
+      degree: user?.course,
+      branch: user?.branch,
+      skills: skills,
+      jobs: jobsAsync.valueOrNull ?? [],
+      internships: internshipsAsync.valueOrNull ?? [],
+    ),
+  );
+});
+
+class PaginatedInternshipsState {
+  final List<InternshipModel> items;
+  final bool isLoading;
+  final bool hasMore;
+  final DocumentSnapshot<Map<String, dynamic>>? lastDoc;
+
+  const PaginatedInternshipsState({
+    this.items = const [],
+    this.isLoading = false,
+    this.hasMore = true,
+    this.lastDoc,
+  });
+
+  PaginatedInternshipsState copyWith({
+    List<InternshipModel>? items,
+    bool? isLoading,
+    bool? hasMore,
+    DocumentSnapshot<Map<String, dynamic>>? lastDoc,
+  }) {
+    return PaginatedInternshipsState(
+      items: items ?? this.items,
+      isLoading: isLoading ?? this.isLoading,
+      hasMore: hasMore ?? this.hasMore,
+      lastDoc: lastDoc ?? this.lastDoc,
+    );
+  }
+}
+
+class PaginatedInternshipsNotifier extends StateNotifier<PaginatedInternshipsState> {
+  PaginatedInternshipsNotifier(this._repo) : super(const PaginatedInternshipsState());
+
+  final CareersRepository _repo;
+
+  Future<void> loadInitial() async {
+    if (state.isLoading) return;
+    state = state.copyWith(isLoading: true, items: []);
+    final page = await _repo.fetchInternshipsPage();
+    state = PaginatedInternshipsState(
+      items: page.items,
+      hasMore: page.hasMore,
+      lastDoc: page.lastDocument,
+    );
+  }
+
+  Future<void> loadMore() async {
+    if (state.isLoading || !state.hasMore) return;
+    state = state.copyWith(isLoading: true);
+    final page = await _repo.fetchInternshipsPage(startAfter: state.lastDoc);
+    state = state.copyWith(
+      items: [...state.items, ...page.items],
+      hasMore: page.hasMore,
+      lastDoc: page.lastDocument,
+      isLoading: false,
+    );
+  }
+}
+
+final paginatedInternshipsProvider =
+    StateNotifierProvider<PaginatedInternshipsNotifier, PaginatedInternshipsState>((ref) {
+  return PaginatedInternshipsNotifier(ref.watch(careersRepositoryProvider));
+});
+
+class PaginatedJobsState {
+  final List<JobModel> items;
+  final bool isLoading;
+  final bool hasMore;
+  final DocumentSnapshot<Map<String, dynamic>>? lastDoc;
+
+  const PaginatedJobsState({
+    this.items = const [],
+    this.isLoading = false,
+    this.hasMore = true,
+    this.lastDoc,
+  });
+
+  PaginatedJobsState copyWith({
+    List<JobModel>? items,
+    bool? isLoading,
+    bool? hasMore,
+    DocumentSnapshot<Map<String, dynamic>>? lastDoc,
+  }) {
+    return PaginatedJobsState(
+      items: items ?? this.items,
+      isLoading: isLoading ?? this.isLoading,
+      hasMore: hasMore ?? this.hasMore,
+      lastDoc: lastDoc ?? this.lastDoc,
+    );
+  }
+}
+
+class PaginatedJobsNotifier extends StateNotifier<PaginatedJobsState> {
+  PaginatedJobsNotifier(this._repo) : super(const PaginatedJobsState());
+
+  final CareersRepository _repo;
+
+  Future<void> loadInitial() async {
+    if (state.isLoading) return;
+    state = state.copyWith(isLoading: true, items: []);
+    final page = await _repo.fetchJobsPage();
+    state = PaginatedJobsState(
+      items: page.items,
+      hasMore: page.hasMore,
+      lastDoc: page.lastDocument,
+    );
+  }
+
+  Future<void> loadMore() async {
+    if (state.isLoading || !state.hasMore) return;
+    state = state.copyWith(isLoading: true);
+    final page = await _repo.fetchJobsPage(startAfter: state.lastDoc);
+    state = state.copyWith(
+      items: [...state.items, ...page.items],
+      hasMore: page.hasMore,
+      lastDoc: page.lastDocument,
+      isLoading: false,
+    );
+  }
+}
+
+final paginatedJobsProvider =
+    StateNotifierProvider<PaginatedJobsNotifier, PaginatedJobsState>((ref) {
+  return PaginatedJobsNotifier(ref.watch(careersRepositoryProvider));
 });

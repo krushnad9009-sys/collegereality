@@ -53,6 +53,12 @@ class RouteNames {
   static const String careersAlumni = '/careers/alumni';
   static const String careersAlumniDetail = '/careers/alumni/:id';
   static const String careersSaved = '/careers/saved';
+  static const String careersResume = '/careers/resume';
+  static const String careersRecommendations = '/careers/recommendations';
+  static const String careersCompanyDashboard = '/careers/company-dashboard';
+  static const String careersPostInternship = '/careers/company/post-internship';
+  static const String careersPostJob = '/careers/company/post-job';
+  static const String careersManageApplicants = '/careers/company/applicants';
   static const String studentLifeHub = '/student-life';
   static const String studentLifeEvents = '/student-life/events';
   static const String studentLifeEventDetail = '/student-life/events/:id';

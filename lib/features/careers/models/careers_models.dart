@@ -10,7 +10,10 @@ class InternshipModel {
   final String city;
   final String payType;
   final String stipend;
+  final int stipendMin;
   final String duration;
+  final int durationWeeks;
+  final String workType;
   final String description;
   final List<String> skills;
   final String applyUrl;
@@ -27,7 +30,10 @@ class InternshipModel {
     required this.city,
     required this.payType,
     this.stipend = '',
+    this.stipendMin = 0,
     this.duration = '',
+    this.durationWeeks = 0,
+    this.workType = CareersConstants.workTypeOffice,
     this.description = '',
     this.skills = const [],
     this.applyUrl = '',
@@ -38,6 +44,7 @@ class InternshipModel {
   });
 
   bool get isPaid => payType == CareersConstants.payTypePaid;
+  bool get isRemote => workType == CareersConstants.workTypeRemote;
 
   static DateTime _parseDate(dynamic value) {
     if (value == null) return DateTime.now();
@@ -55,7 +62,10 @@ class InternshipModel {
       city: json['city'] as String? ?? '',
       payType: json['payType'] as String? ?? CareersConstants.payTypePaid,
       stipend: json['stipend'] as String? ?? '',
+      stipendMin: (json['stipendMin'] as num?)?.toInt() ?? 0,
       duration: json['duration'] as String? ?? '',
+      durationWeeks: (json['durationWeeks'] as num?)?.toInt() ?? 0,
+      workType: json['workType'] as String? ?? CareersConstants.workTypeOffice,
       description: json['description'] as String? ?? '',
       skills: (json['skills'] as List<dynamic>?)?.cast<String>() ?? const [],
       applyUrl: json['applyUrl'] as String? ?? '',
@@ -74,7 +84,10 @@ class InternshipModel {
         'city': city,
         'payType': payType,
         'stipend': stipend,
+        'stipendMin': stipendMin,
         'duration': duration,
+        'durationWeeks': durationWeeks,
+        'workType': workType,
         'description': description,
         'skills': skills,
         'applyUrl': applyUrl,
@@ -95,6 +108,7 @@ class JobModel {
   final String workType;
   final double salaryMinLpa;
   final double salaryMaxLpa;
+  final String eligibility;
   final String description;
   final List<String> skills;
   final String applyUrl;
@@ -113,6 +127,7 @@ class JobModel {
     required this.workType,
     this.salaryMinLpa = 0,
     this.salaryMaxLpa = 0,
+    this.eligibility = '',
     this.description = '',
     this.skills = const [],
     this.applyUrl = '',
@@ -146,6 +161,7 @@ class JobModel {
       workType: json['workType'] as String? ?? CareersConstants.workTypeOffice,
       salaryMinLpa: (json['salaryMinLpa'] as num?)?.toDouble() ?? 0,
       salaryMaxLpa: (json['salaryMaxLpa'] as num?)?.toDouble() ?? 0,
+      eligibility: json['eligibility'] as String? ?? '',
       description: json['description'] as String? ?? '',
       skills: (json['skills'] as List<dynamic>?)?.cast<String>() ?? const [],
       applyUrl: json['applyUrl'] as String? ?? '',
@@ -166,6 +182,7 @@ class JobModel {
         'workType': workType,
         'salaryMinLpa': salaryMinLpa,
         'salaryMaxLpa': salaryMaxLpa,
+        'eligibility': eligibility,
         'description': description,
         'skills': skills,
         'applyUrl': applyUrl,
@@ -187,6 +204,8 @@ class CompanyModel {
   final double rating;
   final int reviewCount;
   final List<String> placementHistory;
+  final bool isVerified;
+  final String? ownerUserId;
   final String searchText;
   final bool isActive;
   final DateTime updatedAt;
@@ -202,6 +221,8 @@ class CompanyModel {
     this.rating = 0,
     this.reviewCount = 0,
     this.placementHistory = const [],
+    this.isVerified = false,
+    this.ownerUserId,
     this.searchText = '',
     this.isActive = true,
     required this.updatedAt,
@@ -227,6 +248,8 @@ class CompanyModel {
       reviewCount: (json['reviewCount'] as num?)?.toInt() ?? 0,
       placementHistory:
           (json['placementHistory'] as List<dynamic>?)?.cast<String>() ?? const [],
+      isVerified: json['isVerified'] as bool? ?? false,
+      ownerUserId: json['ownerUserId'] as String?,
       searchText: json['searchText'] as String? ?? '',
       isActive: json['isActive'] as bool? ?? true,
       updatedAt: _parseDate(json['updatedAt']),
@@ -244,6 +267,8 @@ class CompanyModel {
         'rating': rating,
         'reviewCount': reviewCount,
         'placementHistory': placementHistory,
+        'isVerified': isVerified,
+        if (ownerUserId != null) 'ownerUserId': ownerUserId,
         'searchText': searchText,
         'isActive': isActive,
         'updatedAt': updatedAt.toIso8601String(),
@@ -382,4 +407,174 @@ class AlumniProfileModel {
         'isActive': isActive,
         'updatedAt': updatedAt.toIso8601String(),
       };
+}
+
+class ApplicationModel {
+  final String id;
+  final String userId;
+  final String? internshipId;
+  final String? jobId;
+  final String companyId;
+  final String applicantName;
+  final String coverNote;
+  final String? resumeUrl;
+  final String status;
+  final DateTime createdAt;
+
+  const ApplicationModel({
+    required this.id,
+    required this.userId,
+    this.internshipId,
+    this.jobId,
+    required this.companyId,
+    this.applicantName = '',
+    this.coverNote = '',
+    this.resumeUrl,
+    this.status = CareersConstants.applicationStatusSubmitted,
+    required this.createdAt,
+  });
+
+  bool get isInternship => internshipId != null && internshipId!.isNotEmpty;
+
+  static DateTime _parseDate(dynamic value) {
+    if (value == null) return DateTime.now();
+    if (value is Timestamp) return value.toDate();
+    if (value is DateTime) return value;
+    return DateTime.tryParse(value.toString()) ?? DateTime.now();
+  }
+
+  factory ApplicationModel.fromJson(Map<String, dynamic> json, {String? docId}) {
+    return ApplicationModel(
+      id: docId ?? json['id'] as String? ?? '',
+      userId: json['userId'] as String? ?? '',
+      internshipId: json['internshipId'] as String?,
+      jobId: json['jobId'] as String?,
+      companyId: json['companyId'] as String? ?? '',
+      applicantName: json['applicantName'] as String? ?? '',
+      coverNote: json['coverNote'] as String? ?? '',
+      resumeUrl: json['resumeUrl'] as String?,
+      status: json['status'] as String? ?? CareersConstants.applicationStatusSubmitted,
+      createdAt: _parseDate(json['createdAt']),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'userId': userId,
+        if (internshipId != null) 'internshipId': internshipId,
+        if (jobId != null) 'jobId': jobId,
+        'companyId': companyId,
+        'applicantName': applicantName,
+        'coverNote': coverNote,
+        if (resumeUrl != null) 'resumeUrl': resumeUrl,
+        'status': status,
+        'createdAt': createdAt.toIso8601String(),
+      };
+}
+
+class StudentResumeModel {
+  final String userId;
+  final String fileName;
+  final String downloadUrl;
+  final int fileSizeBytes;
+  final int score;
+  final List<String> suggestions;
+  final List<String> extractedSkills;
+  final DateTime updatedAt;
+
+  const StudentResumeModel({
+    required this.userId,
+    required this.fileName,
+    required this.downloadUrl,
+    this.fileSizeBytes = 0,
+    this.score = 0,
+    this.suggestions = const [],
+    this.extractedSkills = const [],
+    required this.updatedAt,
+  });
+
+  static DateTime _parseDate(dynamic value) {
+    if (value == null) return DateTime.now();
+    if (value is Timestamp) return value.toDate();
+    if (value is DateTime) return value;
+    return DateTime.tryParse(value.toString()) ?? DateTime.now();
+  }
+
+  factory StudentResumeModel.fromJson(Map<String, dynamic> json, {String? docId}) {
+    return StudentResumeModel(
+      userId: docId ?? json['userId'] as String? ?? '',
+      fileName: json['fileName'] as String? ?? 'resume.pdf',
+      downloadUrl: json['downloadUrl'] as String? ?? '',
+      fileSizeBytes: (json['fileSizeBytes'] as num?)?.toInt() ?? 0,
+      score: (json['score'] as num?)?.toInt() ?? 0,
+      suggestions: (json['suggestions'] as List<dynamic>?)?.cast<String>() ?? const [],
+      extractedSkills:
+          (json['extractedSkills'] as List<dynamic>?)?.cast<String>() ?? const [],
+      updatedAt: _parseDate(json['updatedAt']),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'userId': userId,
+        'fileName': fileName,
+        'downloadUrl': downloadUrl,
+        'fileSizeBytes': fileSizeBytes,
+        'score': score,
+        'suggestions': suggestions,
+        'extractedSkills': extractedSkills,
+        'updatedAt': updatedAt.toIso8601String(),
+      };
+}
+
+class CompanyAccountModel {
+  final String userId;
+  final String companyId;
+  final String companyName;
+  final bool isVerified;
+  final DateTime createdAt;
+
+  const CompanyAccountModel({
+    required this.userId,
+    required this.companyId,
+    required this.companyName,
+    this.isVerified = false,
+    required this.createdAt,
+  });
+
+  static DateTime _parseDate(dynamic value) {
+    if (value == null) return DateTime.now();
+    if (value is Timestamp) return value.toDate();
+    if (value is DateTime) return value;
+    return DateTime.tryParse(value.toString()) ?? DateTime.now();
+  }
+
+  factory CompanyAccountModel.fromJson(Map<String, dynamic> json, {String? docId}) {
+    return CompanyAccountModel(
+      userId: docId ?? json['userId'] as String? ?? '',
+      companyId: json['companyId'] as String? ?? '',
+      companyName: json['companyName'] as String? ?? '',
+      isVerified: json['isVerified'] as bool? ?? false,
+      createdAt: _parseDate(json['createdAt']),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'userId': userId,
+        'companyId': companyId,
+        'companyName': companyName,
+        'isVerified': isVerified,
+        'createdAt': createdAt.toIso8601String(),
+      };
+}
+
+class CareersPageResult<T> {
+  final List<T> items;
+  final DocumentSnapshot<Map<String, dynamic>>? lastDocument;
+  final bool hasMore;
+
+  const CareersPageResult({
+    required this.items,
+    this.lastDocument,
+    this.hasMore = false,
+  });
 }

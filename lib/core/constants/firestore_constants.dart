@@ -40,6 +40,8 @@ class FirestoreConstants {
   static const String alumniFollowsCollection = 'alumni_follows';
   static const String internshipApplicationsCollection = 'internship_applications';
   static const String jobApplicationsCollection = 'job_applications';
+  static const String studentResumesCollection = 'student_resumes';
+  static const String companyAccountsCollection = 'company_accounts';
   static const String campusEventsCollection = 'campus_events';
   static const String studentClubsCollection = 'student_clubs';
   static const String competitionsCollection = 'competitions';

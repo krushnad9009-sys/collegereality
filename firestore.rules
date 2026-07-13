@@ -56,6 +56,16 @@ service cloud.firestore {
         .hasOnly(['isMostHelpful', 'updatedAt']);
     }
 
+    function isVerifiedCompanyUser() {
+      return isAuthenticated() &&
+        exists(/databases/$(database)/documents/company_accounts/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/company_accounts/$(request.auth.uid)).data.isVerified == true;
+    }
+
+    function companyAccountCompanyId() {
+      return get(/databases/$(database)/documents/company_accounts/$(request.auth.uid)).data.companyId;
+    }
+
     function isCallParticipant(sessionId) {
       let session = get(/databases/$(database)/documents/call_sessions/$(sessionId)).data;
       return isAuthenticated() &&
@@ -279,12 +289,22 @@ service cloud.firestore {
 
     match /internships/{internshipId} {
       allow read: if isAuthenticated();
-      allow write: if isAdmin();
+      allow create: if isAdmin() ||
+        (isVerifiedCompanyUser() &&
+          request.resource.data.companyId == companyAccountCompanyId());
+      allow update, delete: if isAdmin() ||
+        (isVerifiedCompanyUser() &&
+          resource.data.companyId == companyAccountCompanyId());
     }
 
     match /jobs/{jobId} {
       allow read: if isAuthenticated();
-      allow write: if isAdmin();
+      allow create: if isAdmin() ||
+        (isVerifiedCompanyUser() &&
+          request.resource.data.companyId == companyAccountCompanyId());
+      allow update, delete: if isAdmin() ||
+        (isVerifiedCompanyUser() &&
+          resource.data.companyId == companyAccountCompanyId());
     }
 
     match /companies/{companyId} {
@@ -335,18 +355,45 @@ service cloud.firestore {
 
     match /internship_applications/{applicationId} {
       allow read: if isAuthenticated() &&
-        (resource.data.userId == request.auth.uid || isAdmin());
+        (resource.data.userId == request.auth.uid || isAdmin() ||
+          (isVerifiedCompanyUser() &&
+            resource.data.companyId == companyAccountCompanyId()));
       allow create: if isAuthenticated() &&
         request.resource.data.userId == request.auth.uid;
-      allow update, delete: if isAdmin();
+      allow update: if isAdmin() ||
+        (isVerifiedCompanyUser() &&
+          resource.data.companyId == companyAccountCompanyId() &&
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['status', 'updatedAt']));
+      allow delete: if isAdmin();
     }
 
     match /job_applications/{applicationId} {
       allow read: if isAuthenticated() &&
-        (resource.data.userId == request.auth.uid || isAdmin());
+        (resource.data.userId == request.auth.uid || isAdmin() ||
+          (isVerifiedCompanyUser() &&
+            resource.data.companyId == companyAccountCompanyId()));
       allow create: if isAuthenticated() &&
         request.resource.data.userId == request.auth.uid;
-      allow update, delete: if isAdmin();
+      allow update: if isAdmin() ||
+        (isVerifiedCompanyUser() &&
+          resource.data.companyId == companyAccountCompanyId() &&
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['status', 'updatedAt']));
+      allow delete: if isAdmin();
+    }
+
+    match /student_resumes/{userId} {
+      allow read: if isAuthenticated() &&
+        (request.auth.uid == userId || isAdmin());
+      allow create, update: if isAuthenticated() && request.auth.uid == userId;
+      allow delete: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    match /company_accounts/{userId} {
+      allow read: if isAuthenticated() &&
+        (request.auth.uid == userId || isAdmin());
+      allow create, update, delete: if isAdmin();
     }
 
     match /campus_events/{eventId} {

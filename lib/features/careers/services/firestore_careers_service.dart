@@ -34,6 +34,10 @@ class FirestoreCareersService {
       _firestore.collection(FirestoreConstants.internshipApplicationsCollection);
   CollectionReference<Map<String, dynamic>> get _jobApplications =>
       _firestore.collection(FirestoreConstants.jobApplicationsCollection);
+  CollectionReference<Map<String, dynamic>> get _studentResumes =>
+      _firestore.collection(FirestoreConstants.studentResumesCollection);
+  CollectionReference<Map<String, dynamic>> get _companyAccounts =>
+      _firestore.collection(FirestoreConstants.companyAccountsCollection);
   DocumentReference<Map<String, dynamic>> get _meta =>
       _firestore.collection(FirestoreConstants.metaCollection).doc(
             CareersConstants.metaCareersSeededDoc,
@@ -63,6 +67,7 @@ class FirestoreCareersService {
       map['nameLower'] = name.toLowerCase();
       map['searchText'] = buildCareersSearchText([name, map['industry'] as String? ?? '']);
       map['isActive'] = true;
+      map['isVerified'] = map['isVerified'] as bool? ?? true;
       map['updatedAt'] = now.toIso8601String();
       batch.set(_companies.doc(id), map);
     }
@@ -76,6 +81,11 @@ class FirestoreCareersService {
         map['companyName'] as String? ?? '',
         map['city'] as String? ?? '',
       ]);
+      map['workType'] = map['workType'] as String? ?? CareersConstants.workTypeOffice;
+      map['stipendMin'] = (map['stipendMin'] as num?)?.toInt() ??
+          _parseStipendMin(map['stipend'] as String? ?? '');
+      map['durationWeeks'] = (map['durationWeeks'] as num?)?.toInt() ??
+          _parseDurationWeeks(map['duration'] as String? ?? '');
       map['isActive'] = true;
       map['createdAt'] = now.toIso8601String();
       map['updatedAt'] = now.toIso8601String();
@@ -91,6 +101,8 @@ class FirestoreCareersService {
         map['companyName'] as String? ?? '',
         map['location'] as String? ?? '',
       ]);
+      map['eligibility'] = map['eligibility'] as String? ??
+          'B.E./B.Tech in relevant discipline. Good academic record.';
       map['isActive'] = true;
       map['createdAt'] = now.toIso8601String();
       map['updatedAt'] = now.toIso8601String();
@@ -126,6 +138,60 @@ class FirestoreCareersService {
     });
 
     await batch.commit();
+  }
+
+  int _parseStipendMin(String stipend) {
+    final digits = RegExp(r'[\d,]+').firstMatch(stipend)?.group(0)?.replaceAll(',', '');
+    return int.tryParse(digits ?? '') ?? 0;
+  }
+
+  int _parseDurationWeeks(String duration) {
+    final months = RegExp(r'(\d+)\s*month').firstMatch(duration.toLowerCase());
+    if (months != null) return (int.tryParse(months.group(1) ?? '') ?? 0) * 4;
+    final weeks = RegExp(r'(\d+)\s*week').firstMatch(duration.toLowerCase());
+    if (weeks != null) return int.tryParse(weeks.group(1) ?? '') ?? 0;
+    return 0;
+  }
+
+  Future<CareersPageResult<InternshipModel>> fetchInternshipsPage({
+    DocumentSnapshot<Map<String, dynamic>>? startAfter,
+    int limit = CareersConstants.pageSize,
+  }) async {
+    await ensureSeeded();
+    var query = _internships
+        .where('isActive', isEqualTo: true)
+        .orderBy('createdAt', descending: true)
+        .limit(limit);
+    if (startAfter != null) query = query.startAfterDocument(startAfter);
+    final snap = await query.get();
+    final items = snap.docs
+        .map((d) => InternshipModel.fromJson(d.data(), docId: d.id))
+        .toList();
+    return CareersPageResult(
+      items: items,
+      lastDocument: snap.docs.isEmpty ? startAfter : snap.docs.last,
+      hasMore: snap.docs.length >= limit,
+    );
+  }
+
+  Future<CareersPageResult<JobModel>> fetchJobsPage({
+    DocumentSnapshot<Map<String, dynamic>>? startAfter,
+    int limit = CareersConstants.pageSize,
+  }) async {
+    await ensureSeeded();
+    var query = _jobs
+        .where('isActive', isEqualTo: true)
+        .orderBy('createdAt', descending: true)
+        .limit(limit);
+    if (startAfter != null) query = query.startAfterDocument(startAfter);
+    final snap = await query.get();
+    final items =
+        snap.docs.map((d) => JobModel.fromJson(d.data(), docId: d.id)).toList();
+    return CareersPageResult(
+      items: items,
+      lastDocument: snap.docs.isEmpty ? startAfter : snap.docs.last,
+      hasMore: snap.docs.length >= limit,
+    );
   }
 
   Stream<List<InternshipModel>> watchInternships() async* {
@@ -309,14 +375,22 @@ class FirestoreCareersService {
     required String internshipId,
     required String companyId,
     String coverNote = '',
+    String applicantName = '',
+    String? resumeUrl,
   }) async {
-    final id = _uuid.v4();
-    await _internshipApplications.doc(id).set({
-      'id': id,
+    final docId = '${userId}_$internshipId';
+    final existing = await _internshipApplications.doc(docId).get();
+    if (existing.exists) {
+      throw CareersFirestoreException(message: 'You have already applied to this internship.');
+    }
+    await _internshipApplications.doc(docId).set({
+      'id': docId,
       'userId': userId,
       'internshipId': internshipId,
       'companyId': companyId,
+      'applicantName': applicantName,
       'coverNote': coverNote.trim(),
+      if (resumeUrl != null) 'resumeUrl': resumeUrl,
       'status': CareersConstants.applicationStatusSubmitted,
       'createdAt': DateTime.now().toIso8601String(),
     });
@@ -327,17 +401,110 @@ class FirestoreCareersService {
     required String jobId,
     required String companyId,
     String coverNote = '',
+    String applicantName = '',
+    String? resumeUrl,
   }) async {
-    final id = _uuid.v4();
-    await _jobApplications.doc(id).set({
-      'id': id,
+    final docId = '${userId}_$jobId';
+    final existing = await _jobApplications.doc(docId).get();
+    if (existing.exists) {
+      throw CareersFirestoreException(message: 'You have already applied to this job.');
+    }
+    await _jobApplications.doc(docId).set({
+      'id': docId,
       'userId': userId,
       'jobId': jobId,
       'companyId': companyId,
+      'applicantName': applicantName,
       'coverNote': coverNote.trim(),
+      if (resumeUrl != null) 'resumeUrl': resumeUrl,
       'status': CareersConstants.applicationStatusSubmitted,
       'createdAt': DateTime.now().toIso8601String(),
     });
+  }
+
+  Stream<StudentResumeModel?> watchStudentResume(String userId) {
+    return _studentResumes.doc(userId).snapshots().map((doc) {
+      if (!doc.exists) return null;
+      return StudentResumeModel.fromJson(doc.data()!, docId: userId);
+    });
+  }
+
+  Future<void> saveStudentResume(StudentResumeModel resume) async {
+    await _studentResumes.doc(resume.userId).set(resume.toJson());
+  }
+
+  Future<CompanyAccountModel?> getCompanyAccount(String userId) async {
+    final doc = await _companyAccounts.doc(userId).get();
+    if (!doc.exists) return null;
+    return CompanyAccountModel.fromJson(doc.data()!, docId: userId);
+  }
+
+  Stream<CompanyAccountModel?> watchCompanyAccount(String userId) {
+    return _companyAccounts.doc(userId).snapshots().map((doc) {
+      if (!doc.exists) return null;
+      return CompanyAccountModel.fromJson(doc.data()!, docId: userId);
+    });
+  }
+
+  Future<void> createInternshipListing(InternshipModel internship) async {
+    await _internships.doc(internship.id).set(internship.toJson());
+  }
+
+  Future<void> createJobListing(JobModel job) async {
+    await _jobs.doc(job.id).set(job.toJson());
+  }
+
+  Stream<List<ApplicationModel>> watchInternshipApplicationsForCompany(String companyId) {
+    return _internshipApplications
+        .where('companyId', isEqualTo: companyId)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((s) => s.docs
+            .map((d) => ApplicationModel.fromJson(d.data(), docId: d.id))
+            .toList());
+  }
+
+  Stream<List<ApplicationModel>> watchJobApplicationsForCompany(String companyId) {
+    return _jobApplications
+        .where('companyId', isEqualTo: companyId)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((s) => s.docs
+            .map((d) => ApplicationModel.fromJson(d.data(), docId: d.id))
+            .toList());
+  }
+
+  Future<void> updateApplicationStatus({
+    required String applicationId,
+    required String status,
+    required bool isInternship,
+  }) async {
+    final collection = isInternship ? _internshipApplications : _jobApplications;
+    await collection.doc(applicationId).update({
+      'status': status,
+      'updatedAt': DateTime.now().toIso8601String(),
+    });
+  }
+
+  Stream<List<InternshipModel>> watchCompanyInternships(String companyId) {
+    return _internships
+        .where('companyId', isEqualTo: companyId)
+        .where('isActive', isEqualTo: true)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((s) => s.docs
+            .map((d) => InternshipModel.fromJson(d.data(), docId: d.id))
+            .toList());
+  }
+
+  Stream<List<JobModel>> watchCompanyJobs(String companyId) {
+    return _jobs
+        .where('companyId', isEqualTo: companyId)
+        .where('isActive', isEqualTo: true)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((s) =>
+            s.docs.map((d) => JobModel.fromJson(d.data(), docId: d.id)).toList());
   }
 }
 

@@ -42,6 +42,12 @@ import '../../features/careers/screens/jobs_screen.dart';
 import '../../features/careers/screens/companies_screen.dart';
 import '../../features/careers/screens/alumni_screen.dart';
 import '../../features/careers/screens/saved_careers_screen.dart';
+import '../../features/careers/screens/resume_hub_screen.dart';
+import '../../features/careers/screens/career_recommendations_screen.dart';
+import '../../features/careers/screens/company_dashboard_screen.dart';
+import '../../features/careers/screens/post_internship_screen.dart';
+import '../../features/careers/screens/post_job_screen.dart';
+import '../../features/careers/screens/manage_applicants_screen.dart';
 import '../../features/student_life/screens/student_life_hub_screen.dart';
 import '../../features/student_life/screens/events_screen.dart';
 import '../../features/student_life/screens/clubs_screen.dart';
@@ -285,6 +291,30 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RouteNames.careersSaved,
         builder: (context, state) => const SavedCareersScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.careersResume,
+        builder: (context, state) => const ResumeHubScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.careersRecommendations,
+        builder: (context, state) => const CareerRecommendationsScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.careersCompanyDashboard,
+        builder: (context, state) => const CompanyDashboardScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.careersPostInternship,
+        builder: (context, state) => const PostInternshipScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.careersPostJob,
+        builder: (context, state) => const PostJobScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.careersManageApplicants,
+        builder: (context, state) => const ManageApplicantsScreen(),
       ),
       GoRoute(
         path: RouteNames.studentLifeHub,

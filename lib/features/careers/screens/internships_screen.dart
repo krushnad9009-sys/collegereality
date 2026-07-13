@@ -11,15 +11,41 @@ import '../../../core/widgets/index.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../models/careers_models.dart';
 import '../providers/careers_provider.dart';
+import '../utils/careers_filter_utils.dart';
 
-class InternshipsScreen extends ConsumerWidget {
+class InternshipsScreen extends ConsumerStatefulWidget {
   const InternshipsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final internshipsAsync = ref.watch(filteredInternshipsProvider);
+  ConsumerState<InternshipsScreen> createState() => _InternshipsScreenState();
+}
+
+class _InternshipsScreenState extends ConsumerState<InternshipsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(paginatedInternshipsProvider.notifier).loadInitial();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final pageState = ref.watch(paginatedInternshipsProvider);
     final filters = ref.watch(internshipFilterProvider);
     final savedIds = ref.watch(savedInternshipIdsProvider).valueOrNull ?? {};
+    final resume = ref.watch(studentResumeProvider).valueOrNull;
+
+    final items = filterInternships(
+      items: pageState.items,
+      searchQuery: filters.searchQuery,
+      city: filters.city,
+      company: filters.company,
+      payType: filters.payType,
+      workFromHome: filters.workFromHome ? true : null,
+      minStipend: filters.minStipend,
+      durationBucket: filters.durationBucket,
+    );
 
     return Scaffold(
       appBar: AppBar(
@@ -29,89 +55,116 @@ class InternshipsScreen extends ConsumerWidget {
         ),
         title: const Text('Internships'),
       ),
-      body: internshipsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
-        data: (items) => ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            TextField(
-              decoration: InputDecoration(
-                hintText: 'Search internships...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              onChanged: (q) => ref.read(internshipFilterProvider.notifier).update(
-                    filters.copyWith(searchQuery: q),
-                  ),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          TextField(
+            decoration: InputDecoration(
+              hintText: 'Search internships...',
+              prefixIcon: const Icon(Icons.search),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             ),
+            onChanged: (q) => ref.read(internshipFilterProvider.notifier).update(
+                  filters.copyWith(searchQuery: q),
+                ),
+          ),
+          const SizedBox(height: 12),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                FilterChip(
+                  label: const Text('All'),
+                  selected: filters.payType == null,
+                  onSelected: (_) => ref.read(internshipFilterProvider.notifier).update(
+                        filters.copyWith(clearPayType: true),
+                      ),
+                ),
+                const SizedBox(width: 8),
+                FilterChip(
+                  label: const Text('Paid'),
+                  selected: filters.payType == CareersConstants.payTypePaid,
+                  onSelected: (_) => ref.read(internshipFilterProvider.notifier).update(
+                        filters.copyWith(payType: CareersConstants.payTypePaid),
+                      ),
+                ),
+                const SizedBox(width: 8),
+                FilterChip(
+                  label: const Text('WFH'),
+                  selected: filters.workFromHome,
+                  onSelected: (v) => ref.read(internshipFilterProvider.notifier).update(
+                        filters.copyWith(workFromHome: v),
+                      ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            decoration: InputDecoration(
+              hintText: 'Filter by city',
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onChanged: (v) => ref.read(internshipFilterProvider.notifier).update(
+                  filters.copyWith(city: v.isEmpty ? null : v, clearCity: v.isEmpty),
+                ),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(
+              hintText: 'Min stipend (₹/month)',
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onChanged: (v) => ref.read(internshipFilterProvider.notifier).update(
+                  filters.copyWith(
+                    minStipend: int.tryParse(v),
+                    clearStipend: v.isEmpty,
+                  ),
+                ),
+          ),
+          const SizedBox(height: 8),
+          DropdownButtonFormField<String>(
+            decoration: InputDecoration(
+              hintText: 'Duration',
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            value: filters.durationBucket,
+            items: const [
+              DropdownMenuItem(value: null, child: Text('Any duration')),
+              DropdownMenuItem(value: 'short', child: Text('Short (≤ 8 weeks)')),
+              DropdownMenuItem(value: 'medium', child: Text('Medium (9–16 weeks)')),
+              DropdownMenuItem(value: 'long', child: Text('Long (> 16 weeks)')),
+            ],
+            onChanged: (v) => ref.read(internshipFilterProvider.notifier).update(
+                  filters.copyWith(durationBucket: v, clearDuration: v == null),
+                ),
+          ),
+          const SizedBox(height: 16),
+          if (pageState.isLoading && items.isEmpty)
+            const Center(child: CircularProgressIndicator())
+          else if (items.isEmpty)
+            const Center(child: Text('No internships found'))
+          else
+            ...items.map((i) => _InternshipCard(
+                  internship: i,
+                  isSaved: savedIds.contains(i.id),
+                  onSave: () => _toggleSave(ref, context, i.id, savedIds.contains(i.id)),
+                  onApply: () => _apply(ref, context, i, resume?.downloadUrl),
+                )),
+          if (pageState.hasMore) ...[
             const SizedBox(height: 12),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  FilterChip(
-                    label: const Text('All'),
-                    selected: filters.payType == null,
-                    onSelected: (_) => ref.read(internshipFilterProvider.notifier).update(
-                          filters.copyWith(clearPayType: true),
-                        ),
-                  ),
-                  const SizedBox(width: 8),
-                  FilterChip(
-                    label: const Text('Paid'),
-                    selected: filters.payType == CareersConstants.payTypePaid,
-                    onSelected: (_) => ref.read(internshipFilterProvider.notifier).update(
-                          filters.copyWith(
-                            payType: CareersConstants.payTypePaid,
-                          ),
-                        ),
-                  ),
-                  const SizedBox(width: 8),
-                  FilterChip(
-                    label: const Text('Unpaid'),
-                    selected: filters.payType == CareersConstants.payTypeUnpaid,
-                    onSelected: (_) => ref.read(internshipFilterProvider.notifier).update(
-                          filters.copyWith(
-                            payType: CareersConstants.payTypeUnpaid,
-                          ),
-                        ),
-                  ),
-                ],
-              ),
+            Center(
+              child: pageState.isLoading
+                  ? const CircularProgressIndicator()
+                  : OutlinedButton(
+                      onPressed: () =>
+                          ref.read(paginatedInternshipsProvider.notifier).loadMore(),
+                      child: const Text('Load more'),
+                    ),
             ),
-            const SizedBox(height: 8),
-            TextField(
-              decoration: InputDecoration(
-                hintText: 'Filter by city',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              onChanged: (v) => ref.read(internshipFilterProvider.notifier).update(
-                    filters.copyWith(city: v.isEmpty ? null : v, clearCity: v.isEmpty),
-                  ),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              decoration: InputDecoration(
-                hintText: 'Filter by company',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              onChanged: (v) => ref.read(internshipFilterProvider.notifier).update(
-                    filters.copyWith(company: v.isEmpty ? null : v, clearCompany: v.isEmpty),
-                  ),
-            ),
-            const SizedBox(height: 16),
-            if (items.isEmpty)
-              const Center(child: Text('No internships found'))
-            else
-              ...items.map((i) => _InternshipCard(
-                    internship: i,
-                    isSaved: savedIds.contains(i.id),
-                    onSave: () => _toggleSave(ref, context, i.id, savedIds.contains(i.id)),
-                    onApply: () => _apply(ref, context, i.id, i.companyId, i.applyUrl),
-                  )),
           ],
-        ),
+        ],
       ),
     );
   }
@@ -139,21 +192,22 @@ class InternshipsScreen extends ConsumerWidget {
   Future<void> _apply(
     WidgetRef ref,
     BuildContext context,
-    String internshipId,
-    String companyId,
-    String applyUrl,
+    InternshipModel internship,
+    String? resumeUrl,
   ) async {
     final user = ref.read(authStateProvider).valueOrNull;
     if (user == null) return;
     try {
       await ref.read(careersRepositoryProvider).applyInternship(
             userId: user.uid,
-            internshipId: internshipId,
-            companyId: companyId,
+            internshipId: internship.id,
+            companyId: internship.companyId,
+            applicantName: user.displayName ?? 'Student',
+            resumeUrl: resumeUrl,
           );
       if (context.mounted) {
         SnackBarHelper.showSuccessSnackBar(context, message: 'Application submitted');
-        if (applyUrl.isNotEmpty) launchUrl(Uri.parse(applyUrl));
+        if (internship.applyUrl.isNotEmpty) launchUrl(Uri.parse(internship.applyUrl));
       }
     } catch (e) {
       if (context.mounted) SnackBarHelper.showErrorSnackBar(context, message: e.toString());
@@ -201,6 +255,10 @@ class _InternshipCard extends StatelessWidget {
             Text(
               internship.isPaid ? 'Paid · ${internship.stipend}' : 'Unpaid · ${internship.stipend}',
               style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.accentColor),
+            ),
+            Text(
+              '${internship.workType}${internship.isRemote ? ' · Work from home' : ''}',
+              style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.gray600),
             ),
             if (internship.duration.isNotEmpty)
               Text('Duration: ${internship.duration}',

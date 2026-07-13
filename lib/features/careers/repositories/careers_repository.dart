@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 import '../models/careers_models.dart';
 import '../services/firestore_careers_service.dart';
 
@@ -7,6 +9,14 @@ abstract class CareersRepository {
   Stream<List<JobModel>> watchJobs();
   Stream<List<CompanyModel>> watchCompanies();
   Stream<List<AlumniProfileModel>> watchAlumniProfiles();
+  Future<CareersPageResult<InternshipModel>> fetchInternshipsPage({
+    DocumentSnapshot<Map<String, dynamic>>? startAfter,
+    int limit,
+  });
+  Future<CareersPageResult<JobModel>> fetchJobsPage({
+    DocumentSnapshot<Map<String, dynamic>>? startAfter,
+    int limit,
+  });
   Future<InternshipModel?> getInternshipById(String id);
   Future<JobModel?> getJobById(String id);
   Future<CompanyModel?> getCompanyById(String id);
@@ -35,13 +45,32 @@ abstract class CareersRepository {
     required String internshipId,
     required String companyId,
     String coverNote,
+    String applicantName,
+    String? resumeUrl,
   });
   Future<void> applyJob({
     required String userId,
     required String jobId,
     required String companyId,
     String coverNote,
+    String applicantName,
+    String? resumeUrl,
   });
+  Stream<StudentResumeModel?> watchStudentResume(String userId);
+  Future<void> saveStudentResume(StudentResumeModel resume);
+  Future<CompanyAccountModel?> getCompanyAccount(String userId);
+  Stream<CompanyAccountModel?> watchCompanyAccount(String userId);
+  Future<void> createInternshipListing(InternshipModel internship);
+  Future<void> createJobListing(JobModel job);
+  Stream<List<ApplicationModel>> watchInternshipApplicationsForCompany(String companyId);
+  Stream<List<ApplicationModel>> watchJobApplicationsForCompany(String companyId);
+  Future<void> updateApplicationStatus({
+    required String applicationId,
+    required String status,
+    required bool isInternship,
+  });
+  Stream<List<InternshipModel>> watchCompanyInternships(String companyId);
+  Stream<List<JobModel>> watchCompanyJobs(String companyId);
 }
 
 class CareersRepositoryImpl implements CareersRepository {
@@ -59,6 +88,18 @@ class CareersRepositoryImpl implements CareersRepository {
   @override
   Stream<List<AlumniProfileModel>> watchAlumniProfiles() =>
       _service.watchAlumniProfiles();
+  @override
+  Future<CareersPageResult<InternshipModel>> fetchInternshipsPage({
+    DocumentSnapshot<Map<String, dynamic>>? startAfter,
+    int limit = 15,
+  }) =>
+      _service.fetchInternshipsPage(startAfter: startAfter, limit: limit);
+  @override
+  Future<CareersPageResult<JobModel>> fetchJobsPage({
+    DocumentSnapshot<Map<String, dynamic>>? startAfter,
+    int limit = 15,
+  }) =>
+      _service.fetchJobsPage(startAfter: startAfter, limit: limit);
   @override
   Future<InternshipModel?> getInternshipById(String id) =>
       _service.getInternshipById(id);
@@ -124,12 +165,16 @@ class CareersRepositoryImpl implements CareersRepository {
     required String internshipId,
     required String companyId,
     String coverNote = '',
+    String applicantName = '',
+    String? resumeUrl,
   }) =>
       _service.applyInternship(
         userId: userId,
         internshipId: internshipId,
         companyId: companyId,
         coverNote: coverNote,
+        applicantName: applicantName,
+        resumeUrl: resumeUrl,
       );
   @override
   Future<void> applyJob({
@@ -137,11 +182,56 @@ class CareersRepositoryImpl implements CareersRepository {
     required String jobId,
     required String companyId,
     String coverNote = '',
+    String applicantName = '',
+    String? resumeUrl,
   }) =>
       _service.applyJob(
         userId: userId,
         jobId: jobId,
         companyId: companyId,
         coverNote: coverNote,
+        applicantName: applicantName,
+        resumeUrl: resumeUrl,
       );
+  @override
+  Stream<StudentResumeModel?> watchStudentResume(String userId) =>
+      _service.watchStudentResume(userId);
+  @override
+  Future<void> saveStudentResume(StudentResumeModel resume) =>
+      _service.saveStudentResume(resume);
+  @override
+  Future<CompanyAccountModel?> getCompanyAccount(String userId) =>
+      _service.getCompanyAccount(userId);
+  @override
+  Stream<CompanyAccountModel?> watchCompanyAccount(String userId) =>
+      _service.watchCompanyAccount(userId);
+  @override
+  Future<void> createInternshipListing(InternshipModel internship) =>
+      _service.createInternshipListing(internship);
+  @override
+  Future<void> createJobListing(JobModel job) => _service.createJobListing(job);
+  @override
+  Stream<List<ApplicationModel>> watchInternshipApplicationsForCompany(
+          String companyId) =>
+      _service.watchInternshipApplicationsForCompany(companyId);
+  @override
+  Stream<List<ApplicationModel>> watchJobApplicationsForCompany(String companyId) =>
+      _service.watchJobApplicationsForCompany(companyId);
+  @override
+  Future<void> updateApplicationStatus({
+    required String applicationId,
+    required String status,
+    required bool isInternship,
+  }) =>
+      _service.updateApplicationStatus(
+        applicationId: applicationId,
+        status: status,
+        isInternship: isInternship,
+      );
+  @override
+  Stream<List<InternshipModel>> watchCompanyInternships(String companyId) =>
+      _service.watchCompanyInternships(companyId);
+  @override
+  Stream<List<JobModel>> watchCompanyJobs(String companyId) =>
+      _service.watchCompanyJobs(companyId);
 }

@@ -16,6 +16,9 @@ List<InternshipModel> filterInternships({
   String? city,
   String? company,
   String? payType,
+  bool? workFromHome,
+  int? minStipend,
+  String? durationBucket,
 }) {
   return items.where((i) {
     if (!i.isActive) return false;
@@ -29,9 +32,36 @@ List<InternshipModel> filterInternships({
       return false;
     }
     if (payType != null && payType.isNotEmpty && i.payType != payType) return false;
+    if (workFromHome == true && !i.isRemote) return false;
+    if (minStipend != null && minStipend > 0) {
+      final stipend = i.stipendMin > 0 ? i.stipendMin : _parseStipendFromText(i.stipend);
+      if (stipend < minStipend) return false;
+    }
+    if (durationBucket != null && durationBucket.isNotEmpty) {
+      if (!_matchesDurationBucket(i.durationWeeks, durationBucket)) return false;
+    }
     return true;
   }).toList()
     ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+}
+
+int _parseStipendFromText(String stipend) {
+  final digits = RegExp(r'[\d,]+').firstMatch(stipend)?.group(0)?.replaceAll(',', '');
+  return int.tryParse(digits ?? '') ?? 0;
+}
+
+bool _matchesDurationBucket(int weeks, String bucket) {
+  if (weeks <= 0) return true;
+  switch (bucket) {
+    case 'short':
+      return weeks <= 8;
+    case 'medium':
+      return weeks > 8 && weeks <= 16;
+    case 'long':
+      return weeks > 16;
+    default:
+      return true;
+  }
 }
 
 List<JobModel> filterJobs({

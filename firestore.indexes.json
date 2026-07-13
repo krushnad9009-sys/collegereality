@@ -498,6 +498,40 @@
         { "fieldPath": "isActive", "order": "ASCENDING" },
         { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "internship_applications",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "companyId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "job_applications",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "companyId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "internships",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "companyId", "order": "ASCENDING" },
+        { "fieldPath": "isActive", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "jobs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "companyId", "order": "ASCENDING" },
+        { "fieldPath": "isActive", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

@@ -23,4 +23,12 @@ class CareersConstants {
   static const String applicationStatusRejected = 'rejected';
 
   static const String reviewStatusPublished = 'published';
+
+  static const String userTypeCompany = 'company';
+
+  static const int pageSize = 15;
+
+  static const String durationShort = 'short'; // <= 8 weeks
+  static const String durationMedium = 'medium'; // 9-16 weeks
+  static const String durationLong = 'long'; // > 16 weeks
 }
