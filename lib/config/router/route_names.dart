@@ -50,6 +50,17 @@ class RouteNames {
   static const String careersAlumni = '/careers/alumni';
   static const String careersAlumniDetail = '/careers/alumni/:id';
   static const String careersSaved = '/careers/saved';
+  static const String studentLifeHub = '/student-life';
+  static const String studentLifeEvents = '/student-life/events';
+  static const String studentLifeEventDetail = '/student-life/events/:id';
+  static const String studentLifeClubs = '/student-life/clubs';
+  static const String studentLifeClubDetail = '/student-life/clubs/:id';
+  static const String studentLifeCompetitions = '/student-life/competitions';
+  static const String studentLifeCompetitionDetail = '/student-life/competitions/:id';
+  static const String studentLifeCommunities = '/student-life/communities';
+  static const String studentLifeCommunityBoard = '/student-life/communities/:id';
+  static const String studentLifeSaved = '/student-life/saved';
+  static const String adminStudentLife = '/admin/student-life';
 
   static String collegeDetailsPath(String id, {String? tab}) {
     final path = '/college-details/$id';
@@ -71,6 +82,14 @@ class RouteNames {
       '/careers/companies/$companyId';
   static String careersAlumniDetailPath(String alumniId) =>
       '/careers/alumni/$alumniId';
+  static String studentLifeEventDetailPath(String eventId) =>
+      '/student-life/events/$eventId';
+  static String studentLifeClubDetailPath(String clubId) =>
+      '/student-life/clubs/$clubId';
+  static String studentLifeCompetitionDetailPath(String competitionId) =>
+      '/student-life/competitions/$competitionId';
+  static String studentLifeCommunityBoardPath(String communityId) =>
+      '/student-life/communities/$communityId';
 
   static String assistantPath({
     String? query,

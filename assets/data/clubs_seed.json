@@ -1,0 +1,134 @@
+[
+  {
+    "id": "club_1",
+    "name": "Code Warriors",
+    "collegeId": "col_coep",
+    "collegeName": "COEP Technological University",
+    "clubType": "coding",
+    "description": "Competitive programming, open source contributions, and hackathon prep.",
+    "facultyCoordinator": "Dr. Anil Deshpande",
+    "studentCoordinators": ["Rahul K.", "Sneha M."],
+    "membersCount": 142
+  },
+  {
+    "id": "club_2",
+    "name": "Robotics & Automation Society",
+    "collegeId": "col_coep",
+    "collegeName": "COEP Technological University",
+    "clubType": "robotics",
+    "description": "Build robots for national competitions and industry collaborations.",
+    "facultyCoordinator": "Prof. Meera Joshi",
+    "studentCoordinators": ["Aditya P."],
+    "membersCount": 86
+  },
+  {
+    "id": "club_3",
+    "name": "AI/ML Research Club",
+    "collegeId": "col_vit",
+    "collegeName": "VIT Vellore",
+    "clubType": "ai_ml",
+    "description": "Deep learning projects, paper reading groups, and Kaggle teams.",
+    "facultyCoordinator": "Dr. Srinivasan R.",
+    "studentCoordinators": ["Priya N.", "Karan S."],
+    "membersCount": 210
+  },
+  {
+    "id": "club_4",
+    "name": "E-Cell VIT",
+    "collegeId": "col_vit",
+    "collegeName": "VIT Vellore",
+    "clubType": "entrepreneurship",
+    "description": "Startup incubation, pitch competitions, and founder meetups.",
+    "facultyCoordinator": "Prof. Lakshmi Iyer",
+    "studentCoordinators": ["Arjun T."],
+    "membersCount": 175
+  },
+  {
+    "id": "club_5",
+    "name": "NSS Unit – PICT",
+    "collegeId": "col_pict",
+    "collegeName": "PICT Pune",
+    "clubType": "nss",
+    "description": "Social service camps, blood donation drives, and rural development.",
+    "facultyCoordinator": "Dr. Suresh Patil",
+    "studentCoordinators": ["Neha G.", "Vikram D."],
+    "membersCount": 320
+  },
+  {
+    "id": "club_6",
+    "name": "NCC Army Wing",
+    "collegeId": "col_coep",
+    "collegeName": "COEP Technological University",
+    "clubType": "ncc",
+    "description": "Discipline training, Republic Day parade, and adventure camps.",
+    "facultyCoordinator": "Lt. Col. (Retd.) Sharma",
+    "studentCoordinators": ["Cadet Leader Amit"],
+    "membersCount": 95
+  },
+  {
+    "id": "club_7",
+    "name": "Athletics & Sports Club",
+    "collegeId": "col_pict",
+    "collegeName": "PICT Pune",
+    "clubType": "sports",
+    "description": "Cricket, football, athletics, and inter-college sports events.",
+    "facultyCoordinator": "Coach Rajesh More",
+    "studentCoordinators": ["Siddharth R."],
+    "membersCount": 180
+  },
+  {
+    "id": "club_8",
+    "name": "Symphony – Music Club",
+    "collegeId": "col_vit",
+    "collegeName": "VIT Vellore",
+    "clubType": "music",
+    "description": "Band performances, jam sessions, and music production workshops.",
+    "facultyCoordinator": "Prof. Anita Rao",
+    "studentCoordinators": ["Dev P."],
+    "membersCount": 64
+  },
+  {
+    "id": "club_9",
+    "name": "Nritya – Dance Club",
+    "collegeId": "col_coep",
+    "collegeName": "COEP Technological University",
+    "clubType": "dance",
+    "description": "Classical, contemporary, and hip-hop performances at fests.",
+    "facultyCoordinator": "Ms. Kavita Menon",
+    "studentCoordinators": ["Isha K."],
+    "membersCount": 72
+  },
+  {
+    "id": "club_10",
+    "name": "Shutterbugs Photography",
+    "collegeId": "col_pict",
+    "collegeName": "PICT Pune",
+    "clubType": "photography",
+    "description": "Photo walks, editing workshops, and campus event coverage.",
+    "facultyCoordinator": "Prof. Deepak Kale",
+    "studentCoordinators": ["Rohan M."],
+    "membersCount": 58
+  },
+  {
+    "id": "club_11",
+    "name": "Dramatics Society",
+    "collegeId": "col_vit",
+    "collegeName": "VIT Vellore",
+    "clubType": "drama",
+    "description": "Street plays, one-act dramas, and annual theatre productions.",
+    "facultyCoordinator": "Dr. Prakash Nair",
+    "studentCoordinators": ["Ananya V."],
+    "membersCount": 45
+  },
+  {
+    "id": "club_12",
+    "name": "Technical Innovation Club",
+    "collegeId": "col_pict",
+    "collegeName": "PICT Pune",
+    "clubType": "technical",
+    "description": "Project exhibitions, tech talks, and interdisciplinary innovation labs.",
+    "facultyCoordinator": "Dr. Hemant Bhosale",
+    "studentCoordinators": ["Yash T.", "Pooja L."],
+    "membersCount": 130
+  }
+]

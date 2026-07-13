@@ -42,10 +42,17 @@ import '../../features/careers/screens/jobs_screen.dart';
 import '../../features/careers/screens/companies_screen.dart';
 import '../../features/careers/screens/alumni_screen.dart';
 import '../../features/careers/screens/saved_careers_screen.dart';
+import '../../features/student_life/screens/student_life_hub_screen.dart';
+import '../../features/student_life/screens/events_screen.dart';
+import '../../features/student_life/screens/clubs_screen.dart';
+import '../../features/student_life/screens/competitions_screen.dart';
+import '../../features/student_life/screens/student_communities_screen.dart';
+import '../../features/student_life/screens/saved_events_screen.dart';
 import '../../features/admin/screens/admin_placements_screen.dart';
 import '../../features/admin/screens/admin_community_screen.dart';
 import '../../features/admin/screens/admin_communication_screen.dart';
 import '../../features/admin/screens/admin_questions_screen.dart';
+import '../../features/admin/screens/admin_student_life_screen.dart';
 import '../../features/communication/screens/guides_directory_screen.dart';
 import '../../features/communication/screens/guide_public_profile_screen.dart';
 import '../../features/communication/screens/active_call_screen.dart';
@@ -260,6 +267,58 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const SavedCareersScreen(),
       ),
       GoRoute(
+        path: RouteNames.studentLifeHub,
+        builder: (context, state) => const StudentLifeHubScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.studentLifeEvents,
+        builder: (context, state) => const EventsScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.studentLifeEventDetail,
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return EventDetailScreen(eventId: id);
+        },
+      ),
+      GoRoute(
+        path: RouteNames.studentLifeClubs,
+        builder: (context, state) => const ClubsScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.studentLifeClubDetail,
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return ClubDetailScreen(clubId: id);
+        },
+      ),
+      GoRoute(
+        path: RouteNames.studentLifeCompetitions,
+        builder: (context, state) => const CompetitionsScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.studentLifeCompetitionDetail,
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return CompetitionDetailScreen(competitionId: id);
+        },
+      ),
+      GoRoute(
+        path: RouteNames.studentLifeCommunities,
+        builder: (context, state) => const StudentCommunitiesScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.studentLifeCommunityBoard,
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return CommunityBoardScreen(communityId: id);
+        },
+      ),
+      GoRoute(
+        path: RouteNames.studentLifeSaved,
+        builder: (context, state) => const SavedEventsScreen(),
+      ),
+      GoRoute(
         path: RouteNames.collegeQuestion,
         builder: (context, state) {
           final collegeId = state.pathParameters['id']!;
@@ -316,6 +375,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RouteNames.adminQuestions,
         builder: (context, state) => const AdminQuestionsScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.adminStudentLife,
+        builder: (context, state) => const AdminStudentLifeScreen(),
       ),
       GoRoute(
         path: RouteNames.community,

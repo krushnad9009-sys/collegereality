@@ -1,0 +1,47 @@
+[
+  {
+    "id": "comm_1",
+    "name": "CSE Branch – COEP",
+    "collegeId": "col_coep",
+    "collegeName": "COEP Technological University",
+    "communityType": "branch",
+    "branchOrYear": "Computer Engineering",
+    "description": "Discussion board for CSE students at COEP – placements, projects, and exams."
+  },
+  {
+    "id": "comm_2",
+    "name": "ECE Branch – COEP",
+    "collegeId": "col_coep",
+    "collegeName": "COEP Technological University",
+    "communityType": "branch",
+    "branchOrYear": "Electronics & Telecommunication",
+    "description": "ECE students community for labs, internships, and core subject help."
+  },
+  {
+    "id": "comm_3",
+    "name": "Final Year – VIT 2026",
+    "collegeId": "col_vit",
+    "collegeName": "VIT Vellore",
+    "communityType": "year",
+    "branchOrYear": "Final Year 2026",
+    "description": "Final year batch – placements, thesis, and farewell planning."
+  },
+  {
+    "id": "comm_4",
+    "name": "Second Year – PICT",
+    "collegeId": "col_pict",
+    "collegeName": "PICT Pune",
+    "communityType": "year",
+    "branchOrYear": "Second Year",
+    "description": "Second year students – branch selection, clubs, and fest prep."
+  },
+  {
+    "id": "comm_5",
+    "name": "IT Branch – PICT",
+    "collegeId": "col_pict",
+    "collegeName": "PICT Pune",
+    "communityType": "branch",
+    "branchOrYear": "Information Technology",
+    "description": "IT branch community for coding contests and project collaborations."
+  }
+]

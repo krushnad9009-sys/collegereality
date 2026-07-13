@@ -1,0 +1,96 @@
+[
+  {
+    "id": "evt_1",
+    "title": "TechFest 2026 – Hackathon",
+    "collegeId": "col_coep",
+    "collegeName": "COEP Technological University",
+    "category": "hackathon",
+    "description": "48-hour national-level hackathon with themes in AI, IoT, and sustainability.",
+    "location": "Main Auditorium, COEP Campus, Pune",
+    "startAt": "2026-08-15T09:00:00",
+    "endAt": "2026-08-17T18:00:00",
+    "posterUrl": "https://picsum.photos/seed/techfest/800/400",
+    "galleryUrls": [
+      "https://picsum.photos/seed/techfest1/400/300",
+      "https://picsum.photos/seed/techfest2/400/300"
+    ]
+  },
+  {
+    "id": "evt_2",
+    "title": "Cultural Night – Rangmanch",
+    "collegeId": "col_vit",
+    "collegeName": "VIT Vellore",
+    "category": "cultural",
+    "description": "Annual cultural fest featuring dance, music, and drama performances.",
+    "location": "Open Air Theatre, VIT Campus",
+    "startAt": "2026-09-20T17:00:00",
+    "endAt": "2026-09-20T22:00:00",
+    "posterUrl": "https://picsum.photos/seed/rangmanch/800/400",
+    "galleryUrls": ["https://picsum.photos/seed/rang1/400/300"]
+  },
+  {
+    "id": "evt_3",
+    "title": "Inter-College Cricket Tournament",
+    "collegeId": "col_coep",
+    "collegeName": "COEP Technological University",
+    "category": "sports",
+    "description": "T20 cricket tournament with 16 engineering colleges from Maharashtra.",
+    "location": "COEP Sports Ground, Pune",
+    "startAt": "2026-07-25T08:00:00",
+    "endAt": "2026-07-27T18:00:00",
+    "posterUrl": "https://picsum.photos/seed/cricket/800/400",
+    "galleryUrls": []
+  },
+  {
+    "id": "evt_4",
+    "title": "Flutter & Firebase Workshop",
+    "collegeId": "col_pict",
+    "collegeName": "PICT Pune",
+    "category": "workshop",
+    "description": "Hands-on workshop on building production Flutter apps with Firebase backend.",
+    "location": "Lab 3, PICT Campus",
+    "startAt": "2026-08-05T10:00:00",
+    "endAt": "2026-08-05T16:00:00",
+    "posterUrl": "https://picsum.photos/seed/flutter/800/400",
+    "galleryUrls": []
+  },
+  {
+    "id": "evt_5",
+    "title": "Industry 4.0 Seminar",
+    "collegeId": "col_vit",
+    "collegeName": "VIT Vellore",
+    "category": "seminar",
+    "description": "Seminar on smart manufacturing and digital twins by industry experts.",
+    "location": "Seminar Hall A",
+    "startAt": "2026-08-10T14:00:00",
+    "endAt": "2026-08-10T17:00:00",
+    "posterUrl": "https://picsum.photos/seed/seminar/800/400",
+    "galleryUrls": []
+  },
+  {
+    "id": "evt_6",
+    "title": "Career Guidance Webinar – Placements 2026",
+    "collegeId": "col_coep",
+    "collegeName": "COEP Technological University",
+    "category": "webinar",
+    "description": "Online webinar on resume building, DSA prep, and interview strategies.",
+    "location": "Online (Zoom link shared on registration)",
+    "startAt": "2026-07-20T18:00:00",
+    "endAt": "2026-07-20T20:00:00",
+    "posterUrl": "https://picsum.photos/seed/webinar/800/400",
+    "galleryUrls": []
+  },
+  {
+    "id": "evt_7",
+    "title": "Robotics Expo",
+    "collegeId": "col_pict",
+    "collegeName": "PICT Pune",
+    "category": "technical",
+    "description": "Showcase of student-built robots, drones, and autonomous vehicles.",
+    "location": "Exhibition Hall, PICT",
+    "startAt": "2026-09-05T10:00:00",
+    "endAt": "2026-09-05T18:00:00",
+    "posterUrl": "https://picsum.photos/seed/robotics/800/400",
+    "galleryUrls": ["https://picsum.photos/seed/robot1/400/300"]
+  }
+]

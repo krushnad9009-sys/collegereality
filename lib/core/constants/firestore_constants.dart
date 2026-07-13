@@ -40,4 +40,17 @@ class FirestoreConstants {
   static const String alumniFollowsCollection = 'alumni_follows';
   static const String internshipApplicationsCollection = 'internship_applications';
   static const String jobApplicationsCollection = 'job_applications';
+  static const String campusEventsCollection = 'campus_events';
+  static const String studentClubsCollection = 'student_clubs';
+  static const String competitionsCollection = 'competitions';
+  static const String studentCommunitiesCollection = 'student_communities';
+  static const String studentCommunityPostsCollection = 'student_community_posts';
+  static const String studentCommunityCommentsSubcollection = 'comments';
+  static const String eventRegistrationsCollection = 'event_registrations';
+  static const String savedEventsCollection = 'saved_events';
+  static const String clubJoinRequestsCollection = 'club_join_requests';
+  static const String studentCommunityPostReportsCollection = 'student_community_post_reports';
+  static const String studentCommunityCommentReportsCollection =
+      'student_community_comment_reports';
+  static const String studentCommunityPollVotesCollection = 'student_community_poll_votes';
 }

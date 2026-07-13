@@ -1,0 +1,77 @@
+[
+  {
+    "id": "comp_1",
+    "title": "Code Sprint – Intra College",
+    "collegeId": "col_coep",
+    "collegeName": "COEP Technological University",
+    "scope": "college",
+    "description": "3-hour coding contest for all branches. Languages: C++, Java, Python.",
+    "prizeDetails": "1st: ₹25,000 | 2nd: ₹15,000 | 3rd: ₹10,000",
+    "registrationDeadline": "2026-08-01T23:59:00",
+    "winners": [
+      {"name": "Team Alpha", "position": "1st", "collegeName": "COEP"},
+      {"name": "Team Beta", "position": "2nd", "collegeName": "COEP"}
+    ],
+    "certificateUrls": ["https://example.com/cert/comp1.pdf"],
+    "photoUrls": ["https://picsum.photos/seed/comp1/400/300"],
+    "videoUrls": []
+  },
+  {
+    "id": "comp_2",
+    "title": "RoboWars – Inter College",
+    "collegeId": "col_pict",
+    "collegeName": "PICT Pune",
+    "scope": "inter_college",
+    "description": "Battle of 15kg combat robots from 20+ colleges across India.",
+    "prizeDetails": "Winner: ₹1,00,000 | Runner-up: ₹50,000",
+    "registrationDeadline": "2026-09-15T23:59:00",
+    "winners": [],
+    "certificateUrls": [],
+    "photoUrls": ["https://picsum.photos/seed/robowars/400/300"],
+    "videoUrls": ["https://example.com/video/robowars.mp4"]
+  },
+  {
+    "id": "comp_3",
+    "title": "Smart India Hackathon – National",
+    "collegeId": "col_vit",
+    "collegeName": "VIT Vellore",
+    "scope": "national",
+    "description": "Government of India hackathon with problem statements from ministries.",
+    "prizeDetails": "Winner per problem: ₹1,00,000 + incubation support",
+    "registrationDeadline": "2026-10-30T23:59:00",
+    "winners": [
+      {"name": "Team Innovators", "position": "Winner", "collegeName": "VIT Vellore"}
+    ],
+    "certificateUrls": ["https://example.com/cert/sih.pdf"],
+    "photoUrls": ["https://picsum.photos/seed/sih/400/300"],
+    "videoUrls": []
+  },
+  {
+    "id": "comp_4",
+    "title": "Business Plan Challenge",
+    "collegeId": "col_vit",
+    "collegeName": "VIT Vellore",
+    "scope": "college",
+    "description": "Pitch your startup idea to VCs and win seed funding.",
+    "prizeDetails": "1st: ₹50,000 seed grant | Mentorship from E-Cell partners",
+    "registrationDeadline": "2026-08-20T23:59:00",
+    "winners": [],
+    "certificateUrls": [],
+    "photoUrls": [],
+    "videoUrls": []
+  },
+  {
+    "id": "comp_5",
+    "title": "National Debate Championship",
+    "collegeId": "col_coep",
+    "collegeName": "COEP Technological University",
+    "scope": "national",
+    "description": "Parliamentary debate format with topics on tech policy and ethics.",
+    "prizeDetails": "Best Speaker: ₹30,000 | Best Team: ₹75,000",
+    "registrationDeadline": "2026-11-01T23:59:00",
+    "winners": [],
+    "certificateUrls": [],
+    "photoUrls": ["https://picsum.photos/seed/debate/400/300"],
+    "videoUrls": []
+  }
+]
