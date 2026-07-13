@@ -1,0 +1,46 @@
+[
+  {
+    "id": "co_tcs",
+    "name": "TCS",
+    "description": "Tata Consultancy Services is a global IT services and consulting company.",
+    "industry": "IT Services",
+    "website": "https://www.tcs.com",
+    "hiringStatus": "actively_hiring",
+    "rating": 4.1,
+    "reviewCount": 128,
+    "placementHistory": ["2024: 450+ campus hires", "2023: 380+ campus hires"]
+  },
+  {
+    "id": "co_infosys",
+    "name": "Infosys",
+    "description": "Infosys provides digital services and consulting across industries.",
+    "industry": "IT Services",
+    "website": "https://www.infosys.com",
+    "hiringStatus": "actively_hiring",
+    "rating": 4.0,
+    "reviewCount": 96,
+    "placementHistory": ["2024: 320+ campus hires", "2023: 290+ campus hires"]
+  },
+  {
+    "id": "co_google",
+    "name": "Google",
+    "description": "Google builds products and platforms that help create opportunities for everyone.",
+    "industry": "Technology",
+    "website": "https://careers.google.com",
+    "hiringStatus": "limited",
+    "rating": 4.6,
+    "reviewCount": 42,
+    "placementHistory": ["2024: 12 campus hires from IITs/NITs"]
+  },
+  {
+    "id": "co_zepto",
+    "name": "Zepto",
+    "description": "Zepto is a quick-commerce startup delivering groceries in minutes.",
+    "industry": "Startup / E-commerce",
+    "website": "https://www.zeptonow.com",
+    "hiringStatus": "actively_hiring",
+    "rating": 3.9,
+    "reviewCount": 18,
+    "placementHistory": ["2024: 25 engineering interns converted to FTE"]
+  }
+]

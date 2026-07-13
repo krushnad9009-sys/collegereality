@@ -1,0 +1,67 @@
+[
+  {
+    "id": "int_1",
+    "title": "Software Engineering Intern",
+    "companyId": "co_tcs",
+    "companyName": "TCS",
+    "city": "Pune",
+    "payType": "paid",
+    "stipend": "₹25,000/month",
+    "duration": "6 months",
+    "description": "Work on enterprise Java/Spring projects with mentorship from senior engineers.",
+    "skills": ["Java", "Spring Boot", "SQL"],
+    "applyUrl": "https://www.tcs.com/careers"
+  },
+  {
+    "id": "int_2",
+    "title": "Data Science Intern",
+    "companyId": "co_infosys",
+    "companyName": "Infosys",
+    "city": "Bangalore",
+    "payType": "paid",
+    "stipend": "₹30,000/month",
+    "duration": "3 months",
+    "description": "Build ML pipelines and dashboards for client analytics projects.",
+    "skills": ["Python", "Pandas", "Machine Learning"],
+    "applyUrl": "https://www.infosys.com/careers"
+  },
+  {
+    "id": "int_3",
+    "title": "Product Design Intern",
+    "companyId": "co_zepto",
+    "companyName": "Zepto",
+    "city": "Mumbai",
+    "payType": "paid",
+    "stipend": "₹35,000/month",
+    "duration": "4 months",
+    "description": "Design user flows for the Zepto consumer app.",
+    "skills": ["Figma", "UX Research"],
+    "applyUrl": "https://www.zeptonow.com/careers"
+  },
+  {
+    "id": "int_4",
+    "title": "Social Impact Intern",
+    "companyId": "co_tcs",
+    "companyName": "TCS",
+    "city": "Hyderabad",
+    "payType": "unpaid",
+    "stipend": "Certificate + LOR",
+    "duration": "2 months",
+    "description": "Support CSR digital literacy programs in rural schools.",
+    "skills": ["Communication", "Teaching"],
+    "applyUrl": "https://www.tcs.com/careers"
+  },
+  {
+    "id": "int_5",
+    "title": "Android Developer Intern",
+    "companyId": "co_google",
+    "companyName": "Google",
+    "city": "Bangalore",
+    "payType": "paid",
+    "stipend": "₹80,000/month",
+    "duration": "3 months",
+    "description": "Contribute to Android framework tooling with a host team.",
+    "skills": ["Kotlin", "Android", "Git"],
+    "applyUrl": "https://careers.google.com"
+  }
+]

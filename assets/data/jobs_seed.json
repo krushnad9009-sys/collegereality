@@ -1,0 +1,72 @@
+[
+  {
+    "id": "job_1",
+    "title": "Graduate Engineer Trainee",
+    "companyId": "co_tcs",
+    "companyName": "TCS",
+    "location": "Pune",
+    "jobLevel": "fresher",
+    "workType": "office",
+    "salaryMinLpa": 3.5,
+    "salaryMaxLpa": 4.5,
+    "description": "Join TCS as a GET and rotate across development and support teams.",
+    "skills": ["Java", "Communication"],
+    "applyUrl": "https://www.tcs.com/careers"
+  },
+  {
+    "id": "job_2",
+    "title": "Associate Software Engineer",
+    "companyId": "co_infosys",
+    "companyName": "Infosys",
+    "location": "Bangalore",
+    "jobLevel": "fresher",
+    "workType": "hybrid",
+    "salaryMinLpa": 4.0,
+    "salaryMaxLpa": 5.5,
+    "description": "Build cloud-native microservices for global banking clients.",
+    "skills": ["Java", "AWS", "Microservices"],
+    "applyUrl": "https://www.infosys.com/careers"
+  },
+  {
+    "id": "job_3",
+    "title": "Senior Backend Engineer",
+    "companyId": "co_zepto",
+    "companyName": "Zepto",
+    "location": "Mumbai",
+    "jobLevel": "experienced",
+    "workType": "office",
+    "salaryMinLpa": 18,
+    "salaryMaxLpa": 28,
+    "description": "Lead order-management services handling peak quick-commerce traffic.",
+    "skills": ["Go", "Kafka", "System Design"],
+    "applyUrl": "https://www.zeptonow.com/careers"
+  },
+  {
+    "id": "job_4",
+    "title": "Software Engineer L3",
+    "companyId": "co_google",
+    "companyName": "Google",
+    "location": "Bangalore",
+    "jobLevel": "experienced",
+    "workType": "hybrid",
+    "salaryMinLpa": 35,
+    "salaryMaxLpa": 55,
+    "description": "Design scalable infrastructure for Google Cloud products.",
+    "skills": ["C++", "Distributed Systems"],
+    "applyUrl": "https://careers.google.com"
+  },
+  {
+    "id": "job_5",
+    "title": "Remote QA Analyst",
+    "companyId": "co_infosys",
+    "companyName": "Infosys",
+    "location": "Remote",
+    "jobLevel": "fresher",
+    "workType": "remote",
+    "salaryMinLpa": 3.0,
+    "salaryMaxLpa": 4.0,
+    "description": "Manual and automation testing for enterprise web applications.",
+    "skills": ["Selenium", "Manual Testing"],
+    "applyUrl": "https://www.infosys.com/careers"
+  }
+]

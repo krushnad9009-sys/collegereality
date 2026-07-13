@@ -83,6 +83,13 @@ class HomeScreen extends ConsumerWidget {
                               ),
                               const SizedBox(width: 12),
                               _QuickAccessCard(
+                                icon: Icons.work_rounded,
+                                label: 'Careers',
+                                color: const Color(0xFF059669),
+                                onTap: () => context.go(RouteNames.careersHub),
+                              ),
+                              const SizedBox(width: 12),
+                              _QuickAccessCard(
                                 icon: Icons.support_agent_rounded,
                                 label: 'Guides',
                                 color: AppTheme.primaryColor,

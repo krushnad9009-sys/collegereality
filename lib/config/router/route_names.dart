@@ -42,6 +42,14 @@ class RouteNames {
   static const String savedPredictions = '/admission/predictions';
   static const String studentProfile = '/student/:uid';
   static const String collegeQuestion = '/college-details/:id/questions/:questionId';
+  static const String careersHub = '/careers';
+  static const String careersInternships = '/careers/internships';
+  static const String careersJobs = '/careers/jobs';
+  static const String careersCompanies = '/careers/companies';
+  static const String careersCompanyDetail = '/careers/companies/:id';
+  static const String careersAlumni = '/careers/alumni';
+  static const String careersAlumniDetail = '/careers/alumni/:id';
+  static const String careersSaved = '/careers/saved';
 
   static String collegeDetailsPath(String id, {String? tab}) {
     final path = '/college-details/$id';
@@ -59,6 +67,10 @@ class RouteNames {
   static String adminCollegeEditPath(String id) => '/admin/colleges/$id/edit';
   static String collegeQuestionPath(String collegeId, String questionId) =>
       '/college-details/$collegeId/questions/$questionId';
+  static String careersCompanyDetailPath(String companyId) =>
+      '/careers/companies/$companyId';
+  static String careersAlumniDetailPath(String alumniId) =>
+      '/careers/alumni/$alumniId';
 
   static String assistantPath({
     String? query,

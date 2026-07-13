@@ -36,6 +36,12 @@ import '../../features/admission/screens/entrance_exams_screen.dart';
 import '../../features/admission/screens/cutoffs_screen.dart';
 import '../../features/admission/screens/admission_predictor_screen.dart';
 import '../../features/admission/screens/saved_predictions_screen.dart';
+import '../../features/careers/screens/careers_hub_screen.dart';
+import '../../features/careers/screens/internships_screen.dart';
+import '../../features/careers/screens/jobs_screen.dart';
+import '../../features/careers/screens/companies_screen.dart';
+import '../../features/careers/screens/alumni_screen.dart';
+import '../../features/careers/screens/saved_careers_screen.dart';
 import '../../features/admin/screens/admin_placements_screen.dart';
 import '../../features/admin/screens/admin_community_screen.dart';
 import '../../features/admin/screens/admin_communication_screen.dart';
@@ -214,6 +220,44 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RouteNames.savedPredictions,
         builder: (context, state) => const SavedPredictionsScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.careersHub,
+        builder: (context, state) => const CareersHubScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.careersInternships,
+        builder: (context, state) => const InternshipsScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.careersJobs,
+        builder: (context, state) => const JobsScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.careersCompanies,
+        builder: (context, state) => const CompaniesScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.careersCompanyDetail,
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return CompanyDetailScreen(companyId: id);
+        },
+      ),
+      GoRoute(
+        path: RouteNames.careersAlumni,
+        builder: (context, state) => const AlumniDirectoryScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.careersAlumniDetail,
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return AlumniProfileScreen(alumniId: id);
+        },
+      ),
+      GoRoute(
+        path: RouteNames.careersSaved,
+        builder: (context, state) => const SavedCareersScreen(),
       ),
       GoRoute(
         path: RouteNames.collegeQuestion,

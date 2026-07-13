@@ -1,0 +1,38 @@
+[
+  {
+    "id": "alum_1",
+    "displayName": "Priya Deshmukh",
+    "collegeName": "COEP Technological University",
+    "batchYear": 2019,
+    "company": "Google",
+    "jobTitle": "Software Engineer",
+    "location": "Bangalore",
+    "linkedInUrl": "https://linkedin.com/in/example",
+    "successStory": "Started as a TCS intern, upskilled in system design, and joined Google after 3 years.",
+    "isVerifiedAlumni": true
+  },
+  {
+    "id": "alum_2",
+    "displayName": "Rahul Kulkarni",
+    "collegeName": "VIT Vellore",
+    "batchYear": 2018,
+    "company": "Zepto",
+    "jobTitle": "Engineering Manager",
+    "location": "Mumbai",
+    "linkedInUrl": null,
+    "successStory": "Joined Zepto as founding engineer #8 and now leads the supply chain platform team.",
+    "isVerifiedAlumni": true
+  },
+  {
+    "id": "alum_3",
+    "displayName": "Ananya Sharma",
+    "collegeName": "IIT Bombay",
+    "batchYear": 2020,
+    "company": "Infosys",
+    "jobTitle": "Data Scientist",
+    "location": "Pune",
+    "linkedInUrl": "https://linkedin.com/in/example2",
+    "successStory": "Transitioned from campus ML projects to leading a client analytics pod at Infosys.",
+    "isVerifiedAlumni": true
+  }
+]

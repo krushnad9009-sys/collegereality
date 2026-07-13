@@ -30,4 +30,14 @@ class FirestoreConstants {
   static const String cutoffRecordsCollection = 'cutoff_records';
   static const String admissionPredictionsCollection = 'admission_predictions';
   static const String savedScholarshipsCollection = 'saved_scholarships';
+  static const String internshipsCollection = 'internships';
+  static const String jobsCollection = 'jobs';
+  static const String companiesCollection = 'companies';
+  static const String companyReviewsCollection = 'company_reviews';
+  static const String alumniProfilesCollection = 'alumni_profiles';
+  static const String savedInternshipsCollection = 'saved_internships';
+  static const String savedJobsCollection = 'saved_jobs';
+  static const String alumniFollowsCollection = 'alumni_follows';
+  static const String internshipApplicationsCollection = 'internship_applications';
+  static const String jobApplicationsCollection = 'job_applications';
 }
