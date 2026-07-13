@@ -25,4 +25,9 @@ class FirestoreConstants {
   static const String answerVotesSubcollection = 'votes';
   static const String questionReportsCollection = 'question_reports';
   static const String answerReportsCollection = 'answer_reports';
+  static const String scholarshipsCollection = 'scholarships';
+  static const String entranceExamsCollection = 'entrance_exams';
+  static const String cutoffRecordsCollection = 'cutoff_records';
+  static const String admissionPredictionsCollection = 'admission_predictions';
+  static const String savedScholarshipsCollection = 'saved_scholarships';
 }

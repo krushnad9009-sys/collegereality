@@ -30,6 +30,12 @@ import '../../features/community/screens/ask_seniors_screen.dart';
 import '../../features/community/screens/qa_board_screen.dart';
 import '../../features/placements/screens/submit_placement_screen.dart';
 import '../../features/questions/screens/question_detail_screen.dart';
+import '../../features/admission/screens/admission_hub_screen.dart';
+import '../../features/admission/screens/scholarships_screen.dart';
+import '../../features/admission/screens/entrance_exams_screen.dart';
+import '../../features/admission/screens/cutoffs_screen.dart';
+import '../../features/admission/screens/admission_predictor_screen.dart';
+import '../../features/admission/screens/saved_predictions_screen.dart';
 import '../../features/admin/screens/admin_placements_screen.dart';
 import '../../features/admin/screens/admin_community_screen.dart';
 import '../../features/admin/screens/admin_communication_screen.dart';
@@ -184,6 +190,30 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             collegeName: collegeName,
           );
         },
+      ),
+      GoRoute(
+        path: RouteNames.admissionHub,
+        builder: (context, state) => const AdmissionHubScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.admissionScholarships,
+        builder: (context, state) => const ScholarshipsScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.admissionExams,
+        builder: (context, state) => const EntranceExamsScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.admissionCutoffs,
+        builder: (context, state) => const CutoffsScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.admissionPredictor,
+        builder: (context, state) => const AdmissionPredictorScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.savedPredictions,
+        builder: (context, state) => const SavedPredictionsScreen(),
       ),
       GoRoute(
         path: RouteNames.collegeQuestion,

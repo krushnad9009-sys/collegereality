@@ -34,6 +34,12 @@ class RouteNames {
   static const String communityQa = '/community/qa';
   static const String adminCommunity = '/admin/community';
   static const String adminQuestions = '/admin/questions';
+  static const String admissionHub = '/admission';
+  static const String admissionScholarships = '/admission/scholarships';
+  static const String admissionExams = '/admission/exams';
+  static const String admissionCutoffs = '/admission/cutoffs';
+  static const String admissionPredictor = '/admission/predictor';
+  static const String savedPredictions = '/admission/predictions';
   static const String studentProfile = '/student/:uid';
   static const String collegeQuestion = '/college-details/:id/questions/:questionId';
 

@@ -1,0 +1,184 @@
+[
+  {
+    "id": "exam_jee",
+    "name": "JEE Main & Advanced",
+    "slug": "jee",
+    "category": "Engineering",
+    "conductingBody": "NTA / IITs",
+    "scoreType": "rank",
+    "eligibility": "Class 12 with Physics, Chemistry, Mathematics. Age limit as per NTA norms.",
+    "examPattern": "JEE Main: 90 MCQs (Physics, Chemistry, Maths). JEE Advanced: 2 papers, mixed question types.",
+    "syllabus": "NCERT Class 11 & 12 PCM syllabus. Topics in mechanics, calculus, organic/inorganic/physical chemistry.",
+    "importantDates": [
+      {"label": "JEE Main Session 1", "date": "2026-01-22T00:00:00.000"},
+      {"label": "JEE Main Session 2", "date": "2026-04-04T00:00:00.000"},
+      {"label": "JEE Advanced", "date": "2026-05-18T00:00:00.000"}
+    ],
+    "officialWebsite": "https://jeemain.nta.ac.in"
+  },
+  {
+    "id": "exam_neet",
+    "name": "NEET UG",
+    "slug": "neet",
+    "category": "Medical",
+    "conductingBody": "NTA",
+    "scoreType": "rank",
+    "eligibility": "Class 12 with Physics, Chemistry, Biology. Minimum 50% aggregate (40% for reserved).",
+    "examPattern": "200 MCQs (Physics 45, Chemistry 45, Biology 90). Duration 3 hours 20 minutes.",
+    "syllabus": "NCERT Class 11 & 12 PCB syllabus.",
+    "importantDates": [
+      {"label": "Application Deadline", "date": "2026-03-15T00:00:00.000"},
+      {"label": "Exam Date", "date": "2026-05-04T00:00:00.000"},
+      {"label": "Result", "date": "2026-06-14T00:00:00.000"}
+    ],
+    "officialWebsite": "https://neet.nta.nic.in"
+  },
+  {
+    "id": "exam_mht_cet",
+    "name": "MHT CET",
+    "slug": "mht_cet",
+    "category": "Engineering & Pharmacy",
+    "conductingBody": "State CET Cell, Maharashtra",
+    "scoreType": "percentile",
+    "eligibility": "Maharashtra domicile or all-India quota. Class 12 with PCM/PCB.",
+    "examPattern": "100 MCQs per paper. PCM group for engineering. No negative marking.",
+    "syllabus": "Maharashtra State Board Class 11 & 12 syllabus.",
+    "importantDates": [
+      {"label": "Registration", "date": "2026-02-10T00:00:00.000"},
+      {"label": "Exam (PCM)", "date": "2026-04-20T00:00:00.000"},
+      {"label": "CAP Round 1", "date": "2026-07-01T00:00:00.000"}
+    ],
+    "officialWebsite": "https://cetcell.mahacet.org"
+  },
+  {
+    "id": "exam_cuet",
+    "name": "CUET UG",
+    "slug": "cuet",
+    "category": "University Admission",
+    "conductingBody": "NTA",
+    "scoreType": "percentile",
+    "eligibility": "Class 12 pass from recognized board. Domain-specific subject requirements vary.",
+    "examPattern": "Section IA (Language), Section II (Domain), Section III (General Test). Computer-based.",
+    "syllabus": "Class 12 domain subjects + general aptitude, logical reasoning, GK.",
+    "importantDates": [
+      {"label": "Registration", "date": "2026-03-01T00:00:00.000"},
+      {"label": "Exam Window", "date": "2026-05-15T00:00:00.000"},
+      {"label": "Results", "date": "2026-06-30T00:00:00.000"}
+    ],
+    "officialWebsite": "https://cuet.samarth.ac.in"
+  },
+  {
+    "id": "exam_gate",
+    "name": "GATE",
+    "slug": "gate",
+    "category": "Postgraduate Engineering",
+    "conductingBody": "IISc & IITs",
+    "scoreType": "marks",
+    "eligibility": "Bachelor's degree in Engineering/Science or final year students.",
+    "examPattern": "65 questions (MCQs + NAT). Duration 3 hours. Subject-specific paper.",
+    "syllabus": "Undergraduate engineering syllabus for chosen paper code.",
+    "importantDates": [
+      {"label": "Registration", "date": "2026-08-30T00:00:00.000"},
+      {"label": "Exam", "date": "2027-02-01T00:00:00.000"},
+      {"label": "Results", "date": "2027-03-16T00:00:00.000"}
+    ],
+    "officialWebsite": "https://gate2026.iisc.ac.in"
+  },
+  {
+    "id": "exam_cat",
+    "name": "CAT",
+    "slug": "cat",
+    "category": "Management",
+    "conductingBody": "IIMs",
+    "scoreType": "percentile",
+    "eligibility": "Bachelor's degree with 50% marks (45% for reserved categories).",
+    "examPattern": "VARC (24), DILR (20), QA (22) questions. Duration 2 hours.",
+    "syllabus": "Reading comprehension, data interpretation, logical reasoning, quantitative aptitude.",
+    "importantDates": [
+      {"label": "Registration", "date": "2026-09-15T00:00:00.000"},
+      {"label": "Exam", "date": "2026-11-24T00:00:00.000"},
+      {"label": "Results", "date": "2027-01-10T00:00:00.000"}
+    ],
+    "officialWebsite": "https://iimcat.ac.in"
+  },
+  {
+    "id": "exam_xat",
+    "name": "XAT",
+    "slug": "xat",
+    "category": "Management",
+    "conductingBody": "XLRI Jamshedpur",
+    "scoreType": "percentile",
+    "eligibility": "Bachelor's degree in any discipline.",
+    "examPattern": "Verbal, Decision Making, QA, GK sections. Duration 3 hours 10 minutes.",
+    "syllabus": "English, decision making, quantitative ability, general knowledge.",
+    "importantDates": [
+      {"label": "Registration", "date": "2026-11-30T00:00:00.000"},
+      {"label": "Exam", "date": "2027-01-05T00:00:00.000"}
+    ],
+    "officialWebsite": "https://xatonline.in"
+  },
+  {
+    "id": "exam_clat",
+    "name": "CLAT",
+    "slug": "clat",
+    "category": "Law",
+    "conductingBody": "Consortium of NLUs",
+    "scoreType": "marks",
+    "eligibility": "Class 12 with 45% (40% reserved). Age limit removed.",
+    "examPattern": "120 MCQs: English, Current Affairs, Legal Reasoning, Logical Reasoning, Quant.",
+    "syllabus": "Comprehension, GK, legal aptitude, logical reasoning, elementary maths.",
+    "importantDates": [
+      {"label": "Registration", "date": "2026-10-31T00:00:00.000"},
+      {"label": "Exam", "date": "2026-12-01T00:00:00.000"}
+    ],
+    "officialWebsite": "https://consortiumofnlus.ac.in"
+  },
+  {
+    "id": "exam_nata",
+    "name": "NATA",
+    "slug": "nata",
+    "category": "Architecture",
+    "conductingBody": "Council of Architecture",
+    "scoreType": "marks",
+    "eligibility": "Class 12 with Mathematics. Minimum 50% aggregate.",
+    "examPattern": "Drawing test + MCQs on aptitude and mathematics.",
+    "syllabus": "Drawing, aesthetic sensitivity, mathematics, architecture awareness.",
+    "importantDates": [
+      {"label": "Session 1", "date": "2026-04-06T00:00:00.000"},
+      {"label": "Session 2", "date": "2026-05-25T00:00:00.000"}
+    ],
+    "officialWebsite": "https://www.nata.in"
+  },
+  {
+    "id": "exam_polytechnic",
+    "name": "Polytechnic Entrance",
+    "slug": "polytechnic",
+    "category": "Diploma",
+    "conductingBody": "State Technical Boards",
+    "scoreType": "marks",
+    "eligibility": "Class 10 pass with Mathematics and Science.",
+    "examPattern": "State-specific MCQ papers in Maths, Science, and English.",
+    "syllabus": "Class 10 Mathematics and Science syllabus.",
+    "importantDates": [
+      {"label": "Application", "date": "2026-04-01T00:00:00.000"},
+      {"label": "Exam", "date": "2026-06-10T00:00:00.000"}
+    ],
+    "officialWebsite": "https://www.msbte.org.in"
+  },
+  {
+    "id": "exam_diploma",
+    "name": "Diploma Engineering CET",
+    "slug": "diploma",
+    "category": "Diploma",
+    "conductingBody": "State CET Cells",
+    "scoreType": "percentile",
+    "eligibility": "Class 10 or 12 pass depending on state rules.",
+    "examPattern": "MCQ-based state CET for diploma admissions.",
+    "syllabus": "Class 10/12 science and mathematics.",
+    "importantDates": [
+      {"label": "Registration", "date": "2026-05-01T00:00:00.000"},
+      {"label": "Exam", "date": "2026-07-15T00:00:00.000"}
+    ],
+    "officialWebsite": "https://cetcell.mahacet.org"
+  }
+]
