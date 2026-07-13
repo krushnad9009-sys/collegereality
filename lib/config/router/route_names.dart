@@ -24,6 +24,11 @@ class RouteNames {
   static const String adminReviews = '/admin/reviews';
   static const String adminPlacements = '/admin/placements';
   static const String adminUsers = '/admin/users';
+  static const String adminAnalytics = '/admin/analytics';
+  static const String adminReports = '/admin/reports';
+  static const String adminSystem = '/admin/system';
+  static const String adminExport = '/admin/export';
+  static const String adminBulk = '/admin/bulk';
   static const String adminCommunication = '/admin/communication';
   static const String adminVerification = '/admin/verification';
   static const String verification = '/verification';

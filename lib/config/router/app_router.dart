@@ -19,6 +19,11 @@ import '../../features/admin/screens/admin_college_edit_screen.dart';
 import '../../features/admin/screens/admin_colleges_screen.dart';
 import '../../features/admin/screens/admin_reviews_screen.dart';
 import '../../features/admin/screens/admin_users_screen.dart';
+import '../../features/admin/screens/admin_analytics_screen.dart';
+import '../../features/admin/screens/admin_reports_hub_screen.dart';
+import '../../features/admin/screens/admin_system_monitor_screen.dart';
+import '../../features/admin/screens/admin_college_bulk_screen.dart';
+import '../../features/admin/screens/admin_export_screen.dart';
 import '../../features/admin/providers/admin_provider.dart';
 import '../../features/admin/screens/admin_verification_screen.dart';
 import '../../features/profile/screens/premium_student_profile_screen.dart';
@@ -440,6 +445,26 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RouteNames.adminUsers,
         builder: (context, state) => const AdminUsersScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.adminAnalytics,
+        builder: (context, state) => const AdminAnalyticsScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.adminReports,
+        builder: (context, state) => const AdminReportsHubScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.adminSystem,
+        builder: (context, state) => const AdminSystemMonitorScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.adminBulk,
+        builder: (context, state) => const AdminCollegeBulkScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.adminExport,
+        builder: (context, state) => const AdminExportScreen(),
       ),
       GoRoute(
         path: RouteNames.adminCommunication,

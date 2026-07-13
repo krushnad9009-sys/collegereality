@@ -6,6 +6,7 @@ import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../colleges/providers/college_provider.dart';
 import '../../reviews/providers/review_provider.dart';
+import '../providers/admin_dashboard_provider.dart';
 
 class AdminDashboardScreen extends ConsumerWidget {
   const AdminDashboardScreen({super.key});
@@ -14,6 +15,7 @@ class AdminDashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final collegeCountAsync = ref.watch(collegeCountProvider);
     final reviewsAsync = ref.watch(allReviewsAdminProvider(null));
+    final statsAsync = ref.watch(adminDashboardStatsProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -22,6 +24,15 @@ class AdminDashboardScreen extends ConsumerWidget {
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
           onPressed: () => context.go(RouteNames.home),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              ref.invalidate(adminDashboardStatsProvider);
+              ref.invalidate(collegeCountProvider);
+            },
+          ),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(20),
@@ -66,7 +77,114 @@ class AdminDashboardScreen extends ConsumerWidget {
               ),
             ],
           ),
+          const SizedBox(height: 12),
+          statsAsync.when(
+            loading: () => const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+            error: (_, __) => const SizedBox.shrink(),
+            data: (stats) => Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: _StatTile(
+                        label: 'Verified Students',
+                        value: '${stats.verifiedStudents}',
+                        icon: Icons.verified_user,
+                        color: Colors.teal,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _StatTile(
+                        label: 'Questions',
+                        value: '${stats.totalQuestions}',
+                        icon: Icons.quiz,
+                        color: Colors.indigo,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _StatTile(
+                        label: 'Answers',
+                        value: '${stats.totalAnswers}',
+                        icon: Icons.question_answer,
+                        color: Colors.deepPurple,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _StatTile(
+                        label: 'Reports',
+                        value: '${stats.totalReports}',
+                        icon: Icons.flag,
+                        color: Colors.red,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _StatTile(
+                        label: 'DAU',
+                        value: '${stats.dailyActiveUsers}',
+                        icon: Icons.today,
+                        color: Colors.orange,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _StatTile(
+                        label: 'MAU',
+                        value: '${stats.monthlyActiveUsers}',
+                        icon: Icons.calendar_month,
+                        color: Colors.blueGrey,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
           const SizedBox(height: 24),
+          _AdminMenuTile(
+            icon: Icons.analytics_outlined,
+            title: 'Analytics',
+            subtitle: 'Live charts, growth, and top colleges',
+            onTap: () => context.go(RouteNames.adminAnalytics),
+          ),
+          _AdminMenuTile(
+            icon: Icons.flag_outlined,
+            title: 'Reports Hub',
+            subtitle: 'Unified moderation with one-click actions',
+            onTap: () => context.go(RouteNames.adminReports),
+          ),
+          _AdminMenuTile(
+            icon: Icons.upload_file_outlined,
+            title: 'Bulk College Ops',
+            subtitle: 'CSV import, bulk images, approval workflow',
+            onTap: () => context.go(RouteNames.adminBulk),
+          ),
+          _AdminMenuTile(
+            icon: Icons.monitor_heart_outlined,
+            title: 'System Monitoring',
+            subtitle: 'Firebase usage, crashes, and performance',
+            onTap: () => context.go(RouteNames.adminSystem),
+          ),
+          _AdminMenuTile(
+            icon: Icons.download_outlined,
+            title: 'Export Data',
+            subtitle: 'CSV and Excel-compatible exports',
+            onTap: () => context.go(RouteNames.adminExport),
+          ),
           _AdminMenuTile(
             icon: Icons.school_outlined,
             title: 'Manage Colleges',
@@ -88,7 +206,7 @@ class AdminDashboardScreen extends ConsumerWidget {
           _AdminMenuTile(
             icon: Icons.people_outline,
             title: 'Users',
-            subtitle: 'View registered students',
+            subtitle: 'Search, suspend, ban, and verify students',
             onTap: () => context.go(RouteNames.adminUsers),
           ),
           _AdminMenuTile(
