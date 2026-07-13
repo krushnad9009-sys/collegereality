@@ -6,6 +6,8 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../config/theme/app_theme.dart';
+import '../../auth/providers/auth_provider.dart';
+import '../../engagement/providers/engagement_provider.dart';
 import '../models/entrance_exam_model.dart';
 import '../providers/admission_provider.dart';
 
@@ -52,18 +54,44 @@ class EntranceExamsScreen extends ConsumerWidget {
   }
 }
 
-class _ExamCard extends StatelessWidget {
+class _ExamCard extends ConsumerWidget {
   final EntranceExamModel exam;
 
   const _ExamCard({required this.exam});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final savedIds = ref.watch(savedExamIdsProvider).valueOrNull ?? {};
+    final isSaved = savedIds.contains(exam.id);
+    final user = ref.watch(authStateProvider).valueOrNull;
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: ExpansionTile(
         title: Text(exam.name, style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
         subtitle: Text(exam.category, style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.gray500)),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: Icon(
+                isSaved ? Icons.bookmark : Icons.bookmark_outline,
+                color: isSaved ? AppTheme.primaryColor : null,
+              ),
+              onPressed: user == null
+                  ? null
+                  : () async {
+                      final repo = ref.read(engagementRepositoryProvider);
+                      if (isSaved) {
+                        await repo.unsaveEntranceExam(user.uid, exam.id);
+                      } else {
+                        await repo.saveEntranceExam(user.uid, exam.id);
+                      }
+                    },
+            ),
+            const Icon(Icons.expand_more),
+          ],
+        ),
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),

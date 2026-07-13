@@ -8,6 +8,7 @@ import '../../../config/router/route_names.dart';
 import '../../../core/widgets/index.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../admin/providers/admin_provider.dart';
+import '../../engagement/providers/engagement_provider.dart';
 
 class HomeHeaderWidget extends ConsumerWidget {
   final User user;
@@ -51,7 +52,9 @@ class HomeHeaderWidget extends ConsumerWidget {
             ],
           ),
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: 12),
+        _NotificationBell(userId: user.uid),
+        const SizedBox(width: 8),
         Material(
           color: Colors.transparent,
           child: InkWell(
@@ -144,13 +147,18 @@ class HomeHeaderWidget extends ConsumerWidget {
               ),
               ListTile(
                 leading: const Icon(Icons.bookmark_outline),
-                title: const Text('Favorites'),
+                title: const Text('Bookmarks'),
                 onTap: () {
                   Navigator.pop(context);
-                  SnackBarHelper.showInfoSnackBar(
-                    context,
-                    message: 'Favorites coming in Phase 6!',
-                  );
+                  context.go(RouteNames.favorites);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.notifications_outlined),
+                title: const Text('Notifications'),
+                onTap: () {
+                  Navigator.pop(context);
+                  context.go(RouteNames.notifications);
                 },
               ),
               Consumer(
@@ -208,5 +216,60 @@ class HomeHeaderWidget extends ConsumerWidget {
         }
       }
     });
+  }
+}
+
+class _NotificationBell extends ConsumerWidget {
+  final String userId;
+
+  const _NotificationBell({required this.userId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final unreadAsync = ref.watch(unreadNotificationCountProvider);
+
+    return unreadAsync.when(
+      loading: () => IconButton(
+        icon: const Icon(Icons.notifications_outlined),
+        onPressed: () => context.go(RouteNames.notifications),
+      ),
+      error: (_, __) => IconButton(
+        icon: const Icon(Icons.notifications_outlined),
+        onPressed: () => context.go(RouteNames.notifications),
+      ),
+      data: (count) {
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.notifications_outlined),
+              onPressed: () => context.go(RouteNames.notifications),
+            ),
+            if (count > 0)
+              Positioned(
+                right: 6,
+                top: 6,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: const BoxDecoration(
+                    color: AppTheme.errorColor,
+                    shape: BoxShape.circle,
+                  ),
+                  constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                  child: Text(
+                    count > 9 ? '9+' : '$count',
+                    style: GoogleFonts.poppins(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
   }
 }

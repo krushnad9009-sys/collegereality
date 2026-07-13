@@ -14,6 +14,9 @@ class RouteNames {
   static const String profile = '/profile';
   static const String myReviews = '/my-reviews';
   static const String favorites = '/favorites';
+  static const String notifications = '/notifications';
+  static const String notificationPreferences = '/notifications/preferences';
+  static const String admissionCalendar = '/admission/calendar';
   static const String admin = '/admin';
   static const String adminColleges = '/admin/colleges';
   static const String adminCollegeNew = '/admin/colleges/new';

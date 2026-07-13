@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../features/engagement/providers/engagement_provider.dart';
+
 /// Runs non-critical warm-up work after the Home screen has painted.
 class StartupBootstrap {
   StartupBootstrap._();
@@ -14,6 +16,7 @@ class StartupBootstrap {
     if (_started) return;
     _started = true;
     unawaited(_warmAssets());
+    unawaited(_initEngagement(ref));
   }
 
   static Future<void> _warmAssets() async {
@@ -25,6 +28,14 @@ class StartupBootstrap {
       ]);
     } catch (_) {
       // Font warm-up is best-effort; runtime fetch remains available.
+    }
+  }
+
+  static Future<void> _initEngagement(WidgetRef ref) async {
+    try {
+      await ref.read(engagementMessagingInitProvider.future);
+    } catch (_) {
+      // FCM init is best-effort; in-app notifications still work.
     }
   }
 }

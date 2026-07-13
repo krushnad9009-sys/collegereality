@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../engagement/providers/engagement_provider.dart';
 import '../providers/question_provider.dart';
 import '../widgets/answer_card_widget.dart';
 import '../widgets/ask_question_sheet.dart';
@@ -27,6 +28,8 @@ class QuestionDetailScreen extends ConsumerWidget {
     final answersAsync = ref.watch(sortedQuestionAnswersProvider(questionId));
     final canAnswerAsync = ref.watch(isVerifiedForCollegeAnswerProvider(collegeId));
     final authUser = ref.watch(authStateProvider).valueOrNull;
+    final savedIds = ref.watch(savedQuestionIdsProvider).valueOrNull ?? {};
+    final isSaved = savedIds.contains(questionId);
     final isWide = MediaQuery.of(context).size.width >= 600;
 
     return Scaffold(
@@ -37,6 +40,24 @@ class QuestionDetailScreen extends ConsumerWidget {
         ),
         title: const Text('Question'),
         actions: [
+          IconButton(
+            icon: Icon(isSaved ? Icons.bookmark : Icons.bookmark_outline),
+            tooltip: isSaved ? 'Remove bookmark' : 'Save question',
+            onPressed: authUser == null
+                ? null
+                : () async {
+                    final repo = ref.read(engagementRepositoryProvider);
+                    if (isSaved) {
+                      await repo.unsaveQuestion(authUser.uid, questionId);
+                    } else {
+                      await repo.saveQuestion(
+                        authUser.uid,
+                        questionId,
+                        collegeId: collegeId,
+                      );
+                    }
+                  },
+          ),
           IconButton(
             icon: const Icon(Icons.flag_outlined),
             onPressed: authUser == null

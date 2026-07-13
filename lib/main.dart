@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'config/router/app_router.dart';
 import 'config/theme/app_theme.dart';
 import 'config/theme/theme_provider.dart';
 import 'core/bootstrap/firebase_bootstrap.dart';
+import 'features/engagement/services/firebase_messaging_service.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
   // Start Firebase in the background; splash awaits readiness before routing.
   FirebaseBootstrap.ensureInitialized();
   runApp(

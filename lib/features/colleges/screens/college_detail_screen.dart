@@ -10,6 +10,7 @@ import '../../../config/theme/app_theme.dart';
 import '../../../core/widgets/college_image_widget.dart';
 import '../../../core/widgets/skeleton_loader.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../engagement/providers/engagement_provider.dart';
 import '../../reviews/models/review_model.dart';
 import '../../reviews/providers/review_provider.dart';
 import '../../reviews/widgets/review_card_widget.dart';
@@ -86,6 +87,9 @@ class _CollegeDetailScreenState extends ConsumerState<CollegeDetailScreen> {
         final verifiedAsync = ref.watch(isVerifiedForReviewProvider);
         final basket = ref.watch(compareBasketProvider);
         final isInCompare = basket.contains(college.id);
+        final favoriteIds = ref.watch(favoriteCollegeIdsProvider).valueOrNull ?? {};
+        final isFavorite = favoriteIds.contains(college.id);
+        final user = ref.read(currentUserProvider);
 
         return DefaultTabController(
           initialIndex: _initialTabIndex(),
@@ -123,6 +127,20 @@ class _CollegeDetailScreenState extends ConsumerState<CollegeDetailScreen> {
                     onPressed: () => context.go(RouteNames.home),
                   ),
                   actions: [
+                    IconButton(
+                      icon: Icon(
+                        isFavorite ? Icons.bookmark : Icons.bookmark_outline,
+                        color: isFavorite ? AppTheme.accentColor : null,
+                      ),
+                      tooltip: isFavorite ? 'Remove bookmark' : 'Save college',
+                      onPressed: user == null
+                          ? null
+                          : () async {
+                              await ref
+                                  .read(engagementRepositoryProvider)
+                                  .toggleFavoriteCollege(user.uid, college.id);
+                            },
+                    ),
                     TextButton.icon(
                       onPressed: () {
                         final message = ref

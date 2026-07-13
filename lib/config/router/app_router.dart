@@ -48,6 +48,10 @@ import '../../features/student_life/screens/clubs_screen.dart';
 import '../../features/student_life/screens/competitions_screen.dart';
 import '../../features/student_life/screens/student_communities_screen.dart';
 import '../../features/student_life/screens/saved_events_screen.dart';
+import '../../features/engagement/screens/notifications_center_screen.dart';
+import '../../features/engagement/screens/bookmarks_hub_screen.dart';
+import '../../features/engagement/screens/admission_calendar_screen.dart';
+import '../../features/engagement/screens/notification_preferences_screen.dart';
 import '../../features/admin/screens/admin_placements_screen.dart';
 import '../../features/admin/screens/admin_community_screen.dart';
 import '../../features/admin/screens/admin_communication_screen.dart';
@@ -136,6 +140,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RouteNames.myReviews,
         builder: (context, state) => const MyReviewsScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.favorites,
+        builder: (context, state) => const BookmarksHubScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.notifications,
+        builder: (context, state) => const NotificationsCenterScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.notificationPreferences,
+        builder: (context, state) => const NotificationPreferencesScreen(),
       ),
       GoRoute(
         path: RouteNames.compare,
@@ -227,6 +243,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RouteNames.savedPredictions,
         builder: (context, state) => const SavedPredictionsScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.admissionCalendar,
+        builder: (context, state) => const AdmissionCalendarScreen(),
       ),
       GoRoute(
         path: RouteNames.careersHub,

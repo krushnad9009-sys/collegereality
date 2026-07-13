@@ -1,0 +1,74 @@
+[
+  {
+    "id": "cal_1",
+    "title": "MHT-CET CAP Round 1 Registration",
+    "category": "cap_round",
+    "state": "Maharashtra",
+    "description": "Register and fill choices for CAP Round 1 on the State CET Cell portal.",
+    "eventDate": "2026-07-20T10:00:00",
+    "deadlineDate": "2026-07-25T23:59:00"
+  },
+  {
+    "id": "cal_2",
+    "title": "CAP Round 1 Seat Allotment",
+    "category": "seat_allotment",
+    "state": "Maharashtra",
+    "description": "First round seat allotment results published. Accept or freeze allotted seat.",
+    "eventDate": "2026-07-28T12:00:00",
+    "deadlineDate": "2026-07-30T18:00:00"
+  },
+  {
+    "id": "cal_3",
+    "title": "Document Verification – ARC Centres",
+    "category": "document_verification",
+    "state": "Maharashtra",
+    "description": "Visit ARC with original documents for verification after seat acceptance.",
+    "eventDate": "2026-08-01T09:00:00",
+    "deadlineDate": "2026-08-05T17:00:00"
+  },
+  {
+    "id": "cal_4",
+    "title": "Institute Fee Payment Deadline",
+    "category": "fee_payment",
+    "state": "Maharashtra",
+    "description": "Pay admission fees at allotted institute to confirm seat.",
+    "eventDate": "2026-08-06T09:00:00",
+    "deadlineDate": "2026-08-10T23:59:00"
+  },
+  {
+    "id": "cal_5",
+    "title": "CAP Round 2 Counselling",
+    "category": "counselling",
+    "state": "Maharashtra",
+    "description": "Choice filling opens for CAP Round 2 for vacant seats.",
+    "eventDate": "2026-08-12T10:00:00",
+    "deadlineDate": "2026-08-15T23:59:00"
+  },
+  {
+    "id": "cal_6",
+    "title": "Hostel Admission Registration",
+    "category": "hostel_admission",
+    "state": "Maharashtra",
+    "description": "Apply for government and private hostel accommodation through institute portal.",
+    "eventDate": "2026-08-15T09:00:00",
+    "deadlineDate": "2026-08-25T23:59:00"
+  },
+  {
+    "id": "cal_7",
+    "title": "JEE Main Session 2 Result",
+    "category": "result_date",
+    "state": "All India",
+    "description": "NTA publishes JEE Main Session 2 results on jeemain.nta.nic.in",
+    "eventDate": "2026-07-18T17:00:00",
+    "deadlineDate": "2026-07-18T23:59:00"
+  },
+  {
+    "id": "cal_8",
+    "title": "NEET UG Counselling Registration",
+    "category": "counselling",
+    "state": "All India",
+    "description": "MCC opens registration for NEET UG counselling on mcc.nic.in",
+    "eventDate": "2026-07-22T10:00:00",
+    "deadlineDate": "2026-07-28T23:59:00"
+  }
+]
