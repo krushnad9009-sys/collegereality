@@ -29,9 +29,11 @@ import '../../features/community/screens/chat_screen.dart';
 import '../../features/community/screens/ask_seniors_screen.dart';
 import '../../features/community/screens/qa_board_screen.dart';
 import '../../features/placements/screens/submit_placement_screen.dart';
+import '../../features/questions/screens/question_detail_screen.dart';
 import '../../features/admin/screens/admin_placements_screen.dart';
 import '../../features/admin/screens/admin_community_screen.dart';
 import '../../features/admin/screens/admin_communication_screen.dart';
+import '../../features/admin/screens/admin_questions_screen.dart';
 import '../../features/communication/screens/guides_directory_screen.dart';
 import '../../features/communication/screens/guide_public_profile_screen.dart';
 import '../../features/communication/screens/active_call_screen.dart';
@@ -184,6 +186,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
+        path: RouteNames.collegeQuestion,
+        builder: (context, state) {
+          final collegeId = state.pathParameters['id']!;
+          final questionId = state.pathParameters['questionId']!;
+          return QuestionDetailScreen(
+            collegeId: collegeId,
+            questionId: questionId,
+          );
+        },
+      ),
+      GoRoute(
         path: RouteNames.admin,
         builder: (context, state) => const AdminDashboardScreen(),
       ),
@@ -225,6 +238,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RouteNames.adminCommunity,
         builder: (context, state) => const AdminCommunityScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.adminQuestions,
+        builder: (context, state) => const AdminQuestionsScreen(),
       ),
       GoRoute(
         path: RouteNames.community,

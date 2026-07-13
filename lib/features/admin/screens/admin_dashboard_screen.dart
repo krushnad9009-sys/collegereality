@@ -109,6 +109,12 @@ class AdminDashboardScreen extends ConsumerWidget {
             subtitle: 'Review reported messages and content',
             onTap: () => context.go(RouteNames.adminCommunity),
           ),
+          _AdminMenuTile(
+            icon: Icons.quiz_outlined,
+            title: 'Q&A Moderation',
+            subtitle: 'Moderate college questions, answers, and reports',
+            onTap: () => context.go(RouteNames.adminQuestions),
+          ),
         ],
       ),
     );

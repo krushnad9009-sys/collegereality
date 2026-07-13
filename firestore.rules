@@ -36,6 +36,26 @@ service cloud.firestore {
         .hasOnly(['helpfulCount', 'updatedAt']);
     }
 
+    function isVerifiedStudentOfCollege(collegeId) {
+      let user = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      return isVerifiedStudent() && user.collegeId == collegeId;
+    }
+
+    function isQuestionAggregateUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys()
+        .hasOnly(['answerCount', 'mostHelpfulAnswerId', 'mostHelpfulScore', 'updatedAt']);
+    }
+
+    function isAnswerVoteCountUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys()
+        .hasOnly(['upvoteCount', 'downvoteCount', 'score', 'updatedAt']);
+    }
+
+    function isMostHelpfulAnswerUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys()
+        .hasOnly(['isMostHelpful', 'updatedAt']);
+    }
+
     function isCallParticipant(sessionId) {
       let session = get(/databases/$(database)/documents/call_sessions/$(sessionId)).data;
       return isAuthenticated() &&
@@ -174,6 +194,51 @@ service cloud.firestore {
     match /community_reports/{reportId} {
       allow read: if isAdmin() ||
         (isAuthenticated() && resource.data.reporterId == request.auth.uid);
+      allow create: if isAuthenticated() &&
+        request.resource.data.reporterId == request.auth.uid;
+      allow update: if isAdmin();
+    }
+
+    match /college_questions/{questionId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() &&
+        request.resource.data.authorId == request.auth.uid;
+      allow update: if isAdmin() ||
+        (isAuthenticated() && resource.data.authorId == request.auth.uid) ||
+        (isAuthenticated() && isQuestionAggregateUpdate());
+      allow delete: if isAdmin();
+
+      match /answers/{answerId} {
+        allow read: if isAuthenticated();
+        allow create: if isAuthenticated() &&
+          isVerifiedStudentOfCollege(
+            get(/databases/$(database)/documents/college_questions/$(questionId)).data.collegeId
+          ) &&
+          request.resource.data.authorId == request.auth.uid &&
+          request.resource.data.isVerifiedStudent == true;
+        allow update: if isAdmin() ||
+          (isAuthenticated() && resource.data.authorId == request.auth.uid) ||
+          (isAuthenticated() && isAnswerVoteCountUpdate()) ||
+          (isAuthenticated() && isMostHelpfulAnswerUpdate());
+        allow delete: if isAdmin();
+
+        match /votes/{voterId} {
+          allow read: if isAuthenticated();
+          allow create, update: if isAuthenticated() && request.auth.uid == voterId;
+          allow delete: if isAuthenticated() && request.auth.uid == voterId;
+        }
+      }
+    }
+
+    match /question_reports/{reportId} {
+      allow read: if isAdmin();
+      allow create: if isAuthenticated() &&
+        request.resource.data.reporterId == request.auth.uid;
+      allow update: if isAdmin();
+    }
+
+    match /answer_reports/{reportId} {
+      allow read: if isAdmin();
       allow create: if isAuthenticated() &&
         request.resource.data.reporterId == request.auth.uid;
       allow update: if isAdmin();

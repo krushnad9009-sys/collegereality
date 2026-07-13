@@ -33,7 +33,9 @@ class RouteNames {
   static const String communityAskSeniors = '/community/ask-seniors';
   static const String communityQa = '/community/qa';
   static const String adminCommunity = '/admin/community';
+  static const String adminQuestions = '/admin/questions';
   static const String studentProfile = '/student/:uid';
+  static const String collegeQuestion = '/college-details/:id/questions/:questionId';
 
   static String collegeDetailsPath(String id, {String? tab}) {
     final path = '/college-details/$id';
@@ -49,6 +51,8 @@ class RouteNames {
   static String communityChatPath(String id) => '/community/chat/$id';
   static String studentProfilePath(String uid) => '/student/$uid';
   static String adminCollegeEditPath(String id) => '/admin/colleges/$id/edit';
+  static String collegeQuestionPath(String collegeId, String questionId) =>
+      '/college-details/$collegeId/questions/$questionId';
 
   static String assistantPath({
     String? query,

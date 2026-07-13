@@ -18,6 +18,7 @@ import '../../reviews/widgets/star_rating_widget.dart';
 import '../../compare/providers/compare_basket_provider.dart';
 import '../../compare/widgets/compare_basket_bar.dart';
 import '../../placements/widgets/placements_tab_content.dart';
+import '../../questions/widgets/college_questions_tab_content.dart';
 import '../widgets/accreditation_badges.dart';
 import '../widgets/college_gallery_widget.dart';
 import '../widgets/college_map_section.dart';
@@ -43,14 +44,16 @@ class _CollegeDetailScreenState extends ConsumerState<CollegeDetailScreen> {
   int _initialTabIndex() {
     switch (widget.initialTab) {
       case 'reviews':
-        return 6;
+        return 7;
       case 'ratings':
-        return 5;
+        return 6;
       case 'fees':
-        return 4;
+        return 5;
       case 'hostel':
-        return 3;
+        return 4;
       case 'faculty':
+        return 3;
+      case 'questions':
         return 2;
       case 'placements':
         return 1;
@@ -86,7 +89,7 @@ class _CollegeDetailScreenState extends ConsumerState<CollegeDetailScreen> {
 
         return DefaultTabController(
           initialIndex: _initialTabIndex(),
-          length: 7,
+          length: 8,
           child: Scaffold(
             floatingActionButton: verifiedAsync.when(
               loading: () => null,
@@ -213,6 +216,7 @@ class _CollegeDetailScreenState extends ConsumerState<CollegeDetailScreen> {
                       tabs: const [
                         Tab(text: 'Overview'),
                         Tab(text: 'Placements'),
+                        Tab(text: 'Questions'),
                         Tab(text: 'Faculty'),
                         Tab(text: 'Hostel'),
                         Tab(text: 'Fees'),
@@ -227,6 +231,7 @@ class _CollegeDetailScreenState extends ConsumerState<CollegeDetailScreen> {
                 children: [
                   _OverviewTab(college: college),
                   PlacementsTabContent(college: college),
+                  CollegeQuestionsTabContent(college: college),
                   _FacultyTab(college: college),
                   _HostelTab(college: college),
                   _FeesTab(college: college, currency: currency),
