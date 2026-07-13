@@ -8,7 +8,28 @@ service cloud.firestore {
 
     function isAdmin() {
       return isAuthenticated() &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'admin';
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType in ['admin', 'super_admin'];
+    }
+
+    function isModerator() {
+      return isAuthenticated() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'moderator';
+    }
+
+    function isStaff() {
+      return isAdmin() || isModerator();
+    }
+
+    function isCollegeOfficial(collegeId) {
+      return isAuthenticated() &&
+        exists(/databases/$(database)/documents/college_accounts/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/college_accounts/$(request.auth.uid)).data.collegeId == collegeId &&
+        get(/databases/$(database)/documents/college_accounts/$(request.auth.uid)).data.isVerified == true;
+    }
+
+    function isVerifiedFaculty() {
+      return isAuthenticated() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.verificationBadge == 'verified_faculty';
     }
 
     function isOwner(userId) {
@@ -547,6 +568,95 @@ service cloud.firestore {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated();
       allow update: if isAuthenticated();
+    }
+
+    match /college_requests/{requestId} {
+      allow read: if isStaff() ||
+        (isAuthenticated() && resource.data.userId == request.auth.uid);
+      allow create: if isAuthenticated() &&
+        isVerifiedStudent() &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.status == 'pending_review';
+      allow update: if isAdmin();
+    }
+
+    match /college_edit_suggestions/{suggestionId} {
+      allow read: if isStaff() ||
+        (isAuthenticated() && resource.data.userId == request.auth.uid);
+      allow create: if isAuthenticated() &&
+        isVerifiedStudent() &&
+        request.resource.data.userId == request.auth.uid;
+      allow update: if isAdmin();
+    }
+
+    match /college_data_reports/{reportId} {
+      allow read: if isStaff() ||
+        (isAuthenticated() && resource.data.userId == request.auth.uid);
+      allow create: if isAuthenticated() &&
+        request.resource.data.userId == request.auth.uid;
+      allow update: if isStaff();
+    }
+
+    match /college_claims/{claimId} {
+      allow read: if isAdmin() ||
+        (isAuthenticated() && resource.data.userId == request.auth.uid);
+      allow create: if isAuthenticated() &&
+        request.resource.data.userId == request.auth.uid;
+      allow update: if isAdmin();
+    }
+
+    match /college_accounts/{userId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /college_official_content/{contentId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() &&
+        (isAdmin() || isCollegeOfficial(request.resource.data.collegeId));
+      allow update, delete: if isAdmin() ||
+        (isAuthenticated() && isCollegeOfficial(resource.data.collegeId));
+    }
+
+    match /faculty_verification_requests/{requestId} {
+      allow read: if isStaff() ||
+        (isAuthenticated() && resource.data.userId == request.auth.uid);
+      allow create: if isAuthenticated() &&
+        request.resource.data.userId == request.auth.uid;
+      allow update: if isAdmin();
+    }
+
+    match /faculty_workshops/{workshopId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isVerifiedFaculty() &&
+        request.resource.data.facultyId == request.auth.uid;
+      allow update, delete: if isAdmin() ||
+        (isAuthenticated() && resource.data.facultyId == request.auth.uid);
+    }
+
+    match /faculty_research/{researchId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isVerifiedFaculty() &&
+        request.resource.data.facultyId == request.auth.uid;
+      allow update, delete: if isAdmin() ||
+        (isAuthenticated() && resource.data.facultyId == request.auth.uid);
+    }
+
+    match /alumni_mentorship_offers/{offerId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() &&
+        isVerifiedStudent() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.verificationBadge == 'verified_alumni' &&
+        request.resource.data.alumniId == request.auth.uid;
+      allow update, delete: if isAdmin() ||
+        (isAuthenticated() && resource.data.alumniId == request.auth.uid);
+    }
+
+    match /audit_logs/{logId} {
+      allow read: if isStaff();
+      allow create: if isAuthenticated();
+      allow update, delete: if false;
     }
 
     match /{document=**} {

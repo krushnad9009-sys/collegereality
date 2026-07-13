@@ -156,6 +156,12 @@ class AdminDashboardScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 24),
           _AdminMenuTile(
+            icon: Icons.hub_outlined,
+            title: 'Ecosystem Approvals',
+            subtitle: 'College requests, edits, claims, faculty, audit log',
+            onTap: () => context.go(RouteNames.adminEcosystem),
+          ),
+          _AdminMenuTile(
             icon: Icons.analytics_outlined,
             title: 'Analytics',
             subtitle: 'Live charts, growth, and top colleges',

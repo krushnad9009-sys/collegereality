@@ -75,6 +75,13 @@ import '../../features/admin/screens/admin_community_screen.dart';
 import '../../features/admin/screens/admin_communication_screen.dart';
 import '../../features/admin/screens/admin_questions_screen.dart';
 import '../../features/admin/screens/admin_student_life_screen.dart';
+import '../../features/ecosystem/screens/request_college_screen.dart';
+import '../../features/ecosystem/screens/suggest_edit_screen.dart';
+import '../../features/ecosystem/screens/report_college_data_screen.dart';
+import '../../features/ecosystem/screens/claim_college_screen.dart';
+import '../../features/ecosystem/screens/faculty_verification_screen.dart';
+import '../../features/ecosystem/screens/official_college_dashboard_screen.dart';
+import '../../features/ecosystem/screens/admin_ecosystem_hub_screen.dart';
 import '../../features/communication/screens/guides_directory_screen.dart';
 import '../../features/communication/screens/guide_public_profile_screen.dart';
 import '../../features/communication/screens/active_call_screen.dart';
@@ -109,8 +116,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       final isAdminRoute = path.startsWith('/admin');
       if (isAdminRoute && isLoggedIn) {
-        final isAdmin = await ref.read(isAdminProvider.future);
-        if (!isAdmin) return RouteNames.home;
+        final isStaff = await ref.read(isStaffProvider.future);
+        if (!isStaff) return RouteNames.home;
       }
 
       return null;
@@ -147,6 +154,50 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RouteNames.verification,
         builder: (context, state) => const VerificationScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.requestCollege,
+        builder: (context, state) => const RequestCollegeScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.suggestEdit,
+        builder: (context, state) {
+          final collegeId = state.pathParameters['collegeId']!;
+          final name = state.uri.queryParameters['name'] ?? 'College';
+          return SuggestEditScreen(collegeId: collegeId, collegeName: name);
+        },
+      ),
+      GoRoute(
+        path: RouteNames.reportCollegeData,
+        builder: (context, state) {
+          final collegeId = state.pathParameters['collegeId']!;
+          final name = state.uri.queryParameters['name'] ?? 'College';
+          return ReportCollegeDataScreen(collegeId: collegeId, collegeName: name);
+        },
+      ),
+      GoRoute(
+        path: RouteNames.claimCollege,
+        builder: (context, state) {
+          final collegeId = state.pathParameters['collegeId']!;
+          final name = state.uri.queryParameters['name'] ?? 'College';
+          return ClaimCollegeScreen(collegeId: collegeId, collegeName: name);
+        },
+      ),
+      GoRoute(
+        path: RouteNames.facultyVerification,
+        builder: (context, state) => const FacultyVerificationScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.facultyHub,
+        builder: (context, state) => const FacultyHubScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.alumniMentorship,
+        builder: (context, state) => const AlumniMentorshipScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.officialCollegeDashboard,
+        builder: (context, state) => const OfficialCollegeDashboardScreen(),
       ),
       GoRoute(
         path: RouteNames.studentProfile,
@@ -485,6 +536,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RouteNames.adminStudentLife,
         builder: (context, state) => const AdminStudentLifeScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.adminEcosystem,
+        builder: (context, state) => const AdminEcosystemHubScreen(),
       ),
       GoRoute(
         path: RouteNames.community,

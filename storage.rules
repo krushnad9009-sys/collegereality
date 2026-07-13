@@ -35,13 +35,13 @@ service firebase.storage {
 
     match /college_media/{collegeId}/{fileName} {
       allow read: if isAuthenticated();
-      allow write: if isAdmin() &&
+      allow write: if (isAdmin() || isAuthenticated()) &&
         request.resource.size < 8 * 1024 * 1024;
     }
 
     match /college_media/{collegeId}/gallery/{fileName} {
       allow read: if isAuthenticated();
-      allow write: if isAdmin() &&
+      allow write: if (isAdmin() || isAuthenticated()) &&
         request.resource.size < 8 * 1024 * 1024;
     }
 
@@ -66,6 +66,29 @@ service firebase.storage {
       allow write: if isAuthenticated() &&
         request.auth.uid == userId &&
         request.resource.size < 5 * 1024 * 1024;
+    }
+
+    match /college_claim_documents/{collegeId}/{userId}/{folder}/{fileName} {
+      allow read: if isAuthenticated() &&
+        (request.auth.uid == userId || isAdmin());
+      allow write: if isAuthenticated() &&
+        request.auth.uid == userId &&
+        request.resource.size < 10 * 1024 * 1024;
+    }
+
+    match /faculty_documents/{userId}/{fileName} {
+      allow read: if isAuthenticated() &&
+        (request.auth.uid == userId || isAdmin());
+      allow write: if isAuthenticated() &&
+        request.auth.uid == userId &&
+        request.resource.size < 10 * 1024 * 1024;
+    }
+
+    match /college_official_media/{collegeId}/{userId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() &&
+        request.auth.uid == userId &&
+        request.resource.size < 8 * 1024 * 1024;
     }
 
     match /{allPaths=**} {

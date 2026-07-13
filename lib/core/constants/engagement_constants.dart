@@ -21,6 +21,11 @@ class EngagementConstants {
   static const String typeNewJob = 'new_job';
   static const String typeNewInternship = 'new_internship';
   static const String typeApplicationUpdate = 'application_update';
+  static const String typeVerificationUpdate = 'verification_update';
+  static const String typeCollegeRequestUpdate = 'college_request_update';
+  static const String typeEditSuggestionUpdate = 'edit_suggestion_update';
+  static const String typeClaimUpdate = 'college_claim_update';
+  static const String typeOfficialNotice = 'official_notice';
 
   static const String categoryReviews = 'reviews';
   static const String categoryQuestions = 'questions';

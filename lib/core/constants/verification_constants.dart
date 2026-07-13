@@ -18,6 +18,7 @@ class VerificationConstants {
   static const badgeNone = 'none';
   static const badgeVerifiedStudent = 'verified_student';
   static const badgeVerifiedAlumni = 'verified_alumni';
+  static const badgeVerifiedFaculty = 'verified_faculty';
 
   static const statusIncomplete = 'incomplete';
   static const statusPendingReview = 'pending_review';
@@ -51,6 +52,8 @@ class VerificationConstants {
         return 'Verified Student';
       case badgeVerifiedAlumni:
         return 'Verified Alumni';
+      case badgeVerifiedFaculty:
+        return 'Verified Faculty';
       default:
         return '';
     }

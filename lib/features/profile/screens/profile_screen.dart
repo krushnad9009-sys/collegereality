@@ -373,6 +373,36 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ),
                   const SizedBox(height: 12),
                   OutlinedButton.icon(
+                    onPressed: () => context.push(RouteNames.facultyVerification),
+                    icon: const Icon(Icons.school_outlined),
+                    label: const Text('Faculty Verification'),
+                  ),
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    onPressed: () => context.push(RouteNames.facultyHub),
+                    icon: const Icon(Icons.biotech_outlined),
+                    label: const Text('Faculty Hub'),
+                  ),
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    onPressed: () => context.push(RouteNames.alumniMentorship),
+                    icon: const Icon(Icons.volunteer_activism_outlined),
+                    label: const Text('Alumni Mentorship'),
+                  ),
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    onPressed: () => context.push(RouteNames.officialCollegeDashboard),
+                    icon: const Icon(Icons.dashboard_outlined),
+                    label: const Text('Official College Dashboard'),
+                  ),
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    onPressed: () => context.push(RouteNames.requestCollege),
+                    icon: const Icon(Icons.add_business_outlined),
+                    label: const Text('Request New College'),
+                  ),
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
                     onPressed: () => context.go(RouteNames.guidesDirectory),
                     icon: const Icon(Icons.support_agent_outlined),
                     label: const Text('Browse Guides'),

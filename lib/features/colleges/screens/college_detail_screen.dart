@@ -24,6 +24,8 @@ import '../widgets/accreditation_badges.dart';
 import '../widgets/college_gallery_widget.dart';
 import '../widgets/college_map_section.dart';
 import '../widgets/connect_students_section.dart';
+import '../../ecosystem/widgets/college_ecosystem_menu.dart';
+import '../../ecosystem/widgets/official_college_content_section.dart';
 import '../models/college_model.dart';
 import '../providers/college_provider.dart';
 
@@ -127,6 +129,10 @@ class _CollegeDetailScreenState extends ConsumerState<CollegeDetailScreen> {
                     onPressed: () => context.go(RouteNames.home),
                   ),
                   actions: [
+                    CollegeEcosystemMenu(
+                      collegeId: college.id,
+                      collegeName: college.name,
+                    ),
                     IconButton(
                       icon: Icon(
                         isFavorite ? Icons.bookmark : Icons.bookmark_outline,
@@ -474,6 +480,8 @@ class _OverviewTab extends StatelessWidget {
           const SizedBox(height: 12),
         ],
         ConnectStudentsSection(collegeId: college.id),
+        const SizedBox(height: 20),
+        OfficialCollegeContentSection(collegeId: college.id),
         const SizedBox(height: 20),
         if (college.coursesDetailed.isNotEmpty) ...[
           Text(

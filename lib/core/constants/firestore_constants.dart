@@ -61,4 +61,17 @@ class FirestoreConstants {
   static const String savedEntranceExamsCollection = 'saved_entrance_exams';
   static const String savedQuestionsCollection = 'saved_questions';
   static const String collegeAnalyticsEventsCollection = 'college_analytics_events';
+
+  // Ecosystem collections (Phase 22)
+  static const String collegeRequestsCollection = 'college_requests';
+  static const String collegeEditSuggestionsCollection = 'college_edit_suggestions';
+  static const String collegeDataReportsCollection = 'college_data_reports';
+  static const String collegeClaimsCollection = 'college_claims';
+  static const String collegeAccountsCollection = 'college_accounts';
+  static const String collegeOfficialContentCollection = 'college_official_content';
+  static const String facultyVerificationRequestsCollection = 'faculty_verification_requests';
+  static const String facultyWorkshopsCollection = 'faculty_workshops';
+  static const String facultyResearchCollection = 'faculty_research';
+  static const String alumniMentorshipOffersCollection = 'alumni_mentorship_offers';
+  static const String auditLogsCollection = 'audit_logs';
 }

@@ -83,6 +83,17 @@ class RouteNames {
   static const String rankingInsights = '/rankings/insights';
   static const String rankingAnalytics = '/rankings/analytics';
 
+  // Ecosystem (Phase 22)
+  static const String requestCollege = '/ecosystem/request-college';
+  static const String suggestEdit = '/ecosystem/suggest-edit/:collegeId';
+  static const String reportCollegeData = '/ecosystem/report/:collegeId';
+  static const String claimCollege = '/ecosystem/claim/:collegeId';
+  static const String facultyVerification = '/ecosystem/faculty-verification';
+  static const String facultyHub = '/ecosystem/faculty-hub';
+  static const String alumniMentorship = '/ecosystem/alumni-mentorship';
+  static const String officialCollegeDashboard = '/ecosystem/official-dashboard';
+  static const String adminEcosystem = '/admin/ecosystem';
+
   static String collegeDetailsPath(String id, {String? tab}) {
     final path = '/college-details/$id';
     if (tab == null || tab.isEmpty) return path;
@@ -111,6 +122,13 @@ class RouteNames {
       '/student-life/competitions/$competitionId';
   static String studentLifeCommunityBoardPath(String communityId) =>
       '/student-life/communities/$communityId';
+
+  static String suggestEditPath(String collegeId, String collegeName) =>
+      '/ecosystem/suggest-edit/$collegeId?name=${Uri.encodeComponent(collegeName)}';
+  static String reportCollegeDataPath(String collegeId, String collegeName) =>
+      '/ecosystem/report/$collegeId?name=${Uri.encodeComponent(collegeName)}';
+  static String claimCollegePath(String collegeId, String collegeName) =>
+      '/ecosystem/claim/$collegeId?name=${Uri.encodeComponent(collegeName)}';
 
   static String assistantPath({
     String? query,
