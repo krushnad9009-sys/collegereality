@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 import '../../../core/constants/firestore_constants.dart';
 import '../../../core/constants/question_constants.dart';
 import '../../../core/constants/verification_constants.dart';
+import '../../social/services/moderation_service.dart';
 import '../models/answer_model.dart';
 import '../models/question_model.dart';
 import '../utils/question_display_utils.dart';
@@ -11,6 +12,7 @@ import '../utils/question_display_utils.dart';
 class FirestoreQuestionService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final _uuid = const Uuid();
+  final _moderationService = ModerationService();
 
   CollectionReference<Map<String, dynamic>> get _questions =>
       _firestore.collection(FirestoreConstants.collegeQuestionsCollection);
@@ -433,6 +435,7 @@ class FirestoreQuestionService {
       'status': QuestionConstants.reportStatusOpen,
       'createdAt': DateTime.now().toIso8601String(),
     });
+    await _moderationService.incrementQuestionReportCount(questionId);
   }
 
   Future<void> reportAnswer({

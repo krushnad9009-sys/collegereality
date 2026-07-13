@@ -129,6 +129,7 @@ class CommunityBoardScreen extends ConsumerStatefulWidget {
 class _CommunityBoardScreenState extends ConsumerState<CommunityBoardScreen> {
   final _postController = TextEditingController();
   String _postType = StudentLifeConstants.postDiscussion;
+  bool _postAnonymous = false;
 
   @override
   void dispose() {
@@ -236,6 +237,16 @@ class _CommunityBoardScreenState extends ConsumerState<CommunityBoardScreen> {
           const SizedBox(height: 8),
           Row(
             children: [
+              FilterChip(
+                label: const Text('Post anonymously'),
+                selected: _postAnonymous,
+                onSelected: (v) => setState(() => _postAnonymous = v),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
               Expanded(
                 child: TextField(
                   controller: _postController,
@@ -279,6 +290,7 @@ class _CommunityBoardScreenState extends ConsumerState<CommunityBoardScreen> {
                 const PollOptionModel(id: 'opt_a', label: 'Option A'),
                 const PollOptionModel(id: 'opt_b', label: 'Option B'),
               ],
+              isAnonymous: _postAnonymous,
             );
       } else {
         await ref.read(studentLifeRepositoryProvider).createCommunityPost(
@@ -288,9 +300,11 @@ class _CommunityBoardScreenState extends ConsumerState<CommunityBoardScreen> {
               isVerifiedStudent: isVerified,
               postType: _postType,
               content: _postController.text.trim(),
+              isAnonymous: _postAnonymous,
             );
       }
       _postController.clear();
+      setState(() => _postAnonymous = false);
       if (mounted) SnackBarHelper.showSuccessSnackBar(context, message: 'Post published');
     } on StudentLifeException catch (e) {
       if (mounted) SnackBarHelper.showErrorSnackBar(context, message: e.message);
@@ -391,6 +405,32 @@ class _PostCard extends ConsumerWidget {
               ),
             ],
             const SizedBox(height: 8),
+            Row(
+              children: [
+                IconButton(
+                  icon: Icon(
+                    Icons.favorite_border,
+                    size: 18,
+                    color: post.likeCount > 0 ? AppTheme.errorColor : AppTheme.gray500,
+                  ),
+                  onPressed: () async {
+                    final user = ref.read(authStateProvider).valueOrNull;
+                    if (user == null) return;
+                    await ref.read(studentLifeRepositoryProvider).likePost(
+                          postId: post.id,
+                          userId: user.uid,
+                        );
+                  },
+                ),
+                if (post.likeCount > 0)
+                  Text('${post.likeCount}',
+                      style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.gray600)),
+                const Spacer(),
+                if (post.commentCount > 0)
+                  Text('${post.commentCount} comments',
+                      style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.gray500)),
+              ],
+            ),
             _CommentsSection(post: post, communityId: communityId),
           ],
         ),

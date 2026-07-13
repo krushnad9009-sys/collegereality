@@ -32,7 +32,9 @@ abstract class StudentLifeRepository {
     List<String> pdfUrls,
     String pollQuestion,
     List<PollOptionModel> pollOptions,
+    bool isAnonymous,
   });
+  Future<void> likePost({required String postId, required String userId});
   Future<void> addPostComment({
     required String postId,
     required String communityId,
@@ -153,6 +155,7 @@ class StudentLifeRepositoryImpl implements StudentLifeRepository {
     List<String> pdfUrls = const [],
     String pollQuestion = '',
     List<PollOptionModel> pollOptions = const [],
+    bool isAnonymous = false,
   }) =>
       _service.createCommunityPost(
         communityId: communityId,
@@ -165,7 +168,12 @@ class StudentLifeRepositoryImpl implements StudentLifeRepository {
         pdfUrls: pdfUrls,
         pollQuestion: pollQuestion,
         pollOptions: pollOptions,
+        isAnonymous: isAnonymous,
       );
+
+  @override
+  Future<void> likePost({required String postId, required String userId}) =>
+      _service.likePost(postId: postId, userId: userId);
 
   @override
   Future<void> addPostComment({

@@ -28,6 +28,7 @@ import '../../features/community/screens/private_chats_screen.dart';
 import '../../features/community/screens/chat_screen.dart';
 import '../../features/community/screens/ask_seniors_screen.dart';
 import '../../features/community/screens/qa_board_screen.dart';
+import '../../features/social/screens/college_discussion_feed_screen.dart';
 import '../../features/placements/screens/submit_placement_screen.dart';
 import '../../features/questions/screens/question_detail_screen.dart';
 import '../../features/admission/screens/admission_hub_screen.dart';
@@ -445,6 +446,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RouteNames.communityQa,
         builder: (context, state) => const QaBoardScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.communityDiscussionFeed,
+        builder: (context, state) => const CollegeDiscussionFeedScreen(),
       ),
       GoRoute(
         path: RouteNames.communityChat,

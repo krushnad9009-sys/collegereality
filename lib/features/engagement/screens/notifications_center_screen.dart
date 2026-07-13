@@ -150,6 +150,8 @@ class _NotificationsCenterScreenState
         return 'Events';
       case EngagementConstants.categoryAdmission:
         return 'Admission';
+      case EngagementConstants.categoryCareers:
+        return 'Careers';
       default:
         return c;
     }
@@ -300,6 +302,8 @@ class _NotificationTile extends ConsumerWidget {
         return Icons.event_outlined;
       case EngagementConstants.categoryAdmission:
         return Icons.calendar_today_outlined;
+      case EngagementConstants.categoryCareers:
+        return Icons.work_outline;
       default:
         return Icons.notifications_outlined;
     }

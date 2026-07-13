@@ -61,6 +61,13 @@ class CommunityHubScreen extends ConsumerWidget {
             onTap: () => context.push(RouteNames.communityPrivateChats),
           ),
           _CommunityTile(
+            icon: Icons.forum_outlined,
+            title: 'College Discussion Feed',
+            subtitle: 'Posts, Q&A and campus updates in one place',
+            color: const Color(0xFF0EA5E9),
+            onTap: () => context.push(RouteNames.communityDiscussionFeed),
+          ),
+          _CommunityTile(
             icon: Icons.school_outlined,
             title: 'College Discussion',
             subtitle: 'Talk with students at your college',

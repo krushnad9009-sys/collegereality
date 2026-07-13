@@ -7,12 +7,16 @@ import 'package:uuid/uuid.dart';
 import '../../../core/constants/careers_constants.dart';
 import '../../../core/constants/firestore_constants.dart';
 import '../../../core/constants/verification_constants.dart';
+import '../../social/services/notification_bridge_service.dart';
+import '../../engagement/services/firestore_engagement_service.dart';
 import '../models/careers_models.dart';
 import '../utils/careers_filter_utils.dart';
 
 class FirestoreCareersService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final _uuid = const Uuid();
+  final _notificationBridge =
+      NotificationBridgeService(FirestoreEngagementService());
 
   CollectionReference<Map<String, dynamic>> get _internships =>
       _firestore.collection(FirestoreConstants.internshipsCollection);
@@ -448,10 +452,44 @@ class FirestoreCareersService {
 
   Future<void> createInternshipListing(InternshipModel internship) async {
     await _internships.doc(internship.id).set(internship.toJson());
+    await _notifyCareerSubscribersAboutInternship(internship);
   }
 
   Future<void> createJobListing(JobModel job) async {
     await _jobs.doc(job.id).set(job.toJson());
+    await _notifyCareerSubscribersAboutJob(job);
+  }
+
+  Future<void> _notifyCareerSubscribersAboutJob(JobModel job) async {
+    final savedSnap = await _savedJobs.limit(100).get();
+    final notified = <String>{};
+    for (final doc in savedSnap.docs) {
+      final userId = doc.data()['userId'] as String?;
+      if (userId == null || notified.contains(userId)) continue;
+      notified.add(userId);
+      await _notificationBridge.notifyNewJob(
+        userId: userId,
+        jobTitle: job.title,
+        companyName: job.companyName,
+        jobId: job.id,
+      );
+    }
+  }
+
+  Future<void> _notifyCareerSubscribersAboutInternship(InternshipModel internship) async {
+    final savedSnap = await _savedInternships.limit(100).get();
+    final notified = <String>{};
+    for (final doc in savedSnap.docs) {
+      final userId = doc.data()['userId'] as String?;
+      if (userId == null || notified.contains(userId)) continue;
+      notified.add(userId);
+      await _notificationBridge.notifyNewInternship(
+        userId: userId,
+        title: internship.title,
+        companyName: internship.companyName,
+        internshipId: internship.id,
+      );
+    }
   }
 
   Stream<List<ApplicationModel>> watchInternshipApplicationsForCompany(String companyId) {
@@ -480,10 +518,25 @@ class FirestoreCareersService {
     required bool isInternship,
   }) async {
     final collection = isInternship ? _internshipApplications : _jobApplications;
+    final doc = await collection.doc(applicationId).get();
     await collection.doc(applicationId).update({
       'status': status,
       'updatedAt': DateTime.now().toIso8601String(),
     });
+    if (doc.exists) {
+      final data = doc.data()!;
+      final userId = data['userId'] as String?;
+      final listingTitle = data['listingTitle'] as String? ?? 'Your application';
+      if (userId != null) {
+        await _notificationBridge.notifyApplicationUpdate(
+          userId: userId,
+          listingTitle: listingTitle,
+          status: status,
+          applicationId: applicationId,
+          isInternship: isInternship,
+        );
+      }
+    }
   }
 
   Stream<List<InternshipModel>> watchCompanyInternships(String companyId) {

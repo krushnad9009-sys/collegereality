@@ -7,12 +7,18 @@ import 'package:uuid/uuid.dart';
 import '../../../core/constants/firestore_constants.dart';
 import '../../../core/constants/student_life_constants.dart';
 import '../../../core/constants/verification_constants.dart';
+import '../../questions/utils/question_display_utils.dart';
+import '../../social/models/social_models.dart';
+import '../../social/services/moderation_service.dart';
+import '../../social/utils/content_filter_utils.dart';
+import '../../social/utils/moderation_utils.dart';
 import '../models/student_life_models.dart';
 import '../utils/student_life_filter_utils.dart';
 
 class FirestoreStudentLifeService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final _uuid = const Uuid();
+  final _moderationService = ModerationService();
 
   CollectionReference<Map<String, dynamic>> get _events =>
       _firestore.collection(FirestoreConstants.campusEventsCollection);
@@ -232,10 +238,35 @@ class FirestoreStudentLifeService {
         .where('communityId', isEqualTo: communityId)
         .where('status', isEqualTo: StudentLifeConstants.statusPublished)
         .orderBy('createdAt', descending: true)
+        .limit(50)
         .snapshots()
         .map((s) => s.docs
             .map((d) => StudentCommunityPostModel.fromJson(d.data(), docId: d.id))
             .toList());
+  }
+
+  Future<SocialPageResult<StudentCommunityPostModel>> fetchCommunityPostsPage({
+    required String communityId,
+    DocumentSnapshot<Map<String, dynamic>>? startAfter,
+    int limit = 20,
+  }) async {
+    Query<Map<String, dynamic>> query = _posts
+        .where('communityId', isEqualTo: communityId)
+        .where('status', isEqualTo: StudentLifeConstants.statusPublished)
+        .orderBy('createdAt', descending: true)
+        .limit(limit);
+    if (startAfter != null) {
+      query = query.startAfterDocument(startAfter);
+    }
+    final snap = await query.get();
+    final items = snap.docs
+        .map((d) => StudentCommunityPostModel.fromJson(d.data(), docId: d.id))
+        .toList();
+    return SocialPageResult(
+      items: items,
+      lastDocument: snap.docs.isEmpty ? null : snap.docs.last,
+      hasMore: snap.docs.length >= limit,
+    );
   }
 
   Stream<List<StudentCommunityCommentModel>> watchPostComments(String postId) {
@@ -327,17 +358,35 @@ class FirestoreStudentLifeService {
     List<String> pdfUrls = const [],
     String pollQuestion = '',
     List<PollOptionModel> pollOptions = const [],
+    bool isAnonymous = false,
   }) async {
     if (!isVerifiedStudent) {
       throw StudentLifeException('Only verified students can post in communities.');
     }
+    final sanitized = sanitizeUserContent(
+      postType == StudentLifeConstants.postPoll ? pollQuestion : content,
+    );
+    if (sanitized.isNotEmpty) {
+      final moderation = moderateContent(sanitized);
+      if (!moderation.allowed) {
+        throw StudentLifeException('Post blocked: content violates community guidelines.');
+      }
+    }
+    final displayName = isAnonymous
+        ? resolveAuthorDisplayName(
+            userId: authorId,
+            displayName: authorDisplayName,
+            isAnonymous: true,
+          )
+        : authorDisplayName;
     final id = _uuid.v4();
     await _posts.doc(id).set({
       'id': id,
       'communityId': communityId,
       'authorId': authorId,
-      'authorDisplayName': authorDisplayName,
+      'authorDisplayName': displayName,
       'isVerifiedStudent': true,
+      'isAnonymous': isAnonymous,
       'postType': postType,
       'content': content.trim(),
       'imageUrls': imageUrls,
@@ -348,6 +397,9 @@ class FirestoreStudentLifeService {
         'pollEndsAt': DateTime.now().add(const Duration(days: 7)).toIso8601String(),
       'status': StudentLifeConstants.statusPublished,
       'commentCount': 0,
+      'likeCount': 0,
+      'likedBy': <String>[],
+      'reportCount': 0,
       'createdAt': DateTime.now().toIso8601String(),
       'updatedAt': DateTime.now().toIso8601String(),
     });
@@ -447,6 +499,29 @@ class FirestoreStudentLifeService {
       'reason': reason.trim(),
       'status': StudentLifeConstants.reportStatusOpen,
       'createdAt': DateTime.now().toIso8601String(),
+    });
+    await _moderationService.incrementPostReportCount(postId);
+  }
+
+  Future<void> likePost({
+    required String postId,
+    required String userId,
+  }) async {
+    final ref = _posts.doc(postId);
+    await _firestore.runTransaction((tx) async {
+      final snap = await tx.get(ref);
+      if (!snap.exists) return;
+      final likedBy = (snap.data()?['likedBy'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [];
+      if (likedBy.contains(userId)) return;
+      likedBy.add(userId);
+      tx.update(ref, {
+        'likedBy': likedBy,
+        'likeCount': likedBy.length,
+        'updatedAt': DateTime.now().toIso8601String(),
+      });
     });
   }
 

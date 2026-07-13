@@ -1,4 +1,5 @@
 import '../../../core/constants/community_constants.dart';
+import '../../../core/constants/social_constants.dart';
 
 class ChatMessageModel {
   final String id;
@@ -12,6 +13,9 @@ class ChatMessageModel {
   final String? attachmentName;
   final String? replyToMessageId;
   final List<String> readBy;
+  final String status;
+  final int likeCount;
+  final List<String> likedBy;
   final DateTime createdAt;
 
   const ChatMessageModel({
@@ -26,6 +30,9 @@ class ChatMessageModel {
     this.attachmentName,
     this.replyToMessageId,
     this.readBy = const [],
+    this.status = SocialConstants.contentStatusVisible,
+    this.likeCount = 0,
+    this.likedBy = const [],
     required this.createdAt,
   });
 
@@ -44,6 +51,9 @@ class ChatMessageModel {
       attachmentName: json['attachmentName'] as String?,
       replyToMessageId: json['replyToMessageId'] as String?,
       readBy: (json['readBy'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+      status: json['status'] as String? ?? SocialConstants.contentStatusVisible,
+      likeCount: (json['likeCount'] as num?)?.toInt() ?? 0,
+      likedBy: (json['likedBy'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
       createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ?? DateTime.now(),
     );
   }
@@ -60,6 +70,9 @@ class ChatMessageModel {
         'attachmentName': attachmentName,
         'replyToMessageId': replyToMessageId,
         'readBy': readBy,
+        'status': status,
+        'likeCount': likeCount,
+        'likedBy': likedBy,
         'createdAt': createdAt.toIso8601String(),
       };
 }

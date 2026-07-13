@@ -107,6 +107,9 @@ class NotificationPreferencesModel {
   final bool admissionStart;
   final bool admissionDeadline;
   final bool newEvent;
+  final bool newJob;
+  final bool newInternship;
+  final bool applicationUpdate;
   final DateTime? lastAlertScanAt;
   final DateTime updatedAt;
 
@@ -127,6 +130,9 @@ class NotificationPreferencesModel {
     this.admissionStart = true,
     this.admissionDeadline = true,
     this.newEvent = true,
+    this.newJob = true,
+    this.newInternship = true,
+    this.applicationUpdate = true,
     this.lastAlertScanAt,
     required this.updatedAt,
   });
@@ -163,6 +169,9 @@ class NotificationPreferencesModel {
       admissionStart: json['admissionStart'] as bool? ?? true,
       admissionDeadline: json['admissionDeadline'] as bool? ?? true,
       newEvent: json['newEvent'] as bool? ?? true,
+      newJob: json['newJob'] as bool? ?? true,
+      newInternship: json['newInternship'] as bool? ?? true,
+      applicationUpdate: json['applicationUpdate'] as bool? ?? true,
       lastAlertScanAt: json['lastAlertScanAt'] != null
           ? _parseDate(json['lastAlertScanAt'])
           : null,
@@ -187,6 +196,9 @@ class NotificationPreferencesModel {
         'admissionStart': admissionStart,
         'admissionDeadline': admissionDeadline,
         'newEvent': newEvent,
+        'newJob': newJob,
+        'newInternship': newInternship,
+        'applicationUpdate': applicationUpdate,
         if (lastAlertScanAt != null)
           'lastAlertScanAt': lastAlertScanAt!.toIso8601String(),
         'updatedAt': updatedAt.toIso8601String(),
@@ -208,6 +220,9 @@ class NotificationPreferencesModel {
     bool? admissionStart,
     bool? admissionDeadline,
     bool? newEvent,
+    bool? newJob,
+    bool? newInternship,
+    bool? applicationUpdate,
     DateTime? lastAlertScanAt,
     DateTime? updatedAt,
   }) {
@@ -228,6 +243,9 @@ class NotificationPreferencesModel {
       admissionStart: admissionStart ?? this.admissionStart,
       admissionDeadline: admissionDeadline ?? this.admissionDeadline,
       newEvent: newEvent ?? this.newEvent,
+      newJob: newJob ?? this.newJob,
+      newInternship: newInternship ?? this.newInternship,
+      applicationUpdate: applicationUpdate ?? this.applicationUpdate,
       lastAlertScanAt: lastAlertScanAt ?? this.lastAlertScanAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

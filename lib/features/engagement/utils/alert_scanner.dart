@@ -154,6 +154,12 @@ bool isPreferenceEnabled(
       return prefs.feesChange;
     case EngagementConstants.typeNewEvent:
       return prefs.newEvent;
+    case EngagementConstants.typeNewJob:
+      return prefs.newJob;
+    case EngagementConstants.typeNewInternship:
+      return prefs.newInternship;
+    case EngagementConstants.typeApplicationUpdate:
+      return prefs.applicationUpdate;
     default:
       return true;
   }

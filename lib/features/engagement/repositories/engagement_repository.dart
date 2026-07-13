@@ -1,9 +1,17 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 import '../models/engagement_models.dart';
 import '../services/firestore_engagement_service.dart';
+import '../../social/models/social_models.dart';
 
 abstract class EngagementRepository {
   Future<void> ensureSeeded();
   Stream<List<UserNotificationModel>> watchUserNotifications(String userId);
+  Future<SocialPageResult<UserNotificationModel>> fetchNotificationsPage({
+    required String userId,
+    DocumentSnapshot<Map<String, dynamic>>? startAfter,
+    int limit,
+  });
   Stream<int> watchUnreadCount(String userId);
   Future<void> markAsRead(String notificationId);
   Future<void> markAllAsRead(String userId);
@@ -44,6 +52,18 @@ class EngagementRepositoryImpl implements EngagementRepository {
   @override
   Stream<List<UserNotificationModel>> watchUserNotifications(String userId) =>
       _service.watchUserNotifications(userId);
+
+  @override
+  Future<SocialPageResult<UserNotificationModel>> fetchNotificationsPage({
+    required String userId,
+    DocumentSnapshot<Map<String, dynamic>>? startAfter,
+    int limit = 20,
+  }) =>
+      _service.fetchNotificationsPage(
+        userId: userId,
+        startAfter: startAfter,
+        limit: limit,
+      );
 
   @override
   Stream<int> watchUnreadCount(String userId) => _service.watchUnreadCount(userId);

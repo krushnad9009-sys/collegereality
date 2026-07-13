@@ -373,6 +373,10 @@ class StudentCommunityPostModel {
   final DateTime? pollEndsAt;
   final String status;
   final int commentCount;
+  final int likeCount;
+  final List<String> likedBy;
+  final int reportCount;
+  final bool isAnonymous;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -391,6 +395,10 @@ class StudentCommunityPostModel {
     this.pollEndsAt,
     this.status = StudentLifeConstants.statusPublished,
     this.commentCount = 0,
+    this.likeCount = 0,
+    this.likedBy = const [],
+    this.reportCount = 0,
+    this.isAnonymous = false,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -424,6 +432,10 @@ class StudentCommunityPostModel {
       pollEndsAt: json['pollEndsAt'] != null ? _parseDate(json['pollEndsAt']) : null,
       status: json['status'] as String? ?? StudentLifeConstants.statusPublished,
       commentCount: (json['commentCount'] as num?)?.toInt() ?? 0,
+      likeCount: (json['likeCount'] as num?)?.toInt() ?? 0,
+      likedBy: (json['likedBy'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? const [],
+      reportCount: (json['reportCount'] as num?)?.toInt() ?? 0,
+      isAnonymous: json['isAnonymous'] as bool? ?? false,
       createdAt: _parseDate(json['createdAt']),
       updatedAt: _parseDate(json['updatedAt']),
     );
@@ -444,6 +456,10 @@ class StudentCommunityPostModel {
         if (pollEndsAt != null) 'pollEndsAt': pollEndsAt!.toIso8601String(),
         'status': status,
         'commentCount': commentCount,
+        'likeCount': likeCount,
+        'likedBy': likedBy,
+        'reportCount': reportCount,
+        'isAnonymous': isAnonymous,
         'createdAt': createdAt.toIso8601String(),
         'updatedAt': updatedAt.toIso8601String(),
       };

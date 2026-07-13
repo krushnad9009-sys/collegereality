@@ -35,6 +35,7 @@ class RouteNames {
   static const String communityChat = '/community/chat/:id';
   static const String communityAskSeniors = '/community/ask-seniors';
   static const String communityQa = '/community/qa';
+  static const String communityDiscussionFeed = '/community/discussion-feed';
   static const String adminCommunity = '/admin/community';
   static const String adminQuestions = '/admin/questions';
   static const String admissionHub = '/admission';

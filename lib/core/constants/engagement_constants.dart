@@ -18,6 +18,9 @@ class EngagementConstants {
   static const String typeAdmissionStart = 'admission_start';
   static const String typeAdmissionDeadline = 'admission_deadline';
   static const String typeNewEvent = 'new_event';
+  static const String typeNewJob = 'new_job';
+  static const String typeNewInternship = 'new_internship';
+  static const String typeApplicationUpdate = 'application_update';
 
   static const String categoryReviews = 'reviews';
   static const String categoryQuestions = 'questions';
@@ -27,6 +30,7 @@ class EngagementConstants {
   static const String categoryScholarships = 'scholarships';
   static const String categoryEvents = 'events';
   static const String categoryAdmission = 'admission';
+  static const String categoryCareers = 'careers';
 
   // Calendar categories
   static const String calendarCapRound = 'cap_round';
@@ -47,6 +51,7 @@ class EngagementConstants {
     categoryScholarships,
     categoryEvents,
     categoryAdmission,
+    categoryCareers,
   ];
 
   static String calendarCategoryLabel(String category) {
@@ -102,6 +107,12 @@ class EngagementConstants {
         return 'Admission Deadline';
       case typeNewEvent:
         return 'New Event';
+      case typeNewJob:
+        return 'New Job';
+      case typeNewInternship:
+        return 'New Internship';
+      case typeApplicationUpdate:
+        return 'Application Update';
       default:
         return type;
     }

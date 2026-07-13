@@ -6,9 +6,16 @@ import 'package:uuid/uuid.dart';
 import '../../../core/constants/community_constants.dart';
 import '../../../core/constants/firestore_constants.dart';
 import '../../../core/constants/profile_constants.dart';
+import '../../../core/constants/social_constants.dart';
 import '../../auth/models/user_model.dart';
 import '../../auth/services/firestore_user_service.dart';
 import '../../communication/services/communication_firestore_service.dart';
+import '../../engagement/services/firestore_engagement_service.dart';
+import '../../social/models/social_models.dart';
+import '../../social/services/moderation_service.dart';
+import '../../social/services/notification_bridge_service.dart';
+import '../../social/utils/content_filter_utils.dart';
+import '../../social/utils/moderation_utils.dart';
 import '../models/chat_conversation_model.dart';
 import '../models/chat_message_model.dart';
 import '../models/user_presence_model.dart';
@@ -20,6 +27,9 @@ class CommunityFirestoreService {
   final _userService = FirestoreUserService();
   final _communicationService = CommunicationFirestoreService();
   final _storageService = CommunityStorageService();
+  final _moderationService = ModerationService();
+  final _notificationBridge =
+      NotificationBridgeService(FirestoreEngagementService());
 
   CollectionReference<Map<String, dynamic>> get _conversations =>
       _firestore.collection(FirestoreConstants.communityConversationsCollection);
@@ -242,7 +252,32 @@ class CommunityFirestoreService {
         .snapshots()
         .map((snapshot) => snapshot.docs
             .map((d) => ChatMessageModel.fromJson(d.data(), docId: d.id))
+            .where((m) => m.status != SocialConstants.contentStatusHidden)
             .toList());
+  }
+
+  Future<SocialPageResult<ChatMessageModel>> fetchMessagesPage({
+    required String conversationId,
+    DocumentSnapshot<Map<String, dynamic>>? startAfter,
+    int limit = SocialConstants.defaultPageSize,
+  }) async {
+    Query<Map<String, dynamic>> query = _messages
+        .where('conversationId', isEqualTo: conversationId)
+        .orderBy('createdAt', descending: true)
+        .limit(limit);
+    if (startAfter != null) {
+      query = query.startAfterDocument(startAfter);
+    }
+    final snap = await query.get();
+    final items = snap.docs
+        .map((d) => ChatMessageModel.fromJson(d.data(), docId: d.id))
+        .where((m) => m.status != SocialConstants.contentStatusHidden)
+        .toList();
+    return SocialPageResult(
+      items: items,
+      lastDocument: snap.docs.isEmpty ? null : snap.docs.last,
+      hasMore: snap.docs.length >= limit,
+    );
   }
 
   Future<void> setTyping({
@@ -289,6 +324,18 @@ class CommunityFirestoreService {
       }
     }
 
+    final sanitizedText = sanitizeUserContent(text);
+    if (messageType == CommunityConstants.messageText && sanitizedText.isNotEmpty) {
+      final moderation = moderateContent(sanitizedText);
+      if (!moderation.allowed) {
+        throw CommunityException(
+          moderation.reason == 'spam'
+              ? 'Message blocked: possible spam detected.'
+              : 'Message blocked: inappropriate content.',
+        );
+      }
+    }
+
     final messageId = _uuid.v4();
     String? attachmentUrl;
     if (attachmentBytes != null && attachmentName != null) {
@@ -309,11 +356,12 @@ class CommunityFirestoreService {
       senderName: sender.displayName ?? 'Student',
       senderPhoto: sender.photoURL,
       messageType: messageType,
-      text: text,
+      text: sanitizedText.isNotEmpty ? sanitizedText : text,
       attachmentUrl: attachmentUrl,
       attachmentName: attachmentName,
       replyToMessageId: replyToMessageId,
       readBy: [sender.uid],
+      status: SocialConstants.contentStatusVisible,
       createdAt: DateTime.now(),
     );
 
@@ -328,6 +376,18 @@ class CommunityFirestoreService {
       'typingUsers.$sender.uid': FieldValue.delete(),
       if (replyToMessageId != null) 'replyCount': FieldValue.increment(1),
     });
+
+    if (conversation.type == CommunityConstants.typePrivate) {
+      final peer = conversation.peerIdFor(sender.uid);
+      if (peer != null) {
+        await _notificationBridge.notifyChatMessage(
+          recipientId: peer,
+          senderName: sender.displayName ?? 'Student',
+          conversationId: conversationId,
+          preview: preview,
+        );
+      }
+    }
 
     return message;
   }
@@ -406,7 +466,30 @@ class CommunityFirestoreService {
         'status': CommunityConstants.reportStatusOpen,
         'createdAt': DateTime.now().toIso8601String(),
       });
+      await _moderationService.incrementMessageReportCount(messageId);
     }
+  }
+
+  Future<void> likeMessage({
+    required String messageId,
+    required String userId,
+  }) async {
+    final ref = _messages.doc(messageId);
+    await _firestore.runTransaction((tx) async {
+      final snap = await tx.get(ref);
+      if (!snap.exists) return;
+      final likedBy = (snap.data()?['likedBy'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [];
+      if (likedBy.contains(userId)) return;
+      likedBy.add(userId);
+      tx.update(ref, {
+        'likedBy': likedBy,
+        'likeCount': likedBy.length,
+        'updatedAt': DateTime.now().toIso8601String(),
+      });
+    });
   }
 
   Future<List<Map<String, dynamic>>> getOpenCommunityReports({int limit = 100}) async {

@@ -9,6 +9,7 @@ import '../../../core/constants/firestore_constants.dart';
 import '../models/engagement_models.dart';
 import '../utils/alert_scanner.dart';
 import '../utils/engagement_filter_utils.dart';
+import '../../social/models/social_models.dart';
 
 class FirestoreEngagementService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -78,6 +79,29 @@ class FirestoreEngagementService {
         .map((snap) => snap.docs
             .map((d) => UserNotificationModel.fromJson(d.data(), docId: d.id))
             .toList());
+  }
+
+  Future<SocialPageResult<UserNotificationModel>> fetchNotificationsPage({
+    required String userId,
+    DocumentSnapshot<Map<String, dynamic>>? startAfter,
+    int limit = 20,
+  }) async {
+    Query<Map<String, dynamic>> query = _notifications
+        .where('userId', isEqualTo: userId)
+        .orderBy('createdAt', descending: true)
+        .limit(limit);
+    if (startAfter != null) {
+      query = query.startAfterDocument(startAfter);
+    }
+    final snap = await query.get();
+    final items = snap.docs
+        .map((d) => UserNotificationModel.fromJson(d.data(), docId: d.id))
+        .toList();
+    return SocialPageResult(
+      items: items,
+      lastDocument: snap.docs.isEmpty ? null : snap.docs.last,
+      hasMore: snap.docs.length >= limit,
+    );
   }
 
   Stream<int> watchUnreadCount(String userId) {
