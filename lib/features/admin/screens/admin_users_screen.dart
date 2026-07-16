@@ -82,7 +82,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                       return ListView.separated(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         itemCount: users.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 8),
+                        separatorBuilder: (_, _) => const SizedBox(height: 8),
                         itemBuilder: (context, index) => _UserCard(
                           user: users[index],
                           onChanged: () => ref.invalidate(adminUserSearchProvider(_query)),

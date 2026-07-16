@@ -249,7 +249,7 @@ class CollegeComparisonService {
 
   String _buildSummary(List<CollegeModel> colleges, int? winnerIndex) {
     if (winnerIndex == null || winnerIndex >= colleges.length) {
-      return 'Side-by-side comparison using verified Firestore data only. '
+      return 'Side-by-side comparison using verified college records. '
           'Missing fields are shown as —.';
     }
     final winner = colleges[winnerIndex];

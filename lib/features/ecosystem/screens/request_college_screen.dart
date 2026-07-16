@@ -103,7 +103,7 @@ class _RequestCollegeScreenState extends ConsumerState<RequestCollegeScreen> {
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: _selectedState,
+                initialValue: _selectedState,
                 decoration: const InputDecoration(labelText: 'State *'),
                 items: CollegeConstants.indianStates
                     .map((s) => DropdownMenuItem(value: s, child: Text(s)))

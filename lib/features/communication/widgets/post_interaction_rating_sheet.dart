@@ -103,7 +103,8 @@ class _PostInteractionRatingSheetState extends State<PostInteractionRatingSheet>
                             createdAt: DateTime.now(),
                           ),
                         );
-                        if (mounted) Navigator.pop(context);
+                        if (!context.mounted) return;
+                        Navigator.pop(context);
                       } finally {
                         if (mounted) setState(() => _isSubmitting = false);
                       }

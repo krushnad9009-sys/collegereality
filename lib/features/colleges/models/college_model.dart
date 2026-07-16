@@ -376,14 +376,19 @@ class CollegeCourse {
 
 class CollegeModel implements CollegeModelLike {
   final String id;
+  @override
   final String name;
   final String nameLower;
   final String slug;
+  @override
   final String city;
+  @override
   final String district;
+  @override
   final String state;
   final String address;
   final String type;
+  @override
   final List<String> courses;
   final List<CollegeCourse> coursesDetailed;
   final String? website;
@@ -393,6 +398,7 @@ class CollegeModel implements CollegeModelLike {
   final double? latitude;
   final double? longitude;
   final String? googleMapsUrl;
+  @override
   final String? universityName;
   final String? phone;
   final String? email;
@@ -409,7 +415,9 @@ class CollegeModel implements CollegeModelLike {
   final CollegeRatings aggregatedRatings;
   final int reviewCount;
   final Map<String, int> ratingDistribution;
+  @override
   final List<String> searchKeywords;
+  @override
   final List<String> searchTokens;
   final bool isActive;
   final bool isFeatured;

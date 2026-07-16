@@ -154,7 +154,7 @@ class _DocumentUploadSectionState extends ConsumerState<DocumentUploadSection> {
         ),
         requestAsync.when(
           loading: () => const SizedBox.shrink(),
-          error: (_, __) => const SizedBox.shrink(),
+          error: (_, _) => const SizedBox.shrink(),
           data: (request) {
             if (request == null) return const SizedBox.shrink();
             if (request.status == VerificationConstants.statusApproved ||

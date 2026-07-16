@@ -155,17 +155,19 @@ class _EmailSection extends ConsumerWidget {
                   final verified = await ref
                       .read(authProvider.notifier)
                       .refreshEmailVerificationStatus();
-                  if (verified && context.mounted) {
+                  if (!context.mounted) return;
+                  if (verified) {
                     await ref.read(userRepositoryProvider).verifyEmail(userId);
                     ref.invalidate(currentUserDetailProvider);
+                    if (!context.mounted) return;
                     SnackBarHelper.showSuccessSnackBar(
                       context,
                       message: 'Email verified!',
                     );
-                  } else if (context.mounted) {
+                  } else {
                     SnackBarHelper.showInfoSnackBar(
                       context,
-                      message: 'Email not verified yet.',
+                      message: 'Email not verified yet. Check your inbox.',
                     );
                   }
                 },

@@ -20,7 +20,7 @@ class CollegeImageWidget extends StatelessWidget {
     this.width,
     this.fit = BoxFit.cover,
     this.borderRadius,
-    this.showComingSoonLabel = true,
+    this.showComingSoonLabel = false,
     super.key,
   });
 
@@ -32,7 +32,7 @@ class CollegeImageWidget extends StatelessWidget {
     );
 
     if (resolvedUrl == null) {
-      return _ComingSoonPlaceholder(
+      return _ImagePlaceholder(
         height: height,
         width: width,
         borderRadius: borderRadius,
@@ -52,14 +52,13 @@ class CollegeImageWidget extends StatelessWidget {
       memCacheHeight: (height * 2).toInt(),
       memCacheWidth: cacheWidth,
       filterQuality: FilterQuality.medium,
-      placeholder: (_, _) => _ComingSoonPlaceholder(
+      placeholder: (_, _) => _ImagePlaceholder(
         height: height,
         width: width,
         borderRadius: borderRadius,
-        showLabel: false,
         isLoading: true,
       ),
-      errorWidget: (_, _, _) => _ComingSoonPlaceholder(
+      errorWidget: (_, _, _) => _ImagePlaceholder(
         height: height,
         width: width,
         borderRadius: borderRadius,
@@ -75,18 +74,18 @@ class CollegeImageWidget extends StatelessWidget {
   }
 }
 
-class _ComingSoonPlaceholder extends StatelessWidget {
+class _ImagePlaceholder extends StatelessWidget {
   final double height;
   final double? width;
   final BorderRadius? borderRadius;
   final bool showLabel;
   final bool isLoading;
 
-  const _ComingSoonPlaceholder({
+  const _ImagePlaceholder({
     required this.height,
     this.width,
     this.borderRadius,
-    this.showLabel = true,
+    this.showLabel = false,
     this.isLoading = false,
   });
 
@@ -100,8 +99,8 @@ class _ComingSoonPlaceholder extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppTheme.primaryColor.withValues(alpha: 0.12),
-            AppTheme.secondaryColor.withValues(alpha: 0.18),
+            AppTheme.primaryColor.withValues(alpha: 0.08),
+            AppTheme.secondaryColor.withValues(alpha: 0.14),
           ],
         ),
       ),
@@ -110,29 +109,28 @@ class _ComingSoonPlaceholder extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             if (isLoading)
-              const SizedBox(
+              SizedBox(
                 width: 28,
                 height: 28,
-                child: CircularProgressIndicator(strokeWidth: 2.5),
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  color: AppTheme.primaryColor.withValues(alpha: 0.7),
+                ),
               )
             else
               Icon(
-                Icons.photo_camera_outlined,
-                color: AppTheme.primaryColor.withValues(alpha: 0.7),
-                size: 40,
+                Icons.school_rounded,
+                color: AppTheme.primaryColor.withValues(alpha: 0.55),
+                size: 42,
               ),
             if (showLabel && !isLoading) ...[
-              const SizedBox(height: 10),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Text(
-                  'College photo coming soon',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.gray600,
-                  ),
+              const SizedBox(height: 8),
+              Text(
+                'Campus photo',
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: AppTheme.gray500,
                 ),
               ),
             ],

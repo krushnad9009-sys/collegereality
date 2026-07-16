@@ -61,7 +61,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
           _field(_description, 'Description', maxLines: 4),
           _field(_skills, 'Skills (comma separated)'),
           DropdownButtonFormField<String>(
-            value: _jobLevel,
+            initialValue: _jobLevel,
             decoration: const InputDecoration(labelText: 'Job level'),
             items: const [
               DropdownMenuItem(value: CareersConstants.jobLevelFresher, child: Text('Fresher')),
@@ -71,7 +71,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
             onChanged: (v) => setState(() => _jobLevel = v ?? _jobLevel),
           ),
           DropdownButtonFormField<String>(
-            value: _workType,
+            initialValue: _workType,
             decoration: const InputDecoration(labelText: 'Work type'),
             items: const [
               DropdownMenuItem(value: CareersConstants.workTypeOffice, child: Text('Office')),

@@ -40,7 +40,7 @@ GuideStatsModel recomputeGuideStats({
   }
 
   final overall = totalRatings == 0 ? 0.0 : starSum / totalRatings;
-  final pct = (int count) =>
+  double pct(int count) =>
       totalRatings == 0 ? 0.0 : (count / totalRatings) * 100;
 
   final updated = current.copyWith(

@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/constants/college_constants.dart';
@@ -22,7 +21,6 @@ class CollegeSeedService {
   Future<bool> ensureSeeded() async {
     final authUser = FirebaseAuth.instance.currentUser;
     if (authUser == null) {
-      debugPrint('College seed deferred until user is authenticated');
       return false;
     }
 
@@ -67,12 +65,10 @@ class CollegeSeedService {
       );
       FirestoreSeedGuard.completeCollegeSeed();
       return true;
-    } on FirebaseException catch (e) {
-      debugPrint('College seed failed: ${e.code} ${e.message}');
+    } on FirebaseException catch (_) {
       FirestoreSeedGuard.failCollegeSeed();
       return false;
-    } catch (e) {
-      debugPrint('College seed failed: $e');
+    } catch (_) {
       FirestoreSeedGuard.failCollegeSeed();
       return false;
     }

@@ -35,7 +35,7 @@ class PlacementsTabContent extends ConsumerWidget {
           children: [
             verifiedAsync.when(
               loading: () => const SizedBox.shrink(),
-              error: (_, __) => const SizedBox.shrink(),
+              error: (_, _) => const SizedBox.shrink(),
               data: (isVerified) {
                 if (isVerified) {
                   return Padding(

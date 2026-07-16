@@ -127,8 +127,7 @@ class AiAssistantService {
 
     final reasons = _explanationBuilder.buildReasons(college, intent);
     final text = 'About ${college.name}:\n${reasons.join('\n')}\n\n'
-        'All data is from verified Firestore records. '
-        '${withReasons.isNotEmpty ? 'Here are related alternatives:' : ''}';
+        '${withReasons.isNotEmpty ? 'Related alternatives:' : ''}';
 
     return AiAssistantMessage(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -166,8 +165,7 @@ class AiAssistantService {
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         role: AiMessageRole.assistant,
         text: 'Please search for colleges first, then ask me to compare them '
-            '(up to ${AiAssistantConstants.maxCompareColleges}). '
-            'I only use verified Firestore data — I never guess.',
+            '(up to ${AiAssistantConstants.maxCompareColleges}).',
         createdAt: DateTime.now(),
         dataGrounded: true,
       );

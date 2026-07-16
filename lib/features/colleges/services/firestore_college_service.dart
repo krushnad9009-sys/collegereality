@@ -189,26 +189,115 @@ class FirestoreCollegeService {
       }
     }
 
+    try {
+      final snapshot = await q.get();
+      var colleges = _mapDocs(snapshot.docs);
+      if (hasQuery) {
+        colleges = colleges
+            .where((c) => CollegeSearchUtils.matchesQuery(c, trimmedQuery))
+            .take(limit)
+            .toList();
+      } else {
+        colleges = colleges.take(limit).toList();
+      }
+
+      if (colleges.isEmpty && city != null && city.isNotEmpty) {
+        colleges = await _searchByCityFallback(city);
+        if (hasQuery) {
+          colleges = colleges
+              .where((c) => CollegeSearchUtils.matchesQuery(c, trimmedQuery))
+              .toList();
+        }
+      }
+
+      if (colleges.isEmpty && hasQuery) {
+        colleges = await _searchByTokens(
+          trimmedQuery,
+          state: state,
+          city: city,
+          course: course,
+          includeInactive: includeInactive,
+          limit: limit,
+        );
+      }
+
+      final lastId = colleges.isEmpty ? null : colleges.last.id;
+      return CollegeSearchPage(
+        colleges: colleges,
+        lastDocumentId: lastId,
+        hasMore: snapshot.docs.length >= limit,
+      );
+    } on FirebaseException catch (e) {
+      if (e.code != 'failed-precondition') rethrow;
+      return _searchFallback(
+        trimmedQuery: trimmedQuery,
+        hasQuery: hasQuery,
+        state: state,
+        city: city,
+        course: course,
+        includeInactive: includeInactive,
+        limit: limit,
+      );
+    }
+  }
+
+  Future<CollegeSearchPage> _searchFallback({
+    required String trimmedQuery,
+    required bool hasQuery,
+    String? state,
+    String? city,
+    String? course,
+    bool includeInactive = false,
+    int limit = CollegeConstants.searchPageSize,
+  }) async {
+    if (hasQuery) {
+      final tokenResults = await _searchByTokens(
+        trimmedQuery,
+        state: state,
+        city: city,
+        course: course,
+        includeInactive: includeInactive,
+        limit: limit,
+      );
+      if (tokenResults.isNotEmpty) {
+        return CollegeSearchPage(
+          colleges: tokenResults,
+          hasMore: tokenResults.length >= limit,
+        );
+      }
+    }
+
+    Query<Map<String, dynamic>> q = _colleges;
+    if (!includeInactive) {
+      q = q.where('isActive', isEqualTo: true);
+    }
+    q = q.orderBy('nameLower').limit(limit);
+
     final snapshot = await q.get();
     var colleges = _mapDocs(snapshot.docs);
     if (hasQuery) {
       colleges = colleges
           .where((c) => CollegeSearchUtils.matchesQuery(c, trimmedQuery))
-          .take(limit)
           .toList();
-    } else {
-      colleges = colleges.take(limit).toList();
+    }
+    if (state != null && state.isNotEmpty) {
+      colleges = colleges.where((c) => c.state == state).toList();
+    }
+    if (city != null && city.isNotEmpty) {
+      final cityLower = CollegeSearchUtils.normalizeCity(city);
+      colleges = colleges
+          .where(
+            (c) =>
+                c.cityLower.contains(cityLower) ||
+                c.districtLower.contains(cityLower),
+          )
+          .toList();
+    }
+    if (course != null && course.isNotEmpty) {
+      colleges = colleges.where((c) => c.courses.contains(course)).toList();
     }
 
-    if (colleges.isEmpty && city != null && city.isNotEmpty) {
-      colleges = await _searchByCityFallback(city);
-      if (hasQuery) {
-        colleges = colleges
-            .where((c) => CollegeSearchUtils.matchesQuery(c, trimmedQuery))
-            .toList();
-      }
-    }
-
+    colleges = colleges.take(limit).toList();
     final lastId = colleges.isEmpty ? null : colleges.last.id;
     return CollegeSearchPage(
       colleges: colleges,
@@ -238,7 +327,18 @@ class FirestoreCollegeService {
 
     q = q.where('searchTokens', arrayContainsAny: tokens).limit(limit * 3);
 
-    final snapshot = await q.get();
+    QuerySnapshot<Map<String, dynamic>> snapshot;
+    try {
+      snapshot = await q.get();
+    } on FirebaseException catch (e) {
+      if (e.code != 'failed-precondition') rethrow;
+      snapshot = await _colleges
+          .where('isActive', isEqualTo: true)
+          .where('searchTokens', arrayContainsAny: tokens)
+          .limit(limit * 3)
+          .get();
+    }
+
     final ranked = <CollegeModel>[];
     for (final doc in snapshot.docs) {
       final college = CollegeModel.fromJson(doc.data(), docId: doc.id);
@@ -286,18 +386,22 @@ class FirestoreCollegeService {
 
     Future<void> loadPrefix(String field) async {
       if (results.length >= CollegeConstants.autocompleteLimit) return;
-      final snap = await _colleges
-          .where('isActive', isEqualTo: true)
-          .where(field, isGreaterThanOrEqualTo: lower)
-          .where(field, isLessThan: '$lower\uf8ff')
-          .orderBy(field)
-          .limit(CollegeConstants.autocompleteLimit)
-          .get();
-      for (final doc in snap.docs) {
-        final college = CollegeModel.fromJson(doc.data(), docId: doc.id);
-        if (CollegeSearchUtils.matchesQuery(college, trimmed)) {
-          results[doc.id] = college;
+      try {
+        final snap = await _colleges
+            .where('isActive', isEqualTo: true)
+            .where(field, isGreaterThanOrEqualTo: lower)
+            .where(field, isLessThan: '$lower\uf8ff')
+            .orderBy(field)
+            .limit(CollegeConstants.autocompleteLimit)
+            .get();
+        for (final doc in snap.docs) {
+          final college = CollegeModel.fromJson(doc.data(), docId: doc.id);
+          if (CollegeSearchUtils.matchesQuery(college, trimmed)) {
+            results[doc.id] = college;
+          }
         }
+      } on FirebaseException catch (e) {
+        if (e.code != 'failed-precondition') rethrow;
       }
     }
 

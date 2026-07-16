@@ -72,7 +72,7 @@ class _CutoffsScreenState extends ConsumerState<CutoffsScreen> {
               const SizedBox(height: 12),
               examsAsync.when(
                 loading: () => const SizedBox.shrink(),
-                error: (_, __) => const SizedBox.shrink(),
+                error: (_, _) => const SizedBox.shrink(),
                 data: (exams) => SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(

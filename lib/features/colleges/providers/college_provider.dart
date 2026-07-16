@@ -5,8 +5,8 @@ import '../services/college_storage_service.dart';
 import '../services/firestore_college_service.dart';
 import '../services/college_seed_service.dart';
 import '../../../core/bootstrap/startup_bootstrap.dart';
-import '../../../core/cache/college_session_cache.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../engagement/providers/engagement_provider.dart';
 
 final firestoreCollegeServiceProvider =
     Provider<FirestoreCollegeService>((ref) {
@@ -121,7 +121,7 @@ final collegeSearchPageProvider =
 
 final collegeAutocompleteProvider =
     FutureProvider.family<List<CollegeModel>, String>((ref, query) async {
-  if (query.trim().length < 1) return [];
+  if (query.trim().isEmpty) return [];
   await ref.watch(collegeSeedProvider.future);
   final repository = ref.watch(collegeRepositoryProvider);
   return repository.autocomplete(query);
@@ -130,8 +130,19 @@ final collegeAutocompleteProvider =
 final collegeInstantSuggestProvider =
     FutureProvider.family<List<CollegeModel>, String>((ref, query) async {
   if (query.trim().isEmpty) return [];
+  await ref.watch(collegeSeedProvider.future);
   final repository = ref.watch(collegeRepositoryProvider);
   return repository.autocomplete(query);
+});
+
+/// Loads bookmarked colleges by their saved document IDs.
+final savedCollegesProvider = FutureProvider<List<CollegeModel>>((ref) async {
+  final favoriteIds =
+      ref.watch(favoriteCollegeIdsProvider).valueOrNull ?? {};
+  if (favoriteIds.isEmpty) return const [];
+  await ref.watch(collegeSeedProvider.future);
+  final repository = ref.watch(collegeRepositoryProvider);
+  return repository.getCollegesByIds(favoriteIds.toList());
 });
 
 /// Backward-compatible alias for home featured list.

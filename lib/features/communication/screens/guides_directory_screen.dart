@@ -102,7 +102,7 @@ class _GuidesDirectoryScreenState extends ConsumerState<GuidesDirectoryScreen> {
                   child: ListView.separated(
                     padding: const EdgeInsets.all(16),
                     itemCount: guides.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    separatorBuilder: (_, _) => const SizedBox(height: 12),
                     itemBuilder: (context, index) {
                       return _GuideListTile(guide: guides[index]);
                     },

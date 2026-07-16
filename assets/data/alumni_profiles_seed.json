@@ -1,6 +1,7 @@
 [
   {
     "id": "alum_1",
+    "userId": "alumni_peer_priya",
     "displayName": "Priya Deshmukh",
     "collegeName": "COEP Technological University",
     "batchYear": 2019,
@@ -13,6 +14,7 @@
   },
   {
     "id": "alum_2",
+    "userId": "alumni_peer_rahul",
     "displayName": "Rahul Kulkarni",
     "collegeName": "VIT Vellore",
     "batchYear": 2018,
@@ -25,6 +27,7 @@
   },
   {
     "id": "alum_3",
+    "userId": "alumni_peer_ananya",
     "displayName": "Ananya Sharma",
     "collegeName": "IIT Bombay",
     "batchYear": 2020,

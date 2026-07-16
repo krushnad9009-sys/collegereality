@@ -39,7 +39,7 @@ class PrivateChatsScreen extends ConsumerWidget {
           final userId = ref.read(currentUserDetailProvider).valueOrNull?.uid;
           return ListView.separated(
             itemCount: chats.length,
-            separatorBuilder: (_, __) => const Divider(height: 1),
+            separatorBuilder: (_, _) => const Divider(height: 1),
             itemBuilder: (context, index) {
               final chat = chats[index];
               return ListTile(

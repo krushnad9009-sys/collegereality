@@ -7,6 +7,7 @@ import '../../../config/theme/app_theme.dart';
 import '../../../config/router/route_names.dart';
 import '../../../core/bootstrap/startup_bootstrap.dart';
 import '../../../core/cache/college_session_cache.dart';
+import '../../../core/widgets/index.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../colleges/providers/college_provider.dart';
 import '../widgets/deferred_incoming_call_banner.dart';
@@ -70,6 +71,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           const SizedBox(height: 12),
                           _EmailVerificationBanner(userId: currentUser.uid),
                         ],
+                        const SizedBox(height: 20),
+                        _HeroBanner(
+                          onExplore: () => context.go(RouteNames.collegeSearch),
+                          onAi: () => context.go(RouteNames.assistant),
+                        ),
                         const SizedBox(height: 24),
                         const AiSearchBar(),
                         const SizedBox(height: 12),
@@ -221,6 +227,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           ),
                         ),
                         const SizedBox(height: 24),
+                        SizedBox(height: MediaQuery.of(context).padding.bottom + 88),
                       ],
                     ),
                   ),
@@ -279,33 +286,177 @@ class _SearchBar extends StatelessWidget {
   }
 }
 
-class _EmailVerificationBanner extends ConsumerWidget {
+class _HeroBanner extends StatelessWidget {
+  final VoidCallback onExplore;
+  final VoidCallback onAi;
+
+  const _HeroBanner({
+    required this.onExplore,
+    required this.onAi,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+              ? [AppTheme.primaryDark, AppTheme.gray800]
+              : [AppTheme.primaryColor, AppTheme.secondaryColor],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primaryColor.withValues(alpha: 0.25),
+            blurRadius: 24,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Discover Your Perfect College',
+            style: GoogleFonts.poppins(
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.white,
+              height: 1.25,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Explore rankings, reviews, placements, and alumni guidance — all in one place.',
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: AppTheme.white.withValues(alpha: 0.9),
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              Expanded(
+                child: FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppTheme.white,
+                    foregroundColor: AppTheme.primaryColor,
+                  ),
+                  onPressed: onExplore,
+                  child: Text(
+                    'Explore Colleges',
+                    style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              IconButton.filledTonal(
+                style: IconButton.styleFrom(
+                  backgroundColor: AppTheme.white.withValues(alpha: 0.2),
+                  foregroundColor: AppTheme.white,
+                ),
+                onPressed: onAi,
+                icon: const Icon(Icons.auto_awesome_rounded),
+                tooltip: 'Ask AI',
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmailVerificationBanner extends ConsumerStatefulWidget {
   final String userId;
 
   const _EmailVerificationBanner({required this.userId});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_EmailVerificationBanner> createState() =>
+      _EmailVerificationBannerState();
+}
+
+class _EmailVerificationBannerState
+    extends ConsumerState<_EmailVerificationBanner> {
+  bool _isSending = false;
+
+  Future<void> _resend() async {
+    setState(() => _isSending = true);
+    try {
+      await ref.read(authServiceProvider).sendEmailVerification();
+      if (!mounted) return;
+      SnackBarHelper.showSuccessSnackBar(
+        context,
+        message: 'Verification email sent',
+      );
+    } catch (e) {
+      if (!mounted) return;
+      SnackBarHelper.showErrorSnackBar(context, message: e.toString());
+    } finally {
+      if (mounted) setState(() => _isSending = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppTheme.warningColor.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppTheme.warningColor.withValues(alpha: 0.3)),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.mark_email_unread_outlined, color: AppTheme.warningColor),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              'Verify your email to unlock all features',
-              style: GoogleFonts.poppins(fontSize: 13),
-            ),
+          Row(
+            children: [
+              const Icon(Icons.mark_email_unread_outlined,
+                  color: AppTheme.warningColor),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Verify your email to unlock reviews and community',
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () => context.go(RouteNames.profile),
-            child: const Text('Verify'),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: _isSending ? null : _resend,
+                  child: _isSending
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Resend Email'),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: FilledButton(
+                  onPressed: () => context.go(RouteNames.profile),
+                  child: const Text('Verify Now'),
+                ),
+              ),
+            ],
           ),
         ],
       ),

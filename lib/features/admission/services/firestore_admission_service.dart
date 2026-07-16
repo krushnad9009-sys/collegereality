@@ -27,10 +27,6 @@ class FirestoreAdmissionService {
       _firestore.collection(FirestoreConstants.admissionPredictionsCollection);
   CollectionReference<Map<String, dynamic>> get _savedScholarships =>
       _firestore.collection(FirestoreConstants.savedScholarshipsCollection);
-  DocumentReference<Map<String, dynamic>> get _meta =>
-      _firestore.collection(FirestoreConstants.metaCollection).doc(
-            AdmissionConstants.metaAdmissionSeededDoc,
-          );
 
   Future<void> ensureSeeded() async {
     await FirestoreSeedGuard.tryBootstrapSeed(

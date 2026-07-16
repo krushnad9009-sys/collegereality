@@ -2,7 +2,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../../config/theme/app_theme.dart';
 
 class ReviewMediaGallery extends StatelessWidget {
   final List<String> photoUrls;
@@ -32,7 +31,7 @@ class ReviewMediaGallery extends StatelessWidget {
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: photoUrls.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              separatorBuilder: (_, _) => const SizedBox(width: 8),
               itemBuilder: (context, index) => ClipRRect(
                 borderRadius: BorderRadius.circular(10),
                 child: CachedNetworkImage(

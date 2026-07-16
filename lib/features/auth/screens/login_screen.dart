@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../config/router/route_names.dart';
+import '../../../core/widgets/premium_auth_background.dart';
 import '../../../core/widgets/index.dart';
 import '../../../core/services/preferences_service.dart';
 import '../../colleges/providers/college_provider.dart';
@@ -131,8 +132,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final authState = ref.watch(authProvider);
 
     return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
+      body: PremiumAuthBackground(
+        child: SafeArea(
+          child: SingleChildScrollView(
           child: Padding(
             padding: EdgeInsets.symmetric(
               horizontal: isMobile ? 20 : 40,
@@ -320,6 +322,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 }

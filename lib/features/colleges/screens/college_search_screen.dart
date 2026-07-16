@@ -17,6 +17,7 @@ class CollegeSearchScreen extends ConsumerStatefulWidget {
   final String? initialCity;
   final String? initialState;
   final String? initialCourse;
+  final String? initialFilter;
 
   const CollegeSearchScreen({
     super.key,
@@ -24,6 +25,7 @@ class CollegeSearchScreen extends ConsumerStatefulWidget {
     this.initialCity,
     this.initialState,
     this.initialCourse,
+    this.initialFilter,
   });
 
   @override
@@ -41,6 +43,8 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
   List<CollegeModel> _results = [];
   bool _hasMore = false;
   bool _isLoadingMore = false;
+  bool _isSearching = false;
+  String? _searchError;
   CollegeSearchParams? _activeParams;
   String _liveQuery = '';
   Timer? _debounce;
@@ -52,17 +56,16 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
     _cityController = TextEditingController(text: widget.initialCity ?? '');
     _selectedState = widget.initialState;
     _selectedCourse = widget.initialCourse;
-    if (widget.initialCity != null ||
-        widget.initialState != null ||
-        widget.initialCourse != null) {
+    if (widget.initialFilter == 'city' || widget.initialFilter == 'state') {
       _showFilters = true;
     }
-    if (widget.initialQuery != null ||
-        widget.initialCity != null ||
+    if (widget.initialCity != null ||
         widget.initialState != null ||
-        widget.initialCourse != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _runSearch());
+        widget.initialCourse != null ||
+        widget.initialFilter != null) {
+      _showFilters = true;
     }
+    WidgetsBinding.instance.addPostFrameCallback((_) => _runSearch());
   }
 
   @override
@@ -110,15 +113,26 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
       _cursor = null;
       _results = [];
       _hasMore = false;
+      _isSearching = true;
+      _searchError = null;
     });
 
-    final page = await ref.read(collegeSearchPageProvider(params).future);
-    if (!mounted) return;
-    setState(() {
-      _results = page.colleges;
-      _cursor = page.lastDocumentId;
-      _hasMore = page.hasMore;
-    });
+    try {
+      final page = await ref.read(collegeSearchPageProvider(params).future);
+      if (!mounted) return;
+      setState(() {
+        _results = page.colleges;
+        _cursor = page.lastDocumentId;
+        _hasMore = page.hasMore;
+        _isSearching = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _searchError = e.toString();
+        _isSearching = false;
+      });
+    }
   }
 
   void _clearFilters() {
@@ -144,10 +158,6 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Search Colleges'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-          onPressed: () => context.go(RouteNames.home),
-        ),
         actions: [
           IconButton(
             icon: Icon(
@@ -164,7 +174,7 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
             child: metaAsync.when(
               loading: () => const SizedBox.shrink(),
-              error: (_, __) => const SizedBox.shrink(),
+              error: (_, _) => const SizedBox.shrink(),
               data: (meta) => Text(
                 meta.totalColleges > 0
                     ? '${meta.totalColleges.toString()} colleges indexed'
@@ -195,7 +205,7 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
                 _debounce = Timer(const Duration(milliseconds: 250), () {
                   if (!mounted) return;
                   setState(() => _liveQuery = value);
-                  if (value.trim().length >= 1) _runSearch();
+                  if (value.trim().isNotEmpty) _runSearch();
                 });
               },
               onSubmitted: (_) => _runSearch(),
@@ -203,7 +213,7 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
           ),
           suggestionsAsync.when(
             loading: () => const LinearProgressIndicator(minHeight: 2),
-            error: (_, __) => const SizedBox.shrink(),
+            error: (_, _) => const SizedBox.shrink(),
             data: (suggestions) {
               if (suggestions.isEmpty || _liveQuery.trim().isEmpty) {
                 return const SizedBox.shrink();
@@ -219,7 +229,7 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
                 child: ListView.separated(
                   shrinkWrap: true,
                   itemCount: suggestions.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  separatorBuilder: (_, _) => const Divider(height: 1),
                   itemBuilder: (context, index) {
                     final college = suggestions[index];
                     return ListTile(
@@ -256,7 +266,7 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
                 children: [
                   statesAsync.when(
                     loading: () => const SizedBox.shrink(),
-                    error: (_, __) => const SizedBox.shrink(),
+                    error: (_, _) => const SizedBox.shrink(),
                     data: (states) => DropdownButtonFormField<String>(
                       initialValue: _selectedState,
                       decoration: InputDecoration(
@@ -301,7 +311,7 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
                   const SizedBox(height: 12),
                   coursesAsync.when(
                     loading: () => const SizedBox.shrink(),
-                    error: (_, __) => const SizedBox.shrink(),
+                    error: (_, _) => const SizedBox.shrink(),
                     data: (courses) => DropdownButtonFormField<String>(
                       initialValue: _selectedCourse,
                       decoration: InputDecoration(
@@ -337,40 +347,94 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
               ),
             ),
           Expanded(
-            child: _results.isEmpty && _activeParams == null
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.school_outlined,
-                            size: 64, color: AppTheme.gray400),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Find your college',
-                          style: GoogleFonts.poppins(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Search by name or use filters',
-                          style: GoogleFonts.poppins(color: AppTheme.gray500),
-                        ),
-                      ],
-                    ),
-                  )
-                : _results.isEmpty
+            child: _isSearching && _results.isEmpty
+                ? const Center(child: CircularProgressIndicator())
+                : _searchError != null && _results.isEmpty
                     ? Center(
-                        child: Text(
-                          'No colleges found',
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w600,
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.cloud_off_rounded,
+                                  size: 56, color: AppTheme.gray400),
+                              const SizedBox(height: 16),
+                              Text(
+                                'Search temporarily unavailable',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                _searchError!,
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12,
+                                  color: AppTheme.gray500,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              FilledButton(
+                                onPressed: _runSearch,
+                                child: const Text('Retry'),
+                              ),
+                            ],
                           ),
                         ),
                       )
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(16),
+                    : _results.isEmpty && _activeParams == null
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.school_outlined,
+                                    size: 64, color: AppTheme.gray400),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'Find your college',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Search by name or use filters',
+                                  style:
+                                      GoogleFonts.poppins(color: AppTheme.gray500),
+                                ),
+                              ],
+                            ),
+                          )
+                        : _results.isEmpty
+                            ? Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.search_off_rounded,
+                                        size: 56, color: AppTheme.gray400),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      'No colleges found',
+                                      style: GoogleFonts.poppins(
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'Try a different name, city, or filter',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 12,
+                                        color: AppTheme.gray500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            : ListView.builder(
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
                         itemCount: _results.length + (_hasMore ? 1 : 0),
                         itemBuilder: (context, index) {
                           if (index == _results.length) {

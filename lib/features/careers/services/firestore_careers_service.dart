@@ -43,10 +43,6 @@ class FirestoreCareersService {
       _firestore.collection(FirestoreConstants.studentResumesCollection);
   CollectionReference<Map<String, dynamic>> get _companyAccounts =>
       _firestore.collection(FirestoreConstants.companyAccountsCollection);
-  DocumentReference<Map<String, dynamic>> get _meta =>
-      _firestore.collection(FirestoreConstants.metaCollection).doc(
-            CareersConstants.metaCareersSeededDoc,
-          );
 
   Future<void> ensureSeeded() async {
     await FirestoreSeedGuard.tryBootstrapSeed(
@@ -391,7 +387,7 @@ class FirestoreCareersService {
       'companyId': companyId,
       'applicantName': applicantName,
       'coverNote': coverNote.trim(),
-      if (resumeUrl != null) 'resumeUrl': resumeUrl,
+      'resumeUrl': ?resumeUrl,
       'status': CareersConstants.applicationStatusSubmitted,
       'createdAt': DateTime.now().toIso8601String(),
     });
@@ -417,7 +413,7 @@ class FirestoreCareersService {
       'companyId': companyId,
       'applicantName': applicantName,
       'coverNote': coverNote.trim(),
-      if (resumeUrl != null) 'resumeUrl': resumeUrl,
+      'resumeUrl': ?resumeUrl,
       'status': CareersConstants.applicationStatusSubmitted,
       'createdAt': DateTime.now().toIso8601String(),
     });

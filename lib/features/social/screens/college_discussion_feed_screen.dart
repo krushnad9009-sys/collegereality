@@ -111,7 +111,7 @@ class _CollegeDiscussionFeedScreenState
                   : ListView.separated(
                       padding: const EdgeInsets.all(16),
                       itemCount: _items.length + (_hasMore ? 1 : 0),
-                      separatorBuilder: (_, __) => const SizedBox(height: 10),
+                      separatorBuilder: (_, _) => const SizedBox(height: 10),
                       itemBuilder: (context, index) {
                         if (index >= _items.length) {
                           if (_loading) {

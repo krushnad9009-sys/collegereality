@@ -34,10 +34,6 @@ class FirestoreEngagementService {
       _firestore.collection(FirestoreConstants.scholarshipsCollection);
   CollectionReference<Map<String, dynamic>> get _campusEvents =>
       _firestore.collection(FirestoreConstants.campusEventsCollection);
-  DocumentReference<Map<String, dynamic>> get _meta =>
-      _firestore.collection(FirestoreConstants.metaCollection).doc(
-            EngagementConstants.metaEngagementSeededDoc,
-          );
 
   Future<void> ensureSeeded() async {
     await FirestoreSeedGuard.tryBootstrapSeed(
@@ -283,7 +279,7 @@ class FirestoreEngagementService {
     await _savedQuestions.doc('${userId}_$questionId').set({
       'userId': userId,
       'questionId': questionId,
-      if (collegeId != null) 'collegeId': collegeId,
+      'collegeId': ?collegeId,
       'createdAt': DateTime.now().toIso8601String(),
     });
   }

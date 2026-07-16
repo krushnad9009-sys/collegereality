@@ -137,7 +137,7 @@ class _AdmissionPredictorScreenState extends ConsumerState<AdmissionPredictorScr
             loading: () => const CircularProgressIndicator(),
             error: (e, _) => Text('Error: $e'),
             data: (exams) => DropdownButtonFormField<EntranceExamModel>(
-              value: _selectedExam,
+              initialValue: _selectedExam,
               decoration: InputDecoration(
                 labelText: 'Exam',
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -181,7 +181,7 @@ class _AdmissionPredictorScreenState extends ConsumerState<AdmissionPredictorScr
             ),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
-            value: _category,
+            initialValue: _category,
             decoration: InputDecoration(
               labelText: 'Category',
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -193,7 +193,7 @@ class _AdmissionPredictorScreenState extends ConsumerState<AdmissionPredictorScr
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
-            value: _gender,
+            initialValue: _gender,
             decoration: InputDecoration(
               labelText: 'Gender',
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),

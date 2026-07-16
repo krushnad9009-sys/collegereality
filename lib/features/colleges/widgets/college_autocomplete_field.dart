@@ -51,7 +51,7 @@ class _CollegeAutocompleteFieldState
   @override
   Widget build(BuildContext context) {
     final query = _controller.text.trim();
-    final suggestionsAsync = query.length >= 1 && query != widget.selectedCollegeName
+    final suggestionsAsync = query.isNotEmpty && query != widget.selectedCollegeName
         ? ref.watch(collegeInstantSuggestProvider(query))
         : const AsyncValue<List<CollegeModel>>.data([]);
 
@@ -88,7 +88,7 @@ class _CollegeAutocompleteFieldState
             padding: EdgeInsets.only(top: 8),
             child: LinearProgressIndicator(minHeight: 2),
           ),
-          error: (_, __) => Padding(
+          error: (_, _) => Padding(
             padding: const EdgeInsets.only(top: 8),
             child: Text(
               'Could not search colleges',
@@ -96,7 +96,7 @@ class _CollegeAutocompleteFieldState
             ),
           ),
           data: (colleges) {
-            if (colleges.isEmpty || query.length < 1) {
+            if (colleges.isEmpty || query.isEmpty) {
               return const SizedBox.shrink();
             }
             return Container(
@@ -117,7 +117,7 @@ class _CollegeAutocompleteFieldState
               child: ListView.separated(
                 shrinkWrap: true,
                 itemCount: colleges.length,
-                separatorBuilder: (_, __) => const Divider(height: 1),
+                separatorBuilder: (_, _) => const Divider(height: 1),
                 itemBuilder: (context, index) {
                   final college = colleges[index];
                   return ListTile(

@@ -167,6 +167,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
     if (user == null) return;
 
     final userDetail = await ref.read(userRepositoryProvider).getUser(user.uid);
+    if (!mounted) return;
     if (userDetail == null || !isUserFullyVerified(userDetail)) {
       SnackBarHelper.showErrorSnackBar(
         context,

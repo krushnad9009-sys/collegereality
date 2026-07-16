@@ -175,7 +175,7 @@ class QuestionDetailScreen extends ConsumerWidget {
               const SizedBox(height: 12),
               canAnswerAsync.when(
                 loading: () => const SizedBox.shrink(),
-                error: (_, __) => const SizedBox.shrink(),
+                error: (_, _) => const SizedBox.shrink(),
                 data: (canAnswer) {
                   if (!canAnswer) {
                     return Padding(

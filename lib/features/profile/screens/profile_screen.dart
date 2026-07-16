@@ -22,6 +22,7 @@ import '../../profile/widgets/premium_profile_edit_section.dart';
 import '../../profile/widgets/trust_score_card.dart';
 import '../../profile/models/student_trust_model.dart';
 import '../widgets/phone_verification_section.dart';
+import '../widgets/email_verification_section.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -148,10 +149,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Profile'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-          onPressed: () => context.go(RouteNames.home),
-        ),
       ),
       body: userDetailAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -171,7 +168,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               _communicationSettings ?? userDetail?.communicationSettings;
 
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 96),
             child: Form(
               key: _formKey,
               child: Column(
@@ -242,6 +239,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     isRequired: true,
                   ),
                   const SizedBox(height: 16),
+                  EmailVerificationSection(
+                    userId: authUser.uid,
+                    email: authUser.email ?? '',
+                  ),
                   PhoneVerificationSection(
                     userId: authUser.uid,
                     currentPhone: _verifiedPhone ?? userDetail?.phone,

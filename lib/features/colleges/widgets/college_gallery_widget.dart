@@ -38,7 +38,7 @@ class CollegeGalleryWidget extends StatelessWidget {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: photoUrls.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 10),
+        separatorBuilder: (_, _) => const SizedBox(width: 10),
         itemBuilder: (context, index) {
           return ClipRRect(
             borderRadius: BorderRadius.circular(12),
@@ -47,14 +47,14 @@ class CollegeGalleryWidget extends StatelessWidget {
               width: 200,
               height: 140,
               fit: BoxFit.cover,
-              placeholder: (_, __) => Container(
+              placeholder: (_, _) => Container(
                 width: 200,
                 color: AppTheme.gray100,
                 child: const Center(
                   child: CircularProgressIndicator(strokeWidth: 2),
                 ),
               ),
-              errorWidget: (_, __, ___) => Container(
+              errorWidget: (_, _, _) => Container(
                 width: 200,
                 color: AppTheme.gray100,
                 child: const Icon(Icons.broken_image_outlined),

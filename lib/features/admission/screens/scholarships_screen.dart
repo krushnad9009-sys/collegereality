@@ -163,7 +163,7 @@ class _ScholarshipsScreenState extends ConsumerState<ScholarshipsScreen> {
                       style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 18)),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
-                    value: _eligibilityCategory,
+                    initialValue: _eligibilityCategory,
                     decoration: const InputDecoration(labelText: 'Category'),
                     items: AdmissionConstants.scholarshipCategories
                         .map((c) => DropdownMenuItem(value: c, child: Text(c)))

@@ -43,10 +43,6 @@ class FirestoreStudentLifeService {
       _firestore.collection(FirestoreConstants.studentCommunityCommentReportsCollection);
   CollectionReference<Map<String, dynamic>> get _pollVotes =>
       _firestore.collection(FirestoreConstants.studentCommunityPollVotesCollection);
-  DocumentReference<Map<String, dynamic>> get _meta =>
-      _firestore.collection(FirestoreConstants.metaCollection).doc(
-            StudentLifeConstants.metaStudentLifeSeededDoc,
-          );
 
   Future<void> ensureSeeded() async {
     await FirestoreSeedGuard.tryBootstrapSeed(

@@ -129,7 +129,7 @@ class _InternshipsScreenState extends ConsumerState<InternshipsScreen> {
               hintText: 'Duration',
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             ),
-            value: filters.durationBucket,
+            initialValue: filters.durationBucket,
             items: const [
               DropdownMenuItem(value: null, child: Text('Any duration')),
               DropdownMenuItem(value: 'short', child: Text('Short (≤ 8 weeks)')),

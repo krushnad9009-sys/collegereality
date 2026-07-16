@@ -295,7 +295,8 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                                   sessionId: widget.sessionId,
                                   userId: user.uid,
                                 );
-                            if (mounted) context.pop();
+                            if (!context.mounted) return;
+                            context.pop();
                           },
                         ),
                         _CallActionButton(

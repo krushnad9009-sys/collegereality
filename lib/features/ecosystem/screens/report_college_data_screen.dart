@@ -75,7 +75,7 @@ class _ReportCollegeDataScreenState extends ConsumerState<ReportCollegeDataScree
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               DropdownButtonFormField<String>(
-                value: _reportType,
+                initialValue: _reportType,
                 decoration: const InputDecoration(labelText: 'Issue type'),
                 items: EcosystemConstants.dataReportTypes
                     .map((t) => DropdownMenuItem(

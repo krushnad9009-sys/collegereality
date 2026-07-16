@@ -32,7 +32,7 @@ class AiCompareInsightsPanel extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          'Strengths & weaknesses derived only from verified Firestore data.',
+          'Insights based on verified college records.',
           style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.gray500),
         ),
         const SizedBox(height: 12),

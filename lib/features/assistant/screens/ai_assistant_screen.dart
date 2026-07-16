@@ -83,28 +83,16 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(aiAssistantProvider);
     final basket = ref.watch(compareBasketProvider);
-    ref.listen(aiAssistantProvider, (_, __) => _scrollToBottom());
+    ref.listen(aiAssistantProvider, (_, _) => _scrollToBottom());
 
     return Scaffold(
       appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'AI College Assistant',
-              style: GoogleFonts.poppins(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            Text(
-              'Verified Firestore data only • EN / HI / MR',
-              style: GoogleFonts.poppins(
-                fontSize: 10,
-                color: AppTheme.gray500,
-              ),
-            ),
-          ],
+        title: Text(
+          'AI College Assistant',
+          style: GoogleFonts.poppins(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         actions: [
           if (basket.canCompare)
@@ -331,7 +319,7 @@ class _MessageBubble extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(top: 4, left: 4),
                 child: Text(
-                  '✓ Data from verified Firestore records',
+                  '✓ Verified college data',
                   style: GoogleFonts.poppins(
                     fontSize: 10,
                     color: AppTheme.accentColor,

@@ -678,6 +678,22 @@
       ]
     },
     {
+      "collectionGroup": "colleges",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "isActive", "order": "ASCENDING" },
+        { "fieldPath": "districtLower", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "colleges",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "isActive", "order": "ASCENDING" },
+        { "fieldPath": "cityLower", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "college_requests",
       "queryScope": "COLLECTION",
       "fields": [

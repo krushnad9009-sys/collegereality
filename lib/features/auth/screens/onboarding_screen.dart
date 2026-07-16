@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+import '../../../core/widgets/premium_auth_background.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../config/router/route_names.dart';
 
@@ -80,8 +81,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     final isMobile = MediaQuery.of(context).size.width < 600;
 
     return Scaffold(
-      backgroundColor: AppTheme.white,
-      body: Stack(
+      backgroundColor: Colors.transparent,
+      body: PremiumAuthBackground(
+        child: Stack(
         children: [
           PageView.builder(
             controller: _pageController,
@@ -156,6 +158,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             ),
           ),
         ],
+      ),
       ),
     );
   }

@@ -59,9 +59,10 @@ class AppTheme {
       textTheme: _buildTextTheme(gray900),
       cardTheme: CardThemeData(
         color: white,
-        elevation: 2,
+        elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: gray200),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -172,9 +173,10 @@ class AppTheme {
       textTheme: _buildTextTheme(white),
       cardTheme: CardThemeData(
         color: gray800,
-        elevation: 2,
+        elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: gray700),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(

@@ -151,7 +151,21 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       error: (e, _) => Scaffold(body: Center(child: Text('$e'))),
       data: (conversation) {
         if (conversation == null || user == null) {
-          return const Scaffold(body: Center(child: Text('Chat unavailable')));
+          return Scaffold(
+            body: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.forum_outlined, size: 48, color: AppTheme.gray400),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Unable to load this conversation',
+                    style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
+            ),
+          );
         }
 
         final peerId = conversation.peerIdFor(user.uid);
@@ -169,7 +183,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 if (presenceAsync != null)
                   presenceAsync.when(
                     loading: () => const SizedBox.shrink(),
-                    error: (_, __) => const SizedBox.shrink(),
+                    error: (_, _) => const SizedBox.shrink(),
                     data: (p) => PresenceIndicator(presence: p),
                   ),
               ],

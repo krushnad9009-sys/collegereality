@@ -86,7 +86,7 @@ class _SuggestEditScreenState extends ConsumerState<SuggestEditScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               DropdownButtonFormField<String>(
-                value: _field,
+                initialValue: _field,
                 decoration: const InputDecoration(labelText: 'Field to edit'),
                 items: _fields
                     .map((f) => DropdownMenuItem(value: f.$1, child: Text(f.$2)))

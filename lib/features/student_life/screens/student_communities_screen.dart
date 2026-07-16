@@ -152,7 +152,7 @@ class _CommunityBoardScreenState extends ConsumerState<CommunityBoardScreen> {
         title: communityAsync.when(
           data: (c) => Text(c?.name ?? 'Community'),
           loading: () => const Text('Community'),
-          error: (_, __) => const Text('Community'),
+          error: (_, _) => const Text('Community'),
         ),
       ),
       body: Column(
@@ -179,7 +179,7 @@ class _CommunityBoardScreenState extends ConsumerState<CommunityBoardScreen> {
           ),
           verifiedAsync.when(
             loading: () => const SizedBox.shrink(),
-            error: (_, __) => const SizedBox.shrink(),
+            error: (_, _) => const SizedBox.shrink(),
             data: (verified) {
               if (!verified) {
                 return Padding(
@@ -549,7 +549,7 @@ class _CommentsSectionState extends ConsumerState<_CommentsSection> {
           ),
         verifiedAsync.when(
           loading: () => const SizedBox.shrink(),
-          error: (_, __) => const SizedBox.shrink(),
+          error: (_, _) => const SizedBox.shrink(),
           data: (verified) {
             if (!verified || !_expanded) return const SizedBox.shrink();
             return Row(

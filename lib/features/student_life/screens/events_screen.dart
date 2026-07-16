@@ -168,7 +168,7 @@ class EventDetailScreen extends ConsumerWidget {
                     height: 200,
                     width: double.infinity,
                     fit: BoxFit.cover,
-                    errorWidget: (_, __, ___) => Container(
+                    errorWidget: (_, _, _) => Container(
                       height: 200,
                       color: AppTheme.gray100,
                       child: const Icon(Icons.event, size: 48),
@@ -203,7 +203,7 @@ class EventDetailScreen extends ConsumerWidget {
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     itemCount: event.galleryUrls.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 8),
+                    separatorBuilder: (_, _) => const SizedBox(width: 8),
                     itemBuilder: (_, i) => ClipRRect(
                       borderRadius: BorderRadius.circular(8),
                       child: CachedNetworkImage(

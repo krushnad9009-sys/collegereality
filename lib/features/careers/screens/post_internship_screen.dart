@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:uuid/uuid.dart';
 
-import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/careers_constants.dart';
 import '../../../core/widgets/index.dart';
 import '../models/careers_models.dart';
@@ -61,7 +59,7 @@ class _PostInternshipScreenState extends ConsumerState<PostInternshipScreen> {
           _field(_skills, 'Skills (comma separated)'),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
-            value: _workType,
+            initialValue: _workType,
             decoration: const InputDecoration(labelText: 'Work type'),
             items: const [
               DropdownMenuItem(value: CareersConstants.workTypeOffice, child: Text('Office')),
@@ -71,7 +69,7 @@ class _PostInternshipScreenState extends ConsumerState<PostInternshipScreen> {
             onChanged: (v) => setState(() => _workType = v ?? _workType),
           ),
           DropdownButtonFormField<String>(
-            value: _payType,
+            initialValue: _payType,
             decoration: const InputDecoration(labelText: 'Pay type'),
             items: const [
               DropdownMenuItem(value: CareersConstants.payTypePaid, child: Text('Paid')),

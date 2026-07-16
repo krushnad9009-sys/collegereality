@@ -25,7 +25,7 @@ class OfficialCollegeContentSection extends ConsumerWidget {
       children: [
         contentAsync.when(
           loading: () => const SizedBox.shrink(),
-          error: (_, __) => const SizedBox.shrink(),
+          error: (_, _) => const SizedBox.shrink(),
           data: (items) {
             if (items.isEmpty) return const SizedBox.shrink();
             return Column(
@@ -64,7 +64,7 @@ class OfficialCollegeContentSection extends ConsumerWidget {
         ),
         workshopsAsync.when(
           loading: () => const SizedBox.shrink(),
-          error: (_, __) => const SizedBox.shrink(),
+          error: (_, _) => const SizedBox.shrink(),
           data: (workshops) {
             if (workshops.isEmpty) return const SizedBox.shrink();
             return Column(
@@ -91,7 +91,7 @@ class OfficialCollegeContentSection extends ConsumerWidget {
         ),
         mentorshipAsync.when(
           loading: () => const SizedBox.shrink(),
-          error: (_, __) => const SizedBox.shrink(),
+          error: (_, _) => const SizedBox.shrink(),
           data: (offers) {
             if (offers.isEmpty) return const SizedBox.shrink();
             return Column(

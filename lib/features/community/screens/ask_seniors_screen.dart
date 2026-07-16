@@ -134,13 +134,13 @@ class _AskSeniorsScreenState extends ConsumerState<AskSeniorsScreen> {
           );
       titleController.dispose();
       bodyController.dispose();
-      if (mounted) {
-        context.push(RouteNames.communityChatPath(thread.id));
-      }
+      if (!context.mounted) return;
+      context.push(RouteNames.communityChatPath(thread.id));
     } on CommunityException catch (e) {
       titleController.dispose();
       bodyController.dispose();
-      if (mounted) SnackBarHelper.showErrorSnackBar(context, message: e.message);
+      if (!context.mounted) return;
+      SnackBarHelper.showErrorSnackBar(context, message: e.message);
     }
   }
 }

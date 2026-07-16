@@ -83,7 +83,7 @@ class AdminDashboardScreen extends ConsumerWidget {
               padding: EdgeInsets.symmetric(vertical: 24),
               child: Center(child: CircularProgressIndicator()),
             ),
-            error: (_, __) => const SizedBox.shrink(),
+            error: (_, _) => const SizedBox.shrink(),
             data: (stats) => Column(
               children: [
                 Row(

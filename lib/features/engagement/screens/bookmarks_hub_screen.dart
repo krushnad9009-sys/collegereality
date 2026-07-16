@@ -58,7 +58,7 @@ class _CollegesTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final favoriteIds = ref.watch(favoriteCollegeIdsProvider).valueOrNull ?? {};
-    final collegesAsync = ref.watch(featuredCollegesProvider);
+    final collegesAsync = ref.watch(savedCollegesProvider);
 
     if (favoriteIds.isEmpty) {
       return const Center(child: Text('No saved colleges'));
@@ -67,8 +67,7 @@ class _CollegesTab extends ConsumerWidget {
     return collegesAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(child: Text('Error: $e')),
-      data: (colleges) {
-        final saved = colleges.where((c) => favoriteIds.contains(c.id)).toList();
+      data: (saved) {
         if (saved.isEmpty) {
           return ListView(
             padding: const EdgeInsets.all(16),
@@ -239,7 +238,7 @@ class _SavedQuestionTile extends ConsumerWidget {
     final questionAsync = ref.watch(questionByIdProvider(questionId));
     return questionAsync.when(
       loading: () => const ListTile(title: Text('Loading...')),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
       data: (q) {
         if (q == null) return const SizedBox.shrink();
         return _BookmarkTile(

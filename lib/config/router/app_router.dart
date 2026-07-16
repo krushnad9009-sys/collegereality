@@ -86,6 +86,7 @@ import '../../features/communication/screens/guides_directory_screen.dart';
 import '../../features/communication/screens/guide_public_profile_screen.dart';
 import '../../features/communication/screens/active_call_screen.dart';
 import 'route_names.dart';
+import '../../core/widgets/app_shell.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final firebaseAuth = FirebaseAuth.instance;
@@ -143,13 +144,52 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: RouteNames.forgotPassword,
         builder: (context, state) => const ForgotPasswordScreen(),
       ),
-      GoRoute(
-        path: RouteNames.home,
-        builder: (context, state) => const HomeScreen(),
-      ),
-      GoRoute(
-        path: RouteNames.profile,
-        builder: (context, state) => const ProfileScreen(),
+      ShellRoute(
+        builder: (context, state, child) => AppShell(child: child),
+        routes: [
+          GoRoute(
+            path: RouteNames.home,
+            builder: (context, state) => const HomeScreen(),
+          ),
+          GoRoute(
+            path: RouteNames.profile,
+            builder: (context, state) => const ProfileScreen(),
+          ),
+          GoRoute(
+            path: RouteNames.collegeSearch,
+            builder: (context, state) {
+              final query = state.uri.queryParameters['q'];
+              final city = state.uri.queryParameters['city'];
+              final stateParam = state.uri.queryParameters['state'];
+              final course = state.uri.queryParameters['course'];
+              final filter = state.uri.queryParameters['filter'];
+              return CollegeSearchScreen(
+                initialQuery: query,
+                initialCity: city,
+                initialState: stateParam,
+                initialCourse: course,
+                initialFilter: filter,
+              );
+            },
+          ),
+          GoRoute(
+            path: RouteNames.assistant,
+            builder: (context, state) {
+              final query = state.uri.queryParameters['q'];
+              final collegeId = state.uri.queryParameters['collegeId'];
+              final collegeName = state.uri.queryParameters['collegeName'];
+              return AiAssistantScreen(
+                initialQuery: query,
+                anchorCollegeId: collegeId,
+                anchorCollegeName: collegeName,
+              );
+            },
+          ),
+          GoRoute(
+            path: RouteNames.community,
+            builder: (context, state) => const CommunityHubScreen(),
+          ),
+        ],
       ),
       GoRoute(
         path: RouteNames.verification,
@@ -235,19 +275,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
-        path: RouteNames.assistant,
-        builder: (context, state) {
-          final query = state.uri.queryParameters['q'];
-          final collegeId = state.uri.queryParameters['collegeId'];
-          final collegeName = state.uri.queryParameters['collegeName'];
-          return AiAssistantScreen(
-            initialQuery: query,
-            anchorCollegeId: collegeId,
-            anchorCollegeName: collegeName,
-          );
-        },
-      ),
-      GoRoute(
         path: RouteNames.rankingHub,
         builder: (context, state) => const RankingHubScreen(),
       ),
@@ -270,21 +297,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RouteNames.rankingAnalytics,
         builder: (context, state) => const CollegeAnalyticsScreen(),
-      ),
-      GoRoute(
-        path: RouteNames.collegeSearch,
-        builder: (context, state) {
-          final query = state.uri.queryParameters['q'];
-          final city = state.uri.queryParameters['city'];
-          final stateParam = state.uri.queryParameters['state'];
-          final course = state.uri.queryParameters['course'];
-          return CollegeSearchScreen(
-            initialQuery: query,
-            initialCity: city,
-            initialState: stateParam,
-            initialCourse: course,
-          );
-        },
       ),
       GoRoute(
         path: RouteNames.collegeDetails,
@@ -540,10 +552,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RouteNames.adminEcosystem,
         builder: (context, state) => const AdminEcosystemHubScreen(),
-      ),
-      GoRoute(
-        path: RouteNames.community,
-        builder: (context, state) => const CommunityHubScreen(),
       ),
       GoRoute(
         path: RouteNames.communityPrivateChats,

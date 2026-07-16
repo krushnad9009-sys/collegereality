@@ -60,7 +60,7 @@ class AccreditationBadges extends StatelessWidget {
 
     if (badges.isEmpty) {
       return Text(
-        'Accreditation details not available yet',
+        'Accreditation details unavailable',
         style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.gray500),
       );
     }

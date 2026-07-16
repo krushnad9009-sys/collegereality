@@ -96,7 +96,7 @@ class MessageBubble extends StatelessWidget {
               message.attachmentUrl!,
               height: 180,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Text('Image unavailable', style: TextStyle(color: fg)),
+              errorBuilder: (_, _, _) => Icon(Icons.broken_image_outlined, color: fg, size: 20),
             ),
           );
         }

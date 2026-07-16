@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../config/router/route_names.dart';
+import '../../../core/widgets/premium_auth_background.dart';
 import '../../../core/widgets/index.dart';
 import '../models/user_model.dart';
 import '../providers/auth_provider.dart';
@@ -77,6 +78,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       // Save user to Firestore
       final userRepository = ref.read(userRepositoryProvider);
       await userRepository.createUser(userModel);
+      await ref.read(authServiceProvider).sendEmailVerification();
 
       if (mounted) {
         SnackBarHelper.showSuccessSnackBar(
@@ -134,8 +136,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     final authState = ref.watch(authProvider);
 
     return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
+      body: PremiumAuthBackground(
+        child: SafeArea(
+          child: SingleChildScrollView(
           child: Padding(
             padding: EdgeInsets.symmetric(
               horizontal: isMobile ? 20 : 40,
@@ -397,6 +400,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 }

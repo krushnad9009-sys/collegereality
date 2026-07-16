@@ -6,7 +6,6 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/student_life_constants.dart';
-import '../../../core/widgets/index.dart';
 import '../../student_life/providers/student_life_provider.dart';
 
 class AdminStudentLifeScreen extends ConsumerWidget {
@@ -74,7 +73,7 @@ class AdminStudentLifeScreen extends ConsumerWidget {
     return ListView.separated(
       padding: const EdgeInsets.all(16),
       itemCount: reports.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 8),
+      separatorBuilder: (_, _) => const SizedBox(height: 8),
       itemBuilder: (context, index) {
         final report = reports[index];
         return Card(

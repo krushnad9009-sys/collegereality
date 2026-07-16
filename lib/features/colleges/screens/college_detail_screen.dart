@@ -99,7 +99,7 @@ class _CollegeDetailScreenState extends ConsumerState<CollegeDetailScreen> {
           child: Scaffold(
             floatingActionButton: verifiedAsync.when(
               loading: () => null,
-              error: (_, __) => null,
+              error: (_, _) => null,
               data: (isVerified) {
                 if (!isVerified) {
                   return FloatingActionButton.extended(
@@ -622,7 +622,7 @@ class _HostelTab extends StatelessWidget {
             title: 'Hostel Notes',
             content: ratings.hostel > 0
                 ? 'Rating based on ${college.reviewCount} student reviews.'
-                : 'Hostel information not available yet.',
+                : 'Hostel details have not been added for this college.',
             icon: Icons.info_outline,
           ),
       ],

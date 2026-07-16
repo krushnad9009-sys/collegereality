@@ -18,7 +18,7 @@ class IncomingCallBanner extends ConsumerWidget {
 
     return incomingAsync.when(
       loading: () => const SizedBox.shrink(),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
       data: (calls) {
         if (calls.isEmpty) return const SizedBox.shrink();
         final call = calls.first;

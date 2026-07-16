@@ -92,8 +92,43 @@ class CollegeSearchUtils {
       ...college.searchKeywords,
     ].join(' ').toLowerCase();
 
-    final words = query.split(RegExp(r'\s+')).where((w) => w.isNotEmpty);
-    return words.every(haystack.contains);
+    if (haystack.contains(query)) return true;
+
+    final acronym = _buildAcronym(college.name);
+    if (query.length >= 2 && acronym.contains(query)) return true;
+
+    final words = query
+        .split(RegExp(r'\s+'))
+        .where((w) => w.isNotEmpty)
+        .toList();
+    if (words.isEmpty) return true;
+
+    if (words.every(haystack.contains)) return true;
+
+    final significant = words.where((w) => w.length >= 2).toList();
+    if (significant.isNotEmpty && significant.any(haystack.contains)) {
+      return true;
+    }
+
+    final tokens = college.searchTokens;
+    if (tokens.isNotEmpty) {
+      for (final word in significant) {
+        if (tokens.contains(word)) return true;
+      }
+    }
+
+    return false;
+  }
+
+  static String _buildAcronym(String name) {
+    final parts = name.split(RegExp(r'[\s\-]+'));
+    final buffer = StringBuffer();
+    for (final part in parts) {
+      if (part.isEmpty) continue;
+      final ch = part[0].toLowerCase();
+      if (RegExp(r'[a-z0-9]').hasMatch(ch)) buffer.write(ch);
+    }
+    return buffer.toString();
   }
 }
 
@@ -106,4 +141,5 @@ abstract class CollegeModelLike {
   String? get universityName;
   List<String> get courses;
   List<String> get searchKeywords;
+  List<String> get searchTokens;
 }

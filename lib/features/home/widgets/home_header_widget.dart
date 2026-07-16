@@ -233,7 +233,7 @@ class _NotificationBell extends ConsumerWidget {
         icon: const Icon(Icons.notifications_outlined),
         onPressed: () => context.go(RouteNames.notifications),
       ),
-      error: (_, __) => IconButton(
+      error: (_, _) => IconButton(
         icon: const Icon(Icons.notifications_outlined),
         onPressed: () => context.go(RouteNames.notifications),
       ),

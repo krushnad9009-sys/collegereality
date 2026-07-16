@@ -1,4 +1,3 @@
-import '../../auth/models/user_model.dart';
 import '../../auth/services/firestore_user_service.dart';
 import '../models/premium_student_profile.dart';
 
