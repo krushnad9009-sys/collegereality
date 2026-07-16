@@ -26,7 +26,10 @@ class CollegeImageWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final resolvedUrl = CollegeImageHelper.resolveCoverUrl(imageUrl);
+    final resolvedUrl = CollegeImageHelper.resolveCoverUrl(
+      imageUrl,
+      collegeId: collegeId,
+    );
 
     if (resolvedUrl == null) {
       return _ComingSoonPlaceholder(

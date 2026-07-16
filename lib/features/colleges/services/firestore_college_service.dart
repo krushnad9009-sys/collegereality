@@ -22,12 +22,64 @@ class FirestoreCollegeService {
   Future<List<CollegeModel>> getFeaturedColleges({
     int limit = CollegeConstants.featuredLimit,
   }) async {
-    final snapshot = await _colleges
-        .where('isActive', isEqualTo: true)
-        .orderBy('aggregatedRatings.overall', descending: true)
-        .limit(limit)
-        .get();
-    return _mapDocs(snapshot.docs);
+    final queryBuilders = <Query<Map<String, dynamic>> Function()>[
+      () => _colleges
+          .where('isActive', isEqualTo: true)
+          .where('isFeatured', isEqualTo: true)
+          .orderBy('aggregatedRatings.overall', descending: true)
+          .limit(limit),
+      () => _colleges
+          .where('isActive', isEqualTo: true)
+          .orderBy('aggregatedRatings.overall', descending: true)
+          .limit(limit),
+      () => _colleges
+          .where('isActive', isEqualTo: true)
+          .orderBy('nameLower')
+          .limit(limit),
+    ];
+
+    for (final buildQuery in queryBuilders) {
+      try {
+        final snapshot = await buildQuery().get();
+        final colleges = _prioritizeFeaturedColleges(
+          _mapDocs(snapshot.docs),
+          limit,
+        );
+        if (colleges.isNotEmpty) return colleges;
+      } on FirebaseException catch (e) {
+        if (e.code != 'failed-precondition') rethrow;
+      }
+    }
+
+    return [];
+  }
+
+  List<CollegeModel> _prioritizeFeaturedColleges(
+    List<CollegeModel> colleges,
+    int limit,
+  ) {
+    final sorted = [...colleges]
+      ..sort((a, b) {
+        final featuredCompare =
+            (b.isFeatured ? 1 : 0).compareTo(a.isFeatured ? 1 : 0);
+        if (featuredCompare != 0) return featuredCompare;
+
+        final photoCompare = (_hasCoverPhoto(b) ? 1 : 0)
+            .compareTo(_hasCoverPhoto(a) ? 1 : 0);
+        if (photoCompare != 0) return photoCompare;
+
+        final ratingCompare = b.aggregatedRatings.overall
+            .compareTo(a.aggregatedRatings.overall);
+        if (ratingCompare != 0) return ratingCompare;
+
+        return a.nameLower.compareTo(b.nameLower);
+      });
+    return sorted.take(limit).toList();
+  }
+
+  bool _hasCoverPhoto(CollegeModel college) {
+    final url = college.coverPhotoUrl;
+    return url != null && url.trim().isNotEmpty && url != 'null';
   }
 
   Future<CollegeModel?> getCollegeById(String id) async {
@@ -183,9 +235,6 @@ class FirestoreCollegeService {
     if (state != null && state.isNotEmpty) {
       q = q.where('state', isEqualTo: state);
     }
-    if (course != null && course.isNotEmpty) {
-      q = q.where('courses', arrayContains: course);
-    }
 
     q = q.where('searchTokens', arrayContainsAny: tokens).limit(limit * 3);
 
@@ -199,6 +248,11 @@ class FirestoreCollegeService {
           !college.cityLower.contains(CollegeSearchUtils.normalizeCity(city)) &&
           !college.districtLower
               .contains(CollegeSearchUtils.normalizeDistrict(city))) {
+        continue;
+      }
+      if (course != null &&
+          course.isNotEmpty &&
+          !college.courses.contains(course)) {
         continue;
       }
       ranked.add(college);

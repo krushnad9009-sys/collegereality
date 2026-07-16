@@ -27,6 +27,7 @@ final collegeRepositoryProvider = Provider<CollegeRepository>((ref) {
 
 final featuredCollegesProvider =
     FutureProvider<List<CollegeModel>>((ref) async {
+  await ref.watch(collegeSeedProvider.future);
   final repository = ref.watch(collegeRepositoryProvider);
   return repository.getFeaturedColleges();
 });
@@ -36,6 +37,7 @@ final homeFeaturedCollegesProvider =
     FutureProvider<List<CollegeModel>>((ref) async {
   final ready = ref.watch(homeContentReadyProvider);
   if (!ready) return const [];
+  await ref.watch(collegeSeedProvider.future);
   await Future<void>.delayed(Duration.zero);
   final repository = ref.watch(collegeRepositoryProvider);
   return repository.getFeaturedColleges(limit: 6);

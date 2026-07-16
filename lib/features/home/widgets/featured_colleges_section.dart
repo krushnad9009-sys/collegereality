@@ -5,7 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
-import '../../../core/widgets/skeleton_loader.dart';
+import '../../../core/widgets/index.dart';
 import '../../colleges/providers/college_provider.dart';
 import 'college_card_widget.dart';
 
@@ -53,10 +53,20 @@ class FeaturedCollegesSection extends ConsumerWidget {
               ),
             ),
           ),
-          error: (e, _) => Text('Failed to load colleges: $e'),
+          error: (e, _) => AsyncErrorView(
+            message: e.toString().replaceFirst('Exception: ', ''),
+            onRetry: () {
+              ref.invalidate(homeFeaturedCollegesProvider);
+              ref.invalidate(collegeSeedProvider);
+            },
+          ),
           data: (colleges) {
             if (colleges.isEmpty) {
-              return const SizedBox.shrink();
+              return const AsyncEmptyView(
+                icon: Icons.school_outlined,
+                title: 'No featured colleges yet',
+                subtitle: 'Colleges will appear here once the directory is seeded.',
+              );
             }
             return Column(
               children: colleges
@@ -71,6 +81,7 @@ class FeaturedCollegesSection extends ConsumerWidget {
                         rating: college.aggregatedRatings.overall,
                         reviewCount: college.reviewCount,
                         imageUrl: college.coverPhotoUrl,
+                        logoUrl: college.logoUrl,
                         onTap: () => context.go(
                           RouteNames.collegeDetailsPath(college.id),
                         ),

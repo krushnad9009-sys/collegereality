@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import '../../../core/constants/college_constants.dart';
 import '../../../core/constants/firestore_constants.dart';
 import '../../../core/utils/firestore_seed_guard.dart';
+import '../../../core/utils/college_image_helper.dart';
 import '../models/college_model.dart';
 import '../utils/college_search_utils.dart';
 import 'firestore_college_service.dart';
@@ -98,6 +99,10 @@ class CollegeSeedService {
         [];
     final id = map['id'] as String? ??
         CollegeSearchUtils.buildSlug(name, city).replaceAll('-', '_');
+    final coverPhotoUrl = CollegeImageHelper.resolveCoverUrl(
+      map['coverPhotoUrl'] as String?,
+      collegeId: id,
+    );
 
     final feesMap = map['fees'] as Map<String, dynamic>? ?? {};
     final placementsMap = map['placements'] as Map<String, dynamic>? ?? {};
@@ -122,7 +127,7 @@ class CollegeSeedService {
       type: map['type'] as String? ?? 'private',
       courses: courses,
       website: map['website'] as String?,
-      coverPhotoUrl: map['coverPhotoUrl'] as String?,
+      coverPhotoUrl: coverPhotoUrl,
       photoUrls: (map['photoUrls'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??

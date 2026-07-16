@@ -5,6 +5,23 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "isActive", "order": "ASCENDING" },
+        { "fieldPath": "aggregatedRatings.overall", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "colleges",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "isActive", "order": "ASCENDING" },
+        { "fieldPath": "isFeatured", "order": "ASCENDING" },
+        { "fieldPath": "aggregatedRatings.overall", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "colleges",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "isActive", "order": "ASCENDING" },
         { "fieldPath": "searchTokens", "arrayConfig": "CONTAINS" }
       ]
     },
@@ -15,23 +32,6 @@
         { "fieldPath": "isActive", "order": "ASCENDING" },
         { "fieldPath": "state", "order": "ASCENDING" },
         { "fieldPath": "searchTokens", "arrayConfig": "CONTAINS" }
-      ]
-    },
-    {
-      "collectionGroup": "colleges",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "isActive", "order": "ASCENDING" },
-        { "fieldPath": "courses", "arrayConfig": "CONTAINS" },
-        { "fieldPath": "searchTokens", "arrayConfig": "CONTAINS" }
-      ]
-    },
-    {
-      "collectionGroup": "colleges",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "isActive", "order": "ASCENDING" },
-        { "fieldPath": "districtLower", "order": "ASCENDING" }
       ]
     },
     {
@@ -82,13 +82,6 @@
       "fields": [
         { "fieldPath": "isActive", "order": "ASCENDING" },
         { "fieldPath": "courses", "arrayConfig": "CONTAINS" },
-        { "fieldPath": "nameLower", "order": "ASCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "colleges",
-      "queryScope": "COLLECTION",
-      "fields": [
         { "fieldPath": "nameLower", "order": "ASCENDING" }
       ]
     },
@@ -320,13 +313,6 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "examId", "order": "ASCENDING" },
-        { "fieldPath": "year", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "cutoff_records",
-      "queryScope": "COLLECTION",
-      "fields": [
         { "fieldPath": "year", "order": "DESCENDING" }
       ]
     },

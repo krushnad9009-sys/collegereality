@@ -2,6 +2,29 @@
 class CollegeImageHelper {
   CollegeImageHelper._();
 
+  static const Map<String, String> _featuredCoverUrls = {
+    'iit_bombay':
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/IIT_Bombay_Main_Building.jpg/1280px-IIT_Bombay_Main_Building.jpg',
+    'iit_delhi':
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/Indian_Institute_of_Technology_Delhi_%28IIT_Delhi%29_campus.jpg/1280px-Indian_Institute_of_Technology_Delhi_%28IIT_Delhi%29_campus.jpg',
+    'iit_madras':
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/IIT_Madras_Hostel.jpg/1280px-IIT_Madras_Hostel.jpg',
+    'nit_trichy':
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/NIT_Trichy_Admin_Building.jpg/1280px-NIT_Trichy_Admin_Building.jpg',
+    'iiit_hyderabad':
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9f/IIIT_Hyderabad_campus.jpg/1280px-IIIT_Hyderabad_campus.jpg',
+    'aiims_delhi':
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/AIIMS_New_Delhi.jpg/1280px-AIIMS_New_Delhi.jpg',
+    'national_rohtak_school_business':
+        'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=1200&q=80',
+    'vit_vellore':
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/VIT_University_Campus.jpg/1280px-VIT_University_Campus.jpg',
+    'coep_pune':
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/COEP_Main_Building.jpg/1280px-COEP_Main_Building.jpg',
+    'sppu_pune':
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5d/Savitribai_Phule_Pune_University_main_building.jpg/1280px-Savitribai_Phule_Pune_University_main_building.jpg',
+  };
+
   static bool isValidUrl(String? url) {
     if (url == null || url.isEmpty || url == 'null') return false;
     final uri = Uri.tryParse(url);
@@ -10,9 +33,13 @@ class CollegeImageHelper {
         uri.host.isNotEmpty;
   }
 
-  /// Returns a valid Firestore/remote URL, or null when no real image exists.
-  static String? resolveCoverUrl(String? coverPhotoUrl) {
+  /// Returns a valid Firestore/remote URL, a known featured fallback, or null.
+  static String? resolveCoverUrl(String? coverPhotoUrl, {String? collegeId}) {
     if (isValidUrl(coverPhotoUrl)) return coverPhotoUrl!.trim();
+    if (collegeId != null) {
+      final fallback = _featuredCoverUrls[collegeId];
+      if (isValidUrl(fallback)) return fallback;
+    }
     return null;
   }
 }
