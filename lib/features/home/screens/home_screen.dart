@@ -48,8 +48,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             : RefreshIndicator(
                 onRefresh: () async {
                   CollegeSessionCache.clearFeatured();
+                  ref.invalidate(collegeSeedProvider);
                   ref.invalidate(homeFeaturedCollegesProvider);
                   ref.invalidate(featuredCollegesProvider);
+                  await ref.read(collegeSeedProvider.future);
                   await ref.read(homeFeaturedCollegesProvider.future);
                 },
                 child: SingleChildScrollView(

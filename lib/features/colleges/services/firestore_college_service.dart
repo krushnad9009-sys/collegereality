@@ -357,6 +357,21 @@ class FirestoreCollegeService {
     });
   }
 
+  Future<void> batchSeedColleges(List<CollegeModel> colleges) async {
+    const batchSize = 450;
+    for (var i = 0; i < colleges.length; i += batchSize) {
+      final batch = _firestore.batch();
+      final chunk = colleges.skip(i).take(batchSize);
+      for (final college in chunk) {
+        batch.set(
+          _colleges.doc(college.id),
+          _prepareForWrite(college),
+        );
+      }
+      await batch.commit();
+    }
+  }
+
   Future<void> batchUpsertColleges(List<CollegeModel> colleges) async {
     const batchSize = 450;
     for (var i = 0; i < colleges.length; i += batchSize) {
@@ -377,6 +392,7 @@ class FirestoreCollegeService {
     required int totalColleges,
     List<String>? states,
     List<String>? courses,
+    DateTime? seededAt,
   }) async {
     await _firestore
         .collection(FirestoreConstants.metaCollection)
@@ -386,6 +402,7 @@ class FirestoreCollegeService {
       'states': states ?? CollegeConstants.indianStates,
       'courses': courses ?? CollegeConstants.popularCourses,
       'updatedAt': DateTime.now().toIso8601String(),
+      if (seededAt != null) 'seededAt': seededAt.toIso8601String(),
     }, SetOptions(merge: true));
   }
 

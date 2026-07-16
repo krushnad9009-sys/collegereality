@@ -117,6 +117,21 @@ service cloud.firestore {
         !exists(/databases/$(database)/documents/_meta/$(metaId));
     }
 
+    function isCollegeDirectoryMetaWrite() {
+      return request.resource.data.keys().hasAll(['totalColleges', 'updatedAt']) &&
+        request.resource.data.totalColleges is number;
+    }
+
+    function isCollegeBootstrapCreate(collegeId) {
+      return isAuthenticated() &&
+        collegeDirectoryEmpty() &&
+        !exists(/databases/$(database)/documents/colleges/$(collegeId));
+    }
+
+    function isCollegeBootstrapUpdate() {
+      return isAuthenticated() && collegeDirectoryEmpty();
+    }
+
     function canAccessConversation(data) {
       return isAuthenticated() && (
         data.type != 'private' ||
@@ -140,16 +155,21 @@ service cloud.firestore {
 
     match /colleges/{collegeId} {
       allow read: if isAuthenticated();
-      allow create: if isAdmin() ||
-        (isAuthenticated() && collegeDirectoryEmpty());
-      allow update: if isAdmin() || (isAuthenticated() && isAggregateOnlyUpdate());
+      allow create: if isAdmin() || isCollegeBootstrapCreate(collegeId);
+      allow update: if isAdmin() ||
+        (isAuthenticated() && isAggregateOnlyUpdate()) ||
+        isCollegeBootstrapUpdate();
       allow delete: if isAdmin();
     }
 
     match /_meta/{docId} {
       allow read: if isAuthenticated();
-      allow write: if isAdmin() ||
-        (isAuthenticated() && canBootstrapMeta(docId));
+      allow create: if isAdmin() ||
+        (isAuthenticated() && canBootstrapMeta(docId)) ||
+        (isAuthenticated() && docId == 'collegeDirectory' && isCollegeDirectoryMetaWrite());
+      allow update: if isAdmin() ||
+        (isAuthenticated() && docId == 'collegeDirectory' && isCollegeDirectoryMetaWrite());
+      allow delete: if isAdmin();
     }
 
     match /reviews/{reviewId} {

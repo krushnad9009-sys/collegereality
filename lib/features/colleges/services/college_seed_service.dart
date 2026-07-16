@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
@@ -19,6 +20,12 @@ class CollegeSeedService {
   final FirestoreCollegeService _collegeService;
 
   Future<bool> ensureSeeded() async {
+    final authUser = FirebaseAuth.instance.currentUser;
+    if (authUser == null) {
+      debugPrint('College seed deferred until user is authenticated');
+      return false;
+    }
+
     if (FirestoreSeedGuard.collegeSeedCompleted) return true;
 
     final alreadySeeded = await FirestoreSeedGuard.isMetaSeeded(
@@ -51,11 +58,12 @@ class CollegeSeedService {
         FirestoreSeedGuard.failCollegeSeed();
         return false;
       }
-      await _collegeService.batchUpsertColleges(colleges);
+      await _collegeService.batchSeedColleges(colleges);
       await _collegeService.updateDirectoryMeta(
         totalColleges: colleges.length,
         states: CollegeConstants.indianStates,
         courses: CollegeConstants.popularCourses,
+        seededAt: DateTime.now(),
       );
       FirestoreSeedGuard.completeCollegeSeed();
       return true;

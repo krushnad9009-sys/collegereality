@@ -6,6 +6,7 @@ import '../../../config/theme/app_theme.dart';
 import '../../../config/router/route_names.dart';
 import '../../../core/widgets/index.dart';
 import '../../../core/services/preferences_service.dart';
+import '../../colleges/providers/college_provider.dart';
 import '../providers/auth_provider.dart';
 import '../utils/google_auth_helper.dart';
 import '../utils/validation_util.dart';
@@ -72,6 +73,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
 
       if (mounted) {
+        ref.invalidate(collegeSeedProvider);
         SnackBarHelper.showSuccessSnackBar(
           context,
           message: 'Logged in successfully!',

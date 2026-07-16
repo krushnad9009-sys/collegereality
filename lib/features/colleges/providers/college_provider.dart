@@ -6,15 +6,19 @@ import '../services/firestore_college_service.dart';
 import '../services/college_seed_service.dart';
 import '../../../core/bootstrap/startup_bootstrap.dart';
 import '../../../core/cache/college_session_cache.dart';
-
-final collegeSeedProvider = FutureProvider<bool>((ref) async {
-  final service = CollegeSeedService(ref.watch(firestoreCollegeServiceProvider));
-  return service.ensureSeeded();
-});
+import '../../auth/providers/auth_provider.dart';
 
 final firestoreCollegeServiceProvider =
     Provider<FirestoreCollegeService>((ref) {
   return FirestoreCollegeService();
+});
+
+final collegeSeedProvider = FutureProvider<bool>((ref) async {
+  final user = ref.watch(currentUserProvider);
+  if (user == null) return false;
+
+  final service = CollegeSeedService(ref.watch(firestoreCollegeServiceProvider));
+  return service.ensureSeeded();
 });
 
 final collegeStorageServiceProvider = Provider<CollegeStorageService>((ref) {

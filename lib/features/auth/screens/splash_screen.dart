@@ -7,8 +7,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../config/router/route_names.dart';
 import '../../../core/bootstrap/firebase_bootstrap.dart';
-import '../../colleges/services/college_seed_service.dart';
-import '../../colleges/services/firestore_college_service.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -58,12 +56,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       FirebaseBootstrap.ensureInitialized(),
       SharedPreferences.getInstance().then((p) => prefs = p),
     ]);
-
-    try {
-      await CollegeSeedService(FirestoreCollegeService()).ensureSeeded();
-    } catch (_) {
-      // Search still works once seed completes on a later screen.
-    }
 
     if (!mounted) return;
 
