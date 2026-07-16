@@ -374,12 +374,13 @@ class CollegeCourse {
       };
 }
 
-class CollegeModel {
+class CollegeModel implements CollegeModelLike {
   final String id;
   final String name;
   final String nameLower;
   final String slug;
   final String city;
+  final String district;
   final String state;
   final String address;
   final String type;
@@ -397,6 +398,7 @@ class CollegeModel {
   final String? email;
   final List<String> officialLinks;
   final String cityLower;
+  final String districtLower;
   final String universityLower;
   final String stateLower;
   final CollegeFees fees;
@@ -422,6 +424,7 @@ class CollegeModel {
     required this.nameLower,
     required this.slug,
     required this.city,
+    String district = '',
     required this.state,
     required this.address,
     required this.type,
@@ -439,6 +442,7 @@ class CollegeModel {
     this.email,
     this.officialLinks = const [],
     String? cityLower,
+    String? districtLower,
     String? universityLower,
     String? stateLower,
     required this.fees,
@@ -457,12 +461,22 @@ class CollegeModel {
     this.updatedBy,
     this.createdAt,
     this.updatedAt,
-  })  : cityLower = cityLower ?? CollegeSearchUtils.normalizeCity(city),
+  })  : district = district.isNotEmpty ? district : city,
+        cityLower = cityLower ?? CollegeSearchUtils.normalizeCity(city),
+        districtLower = districtLower ??
+            CollegeSearchUtils.normalizeDistrict(
+              district.isNotEmpty ? district : city,
+            ),
         universityLower =
             universityLower ?? CollegeSearchUtils.normalizeUniversity(universityName),
         stateLower = stateLower ?? CollegeSearchUtils.normalizeState(state);
 
-  String get locationLabel => '$city, $state';
+  String get locationLabel {
+    if (district.isNotEmpty && district != city) {
+      return '$city, $district, $state';
+    }
+    return '$city, $state';
+  }
 
   String get mapsLink {
     if (googleMapsUrl != null && googleMapsUrl!.trim().isNotEmpty) {
@@ -491,6 +505,7 @@ class CollegeModel {
           CollegeSearchUtils.normalizeName(name),
       slug: json['slug'] as String? ?? '',
       city: json['city'] as String? ?? '',
+      district: json['district'] as String? ?? json['city'] as String? ?? '',
       state: json['state'] as String? ?? '',
       address: json['address'] as String? ?? '',
       type: json['type'] as String? ?? 'private',
@@ -521,6 +536,10 @@ class CollegeModel {
           [],
       cityLower: json['cityLower'] as String? ??
           CollegeSearchUtils.normalizeCity(json['city'] as String? ?? ''),
+      districtLower: json['districtLower'] as String? ??
+          CollegeSearchUtils.normalizeDistrict(
+            json['district'] as String? ?? json['city'] as String? ?? '',
+          ),
       universityLower: json['universityLower'] as String? ??
           CollegeSearchUtils.normalizeUniversity(json['universityName'] as String?),
       stateLower: json['stateLower'] as String? ??
@@ -577,8 +596,11 @@ class CollegeModel {
         : CollegeSearchUtils.buildSearchTokens(
             name: name,
             city: city,
+            district: district,
             state: state,
+            university: universityName ?? '',
             courses: courses,
+            keywords: searchKeywords,
           );
     return {
       'id': id,
@@ -588,6 +610,7 @@ class CollegeModel {
           : CollegeSearchUtils.normalizeName(name),
       'slug': slug.isNotEmpty ? slug : CollegeSearchUtils.buildSlug(name, city),
       'city': city,
+      'district': district,
       'state': state,
       'address': address,
       'type': type,
@@ -607,6 +630,9 @@ class CollegeModel {
       'cityLower': cityLower.isNotEmpty
           ? cityLower
           : CollegeSearchUtils.normalizeCity(city),
+      'districtLower': districtLower.isNotEmpty
+          ? districtLower
+          : CollegeSearchUtils.normalizeDistrict(district),
       'universityLower': universityLower.isNotEmpty
           ? universityLower
           : CollegeSearchUtils.normalizeUniversity(universityName),
@@ -638,6 +664,7 @@ class CollegeModel {
     String? nameLower,
     String? slug,
     String? city,
+    String? district,
     String? state,
     String? address,
     String? type,
@@ -655,6 +682,7 @@ class CollegeModel {
     String? email,
     List<String>? officialLinks,
     String? cityLower,
+    String? districtLower,
     String? universityLower,
     String? stateLower,
     CollegeFees? fees,
@@ -676,6 +704,7 @@ class CollegeModel {
   }) {
     final nextName = name ?? this.name;
     final nextCity = city ?? this.city;
+    final nextDistrict = district ?? this.district;
     final nextState = state ?? this.state;
     final nextUniversity = universityName ?? this.universityName;
     return CollegeModel(
@@ -684,6 +713,7 @@ class CollegeModel {
       nameLower: nameLower ?? CollegeSearchUtils.normalizeName(nextName),
       slug: slug ?? this.slug,
       city: nextCity,
+      district: nextDistrict,
       state: nextState,
       address: address ?? this.address,
       type: type ?? this.type,
@@ -701,6 +731,10 @@ class CollegeModel {
       email: email ?? this.email,
       officialLinks: officialLinks ?? this.officialLinks,
       cityLower: cityLower ?? CollegeSearchUtils.normalizeCity(nextCity),
+      districtLower: districtLower ??
+          CollegeSearchUtils.normalizeDistrict(
+            nextDistrict.isNotEmpty ? nextDistrict : nextCity,
+          ),
       universityLower: universityLower ??
           CollegeSearchUtils.normalizeUniversity(nextUniversity),
       stateLower: stateLower ?? CollegeSearchUtils.normalizeState(nextState),

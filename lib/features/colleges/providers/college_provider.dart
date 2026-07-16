@@ -3,8 +3,14 @@ import '../models/college_model.dart';
 import '../repositories/college_repository.dart';
 import '../services/college_storage_service.dart';
 import '../services/firestore_college_service.dart';
+import '../services/college_seed_service.dart';
 import '../../../core/bootstrap/startup_bootstrap.dart';
 import '../../../core/cache/college_session_cache.dart';
+
+final collegeSeedProvider = FutureProvider<bool>((ref) async {
+  final service = CollegeSeedService(ref.watch(firestoreCollegeServiceProvider));
+  return service.ensureSeeded();
+});
 
 final firestoreCollegeServiceProvider =
     Provider<FirestoreCollegeService>((ref) {
@@ -37,6 +43,7 @@ final homeFeaturedCollegesProvider =
 
 final collegeByIdProvider =
     FutureProvider.family<CollegeModel?, String>((ref, id) async {
+  await ref.watch(collegeSeedProvider.future);
   final repository = ref.watch(collegeRepositoryProvider);
   return repository.getCollegeById(id);
 });
@@ -95,6 +102,7 @@ class CollegeSearchParams {
 final collegeSearchPageProvider =
     FutureProvider.family<CollegeSearchPage, CollegeSearchParams>(
         (ref, params) async {
+  await ref.watch(collegeSeedProvider.future);
   final repository = ref.watch(collegeRepositoryProvider);
   return repository.searchColleges(
     query: params.query,
@@ -108,6 +116,7 @@ final collegeSearchPageProvider =
 final collegeAutocompleteProvider =
     FutureProvider.family<List<CollegeModel>, String>((ref, query) async {
   if (query.trim().length < 1) return [];
+  await ref.watch(collegeSeedProvider.future);
   final repository = ref.watch(collegeRepositoryProvider);
   return repository.autocomplete(query);
 });

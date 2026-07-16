@@ -33,10 +33,11 @@ class FirestoreAdmissionService {
           );
 
   Future<void> ensureSeeded() async {
-    final hasData =
-        await FirestoreSeedGuard.hasSampleData(_scholarships.limit(1).get());
-    if (hasData) return;
-    await FirestoreSeedGuard.skipClientSeedWrites();
+    await FirestoreSeedGuard.tryBootstrapSeed(
+      metaDocId: AdmissionConstants.metaAdmissionSeededDoc,
+      sampleQuery: _scholarships.limit(1).get(),
+      seed: _seedFromAssets,
+    );
   }
 
   Future<void> _seedFromAssets() async {

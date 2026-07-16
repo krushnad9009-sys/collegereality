@@ -108,6 +108,29 @@ service cloud.firestore {
         (session.callerId == request.auth.uid || session.calleeId == request.auth.uid);
     }
 
+    function collegeDirectoryEmpty() {
+      return !exists(/databases/$(database)/documents/_meta/collegeDirectory);
+    }
+
+    function canBootstrapMeta(metaId) {
+      return isAuthenticated() &&
+        !exists(/databases/$(database)/documents/_meta/$(metaId));
+    }
+
+    function canAccessConversation(data) {
+      return isAuthenticated() && (
+        data.type != 'private' ||
+        request.auth.uid in data.get('participantIds', [])
+      );
+    }
+
+    function canAccessConversationById(conversationId) {
+      return exists(/databases/$(database)/documents/community_conversations/$(conversationId)) &&
+        canAccessConversation(
+          get(/databases/$(database)/documents/community_conversations/$(conversationId)).data
+        );
+    }
+
     match /users/{userId} {
       allow read: if isAuthenticated();
       allow create: if isOwner(userId);
@@ -117,14 +140,16 @@ service cloud.firestore {
 
     match /colleges/{collegeId} {
       allow read: if isAuthenticated();
-      allow create: if isAdmin();
+      allow create: if isAdmin() ||
+        (isAuthenticated() && collegeDirectoryEmpty());
       allow update: if isAdmin() || (isAuthenticated() && isAggregateOnlyUpdate());
       allow delete: if isAdmin();
     }
 
     match /_meta/{docId} {
       allow read: if isAuthenticated();
-      allow write: if isAdmin();
+      allow write: if isAdmin() ||
+        (isAuthenticated() && canBootstrapMeta(docId));
     }
 
     match /reviews/{reviewId} {
@@ -223,17 +248,23 @@ service cloud.firestore {
     }
 
     match /community_conversations/{conversationId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
-      allow update: if isAuthenticated();
+      allow read: if canAccessConversation(resource.data);
+      allow create: if isAuthenticated() && (
+        request.resource.data.type != 'private' ||
+        request.auth.uid in request.resource.data.get('participantIds', [])
+      );
+      allow update: if canAccessConversation(resource.data);
       allow delete: if isAdmin();
     }
 
     match /community_messages/{messageId} {
-      allow read: if isAuthenticated();
+      allow read: if isAuthenticated() &&
+        canAccessConversationById(resource.data.conversationId);
       allow create: if isAuthenticated() &&
-        request.resource.data.senderId == request.auth.uid;
+        request.resource.data.senderId == request.auth.uid &&
+        canAccessConversationById(request.resource.data.conversationId);
       allow update: if isAuthenticated() &&
+        canAccessConversationById(resource.data.conversationId) &&
         (resource.data.senderId == request.auth.uid || isCommunityMessageAggregateUpdate());
       allow delete: if isAdmin();
     }
@@ -294,17 +325,23 @@ service cloud.firestore {
 
     match /scholarships/{scholarshipId} {
       allow read: if isAuthenticated();
-      allow write: if isAdmin();
+      allow create: if isAdmin() ||
+        (isAuthenticated() && canBootstrapMeta('admissionSeeded'));
+      allow update, delete: if isAdmin();
     }
 
     match /entrance_exams/{examId} {
       allow read: if isAuthenticated();
-      allow write: if isAdmin();
+      allow create: if isAdmin() ||
+        (isAuthenticated() && canBootstrapMeta('admissionSeeded'));
+      allow update, delete: if isAdmin();
     }
 
     match /cutoff_records/{cutoffId} {
       allow read: if isAuthenticated();
-      allow write: if isAdmin();
+      allow create: if isAdmin() ||
+        (isAuthenticated() && canBootstrapMeta('admissionSeeded'));
+      allow update, delete: if isAdmin();
     }
 
     match /admission_predictions/{predictionId} {
@@ -328,6 +365,7 @@ service cloud.firestore {
     match /internships/{internshipId} {
       allow read: if isAuthenticated();
       allow create: if isAdmin() ||
+        (isAuthenticated() && canBootstrapMeta('careersSeeded')) ||
         (isVerifiedCompanyUser() &&
           request.resource.data.companyId == companyAccountCompanyId());
       allow update, delete: if isAdmin() ||
@@ -338,6 +376,7 @@ service cloud.firestore {
     match /jobs/{jobId} {
       allow read: if isAuthenticated();
       allow create: if isAdmin() ||
+        (isAuthenticated() && canBootstrapMeta('careersSeeded')) ||
         (isVerifiedCompanyUser() &&
           request.resource.data.companyId == companyAccountCompanyId());
       allow update, delete: if isAdmin() ||
@@ -347,21 +386,27 @@ service cloud.firestore {
 
     match /companies/{companyId} {
       allow read: if isAuthenticated();
-      allow write: if isAdmin();
+      allow create: if isAdmin() ||
+        (isAuthenticated() && canBootstrapMeta('careersSeeded'));
+      allow update, delete: if isAdmin();
     }
 
     match /company_reviews/{reviewId} {
       allow read: if isAuthenticated();
-      allow create: if isAuthenticated() &&
-        isVerifiedStudent() &&
-        request.resource.data.userId == request.auth.uid &&
-        request.resource.data.isVerifiedStudent == true;
+      allow create: if isAuthenticated() && (
+        (isVerifiedStudent() &&
+          request.resource.data.userId == request.auth.uid &&
+          request.resource.data.isVerifiedStudent == true) ||
+        (isAuthenticated() && canBootstrapMeta('careersSeeded'))
+      );
       allow update, delete: if isAdmin();
     }
 
     match /alumni_profiles/{alumniId} {
       allow read: if isAuthenticated();
-      allow write: if isAdmin();
+      allow create: if isAdmin() ||
+        (isAuthenticated() && canBootstrapMeta('careersSeeded'));
+      allow update, delete: if isAdmin();
     }
 
     match /saved_internships/{docId} {
@@ -436,30 +481,40 @@ service cloud.firestore {
 
     match /campus_events/{eventId} {
       allow read: if isAuthenticated();
-      allow write: if isAdmin();
+      allow create: if isAdmin() ||
+        (isAuthenticated() && canBootstrapMeta('studentLifeSeeded'));
+      allow update, delete: if isAdmin();
     }
 
     match /student_clubs/{clubId} {
       allow read: if isAuthenticated();
-      allow write: if isAdmin();
+      allow create: if isAdmin() ||
+        (isAuthenticated() && canBootstrapMeta('studentLifeSeeded'));
+      allow update, delete: if isAdmin();
     }
 
     match /competitions/{competitionId} {
       allow read: if isAuthenticated();
-      allow write: if isAdmin();
+      allow create: if isAdmin() ||
+        (isAuthenticated() && canBootstrapMeta('studentLifeSeeded'));
+      allow update, delete: if isAdmin();
     }
 
     match /student_communities/{communityId} {
       allow read: if isAuthenticated();
-      allow write: if isAdmin();
+      allow create: if isAdmin() ||
+        (isAuthenticated() && canBootstrapMeta('studentLifeSeeded'));
+      allow update, delete: if isAdmin();
     }
 
     match /student_community_posts/{postId} {
       allow read: if isAuthenticated();
-      allow create: if isAuthenticated() &&
-        isVerifiedStudent() &&
-        request.resource.data.authorId == request.auth.uid &&
-        request.resource.data.isVerifiedStudent == true;
+      allow create: if isAuthenticated() && (
+        (isVerifiedStudent() &&
+          request.resource.data.authorId == request.auth.uid &&
+          request.resource.data.isVerifiedStudent == true) ||
+        (canBootstrapMeta('studentLifeSeeded'))
+      );
       allow update: if isAdmin() ||
         (isAuthenticated() && resource.data.authorId == request.auth.uid) ||
         (isAuthenticated() && isStudentPostAggregateUpdate());
@@ -543,7 +598,9 @@ service cloud.firestore {
 
     match /admission_calendar_events/{eventId} {
       allow read: if isAuthenticated();
-      allow write: if isAdmin();
+      allow create: if isAdmin() ||
+        (isAuthenticated() && canBootstrapMeta('engagementSeeded'));
+      allow update, delete: if isAdmin();
     }
 
     match /saved_entrance_exams/{docId} {

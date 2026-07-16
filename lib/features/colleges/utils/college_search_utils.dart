@@ -6,6 +6,8 @@ class CollegeSearchUtils {
 
   static String normalizeCity(String city) => city.trim().toLowerCase();
 
+  static String normalizeDistrict(String district) => district.trim().toLowerCase();
+
   static String normalizeState(String state) => state.trim().toLowerCase();
 
   static String titleCaseCity(String city) {
@@ -31,28 +33,77 @@ class CollegeSearchUtils {
     return base.isEmpty ? 'college' : base;
   }
 
-  /// Prefix tokens for optional array-contains-any fallback (max 10 used in query).
+  /// Tokenizes query words for array-contains-any Firestore lookup.
+  static List<String> queryTokens(String query) {
+    final tokens = <String>{};
+    for (final word in query.toLowerCase().split(RegExp(r'\W+'))) {
+      if (word.length < 2) continue;
+      tokens.add(word);
+      for (var len = 3; len <= word.length && len <= 12; len++) {
+        tokens.add(word.substring(0, len));
+      }
+    }
+    return tokens.take(10).toList();
+  }
+
+  /// Prefix tokens for optional array-contains-any fallback (max 30 stored).
   static List<String> buildSearchTokens({
     required String name,
     required String city,
     required String state,
+    String district = '',
+    String university = '',
     List<String> courses = const [],
+    List<String> keywords = const [],
   }) {
     final tokens = <String>{};
     final corpus = [
       name,
       city,
+      district,
       state,
+      university,
       ...courses,
+      ...keywords,
     ].join(' ').toLowerCase();
 
     for (final word in corpus.split(RegExp(r'\W+'))) {
       if (word.length < 2) continue;
       tokens.add(word);
-      for (var len = 3; len <= word.length && len <= 10; len++) {
+      for (var len = 3; len <= word.length && len <= 12; len++) {
         tokens.add(word.substring(0, len));
       }
     }
     return tokens.take(30).toList();
   }
+
+  /// Case-insensitive partial match across all searchable college fields.
+  static bool matchesQuery(CollegeModelLike college, String rawQuery) {
+    final query = rawQuery.trim().toLowerCase();
+    if (query.isEmpty) return true;
+
+    final haystack = [
+      college.name,
+      college.city,
+      college.district,
+      college.state,
+      college.universityName ?? '',
+      ...college.courses,
+      ...college.searchKeywords,
+    ].join(' ').toLowerCase();
+
+    final words = query.split(RegExp(r'\s+')).where((w) => w.isNotEmpty);
+    return words.every(haystack.contains);
+  }
+}
+
+/// Minimal interface for search matching without importing the full model.
+abstract class CollegeModelLike {
+  String get name;
+  String get city;
+  String get district;
+  String get state;
+  String? get universityName;
+  List<String> get courses;
+  List<String> get searchKeywords;
 }

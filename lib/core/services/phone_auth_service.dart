@@ -160,7 +160,9 @@ class PhoneAuthService {
         case 'session-expired':
           return PhoneAuthException('OTP expired. Request a new code.');
         default:
-          return PhoneAuthException(e.message ?? 'Phone verification failed');
+          return PhoneAuthException(
+            '${e.code}: ${e.message ?? 'Phone verification failed'}',
+          );
       }
     }
     return PhoneAuthException(e.toString());

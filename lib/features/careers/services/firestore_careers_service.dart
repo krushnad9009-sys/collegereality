@@ -49,10 +49,11 @@ class FirestoreCareersService {
           );
 
   Future<void> ensureSeeded() async {
-    final hasData =
-        await FirestoreSeedGuard.hasSampleData(_companies.limit(1).get());
-    if (hasData) return;
-    await FirestoreSeedGuard.skipClientSeedWrites();
+    await FirestoreSeedGuard.tryBootstrapSeed(
+      metaDocId: CareersConstants.metaCareersSeededDoc,
+      sampleQuery: _companies.limit(1).get(),
+      seed: _seedFromAssets,
+    );
   }
 
   Future<void> _seedFromAssets() async {

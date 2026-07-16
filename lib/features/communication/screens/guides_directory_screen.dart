@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/communication_constants.dart';
+import '../../../core/widgets/index.dart';
 import '../models/public_guide_profile.dart';
 import '../providers/communication_provider.dart';
 import '../../verification/widgets/verification_badge_widget.dart';
@@ -79,16 +80,19 @@ class _GuidesDirectoryScreenState extends ConsumerState<GuidesDirectoryScreen> {
           ),
           Expanded(
             child: guidesAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('Error: $e')),
+              loading: () => const ListSkeletonLoader(itemCount: 5),
+              error: (e, _) => AsyncErrorView(
+                message: e.toString().replaceFirst('Exception: ', ''),
+                onRetry: () =>
+                    ref.invalidate(guidesDirectoryProvider(_languageFilter)),
+              ),
               data: (guides) {
                 if (guides.isEmpty) {
-                  return Center(
-                    child: Text(
-                      'No guides available yet.\nEnable guide mode in your profile!',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.poppins(color: AppTheme.gray600),
-                    ),
+                  return AsyncEmptyView(
+                    icon: Icons.school_outlined,
+                    title: 'No guides available yet',
+                    subtitle:
+                        'Guides are verified students who help others.\nEnable guide mode in your profile to appear here.',
                   );
                 }
                 return RefreshIndicator(
@@ -123,7 +127,7 @@ class _GuideListTile extends StatelessWidget {
     return Card(
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-                        onTap: () => context.push(RouteNames.studentProfilePath(guide.uid)),
+                        onTap: () => context.push(RouteNames.guideProfilePath(guide.uid)),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(

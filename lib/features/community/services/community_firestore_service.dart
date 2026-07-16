@@ -141,13 +141,19 @@ class CommunityFirestoreService {
     final ids = [currentUser.uid, peerId]..sort();
     final snapshot = await _conversations
         .where('type', isEqualTo: CommunityConstants.typePrivate)
-        .where('participantIds', isEqualTo: ids)
-        .limit(1)
+        .where('participantIds', arrayContains: currentUser.uid)
+        .limit(25)
         .get();
 
-    if (snapshot.docs.isNotEmpty) {
-      return ChatConversationModel.fromJson(snapshot.docs.first.data(),
-          docId: snapshot.docs.first.id);
+    for (final doc in snapshot.docs) {
+      final data = doc.data();
+      final participants = (data['participantIds'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [];
+      if (participants.contains(peerId)) {
+        return ChatConversationModel.fromJson(data, docId: doc.id);
+      }
     }
 
     final id = _uuid.v4();

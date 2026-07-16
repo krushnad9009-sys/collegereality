@@ -40,9 +40,11 @@ class FirestoreEngagementService {
           );
 
   Future<void> ensureSeeded() async {
-    final hasData = await FirestoreSeedGuard.hasSampleData(_calendar.limit(1).get());
-    if (hasData) return;
-    await FirestoreSeedGuard.skipClientSeedWrites();
+    await FirestoreSeedGuard.tryBootstrapSeed(
+      metaDocId: EngagementConstants.metaEngagementSeededDoc,
+      sampleQuery: _calendar.limit(1).get(),
+      seed: _seedCalendarFromAssets,
+    );
   }
 
   Future<void> _seedCalendarFromAssets() async {
