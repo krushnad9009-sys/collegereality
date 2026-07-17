@@ -242,9 +242,8 @@ class _EmptyState extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                'Ask in English, Hindi, or Marathi. I rank colleges using '
-                'verified ratings, reviews, placements, fees, hostel, NAAC & NIRF — '
-                'never hallucinated data.',
+                'Get personalized college recommendations using verified '
+                'ratings, reviews, placements, fees, hostel, NAAC & NIRF data.',
                 style: GoogleFonts.poppins(fontSize: 13),
               ),
             ],

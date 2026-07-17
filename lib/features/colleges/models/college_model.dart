@@ -388,6 +388,8 @@ class CollegeModel implements CollegeModelLike {
   final String state;
   final String address;
   final String type;
+  final String category;
+  final String? aisheId;
   @override
   final List<String> courses;
   final List<CollegeCourse> coursesDetailed;
@@ -436,6 +438,8 @@ class CollegeModel implements CollegeModelLike {
     required this.state,
     required this.address,
     required this.type,
+    this.category = 'General',
+    this.aisheId,
     required this.courses,
     this.coursesDetailed = const [],
     this.website,
@@ -517,6 +521,8 @@ class CollegeModel implements CollegeModelLike {
       state: json['state'] as String? ?? '',
       address: json['address'] as String? ?? '',
       type: json['type'] as String? ?? 'private',
+      category: json['category'] as String? ?? 'General',
+      aisheId: json['aisheId'] as String?,
       courses: (json['courses'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??
@@ -622,6 +628,8 @@ class CollegeModel implements CollegeModelLike {
       'state': state,
       'address': address,
       'type': type,
+      'category': category,
+      if (aisheId != null) 'aisheId': aisheId,
       'courses': courses,
       'coursesDetailed': coursesDetailed.map((e) => e.toJson()).toList(),
       'website': website,
@@ -676,6 +684,8 @@ class CollegeModel implements CollegeModelLike {
     String? state,
     String? address,
     String? type,
+    String? category,
+    String? aisheId,
     List<String>? courses,
     List<CollegeCourse>? coursesDetailed,
     String? website,
@@ -725,6 +735,8 @@ class CollegeModel implements CollegeModelLike {
       state: nextState,
       address: address ?? this.address,
       type: type ?? this.type,
+      category: category ?? this.category,
+      aisheId: aisheId ?? this.aisheId,
       courses: courses ?? this.courses,
       coursesDetailed: coursesDetailed ?? this.coursesDetailed,
       website: website ?? this.website,
@@ -809,17 +821,23 @@ class CollegeDirectoryMeta {
   final List<String> states;
   final List<String> courses;
   final int totalColleges;
+  final Map<String, int> categoryCounts;
+  final Map<String, int> stateCounts;
   final DateTime? updatedAt;
 
   const CollegeDirectoryMeta({
     this.states = CollegeConstants.indianStates,
     this.courses = CollegeConstants.popularCourses,
     this.totalColleges = 0,
+    this.categoryCounts = const {},
+    this.stateCounts = const {},
     this.updatedAt,
   });
 
   factory CollegeDirectoryMeta.fromJson(Map<String, dynamic>? json) {
     if (json == null) return const CollegeDirectoryMeta();
+    final rawCategories = json['categoryCounts'] as Map<String, dynamic>?;
+    final rawStates = json['stateCounts'] as Map<String, dynamic>?;
     return CollegeDirectoryMeta(
       states: (json['states'] as List<dynamic>?)
               ?.map((e) => e.toString())
@@ -830,6 +848,14 @@ class CollegeDirectoryMeta {
               .toList() ??
           CollegeConstants.popularCourses,
       totalColleges: (json['totalColleges'] as num?)?.toInt() ?? 0,
+      categoryCounts: rawCategories?.map(
+            (k, v) => MapEntry(k, (v as num).toInt()),
+          ) ??
+          const {},
+      stateCounts: rawStates?.map(
+            (k, v) => MapEntry(k, (v as num).toInt()),
+          ) ??
+          const {},
       updatedAt: json['updatedAt'] != null
           ? DateTime.tryParse(json['updatedAt'].toString())
           : null,

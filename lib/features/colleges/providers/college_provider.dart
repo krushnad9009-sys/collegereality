@@ -14,11 +14,20 @@ final firestoreCollegeServiceProvider =
 });
 
 final collegeSeedProvider = FutureProvider<bool>((ref) async {
-  final user = ref.watch(currentUserProvider);
-  if (user == null) return false;
-
   final service = CollegeSeedService(ref.watch(firestoreCollegeServiceProvider));
-  return service.ensureSeeded();
+  final user = ref.watch(currentUserProvider);
+  if (user != null) {
+    return service.ensureSeeded();
+  }
+  final count = await ref.watch(collegeRepositoryProvider).getCollegeCount();
+  return count > 0;
+});
+
+/// True when Firestore has college data (no client seed required).
+final collegeDataReadyProvider = FutureProvider<bool>((ref) async {
+  final count = await ref.watch(collegeCountProvider.future);
+  if (count > 0) return true;
+  return ref.watch(collegeSeedProvider.future);
 });
 
 final collegeStorageServiceProvider = Provider<CollegeStorageService>((ref) {
@@ -70,6 +79,7 @@ class CollegeSearchParams {
   final String? city;
   final String? state;
   final String? course;
+  final String? category;
   final String? startAfterDocumentId;
 
   const CollegeSearchParams({
@@ -77,6 +87,7 @@ class CollegeSearchParams {
     this.city,
     this.state,
     this.course,
+    this.category,
     this.startAfterDocumentId,
   });
 
@@ -86,6 +97,7 @@ class CollegeSearchParams {
       city: city,
       state: state,
       course: course,
+      category: category,
       startAfterDocumentId: lastDocumentId,
     );
   }
@@ -98,23 +110,25 @@ class CollegeSearchParams {
           city == other.city &&
           state == other.state &&
           course == other.course &&
+          category == other.category &&
           startAfterDocumentId == other.startAfterDocumentId;
 
   @override
   int get hashCode =>
-      Object.hash(query, city, state, course, startAfterDocumentId);
+      Object.hash(query, city, state, course, category, startAfterDocumentId);
 }
 
 final collegeSearchPageProvider =
     FutureProvider.family<CollegeSearchPage, CollegeSearchParams>(
         (ref, params) async {
-  await ref.watch(collegeSeedProvider.future);
+  await ref.watch(collegeDataReadyProvider.future);
   final repository = ref.watch(collegeRepositoryProvider);
   return repository.searchColleges(
     query: params.query,
     city: params.city,
     state: params.state,
     course: params.course,
+    category: params.category,
     startAfterDocumentId: params.startAfterDocumentId,
   );
 });
@@ -122,7 +136,7 @@ final collegeSearchPageProvider =
 final collegeAutocompleteProvider =
     FutureProvider.family<List<CollegeModel>, String>((ref, query) async {
   if (query.trim().isEmpty) return [];
-  await ref.watch(collegeSeedProvider.future);
+  await ref.watch(collegeDataReadyProvider.future);
   final repository = ref.watch(collegeRepositoryProvider);
   return repository.autocomplete(query);
 });
@@ -130,7 +144,7 @@ final collegeAutocompleteProvider =
 final collegeInstantSuggestProvider =
     FutureProvider.family<List<CollegeModel>, String>((ref, query) async {
   if (query.trim().isEmpty) return [];
-  await ref.watch(collegeSeedProvider.future);
+  await ref.watch(collegeDataReadyProvider.future);
   final repository = ref.watch(collegeRepositoryProvider);
   return repository.autocomplete(query);
 });
@@ -144,6 +158,35 @@ final savedCollegesProvider = FutureProvider<List<CollegeModel>>((ref) async {
   final repository = ref.watch(collegeRepositoryProvider);
   return repository.getCollegesByIds(favoriteIds.toList());
 });
+
+/// All-India featured colleges from Firestore AISHE directory.
+final indiaFeaturedCollegesProvider =
+    FutureProvider<List<CollegeModel>>((ref) async {
+  await ref.watch(collegeDataReadyProvider.future);
+  final repository = ref.watch(collegeRepositoryProvider);
+  return repository.getFeaturedColleges(limit: 24);
+});
+
+/// Category counts from directory meta.
+final collegeCategoryCountsProvider =
+    FutureProvider<Map<String, int>>((ref) async {
+  final meta = await ref.watch(collegeDirectoryMetaProvider.future);
+  if (meta.categoryCounts.isNotEmpty) return meta.categoryCounts;
+  return const {
+    'Engineering': 4400,
+    'Medical': 1400,
+    'MBA': 2300,
+    'Law': 800,
+    'Pharmacy': 1200,
+    'Arts': 1400,
+    'Commerce': 1500,
+    'Science': 900,
+    'General': 27000,
+  };
+});
+
+/// Backward-compatible alias.
+final maharashtraCollegesProvider = indiaFeaturedCollegesProvider;
 
 /// Backward-compatible alias for home featured list.
 final collegesProvider = featuredCollegesProvider;

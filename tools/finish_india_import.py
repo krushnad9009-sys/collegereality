@@ -1,0 +1,187 @@
+#!/usr/bin/env python3
+"""Import only missing/under-imported states, then fix and verify."""
+
+from __future__ import annotations
+
+import csv
+import json
+import re
+import subprocess
+import sys
+import time
+from collections import Counter
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+CREDS = ROOT / "android" / "tools" / "serviceAccount.json"
+CSV_PATH = ROOT / "tools/data/processed/india_colleges_clean.csv"
+FULL_JSON = ROOT / "tools/data/firestore/india_colleges_firestore_full.json"
+LEGACY_JSON = ROOT / "tools/data/firestore/india_colleges_firestore.json"
+STATE_DIR = ROOT / "tools/data/firestore/states"
+MIN_RATIO = 0.90
+
+STATES = [
+    "Uttar Pradesh", "Maharashtra", "Karnataka", "Tamil Nadu", "Andhra Pradesh",
+    "Rajasthan", "Gujarat", "Madhya Pradesh", "Telangana", "Kerala", "Odisha",
+    "West Bengal", "Punjab", "Haryana", "Chhatisgarh", "Bihar", "Assam",
+    "Uttrakhand", "Himachal Pradesh", "Jammu and Kashmir", "Jharkhand", "Goa",
+    "Delhi", "Chandigarh", "Puducherry", "Manipur", "Meghalaya", "Mizoram",
+    "Nagaland", "Tripura", "Arunachal Pradesh", "Sikkim", "Andaman and Nicobar Islands",
+    "Dadra and Nagar Haveli", "Lakshadweep", "Daman and Diu",
+]
+
+
+def ensure_full_json() -> None:
+    if FULL_JSON.exists() and FULL_JSON.stat().st_size > 1_000_000:
+        return
+    if LEGACY_JSON.exists() and LEGACY_JSON.stat().st_size > 1_000_000:
+        try:
+            data = json.loads(LEGACY_JSON.read_text(encoding="utf-8"))
+            if isinstance(data, list) and len(data) > 10_000:
+                FULL_JSON.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+                print(f"Backed up full JSON from legacy file ({len(data)} colleges)")
+                return
+        except json.JSONDecodeError:
+            pass
+    print("Regenerating full-India JSON...")
+    subprocess.run(
+        [sys.executable, str(ROOT / "tools" / "import_india_aishe.py")],
+        cwd=str(ROOT),
+        check=True,
+    )
+
+
+def load_full_colleges() -> list[dict]:
+    ensure_full_json()
+    path = FULL_JSON if FULL_JSON.exists() else LEGACY_JSON
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def expected_counts() -> Counter[str]:
+    colleges = load_full_colleges()
+    c: Counter[str] = Counter()
+    for row in colleges:
+        c[row.get("state", "?")] += 1
+    if c:
+        return c
+    if CSV_PATH.exists():
+        c = Counter()
+        with CSV_PATH.open(encoding="utf-8", newline="") as f:
+            for row in csv.DictReader(f):
+                c[row["state"].strip()] += 1
+        return c
+    return Counter()
+
+
+def state_slug(state: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "_", state.lower()).strip("_")
+
+
+def colleges_for_state(state: str) -> list[dict]:
+    return [c for c in load_full_colleges() if c.get("state") == state]
+
+
+def firestore_count(state: str) -> int:
+    import firebase_admin
+    from firebase_admin import credentials, firestore
+
+    if not firebase_admin._apps:
+        firebase_admin.initialize_app(
+            credentials.Certificate(str(CREDS)),
+            {"projectId": "college-reality"},
+        )
+    db = firestore.client()
+    return int(
+        db.collection("colleges").where("state", "==", state).count().get()[0][0].value
+    )
+
+
+def import_state(state: str) -> bool:
+    STATE_DIR.mkdir(parents=True, exist_ok=True)
+    state_json = STATE_DIR / f"{state_slug(state)}.json"
+    colleges = colleges_for_state(state)
+    if not colleges:
+        print(f"No colleges in full JSON for {state}")
+        return True
+    state_json.write_text(json.dumps(colleges, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(f"Prepared {len(colleges)} colleges for {state} -> {state_json.name}")
+
+    for attempt in range(1, 7):
+        print(f"\n=== Importing {state} (attempt {attempt}, {len(colleges)} docs) ===")
+        rc = subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "tools" / "import_colleges_bulk.py"),
+                "--input", str(state_json),
+                "--credentials", str(CREDS),
+                "--project", "college-reality",
+                "--delay", "3.0",
+                "--only-missing",
+                "--verify-state", state,
+            ],
+            cwd=str(ROOT),
+        ).returncode
+        if rc == 0:
+            got = firestore_count(state)
+            exp = expected_counts().get(state, len(colleges))
+            if got >= exp * MIN_RATIO:
+                print(f"OK {state}: {got}/{exp}")
+                return True
+            print(f"Under target after import {state}: {got}/{exp}")
+        wait = 120 * attempt
+        print(f"Retry after {wait}s...")
+        time.sleep(wait)
+    return False
+
+
+def main() -> int:
+    if not CREDS.exists():
+        print(f"Missing {CREDS}", file=sys.stderr)
+        return 1
+
+    ensure_full_json()
+    expected = expected_counts()
+    pending: list[str] = []
+    for state in STATES:
+        exp = expected.get(state, 0)
+        if exp == 0:
+            continue
+        try:
+            got = firestore_count(state)
+        except Exception as exc:  # noqa: BLE001
+            print(f"Count error {state}: {exc}")
+            pending.append(state)
+            continue
+        if got < exp * MIN_RATIO:
+            print(f"PENDING {state}: {got}/{exp}")
+            pending.append(state)
+        else:
+            print(f"OK {state}: {got}/{exp}")
+
+    if pending:
+        print(f"\nImporting {len(pending)} pending state(s)...")
+        failed = [s for s in pending if not import_state(s)]
+        if failed:
+            print(f"FAILED: {failed}")
+            return 2
+
+    print("\n=== Post-import fix ===")
+    subprocess.run(
+        [sys.executable, str(ROOT / "tools" / "import_india_aishe.py")],
+        cwd=str(ROOT),
+    )
+    fix_rc = subprocess.run(
+        [sys.executable, str(ROOT / "tools" / "fix_india_import.py"), "--credentials", str(CREDS)],
+        cwd=str(ROOT),
+    ).returncode
+
+    print("\n=== Verify ===")
+    verify_rc = subprocess.run(
+        [sys.executable, str(ROOT / "tools" / "verify_india_import.py"), "--credentials", str(CREDS)],
+        cwd=str(ROOT),
+    ).returncode
+    return 0 if fix_rc == 0 and verify_rc == 0 else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

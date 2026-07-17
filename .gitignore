@@ -42,4 +42,12 @@ app.*.map.json
 # Android Studio will place build artifacts here
 /android/app/debug
 /android/app/profile
-/android/app/release
+# Large AISHE raw + generated Firestore dumps (regenerate via tools/import scripts)
+tools/data/raw/aishe_colleges_india.csv
+tools/data/processed/india_colleges_clean.csv
+tools/data/firestore/maharashtra_colleges_firestore.json
+tools/data/firestore/india_colleges_firestore.json
+tools/data/firestore/india_colleges_firestore_full.json
+tools/data/firestore/states/
+tools/serviceAccount.json
+android/tools/serviceAccount.json

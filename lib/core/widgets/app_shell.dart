@@ -71,7 +71,7 @@ class AppShell extends StatelessWidget {
                     destinations: [
                       _destination(Icons.home_rounded, 'Home'),
                       _destination(Icons.search_rounded, 'Search'),
-                      _destination(Icons.auto_awesome_rounded, 'AI'),
+                      _destination(Icons.auto_awesome_rounded, 'Assistant'),
                       _destination(Icons.forum_rounded, 'Community'),
                       _destination(Icons.person_rounded, 'Profile'),
                     ],

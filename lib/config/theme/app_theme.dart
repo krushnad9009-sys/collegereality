@@ -31,6 +31,9 @@ class AppTheme {
   static const Color gray800 = Color(0xFF1F2937);
   static const Color gray900 = Color(0xFF111827);
 
+  /// Premium app background — soft cool gray.
+  static const Color surfaceMuted = Color(0xFFF5F7FB);
+
   // Light Theme
   static ThemeData get lightTheme {
     return ThemeData(
@@ -44,7 +47,7 @@ class AppTheme {
         surface: white,
         surfaceContainerHighest: gray100,
       ),
-      scaffoldBackgroundColor: white,
+      scaffoldBackgroundColor: surfaceMuted,
       appBarTheme: AppBarTheme(
         backgroundColor: white,
         elevation: 0,

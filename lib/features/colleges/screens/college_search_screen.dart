@@ -17,6 +17,7 @@ class CollegeSearchScreen extends ConsumerStatefulWidget {
   final String? initialCity;
   final String? initialState;
   final String? initialCourse;
+  final String? initialCategory;
   final String? initialFilter;
 
   const CollegeSearchScreen({
@@ -25,6 +26,7 @@ class CollegeSearchScreen extends ConsumerStatefulWidget {
     this.initialCity,
     this.initialState,
     this.initialCourse,
+    this.initialCategory,
     this.initialFilter,
   });
 
@@ -38,6 +40,7 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
   late final TextEditingController _cityController;
   String? _selectedState;
   String? _selectedCourse;
+  String? _selectedCategory;
   bool _showFilters = false;
   String? _cursor;
   List<CollegeModel> _results = [];
@@ -56,12 +59,14 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
     _cityController = TextEditingController(text: widget.initialCity ?? '');
     _selectedState = widget.initialState;
     _selectedCourse = widget.initialCourse;
+    _selectedCategory = widget.initialCategory;
     if (widget.initialFilter == 'city' || widget.initialFilter == 'state') {
       _showFilters = true;
     }
     if (widget.initialCity != null ||
         widget.initialState != null ||
         widget.initialCourse != null ||
+        widget.initialCategory != null ||
         widget.initialFilter != null) {
       _showFilters = true;
     }
@@ -86,6 +91,7 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
           : _cityController.text.trim(),
       state: _selectedState,
       course: _selectedCourse,
+      category: _selectedCategory,
       startAfterDocumentId: startAfter,
     );
   }
@@ -139,6 +145,7 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
     setState(() {
       _selectedState = null;
       _selectedCourse = null;
+      _selectedCategory = null;
       _cityController.clear();
       _searchController.clear();
     });
@@ -178,7 +185,7 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
               data: (meta) => Text(
                 meta.totalColleges > 0
                     ? '${meta.totalColleges.toString()} colleges indexed'
-                    : 'Search 40,000+ colleges by name',
+                    : 'Search 47,000+ colleges by name',
                 style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.gray500),
               ),
             ),
@@ -335,6 +342,33 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
                         _runSearch();
                       },
                     ),
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    initialValue: _selectedCategory,
+                    decoration: InputDecoration(
+                      labelText: 'Category',
+                      filled: true,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: null, child: Text('All Categories')),
+                      DropdownMenuItem(value: 'Engineering', child: Text('Engineering')),
+                      DropdownMenuItem(value: 'Medical', child: Text('Medical')),
+                      DropdownMenuItem(value: 'MBA', child: Text('MBA')),
+                      DropdownMenuItem(value: 'Law', child: Text('Law')),
+                      DropdownMenuItem(value: 'Pharmacy', child: Text('Pharmacy')),
+                      DropdownMenuItem(value: 'Arts', child: Text('Arts')),
+                      DropdownMenuItem(value: 'Commerce', child: Text('Commerce')),
+                      DropdownMenuItem(value: 'Science', child: Text('Science')),
+                      DropdownMenuItem(value: 'General', child: Text('General')),
+                    ],
+                    onChanged: (v) {
+                      setState(() => _selectedCategory = v);
+                      _runSearch();
+                    },
                   ),
                   Align(
                     alignment: Alignment.centerRight,

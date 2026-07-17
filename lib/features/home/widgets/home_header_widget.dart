@@ -42,11 +42,11 @@ class HomeHeaderWidget extends ConsumerWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                'Explore top colleges in India',
+                'Your personalized college discovery platform',
                 style: GoogleFonts.poppins(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
-                  color: AppTheme.gray600,
+                  color: AppTheme.gray500,
                 ),
               ),
             ],

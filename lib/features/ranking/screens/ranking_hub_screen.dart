@@ -65,7 +65,7 @@ class RankingHubScreen extends StatelessWidget {
           OutlinedButton.icon(
             onPressed: () => context.push(RouteNames.assistant),
             icon: const Icon(Icons.chat_outlined),
-            label: const Text('Ask AI Assistant'),
+            label: const Text('AI Assistant'),
           ),
         ],
       ),

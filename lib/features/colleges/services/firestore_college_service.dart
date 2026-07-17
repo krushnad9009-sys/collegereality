@@ -124,6 +124,7 @@ class FirestoreCollegeService {
     String? state,
     String? city,
     String? course,
+    String? category,
     String? startAfterDocumentId,
     int limit = CollegeConstants.searchPageSize,
     bool includeInactive = false,
@@ -137,6 +138,7 @@ class FirestoreCollegeService {
         state: state,
         city: city,
         course: course,
+        category: category,
         includeInactive: includeInactive,
         limit: limit,
       );
@@ -164,6 +166,9 @@ class FirestoreCollegeService {
     }
     if (course != null && course.isNotEmpty) {
       q = q.where('courses', arrayContains: course);
+    }
+    if (category != null && category.isNotEmpty) {
+      q = q.where('category', isEqualTo: category);
     }
 
     final hasCity = city != null && city.isNotEmpty;
@@ -235,6 +240,7 @@ class FirestoreCollegeService {
         state: state,
         city: city,
         course: course,
+        category: category,
         includeInactive: includeInactive,
         limit: limit,
       );
@@ -247,6 +253,7 @@ class FirestoreCollegeService {
     String? state,
     String? city,
     String? course,
+    String? category,
     bool includeInactive = false,
     int limit = CollegeConstants.searchPageSize,
   }) async {
@@ -256,6 +263,7 @@ class FirestoreCollegeService {
         state: state,
         city: city,
         course: course,
+        category: category,
         includeInactive: includeInactive,
         limit: limit,
       );
@@ -296,6 +304,9 @@ class FirestoreCollegeService {
     if (course != null && course.isNotEmpty) {
       colleges = colleges.where((c) => c.courses.contains(course)).toList();
     }
+    if (category != null && category.isNotEmpty) {
+      colleges = colleges.where((c) => c.category == category).toList();
+    }
 
     colleges = colleges.take(limit).toList();
     final lastId = colleges.isEmpty ? null : colleges.last.id;
@@ -311,6 +322,7 @@ class FirestoreCollegeService {
     String? state,
     String? city,
     String? course,
+    String? category,
     bool includeInactive = false,
     int limit = CollegeConstants.searchPageSize,
   }) async {
@@ -353,6 +365,11 @@ class FirestoreCollegeService {
       if (course != null &&
           course.isNotEmpty &&
           !college.courses.contains(course)) {
+        continue;
+      }
+      if (category != null &&
+          category.isNotEmpty &&
+          college.category != category) {
         continue;
       }
       ranked.add(college);

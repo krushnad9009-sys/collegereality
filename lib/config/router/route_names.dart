@@ -6,6 +6,9 @@ class RouteNames {
   static const String forgotPassword = '/forgot-password';
   static const String home = '/home';
   static const String collegeSearch = '/college-search';
+  static const String collegeBrowse = '/college-browse';
+  static const String privacyPolicy = '/privacy-policy';
+  static const String termsOfService = '/terms-of-service';
   static const String assistant = '/assistant';
   static const String compare = '/compare';
   static const String collegeDetails = '/college-details/:id';

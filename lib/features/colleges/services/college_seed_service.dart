@@ -88,6 +88,7 @@ class CollegeSeedService {
 
     await loadAsset('assets/data/colleges_seed.json');
     await loadAsset('assets/data/prominent_colleges_seed.json');
+    await loadAsset('assets/data/india_colleges_seed.json');
     return merged.values.toList();
   }
 
@@ -114,10 +115,16 @@ class CollegeSeedService {
     final accreditationMap = map['accreditation'] as Map<String, dynamic>? ?? {};
     final ratingsMap = map['aggregatedRatings'] as Map<String, dynamic>? ?? {};
 
-    final searchKeywords = (map['searchKeywords'] as List<dynamic>?)
-            ?.map((e) => e.toString())
-            .toList() ??
-        [];
+    final searchKeywords = <String>[
+      ...((map['searchKeywords'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          []),
+    ];
+    final category = map['category'] as String?;
+    if (category != null && category.isNotEmpty) {
+      searchKeywords.add(category.toLowerCase());
+    }
 
     return CollegeModel(
       id: id,

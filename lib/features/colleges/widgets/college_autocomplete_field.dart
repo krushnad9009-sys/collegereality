@@ -62,7 +62,7 @@ class _CollegeAutocompleteFieldState
           controller: _controller,
           decoration: InputDecoration(
             labelText: 'College',
-            hintText: 'Search from 40,000+ colleges...',
+            hintText: 'Search from 47,000+ colleges...',
             filled: true,
             fillColor: AppTheme.gray100,
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),

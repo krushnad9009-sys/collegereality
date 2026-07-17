@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -263,15 +264,13 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                     Expanded(
                       child: RichText(
                         text: TextSpan(
+                          style: GoogleFonts.poppins(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: AppTheme.gray700,
+                          ),
                           children: [
-                            TextSpan(
-                              text: 'I agree to the ',
-                              style: GoogleFonts.poppins(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                                color: AppTheme.gray700,
-                              ),
-                            ),
+                            const TextSpan(text: 'I agree to the '),
                             TextSpan(
                               text: 'Terms & Conditions',
                               style: GoogleFonts.poppins(
@@ -280,15 +279,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                 color: AppTheme.primaryColor,
                                 decoration: TextDecoration.underline,
                               ),
+                              recognizer: TapGestureRecognizer()
+                                ..onTap = () =>
+                                    context.push(RouteNames.termsOfService),
                             ),
-                            TextSpan(
-                              text: ' and ',
-                              style: GoogleFonts.poppins(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                                color: AppTheme.gray700,
-                              ),
-                            ),
+                            const TextSpan(text: ' and '),
                             TextSpan(
                               text: 'Privacy Policy',
                               style: GoogleFonts.poppins(
@@ -297,6 +292,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                 color: AppTheme.primaryColor,
                                 decoration: TextDecoration.underline,
                               ),
+                              recognizer: TapGestureRecognizer()
+                                ..onTap = () =>
+                                    context.push(RouteNames.privacyPolicy),
                             ),
                           ],
                         ),

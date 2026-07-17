@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../reviews/widgets/star_rating_widget.dart';
+import '../../../core/widgets/college_logo_widget.dart';
 import '../../../core/widgets/college_image_widget.dart';
 
 class CollegeCardWidget extends StatelessWidget {
@@ -34,16 +35,29 @@ class CollegeCardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
-        child: Card(
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
-            side: BorderSide(color: AppTheme.gray200.withValues(alpha: 0.9)),
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          decoration: BoxDecoration(
+            color: isDark ? AppTheme.gray800 : AppTheme.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isDark ? AppTheme.gray700 : AppTheme.gray200.withValues(alpha: 0.8),
+            ),
+            boxShadow: isDark
+                ? null
+                : [
+                    BoxShadow(
+                      color: AppTheme.primaryDark.withValues(alpha: 0.06),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
           ),
           clipBehavior: Clip.antiAlias,
           child: Column(
@@ -54,8 +68,8 @@ class CollegeCardWidget extends StatelessWidget {
                 imageUrl: imageUrl,
                 height: 168,
                 borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(18),
-                  topRight: Radius.circular(18),
+                  topLeft: Radius.circular(20),
+                  topRight: Radius.circular(20),
                 ),
               ),
               Padding(
@@ -66,14 +80,15 @@ class CollegeCardWidget extends StatelessWidget {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        if (logoUrl != null && logoUrl!.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(right: 10),
-                            child: CircleAvatar(
-                              radius: 18,
-                              backgroundImage: NetworkImage(logoUrl!),
-                            ),
+                        Padding(
+                          padding: const EdgeInsets.only(right: 10),
+                          child: CollegeLogoWidget(
+                            collegeId: collegeId,
+                            collegeName: collegeName,
+                            logoUrl: logoUrl,
+                            radius: 18,
                           ),
+                        ),
                         Expanded(
                           child: Text(
                             collegeName,

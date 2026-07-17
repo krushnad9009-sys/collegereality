@@ -8,7 +8,9 @@ import '../../features/auth/screens/signup_screen.dart';
 import '../../features/auth/screens/forgot_password_screen.dart';
 import '../../features/home/screens/home_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
+import '../../features/colleges/screens/college_browse_screen.dart';
 import '../../features/colleges/screens/college_search_screen.dart';
+import '../../features/legal/screens/legal_screens.dart';
 import '../../features/colleges/screens/college_detail_screen.dart';
 import '../../features/assistant/screens/ai_assistant_screen.dart';
 import '../../features/compare/screens/college_compare_screen.dart';
@@ -93,7 +95,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
   return GoRouter(
     initialLocation: RouteNames.splash,
-    debugLogDiagnostics: true,
+    debugLogDiagnostics: false,
     redirect: (context, state) async {
       final isLoggedIn = firebaseAuth.currentUser != null;
       final path = state.uri.path;
@@ -101,7 +103,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           path == RouteNames.onboarding ||
           path == RouteNames.login ||
           path == RouteNames.signup ||
-          path == RouteNames.forgotPassword;
+          path == RouteNames.forgotPassword ||
+          path == RouteNames.home ||
+          path == RouteNames.collegeSearch ||
+          path == RouteNames.collegeBrowse ||
+          path == RouteNames.privacyPolicy ||
+          path == RouteNames.termsOfService ||
+          path.startsWith('/college-details');
 
       if (!isLoggedIn && !isPublicRoute) {
         return RouteNames.login;
@@ -144,6 +152,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: RouteNames.forgotPassword,
         builder: (context, state) => const ForgotPasswordScreen(),
       ),
+      GoRoute(
+        path: RouteNames.privacyPolicy,
+        builder: (context, state) => const PrivacyPolicyScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.termsOfService,
+        builder: (context, state) => const TermsOfServiceScreen(),
+      ),
       ShellRoute(
         builder: (context, state, child) => AppShell(child: child),
         routes: [
@@ -162,15 +178,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               final city = state.uri.queryParameters['city'];
               final stateParam = state.uri.queryParameters['state'];
               final course = state.uri.queryParameters['course'];
+              final category = state.uri.queryParameters['category'];
               final filter = state.uri.queryParameters['filter'];
               return CollegeSearchScreen(
                 initialQuery: query,
                 initialCity: city,
                 initialState: stateParam,
                 initialCourse: course,
+                initialCategory: category,
                 initialFilter: filter,
               );
             },
+          ),
+          GoRoute(
+            path: RouteNames.collegeBrowse,
+            builder: (context, state) => const CollegeBrowseScreen(),
           ),
           GoRoute(
             path: RouteNames.assistant,

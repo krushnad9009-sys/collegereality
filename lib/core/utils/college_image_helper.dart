@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 /// Resolves college cover image URLs from Firestore.
 class CollegeImageHelper {
   CollegeImageHelper._();
@@ -15,8 +17,6 @@ class CollegeImageHelper {
         'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9f/IIIT_Hyderabad_campus.jpg/1280px-IIIT_Hyderabad_campus.jpg',
     'aiims_delhi':
         'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/AIIMS_New_Delhi.jpg/1280px-AIIMS_New_Delhi.jpg',
-    'national_rohtak_school_business':
-        'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=1200&q=80',
     'vit_vellore':
         'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/VIT_University_Campus.jpg/1280px-VIT_University_Campus.jpg',
     'coep_pune':
@@ -33,28 +33,45 @@ class CollegeImageHelper {
         uri.host.isNotEmpty;
   }
 
-  /// Returns a valid Firestore/remote URL, a known featured fallback, or a
-  /// deterministic campus photo for the college id.
+  /// Returns a valid Firestore/remote URL or a known featured fallback.
   static String? resolveCoverUrl(String? coverPhotoUrl, {String? collegeId}) {
     if (isValidUrl(coverPhotoUrl)) return coverPhotoUrl!.trim();
     if (collegeId != null) {
       final fallback = _featuredCoverUrls[collegeId];
       if (isValidUrl(fallback)) return fallback;
-      return _genericCampusPhoto(collegeId);
     }
     return null;
   }
 
-  static String _genericCampusPhoto(String collegeId) {
-    final hash = collegeId.codeUnits.fold<int>(0, (a, b) => a + b) % 6;
-    const photos = [
-      'https://images.unsplash.com/photo-1562774053-701939374585?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1541339907192-ebe66fcfbe8c?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1498243691581-b145c3f54a5a?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1607237138185-eedd9c632b0b?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1576495199011-eb94736d05d6?auto=format&fit=crop&w=1200&q=80',
+  static String? resolveLogoUrl(String? logoUrl, {String? collegeId}) {
+    if (isValidUrl(logoUrl)) return logoUrl!.trim();
+    if (collegeId != null) {
+      final cover = _featuredCoverUrls[collegeId];
+      if (isValidUrl(cover)) return cover;
+    }
+    return null;
+  }
+
+  static Color logoColor(String collegeId) {
+    final hash = collegeId.codeUnits.fold<int>(0, (a, b) => a + b) % 8;
+    const palette = [
+      Color(0xFF1E3A5F),
+      Color(0xFF2D6A4F),
+      Color(0xFF5C4D7D),
+      Color(0xFFB5651D),
+      Color(0xFF006D77),
+      Color(0xFF7B2D26),
+      Color(0xFF3D5A80),
+      Color(0xFF6A4C93),
     ];
-    return photos[hash];
+    return palette[hash];
+  }
+
+  static List<Color> coverGradient(String collegeId) {
+    final base = logoColor(collegeId);
+    return [
+      base,
+      Color.lerp(base, Colors.white, 0.25) ?? base,
+    ];
   }
 }

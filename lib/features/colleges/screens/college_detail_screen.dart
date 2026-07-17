@@ -182,7 +182,7 @@ class _CollegeDetailScreenState extends ConsumerState<CollegeDetailScreen> {
                       ),
                       icon: const Icon(Icons.auto_awesome_rounded, size: 18),
                       label: Text(
-                        'Ask AI',
+                        'AI Assistant',
                         style: GoogleFonts.poppins(
                           fontWeight: FontWeight.w600,
                           fontSize: 13,
