@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
+import '../../../core/utils/firestore_error_utils.dart';
 import '../../home/widgets/college_card_widget.dart';
 import '../../compare/providers/compare_basket_provider.dart';
 import '../../compare/widgets/compare_basket_bar.dart';
@@ -135,7 +136,9 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _searchError = e.toString();
+        _searchError = FirestoreErrorUtils.isQuotaExceededError(e)
+            ? kFirestoreQuotaUserMessage
+            : e.toString();
         _isSearching = false;
       });
     }
@@ -394,19 +397,11 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
                                   size: 56, color: AppTheme.gray400),
                               const SizedBox(height: 16),
                               Text(
-                                'Search temporarily unavailable',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
                                 _searchError!,
                                 textAlign: TextAlign.center,
                                 style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  color: AppTheme.gray500,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
                               const SizedBox(height: 16),

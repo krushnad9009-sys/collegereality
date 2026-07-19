@@ -8,6 +8,8 @@ import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/bootstrap/startup_bootstrap.dart';
 import '../../../core/cache/college_session_cache.dart';
+import '../../../core/cache/firestore_quota_guard.dart';
+import '../../../core/providers/firestore_quota_provider.dart';
 import '../../../core/widgets/premium_components.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../colleges/providers/college_provider.dart';
@@ -37,6 +39,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Future<void> _onRefresh() async {
     CollegeSessionCache.clearFeatured();
+    await FirestoreQuotaGuard.instance.retryNowIfAllowed();
     ref.invalidate(collegeSeedProvider);
     ref.invalidate(homeFeaturedCollegesProvider);
     ref.invalidate(featuredCollegesProvider);
@@ -52,6 +55,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(firestoreQuotaCoordinatorProvider);
+    final quotaBlocked = ref.watch(firestoreQuotaBlockedProvider);
     final isMobile = MediaQuery.of(context).size.width < 600;
     final authState = ref.watch(authProvider);
     final currentUser = authState.user ?? FirebaseAuth.instance.currentUser;
@@ -86,6 +91,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           delayMs: 60,
                           child: const PremiumHomeSearchBar(),
                         ),
+                        if (quotaBlocked) ...[
+                          const SizedBox(height: AppSpacing.md),
+                          _QuotaNoticeBanner(),
+                        ],
                         const SizedBox(height: AppSpacing.section),
                         FadeInSection(
                           delayMs: 100,
@@ -251,6 +260,39 @@ class _GuestHomeHeader extends StatelessWidget {
           child: const Text('Sign in'),
         ),
       ],
+    );
+  }
+}
+
+class _QuotaNoticeBanner extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppTheme.warningColor.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppTheme.warningColor.withValues(alpha: 0.25),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.cloud_off_rounded,
+              size: 20, color: AppTheme.warningColor.withValues(alpha: 0.9)),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Showing saved college data. Live updates will resume shortly.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppTheme.gray700,
+                    height: 1.35,
+                  ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

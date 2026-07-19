@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../assistant/widgets/ai_search_bar.dart';
+import '../../../core/cache/firestore_quota_guard.dart';
 import '../../../core/widgets/async_state_widgets.dart';
 import '../../../core/widgets/premium_components.dart';
 import '../../../core/widgets/skeleton_loader.dart';
@@ -37,9 +38,13 @@ class TrendingCollegesCarousel extends ConsumerWidget {
           ),
         ),
       ),
-      error: (e, _) => AsyncErrorView(
-        message: e.toString(),
-        onRetry: () => ref.invalidate(trendingCollegesProvider),
+      error: (e, _) => AsyncErrorView.fromError(
+        e,
+        compact: true,
+        onRetry: () async {
+          await FirestoreQuotaGuard.instance.retryNowIfAllowed();
+          ref.invalidate(trendingCollegesProvider);
+        },
       ),
       data: (colleges) {
         if (colleges.isEmpty) return const SizedBox.shrink();
@@ -77,9 +82,13 @@ class TopRatedCollegesSection extends ConsumerWidget {
           ),
         ),
       ),
-      error: (e, _) => AsyncErrorView(
-        message: e.toString(),
-        onRetry: () => ref.invalidate(topRatedCollegesProvider),
+      error: (e, _) => AsyncErrorView.fromError(
+        e,
+        compact: true,
+        onRetry: () async {
+          await FirestoreQuotaGuard.instance.retryNowIfAllowed();
+          ref.invalidate(topRatedCollegesProvider);
+        },
       ),
       data: (colleges) {
         if (colleges.isEmpty) return const SizedBox.shrink();

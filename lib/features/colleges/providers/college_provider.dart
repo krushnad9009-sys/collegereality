@@ -5,6 +5,8 @@ import '../services/college_storage_service.dart';
 import '../services/firestore_college_service.dart';
 import '../services/college_seed_service.dart';
 import '../../../core/bootstrap/startup_bootstrap.dart';
+import '../../../core/cache/college_local_cache.dart';
+import '../../../core/utils/firestore_error_utils.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../engagement/providers/engagement_provider.dart';
 
@@ -19,14 +21,28 @@ final collegeSeedProvider = FutureProvider<bool>((ref) async {
   if (user != null) {
     return service.ensureSeeded();
   }
-  final count = await ref.watch(collegeRepositoryProvider).getCollegeCount();
-  return count > 0;
+  try {
+    final count = await ref.watch(collegeRepositoryProvider).getCollegeCount();
+    return count > 0;
+  } on FirestoreQuotaException {
+    final cached = await CollegeLocalCache.loadCollegeCount();
+    if (cached != null && cached > 0) return true;
+    final featured = await CollegeLocalCache.loadFeatured();
+    return featured != null && featured.isNotEmpty;
+  }
 });
 
 /// True when Firestore has college data (no client seed required).
 final collegeDataReadyProvider = FutureProvider<bool>((ref) async {
-  final count = await ref.watch(collegeCountProvider.future);
-  if (count > 0) return true;
+  try {
+    final count = await ref.watch(collegeCountProvider.future);
+    if (count > 0) return true;
+  } on FirestoreQuotaException {
+    final cached = await CollegeLocalCache.loadCollegeCount();
+    if (cached != null && cached > 0) return true;
+    final featured = await CollegeLocalCache.loadFeatured();
+    if (featured != null && featured.isNotEmpty) return true;
+  }
   return ref.watch(collegeSeedProvider.future);
 });
 
