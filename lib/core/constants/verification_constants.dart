@@ -1,18 +1,28 @@
 class VerificationConstants {
   VerificationConstants._();
 
+  static const roleStudent = 'student';
+  static const roleAlumni = 'alumni';
+
   static const documentCollegeId = 'college_id';
   static const documentBonafide = 'bonafide_certificate';
   static const documentFeeReceipt = 'fee_receipt';
   static const documentAdmissionLetter = 'admission_letter';
   static const documentFinalMarksheet = 'final_year_marksheet';
 
-  static const List<Map<String, String>> documentTypes = [
-    {'id': documentCollegeId, 'label': 'College ID'},
+  static const List<Map<String, String>> studentDocumentTypes = [
+    {'id': documentCollegeId, 'label': 'College ID Card'},
     {'id': documentBonafide, 'label': 'Bonafide Certificate'},
-    {'id': documentFeeReceipt, 'label': 'Fee Receipt'},
-    {'id': documentAdmissionLetter, 'label': 'Admission Letter'},
-    {'id': documentFinalMarksheet, 'label': 'Final Year Marksheet (Alumni)'},
+  ];
+
+  static const List<Map<String, String>> alumniDocumentTypes = [
+    {'id': documentFinalMarksheet, 'label': 'Graduation Marksheet'},
+    {'id': documentBonafide, 'label': 'Bonafide Certificate'},
+  ];
+
+  static const List<Map<String, String>> documentTypes = [
+    ...studentDocumentTypes,
+    ...alumniDocumentTypes,
   ];
 
   static const badgeNone = 'none';
@@ -25,6 +35,7 @@ class VerificationConstants {
   static const statusFlagged = 'flagged';
   static const statusApproved = 'approved';
   static const statusRejected = 'rejected';
+  static const statusResubmissionRequested = 'resubmission_requested';
 
   static const flagDuplicate = 'duplicate_upload';
   static const flagManipulated = 'possible_manipulation';
@@ -37,6 +48,22 @@ class VerificationConstants {
   static const double autoApproveConfidence = 0.85;
 
   static const List<String> allowedExtensions = ['jpg', 'jpeg', 'png', 'pdf'];
+
+  static List<Map<String, String>> documentTypesForRole(String role) {
+    if (role == roleAlumni) return alumniDocumentTypes;
+    return studentDocumentTypes;
+  }
+
+  static String roleLabel(String role) {
+    switch (role) {
+      case roleAlumni:
+        return 'Alumni';
+      case roleStudent:
+        return 'Current Student';
+      default:
+        return role;
+    }
+  }
 
   static String documentLabel(String type) {
     return documentTypes
@@ -61,5 +88,10 @@ class VerificationConstants {
 
   static bool isAlumniDocument(String documentType) {
     return documentType == documentFinalMarksheet;
+  }
+
+  static bool isApprovedStudentOrAlumni(String? badge, String? status) {
+    if (status != statusApproved) return false;
+    return badge == badgeVerifiedStudent || badge == badgeVerifiedAlumni;
   }
 }

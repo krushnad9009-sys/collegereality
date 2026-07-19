@@ -47,9 +47,11 @@ service cloud.firestore {
     }
 
     function isVerifiedStudent() {
+      let user = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
       return isAuthenticated() &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.verificationStatus == 'approved' &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.verificationBadge != 'none';
+        user.verificationStatus == 'approved' &&
+        (user.verificationBadge == 'verified_student' ||
+         user.verificationBadge == 'verified_alumni');
     }
 
     function isHelpfulCountOnlyUpdate() {

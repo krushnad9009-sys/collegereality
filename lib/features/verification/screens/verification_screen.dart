@@ -29,7 +29,7 @@ class VerificationScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Student Verification'),
+        title: const Text('Verified Student & Alumni'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
           onPressed: () => context.go(RouteNames.profile),
@@ -58,7 +58,15 @@ class VerificationScreen extends ConsumerWidget {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Your identity is verified on College Reality.',
+                          VerificationConstants.badgeLabel(user.verificationBadge),
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 18,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'You can write reviews, answer questions, and join the community.',
                           style: GoogleFonts.poppins(color: AppTheme.gray600),
                           textAlign: TextAlign.center,
                         ),
@@ -73,20 +81,35 @@ class VerificationScreen extends ConsumerWidget {
                       color: AppTheme.primaryColor.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Text(
-                      'Secure verification only — no community or peer verification. '
-                      'Your phone, email, and documents stay private on your public profile.',
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        color: AppTheme.gray700,
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Why verify?',
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Verified students and alumni can write trusted reviews, '
+                          'answer questions, and participate in the community. '
+                          'Documents are private and never shown publicly.',
+                          style: GoogleFonts.poppins(
+                            fontSize: 13,
+                            color: AppTheme.gray700,
+                            height: 1.4,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 20),
                   if (!authUser.emailVerified)
                     _EmailSection(userId: user.uid)
                   else
-                    _VerifiedBanner(label: 'Email verified'),
+                    const _VerifiedBanner(label: 'Email verified'),
                   const SizedBox(height: 16),
                   PhoneVerificationSection(
                     userId: user.uid,

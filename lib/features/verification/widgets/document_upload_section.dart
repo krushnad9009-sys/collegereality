@@ -10,6 +10,7 @@ import '../../../core/constants/verification_constants.dart';
 import '../../../core/widgets/index.dart';
 import '../../auth/models/user_model.dart';
 import '../../auth/providers/user_provider.dart';
+import '../../colleges/widgets/college_autocomplete_field.dart';
 import '../providers/verification_provider.dart';
 import '../services/verification_firestore_service.dart';
 import 'verification_badge_widget.dart';
@@ -25,10 +26,20 @@ class DocumentUploadSection extends ConsumerStatefulWidget {
 }
 
 class _DocumentUploadSectionState extends ConsumerState<DocumentUploadSection> {
+  String _verificationRole = VerificationConstants.roleStudent;
   String? _documentType;
+  String? _collegeId;
+  String? _collegeName;
   Uint8List? _fileBytes;
   String? _fileName;
   bool _isSubmitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _collegeId = widget.user.collegeId;
+    _collegeName = widget.user.collegeName;
+  }
 
   Future<void> _pickDocument() async {
     final result = await FilePicker.platform.pickFiles(
@@ -49,6 +60,17 @@ class _DocumentUploadSectionState extends ConsumerState<DocumentUploadSection> {
   }
 
   Future<void> _submit() async {
+    if (_collegeId == null ||
+        _collegeName == null ||
+        _collegeId!.isEmpty ||
+        _collegeName!.isEmpty) {
+      SnackBarHelper.showErrorSnackBar(
+        context,
+        message: 'Select your college.',
+      );
+      return;
+    }
+
     if (_documentType == null || _fileBytes == null || _fileName == null) {
       SnackBarHelper.showErrorSnackBar(
         context,
@@ -62,6 +84,9 @@ class _DocumentUploadSectionState extends ConsumerState<DocumentUploadSection> {
       await ref.read(verificationServiceProvider).submitDocument(
             user: widget.user,
             documentType: _documentType!,
+            verificationRole: _verificationRole,
+            collegeId: _collegeId!,
+            collegeName: _collegeName!,
             bytes: _fileBytes!,
             fileName: _fileName!,
           );
@@ -70,8 +95,7 @@ class _DocumentUploadSectionState extends ConsumerState<DocumentUploadSection> {
       if (mounted) {
         SnackBarHelper.showSuccessSnackBar(
           context,
-          message:
-              'Document submitted. AI checks complete — admin will review if flagged.',
+          message: 'Verification submitted. An admin will review your document.',
         );
         setState(() {
           _fileBytes = null;
@@ -104,7 +128,7 @@ class _DocumentUploadSectionState extends ConsumerState<DocumentUploadSection> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Student Verification',
+            'Verification Complete',
             style: GoogleFonts.poppins(
               fontSize: 16,
               fontWeight: FontWeight.w700,
@@ -112,6 +136,11 @@ class _DocumentUploadSectionState extends ConsumerState<DocumentUploadSection> {
           ),
           const SizedBox(height: 8),
           VerificationBadgeWidget(badge: user.verificationBadge),
+          const SizedBox(height: 8),
+          Text(
+            'You can write reviews, answer student questions, and participate in the community.',
+            style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.gray600),
+          ),
         ],
       );
     }
@@ -119,12 +148,50 @@ class _DocumentUploadSectionState extends ConsumerState<DocumentUploadSection> {
     final emailDone = user.isEmailVerified;
     final phoneDone = user.isPhoneVerified;
     final canUpload = emailDone && phoneDone;
+    final documentOptions =
+        VerificationConstants.documentTypesForRole(_verificationRole);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Secure Student Verification',
+          'Register as',
+          style: GoogleFonts.poppins(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 10),
+        SegmentedButton<String>(
+          segments: const [
+            ButtonSegment(
+              value: VerificationConstants.roleStudent,
+              label: Text('Current Student'),
+              icon: Icon(Icons.school_outlined),
+            ),
+            ButtonSegment(
+              value: VerificationConstants.roleAlumni,
+              label: Text('Alumni'),
+              icon: Icon(Icons.workspace_premium_outlined),
+            ),
+          ],
+          selected: {_verificationRole},
+          onSelectionChanged: canUpload &&
+                  user.verificationStatus !=
+                      VerificationConstants.statusPendingReview &&
+                  user.verificationStatus != VerificationConstants.statusFlagged
+              ? (selected) {
+                  if (selected.isEmpty) return;
+                  setState(() {
+                    _verificationRole = selected.first;
+                    _documentType = null;
+                  });
+                }
+              : null,
+        ),
+        const SizedBox(height: 16),
+        Text(
+          'Verification steps',
           style: GoogleFonts.poppins(
             fontSize: 16,
             fontWeight: FontWeight.w700,
@@ -132,8 +199,9 @@ class _DocumentUploadSectionState extends ConsumerState<DocumentUploadSection> {
         ),
         const SizedBox(height: 4),
         Text(
-          'Verify with mobile OTP, email, and one college document. '
-          'Documents are never shown publicly.',
+          _verificationRole == VerificationConstants.roleAlumni
+              ? 'Upload graduation marksheet or bonafide certificate.'
+              : 'Upload college ID card or bonafide certificate.',
           style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.gray600),
         ),
         const SizedBox(height: 12),
@@ -148,7 +216,7 @@ class _DocumentUploadSectionState extends ConsumerState<DocumentUploadSection> {
           icon: Icons.phone_android_outlined,
         ),
         _StepRow(
-          label: 'Document uploaded (one only)',
+          label: 'Document submitted & approved',
           done: user.verificationStatus == VerificationConstants.statusApproved,
           icon: Icons.upload_file_outlined,
         ),
@@ -157,43 +225,110 @@ class _DocumentUploadSectionState extends ConsumerState<DocumentUploadSection> {
           error: (_, _) => const SizedBox.shrink(),
           data: (request) {
             if (request == null) return const SizedBox.shrink();
-            if (request.status == VerificationConstants.statusApproved ||
-                request.status == VerificationConstants.statusRejected) {
-              return const SizedBox.shrink();
-            }
-            return Container(
-              width: double.infinity,
-              margin: const EdgeInsets.only(top: 12),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppTheme.warningColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    request.status == VerificationConstants.statusFlagged
-                        ? 'Flagged for admin review'
-                        : 'Under admin review',
-                    style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    request.aiSummary,
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: AppTheme.gray700,
+
+            if (request.status == VerificationConstants.statusPendingReview ||
+                request.status == VerificationConstants.statusFlagged) {
+              return Container(
+                width: double.infinity,
+                margin: const EdgeInsets.only(top: 12),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppTheme.warningColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      request.status == VerificationConstants.statusFlagged
+                          ? 'Flagged for admin review'
+                          : 'Under admin review',
+                      style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
                     ),
+                    const SizedBox(height: 4),
+                    Text(
+                      request.aiSummary,
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: AppTheme.gray700,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            if (request.status == VerificationConstants.statusRejected ||
+                request.status ==
+                    VerificationConstants.statusResubmissionRequested) {
+              final isResubmit = request.status ==
+                  VerificationConstants.statusResubmissionRequested;
+              return Container(
+                width: double.infinity,
+                margin: const EdgeInsets.only(top: 12),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppTheme.errorColor.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppTheme.errorColor.withValues(alpha: 0.2),
                   ),
-                ],
-              ),
-            );
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isResubmit
+                          ? 'Admin requested a new document'
+                          : 'Verification rejected',
+                      style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                    ),
+                    if (request.adminNote != null &&
+                        request.adminNote!.trim().isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        request.adminNote!,
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: AppTheme.gray700,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 8),
+                    Text(
+                      'Upload a clearer document below to try again.',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: AppTheme.gray600,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            return const SizedBox.shrink();
           },
         ),
         if (canUpload &&
             user.verificationStatus != VerificationConstants.statusPendingReview &&
             user.verificationStatus != VerificationConstants.statusFlagged) ...[
+          const SizedBox(height: 16),
+          Text(
+            'Your college',
+            style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 8),
+          CollegeAutocompleteField(
+            selectedCollegeId: _collegeId,
+            selectedCollegeName: _collegeName,
+            onChanged: (college) {
+              setState(() {
+                _collegeId = college?.id;
+                _collegeName = college?.name;
+              });
+            },
+          ),
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
             initialValue: _documentType,
@@ -205,7 +340,7 @@ class _DocumentUploadSectionState extends ConsumerState<DocumentUploadSection> {
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            items: VerificationConstants.documentTypes
+            items: documentOptions
                 .map(
                   (d) => DropdownMenuItem(
                     value: d['id'],
@@ -226,6 +361,12 @@ class _DocumentUploadSectionState extends ConsumerState<DocumentUploadSection> {
             label: 'Submit for Verification',
             isLoading: _isSubmitting,
             onPressed: _submit,
+          ),
+        ] else if (!canUpload) ...[
+          const SizedBox(height: 12),
+          Text(
+            'Complete email and mobile verification above to upload your document.',
+            style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.gray600),
           ),
         ],
       ],

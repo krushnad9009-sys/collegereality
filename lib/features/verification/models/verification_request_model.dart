@@ -1,3 +1,5 @@
+import '../../../core/constants/verification_constants.dart';
+
 class VerificationRequestModel {
   final String id;
   final String userId;
@@ -5,6 +7,9 @@ class VerificationRequestModel {
   final String storagePath;
   final String contentHash;
   final String status;
+  final String verificationRole;
+  final String? collegeId;
+  final String? collegeName;
   final List<String> aiFlags;
   final double aiConfidence;
   final String aiSummary;
@@ -21,6 +26,9 @@ class VerificationRequestModel {
     required this.storagePath,
     required this.contentHash,
     required this.status,
+    this.verificationRole = VerificationConstants.roleStudent,
+    this.collegeId,
+    this.collegeName,
     this.aiFlags = const [],
     this.aiConfidence = 0,
     this.aiSummary = '',
@@ -40,6 +48,10 @@ class VerificationRequestModel {
       storagePath: json['storagePath'] as String? ?? '',
       contentHash: json['contentHash'] as String? ?? '',
       status: json['status'] as String? ?? 'pending_review',
+      verificationRole:
+          json['verificationRole'] as String? ?? VerificationConstants.roleStudent,
+      collegeId: json['collegeId'] as String?,
+      collegeName: json['collegeName'] as String?,
       aiFlags: (json['aiFlags'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??
@@ -62,6 +74,9 @@ class VerificationRequestModel {
         'storagePath': storagePath,
         'contentHash': contentHash,
         'status': status,
+        'verificationRole': verificationRole,
+        'collegeId': collegeId,
+        'collegeName': collegeName,
         'aiFlags': aiFlags,
         'aiConfidence': aiConfidence,
         'aiSummary': aiSummary,

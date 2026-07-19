@@ -88,15 +88,33 @@ class VerificationFirestoreService {
         user.verificationStatus != VerificationConstants.statusFlagged;
   }
 
+  bool isValidDocumentForRole(String role, String documentType) {
+    return VerificationConstants.documentTypesForRole(role)
+        .any((d) => d['id'] == documentType);
+  }
+
   Future<VerificationRequestModel> submitDocument({
     required UserModel user,
     required String documentType,
+    required String verificationRole,
+    required String collegeId,
+    required String collegeName,
     required Uint8List bytes,
     required String fileName,
   }) async {
     if (!user.isEmailVerified || !user.isPhoneVerified) {
       throw VerificationException(
         'Complete email and mobile OTP verification before uploading a document.',
+      );
+    }
+
+    if (collegeId.trim().isEmpty || collegeName.trim().isEmpty) {
+      throw VerificationException('Select your college before submitting.');
+    }
+
+    if (!isValidDocumentForRole(verificationRole, documentType)) {
+      throw VerificationException(
+        'That document type is not accepted for ${VerificationConstants.roleLabel(verificationRole)} verification.',
       );
     }
 
@@ -133,9 +151,7 @@ class VerificationFirestoreService {
 
     final status = validation.isDuplicate
         ? VerificationConstants.statusFlagged
-        : validation.requiresManualReview
-            ? VerificationConstants.statusPendingReview
-            : VerificationConstants.statusPendingReview;
+        : VerificationConstants.statusPendingReview;
 
     final request = VerificationRequestModel(
       id: requestId,
@@ -144,6 +160,9 @@ class VerificationFirestoreService {
       storagePath: storagePath,
       contentHash: hash,
       status: status,
+      verificationRole: verificationRole,
+      collegeId: collegeId.trim(),
+      collegeName: collegeName.trim(),
       aiFlags: validation.flags,
       aiConfidence: validation.confidence,
       aiSummary: validation.summary,
@@ -158,6 +177,9 @@ class VerificationFirestoreService {
 
     await _firestore.collection(FirestoreConstants.usersCollection).doc(user.uid).update({
       'verificationStatus': status,
+      'verificationIntent': verificationRole,
+      'collegeId': collegeId.trim(),
+      'collegeName': collegeName.trim(),
       'updatedAt': DateTime.now().toIso8601String(),
     });
 
@@ -180,9 +202,21 @@ class VerificationFirestoreService {
     final user = await _userService.getUserByUID(request.userId);
     if (user == null) throw VerificationException('User not found.');
 
-    final badge = VerificationConstants.isAlumniDocument(request.documentType)
+    final badge = request.verificationRole == VerificationConstants.roleAlumni ||
+            VerificationConstants.isAlumniDocument(request.documentType)
         ? VerificationConstants.badgeVerifiedAlumni
         : VerificationConstants.badgeVerifiedStudent;
+
+    final userUpdate = <String, dynamic>{
+      'verificationBadge': badge,
+      'verificationStatus': VerificationConstants.statusApproved,
+      'isVerified': true,
+      'updatedAt': DateTime.now().toIso8601String(),
+    };
+    if (request.collegeId != null && request.collegeId!.isNotEmpty) {
+      userUpdate['collegeId'] = request.collegeId;
+      userUpdate['collegeName'] = request.collegeName ?? '';
+    }
 
     await ref.update({
       'status': VerificationConstants.statusApproved,
@@ -194,12 +228,7 @@ class VerificationFirestoreService {
     await _firestore
         .collection(FirestoreConstants.usersCollection)
         .doc(request.userId)
-        .update({
-      'verificationBadge': badge,
-      'verificationStatus': VerificationConstants.statusApproved,
-      'isVerified': true,
-      'updatedAt': DateTime.now().toIso8601String(),
-    });
+        .update(userUpdate);
   }
 
   Future<void> rejectRequest({
@@ -228,6 +257,36 @@ class VerificationFirestoreService {
         .doc(request.userId)
         .update({
       'verificationStatus': VerificationConstants.statusRejected,
+      'updatedAt': DateTime.now().toIso8601String(),
+    });
+  }
+
+  Future<void> requestResubmission({
+    required String requestId,
+    required String adminId,
+    required String adminNote,
+  }) async {
+    final ref = _firestore
+        .collection(FirestoreConstants.verificationRequestsCollection)
+        .doc(requestId);
+    final doc = await ref.get();
+    if (!doc.exists) throw VerificationException('Request not found.');
+
+    final request =
+        VerificationRequestModel.fromJson(doc.data()!, docId: doc.id);
+
+    await ref.update({
+      'status': VerificationConstants.statusResubmissionRequested,
+      'adminNote': adminNote,
+      'reviewedBy': adminId,
+      'reviewedAt': DateTime.now().toIso8601String(),
+    });
+
+    await _firestore
+        .collection(FirestoreConstants.usersCollection)
+        .doc(request.userId)
+        .update({
+      'verificationStatus': VerificationConstants.statusResubmissionRequested,
       'updatedAt': DateTime.now().toIso8601String(),
     });
   }

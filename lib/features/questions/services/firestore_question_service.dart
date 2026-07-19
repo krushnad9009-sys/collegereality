@@ -28,16 +28,19 @@ class FirestoreQuestionService {
   Future<bool> isVerifiedStudent(String userId) async {
     final data = await _userData(userId);
     if (data == null) return false;
-    return data['verificationBadge'] != VerificationConstants.badgeNone &&
-        data['verificationStatus'] == VerificationConstants.statusApproved;
+    final badge = data['verificationBadge'] as String?;
+    final status = data['verificationStatus'] as String?;
+    return VerificationConstants.isApprovedStudentOrAlumni(badge, status);
   }
 
   Future<bool> isVerifiedStudentOfCollege(String userId, String collegeId) async {
     final data = await _userData(userId);
     if (data == null) return false;
-    final verified = data['verificationBadge'] != VerificationConstants.badgeNone &&
-        data['verificationStatus'] == VerificationConstants.statusApproved;
-    if (!verified) return false;
+    final badge = data['verificationBadge'] as String?;
+    final status = data['verificationStatus'] as String?;
+    if (!VerificationConstants.isApprovedStudentOrAlumni(badge, status)) {
+      return false;
+    }
     final userCollegeId = (data['collegeId'] as String?)?.trim();
     return userCollegeId != null && userCollegeId == collegeId.trim();
   }
