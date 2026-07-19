@@ -6,6 +6,7 @@ import '../../../core/constants/college_constants.dart';
 import '../../../core/cache/college_session_cache.dart';
 import '../../../core/cache/college_local_cache.dart';
 import '../../../core/cache/firestore_quota_guard.dart';
+import '../../../core/data/college_bundled_data_source.dart';
 import '../../../core/utils/firestore_error_utils.dart';
 
 abstract class CollegeRepository {
@@ -40,12 +41,14 @@ class CollegeRepositoryImpl implements CollegeRepository {
     required Future<T?> Function() loadLocalCache,
     T? Function()? loadSessionCache,
     Future<void> Function(T result)? persist,
+    Future<T> Function()? bundledFallback,
   }) async {
     if (FirestoreQuotaGuard.instance.shouldBlockRequest()) {
       final session = loadSessionCache?.call();
       if (session != null) return session;
       final local = await loadLocalCache();
       if (local != null) return local;
+      if (bundledFallback != null) return bundledFallback();
       throw const FirestoreQuotaException();
     }
 
@@ -64,6 +67,7 @@ class CollegeRepositoryImpl implements CollegeRepository {
       if (session != null) return session;
       final local = await loadLocalCache();
       if (local != null) return local;
+      if (bundledFallback != null) return bundledFallback();
       throw const FirestoreQuotaException();
     }
   }
@@ -82,6 +86,7 @@ class CollegeRepositoryImpl implements CollegeRepository {
         if (local == null) return null;
         return local.length <= limit ? local : local.take(limit).toList();
       },
+      bundledFallback: () => CollegeBundledDataSource.featuredFallback(limit: limit),
       fetch: () async {
         final colleges = await _service.getFeaturedColleges(limit: limit);
         return colleges.length <= limit
@@ -110,7 +115,11 @@ class CollegeRepositoryImpl implements CollegeRepository {
           if (college.id == id) return college;
         }
       }
-      throw const FirestoreQuotaException();
+      final all = await CollegeBundledDataSource.loadAll();
+      for (final college in all) {
+        if (college.id == id) return college;
+      }
+      return null;
     }
 
     try {
@@ -120,7 +129,11 @@ class CollegeRepositoryImpl implements CollegeRepository {
     } on FirebaseException catch (e) {
       if (!FirestoreErrorUtils.isQuotaExceeded(e)) rethrow;
       FirestoreQuotaGuard.instance.markQuotaExceeded();
-      throw const FirestoreQuotaException();
+      final all = await CollegeBundledDataSource.loadAll();
+      for (final college in all) {
+        if (college.id == id) return college;
+      }
+      return null;
     }
   }
 
@@ -167,7 +180,15 @@ class CollegeRepositoryImpl implements CollegeRepository {
           hasMore: false,
         );
       }
-      throw const FirestoreQuotaException();
+      return CollegeBundledDataSource.search(
+        query: query,
+        state: state,
+        city: city,
+        course: course,
+        category: category,
+        limit: limit,
+        includeInactive: includeInactive,
+      );
     }
 
     try {
@@ -202,7 +223,15 @@ class CollegeRepositoryImpl implements CollegeRepository {
           hasMore: false,
         );
       }
-      throw const FirestoreQuotaException();
+      return CollegeBundledDataSource.search(
+        query: query,
+        state: state,
+        city: city,
+        course: course,
+        category: category,
+        limit: limit,
+        includeInactive: includeInactive,
+      );
     }
   }
 
@@ -216,7 +245,7 @@ class CollegeRepositoryImpl implements CollegeRepository {
             .take(12)
             .toList();
       }
-      throw const FirestoreQuotaException();
+      return CollegeBundledDataSource.autocomplete(query);
     }
 
     try {
@@ -226,7 +255,7 @@ class CollegeRepositoryImpl implements CollegeRepository {
     } on FirebaseException catch (e) {
       if (!FirestoreErrorUtils.isQuotaExceeded(e)) rethrow;
       FirestoreQuotaGuard.instance.markQuotaExceeded();
-      throw const FirestoreQuotaException();
+      return CollegeBundledDataSource.autocomplete(query);
     }
   }
 
@@ -252,7 +281,10 @@ class CollegeRepositoryImpl implements CollegeRepository {
     if (FirestoreQuotaGuard.instance.shouldBlockRequest()) {
       final cached = await CollegeLocalCache.loadCollegeCount();
       if (cached != null && cached > 0) return cached;
-      throw const FirestoreQuotaException();
+      final bundled = await CollegeBundledDataSource.loadAll();
+      return bundled.length >= CollegeBundledDataSource.minimumFallbackCount
+          ? bundled.length
+          : CollegeBundledDataSource.minimumFallbackCount;
     }
 
     try {
@@ -267,7 +299,10 @@ class CollegeRepositoryImpl implements CollegeRepository {
       FirestoreQuotaGuard.instance.markQuotaExceeded();
       final cached = await CollegeLocalCache.loadCollegeCount();
       if (cached != null && cached > 0) return cached;
-      throw const FirestoreQuotaException();
+      final bundled = await CollegeBundledDataSource.loadAll();
+      return bundled.length >= CollegeBundledDataSource.minimumFallbackCount
+          ? bundled.length
+          : CollegeBundledDataSource.minimumFallbackCount;
     }
   }
 

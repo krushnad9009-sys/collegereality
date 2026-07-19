@@ -26,6 +26,9 @@ final firestoreQuotaCoordinatorProvider = Provider<void>((ref) {
     ref.invalidate(topRatedCollegesProvider);
     ref.invalidate(collegeCountProvider);
     ref.invalidate(collegeDirectoryMetaProvider);
+    ref.invalidate(collegeSearchPageProvider);
+    ref.invalidate(collegeAutocompleteProvider);
+    ref.invalidate(homePlacementHighlightsProvider);
   });
 
   FirestoreQuotaGuard.instance.addRecoveryListener(() {
@@ -35,6 +38,9 @@ final firestoreQuotaCoordinatorProvider = Provider<void>((ref) {
     ref.invalidate(trendingCollegesProvider);
     ref.invalidate(topRatedCollegesProvider);
     ref.invalidate(collegeCountProvider);
+    ref.invalidate(collegeSearchPageProvider);
+    ref.invalidate(collegeAutocompleteProvider);
+    ref.invalidate(homePlacementHighlightsProvider);
   });
 
   FirestoreQuotaGuard.instance.addBlockedListener(() {

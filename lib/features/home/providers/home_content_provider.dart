@@ -1,7 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/cache/college_local_cache.dart';
-import '../../../core/utils/firestore_error_utils.dart';
+import '../../../core/cache/firestore_quota_guard.dart';
+import '../../../core/data/college_offline_resolver.dart';
 import '../../colleges/models/college_model.dart';
 import '../../colleges/providers/college_provider.dart';
 import '../../reviews/models/review_model.dart';
@@ -9,48 +10,55 @@ import '../../reviews/providers/review_provider.dart';
 import '../../careers/models/careers_models.dart';
 import '../../careers/providers/careers_provider.dart';
 
-/// Trending / featured colleges for horizontal carousel (all-India).
+/// Trending colleges — always returns data (Firestore → cache → bundled seed).
 final trendingCollegesProvider =
     FutureProvider<List<CollegeModel>>((ref) async {
-  await ref.watch(collegeDataReadyProvider.future);
-
   try {
-    final featured = await ref.watch(homeFeaturedCollegesProvider.future);
-    if (featured.isNotEmpty) {
-      final trending = featured.take(12).toList();
-      await CollegeLocalCache.saveTrending(trending);
-      return trending;
+    if (!FirestoreQuotaGuard.instance.shouldBlockRequest()) {
+      try {
+        await ref.watch(collegeDataReadyProvider.future);
+        final featured = await ref.watch(homeFeaturedCollegesProvider.future);
+        if (featured.isNotEmpty) {
+          final trending = featured.take(12).toList();
+          await CollegeLocalCache.saveTrending(trending);
+          return trending;
+        }
+        final colleges = await ref.watch(featuredCollegesProvider.future);
+        if (colleges.isNotEmpty) {
+          final trending = colleges.take(12).toList();
+          await CollegeLocalCache.saveTrending(trending);
+          return trending;
+        }
+      } catch (_) {}
     }
-
-    final colleges = await ref.watch(featuredCollegesProvider.future);
-    final trending = colleges.take(12).toList();
-    await CollegeLocalCache.saveTrending(trending);
-    return trending;
-  } on FirestoreQuotaException {
-    final local = await CollegeLocalCache.loadTrending();
-    if (local != null && local.isNotEmpty) return local;
-    rethrow;
+    return await CollegeOfflineResolver.trendingColleges();
+  } catch (_) {
+    return CollegeOfflineResolver.trendingColleges();
   }
 });
 
-/// Top-rated colleges sorted by overall rating.
+/// Top-rated colleges — always returns data (Firestore → cache → bundled seed).
 final topRatedCollegesProvider = FutureProvider<List<CollegeModel>>((ref) async {
-  await ref.watch(collegeDataReadyProvider.future);
-
   try {
-    final colleges = await ref.watch(featuredCollegesProvider.future);
-    final sorted = [...colleges]
-      ..sort(
-        (a, b) =>
-            b.aggregatedRatings.overall.compareTo(a.aggregatedRatings.overall),
-      );
-    final topRated = sorted.take(8).toList();
-    await CollegeLocalCache.saveTopRated(topRated);
-    return topRated;
-  } on FirestoreQuotaException {
-    final local = await CollegeLocalCache.loadTopRated();
-    if (local != null && local.isNotEmpty) return local;
-    rethrow;
+    if (!FirestoreQuotaGuard.instance.shouldBlockRequest()) {
+      try {
+        await ref.watch(collegeDataReadyProvider.future);
+        final colleges = await ref.watch(featuredCollegesProvider.future);
+        if (colleges.isNotEmpty) {
+          final sorted = [...colleges]
+            ..sort(
+              (a, b) => b.aggregatedRatings.overall
+                  .compareTo(a.aggregatedRatings.overall),
+            );
+          final topRated = sorted.take(8).toList();
+          await CollegeLocalCache.saveTopRated(topRated);
+          return topRated;
+        }
+      } catch (_) {}
+    }
+    return await CollegeOfflineResolver.topRatedColleges();
+  } catch (_) {
+    return CollegeOfflineResolver.topRatedColleges();
   }
 });
 
@@ -75,17 +83,30 @@ final homeAlumniStoriesProvider =
 /// Colleges with strongest placement stats.
 final homePlacementHighlightsProvider =
     FutureProvider<List<CollegeModel>>((ref) async {
-  await ref.watch(collegeDataReadyProvider.future);
-
-  final source = await ref.watch(featuredCollegesProvider.future);
-  final sorted = [...source]
+  if (!FirestoreQuotaGuard.instance.shouldBlockRequest()) {
+    try {
+      await ref.watch(collegeDataReadyProvider.future);
+      final source = await ref.watch(featuredCollegesProvider.future);
+      if (source.isNotEmpty) {
+        final sorted = [...source]
+          ..sort(
+            (a, b) => b.placements.averagePackageLpa
+                .compareTo(a.placements.averagePackageLpa),
+          );
+        final withPlacements = sorted
+            .where((c) => c.placements.averagePackageLpa > 0)
+            .take(5)
+            .toList();
+        if (withPlacements.isNotEmpty) return withPlacements;
+        return sorted.take(5).toList();
+      }
+    } catch (_) {}
+  }
+  final offline = await CollegeOfflineResolver.featuredColleges(limit: 20);
+  final sorted = [...offline]
     ..sort(
-      (a, b) => b.placements.averagePackageLpa
-          .compareTo(a.placements.averagePackageLpa),
+      (a, b) =>
+          b.placements.averagePackageLpa.compareTo(a.placements.averagePackageLpa),
     );
-
-  final withPlacements =
-      sorted.where((c) => c.placements.averagePackageLpa > 0).take(5).toList();
-  if (withPlacements.isNotEmpty) return withPlacements;
   return sorted.take(5).toList();
 });

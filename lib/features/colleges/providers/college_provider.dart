@@ -6,6 +6,8 @@ import '../services/firestore_college_service.dart';
 import '../services/college_seed_service.dart';
 import '../../../core/bootstrap/startup_bootstrap.dart';
 import '../../../core/cache/college_local_cache.dart';
+import '../../../core/cache/firestore_quota_guard.dart';
+import '../../../core/data/college_offline_resolver.dart';
 import '../../../core/utils/firestore_error_utils.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../engagement/providers/engagement_provider.dart';
@@ -28,7 +30,8 @@ final collegeSeedProvider = FutureProvider<bool>((ref) async {
     final cached = await CollegeLocalCache.loadCollegeCount();
     if (cached != null && cached > 0) return true;
     final featured = await CollegeLocalCache.loadFeatured();
-    return featured != null && featured.isNotEmpty;
+    if (featured != null && featured.isNotEmpty) return true;
+    return CollegeOfflineResolver.hasOfflineData();
   }
 });
 
@@ -42,6 +45,7 @@ final collegeDataReadyProvider = FutureProvider<bool>((ref) async {
     if (cached != null && cached > 0) return true;
     final featured = await CollegeLocalCache.loadFeatured();
     if (featured != null && featured.isNotEmpty) return true;
+    return CollegeOfflineResolver.hasOfflineData();
   }
   return ref.watch(collegeSeedProvider.future);
 });
@@ -56,9 +60,15 @@ final collegeRepositoryProvider = Provider<CollegeRepository>((ref) {
 
 final featuredCollegesProvider =
     FutureProvider<List<CollegeModel>>((ref) async {
-  await ref.watch(collegeSeedProvider.future);
-  final repository = ref.watch(collegeRepositoryProvider);
-  return repository.getFeaturedColleges();
+  if (!FirestoreQuotaGuard.instance.shouldBlockRequest()) {
+    try {
+      await ref.watch(collegeSeedProvider.future);
+      final repository = ref.watch(collegeRepositoryProvider);
+      final colleges = await repository.getFeaturedColleges();
+      if (colleges.isNotEmpty) return colleges;
+    } catch (_) {}
+  }
+  return CollegeOfflineResolver.featuredColleges();
 });
 
 /// Loads a small featured slice only after Home has painted (startup deferral).
@@ -66,10 +76,16 @@ final homeFeaturedCollegesProvider =
     FutureProvider<List<CollegeModel>>((ref) async {
   final ready = ref.watch(homeContentReadyProvider);
   if (!ready) return const [];
-  await ref.watch(collegeSeedProvider.future);
-  await Future<void>.delayed(Duration.zero);
-  final repository = ref.watch(collegeRepositoryProvider);
-  return repository.getFeaturedColleges(limit: 6);
+  if (!FirestoreQuotaGuard.instance.shouldBlockRequest()) {
+    try {
+      await ref.watch(collegeSeedProvider.future);
+      await Future<void>.delayed(Duration.zero);
+      final repository = ref.watch(collegeRepositoryProvider);
+      final colleges = await repository.getFeaturedColleges(limit: 6);
+      if (colleges.isNotEmpty) return colleges;
+    } catch (_) {}
+  }
+  return CollegeOfflineResolver.featuredColleges(limit: 6);
 });
 
 final collegeByIdProvider =

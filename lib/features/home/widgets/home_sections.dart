@@ -6,7 +6,6 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../assistant/widgets/ai_search_bar.dart';
-import '../../../core/cache/firestore_quota_guard.dart';
 import '../../../core/widgets/async_state_widgets.dart';
 import '../../../core/widgets/premium_components.dart';
 import '../../../core/widgets/skeleton_loader.dart';
@@ -38,16 +37,33 @@ class TrendingCollegesCarousel extends ConsumerWidget {
           ),
         ),
       ),
-      error: (e, _) => AsyncErrorView.fromError(
-        e,
-        compact: true,
-        onRetry: () async {
-          await FirestoreQuotaGuard.instance.retryNowIfAllowed();
-          ref.invalidate(trendingCollegesProvider);
-        },
+      error: (_, _) => SizedBox(
+        height: 220,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          itemCount: 3,
+          separatorBuilder: (_, _) => const SizedBox(width: 14),
+          itemBuilder: (_, _) => const SizedBox(
+            width: 268,
+            child: CollegeCardSkeleton(),
+          ),
+        ),
       ),
       data: (colleges) {
-        if (colleges.isEmpty) return const SizedBox.shrink();
+        if (colleges.isEmpty) {
+          return SizedBox(
+            height: 220,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: 3,
+              separatorBuilder: (_, _) => const SizedBox(width: 14),
+              itemBuilder: (_, _) => const SizedBox(
+                width: 268,
+                child: CollegeCardSkeleton(),
+              ),
+            ),
+          );
+        }
         return SizedBox(
           height: 228,
           child: ListView.separated(
@@ -82,16 +98,27 @@ class TopRatedCollegesSection extends ConsumerWidget {
           ),
         ),
       ),
-      error: (e, _) => AsyncErrorView.fromError(
-        e,
-        compact: true,
-        onRetry: () async {
-          await FirestoreQuotaGuard.instance.retryNowIfAllowed();
-          ref.invalidate(topRatedCollegesProvider);
-        },
+      error: (_, _) => Column(
+        children: List.generate(
+          2,
+          (_) => const Padding(
+            padding: EdgeInsets.only(bottom: 12),
+            child: CollegeCardSkeleton(),
+          ),
+        ),
       ),
       data: (colleges) {
-        if (colleges.isEmpty) return const SizedBox.shrink();
+        if (colleges.isEmpty) {
+          return Column(
+            children: List.generate(
+              2,
+              (_) => const Padding(
+                padding: EdgeInsets.only(bottom: 12),
+                child: CollegeCardSkeleton(),
+              ),
+            ),
+          );
+        }
         return Column(
           children: colleges
               .take(4)

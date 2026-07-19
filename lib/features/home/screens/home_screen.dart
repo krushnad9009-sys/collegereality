@@ -284,7 +284,7 @@ class _QuotaNoticeBanner extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Showing saved college data. Live updates will resume shortly.',
+              'Offline data • Live data will sync automatically.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppTheme.gray700,
                     height: 1.35,
