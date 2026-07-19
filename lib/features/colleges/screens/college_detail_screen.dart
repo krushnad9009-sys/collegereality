@@ -16,6 +16,7 @@ import '../../reviews/providers/review_provider.dart';
 import '../../reviews/widgets/review_card_widget.dart';
 import '../../reviews/widgets/review_summary_panel.dart';
 import '../../reviews/widgets/star_rating_widget.dart';
+import '../../reviews/widgets/write_review_button.dart';
 import '../../compare/providers/compare_basket_provider.dart';
 import '../../compare/widgets/compare_basket_bar.dart';
 import '../../placements/widgets/placements_tab_content.dart';
@@ -86,10 +87,10 @@ class _CollegeDetailScreenState extends ConsumerState<CollegeDetailScreen> {
           );
         }
 
-        final verifiedAsync = ref.watch(isVerifiedForReviewProvider);
         final basket = ref.watch(compareBasketProvider);
         final isInCompare = basket.contains(college.id);
-        final favoriteIds = ref.watch(favoriteCollegeIdsProvider).valueOrNull ?? {};
+        final favoriteIds =
+            ref.watch(favoriteCollegeIdsProvider).valueOrNull ?? {};
         final isFavorite = favoriteIds.contains(college.id);
         final user = ref.read(currentUserProvider);
 
@@ -97,26 +98,10 @@ class _CollegeDetailScreenState extends ConsumerState<CollegeDetailScreen> {
           initialIndex: _initialTabIndex(),
           length: 8,
           child: Scaffold(
-            floatingActionButton: verifiedAsync.when(
-              loading: () => null,
-              error: (_, _) => null,
-              data: (isVerified) {
-                if (!isVerified) {
-                  return FloatingActionButton.extended(
-                    onPressed: () => context.go(RouteNames.verification),
-                    icon: const Icon(Icons.verified_user_outlined),
-                    label: const Text('Verify to Review'),
-                  );
-                }
-                return FloatingActionButton.extended(
-                  elevation: 4,
-                  onPressed: () => context.go(
-                    '${RouteNames.writeReviewPath(college.id)}?name=${Uri.encodeComponent(college.name)}',
-                  ),
-                  icon: const Icon(Icons.rate_review),
-                  label: const Text('Write Review'),
-                );
-              },
+            floatingActionButton: WriteReviewButton(
+              collegeId: college.id,
+              collegeName: college.name,
+              extended: true,
             ),
             body: NestedScrollView(
               headerSliverBuilder: (context, innerBoxIsScrolled) => [
@@ -330,6 +315,12 @@ class _CollegeHeader extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 12),
+          WriteReviewButton(
+            collegeId: college.id,
+            collegeName: college.name,
+            outlined: true,
           ),
           const SizedBox(height: 12),
           AccreditationBadges(
@@ -725,6 +716,13 @@ class _ReviewsTabState extends ConsumerState<_ReviewsTab> {
             padding: const EdgeInsets.all(16),
             children: [
               ReviewSummaryPanel(college: widget.college),
+              const SizedBox(height: 12),
+              Center(
+                child: WriteReviewButton(
+                  collegeId: _collegeId,
+                  collegeName: widget.college.name,
+                ),
+              ),
               const SizedBox(height: 8),
               ConnectStudentsSection(
                 collegeId: _collegeId,
@@ -752,6 +750,11 @@ class _ReviewsTabState extends ConsumerState<_ReviewsTab> {
                         style: GoogleFonts.poppins(color: AppTheme.gray500),
                         textAlign: TextAlign.center,
                       ),
+                      const SizedBox(height: 20),
+                      WriteReviewButton(
+                        collegeId: _collegeId,
+                        collegeName: widget.college.name,
+                      ),
                     ],
                   ),
                 ),
@@ -765,7 +768,18 @@ class _ReviewsTabState extends ConsumerState<_ReviewsTab> {
           itemCount: reviews.length + 3 + (_hasMore ? 1 : 0),
           itemBuilder: (context, index) {
             if (index == 0) {
-              return ReviewSummaryPanel(college: widget.college);
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  ReviewSummaryPanel(college: widget.college),
+                  const SizedBox(height: 12),
+                  WriteReviewButton(
+                    collegeId: _collegeId,
+                    collegeName: widget.college.name,
+                    outlined: true,
+                  ),
+                ],
+              );
             }
             if (index == 1) {
               return Padding(
@@ -991,11 +1005,23 @@ class _RatingsTab extends StatelessWidget {
         .toList();
 
     if (items.isEmpty) {
-      return Center(
-        child: Text(
-          'No verified ratings yet',
-          style: GoogleFonts.poppins(color: AppTheme.gray500),
-        ),
+      return ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          ReviewSummaryPanel(college: college),
+          const SizedBox(height: 16),
+          WriteReviewButton(
+            collegeId: college.id,
+            collegeName: college.name,
+          ),
+          const SizedBox(height: 24),
+          Center(
+            child: Text(
+              'No verified ratings yet',
+              style: GoogleFonts.poppins(color: AppTheme.gray500),
+            ),
+          ),
+        ],
       );
     }
 
@@ -1003,7 +1029,13 @@ class _RatingsTab extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       children: [
         ReviewSummaryPanel(college: college),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
+        WriteReviewButton(
+          collegeId: college.id,
+          collegeName: college.name,
+          outlined: true,
+        ),
+        const SizedBox(height: 16),
         Text(
           'Category-wise ratings',
           style: GoogleFonts.poppins(

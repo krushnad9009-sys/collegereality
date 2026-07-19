@@ -25,14 +25,30 @@ class FirestoreReviewService {
         .get();
     if (!doc.exists) return false;
     final data = doc.data()!;
-    return data['verificationBadge'] != VerificationConstants.badgeNone &&
-        data['verificationStatus'] == VerificationConstants.statusApproved;
+    if (data['verificationStatus'] != VerificationConstants.statusApproved) {
+      return false;
+    }
+    final badge = data['verificationBadge'] as String? ??
+        VerificationConstants.badgeNone;
+    return badge == VerificationConstants.badgeVerifiedStudent ||
+        badge == VerificationConstants.badgeVerifiedAlumni;
   }
 
   Future<ReviewModel> createReview({required ReviewModel review}) async {
     if (!review.isVerifiedStudent) {
       throw ReviewFirestoreException(
         message: 'Only verified students or alumni can submit reviews.',
+      );
+    }
+
+    final existing = await getUserReviewForCollege(
+      review.userId,
+      review.collegeId,
+    );
+    if (existing != null) {
+      throw ReviewFirestoreException(
+        message:
+            'You have already reviewed this college. Edit your existing review instead.',
       );
     }
 
@@ -418,7 +434,16 @@ class FirestoreReviewService {
       );
     }
 
-    return {for (final key in RatingParameters.allKeys) key: avg(key)};
+    final feesAvg = avg(RatingParameters.fees) > 0
+        ? avg(RatingParameters.fees)
+        : avg(RatingParameters.feesValue);
+    final campusAvg = avg(RatingParameters.campus);
+
+    return {
+      for (final key in RatingParameters.allKeys) key: avg(key),
+      'campusLife': campusAvg,
+      'fees': feesAvg,
+    };
   }
 
   Map<String, int> _distributionFromMeta(ReviewAggregationMeta meta) {
@@ -494,9 +519,11 @@ CollegeRatings computeCollegeRatingsFromReviews(List<ReviewModel> reviews) {
     faculty: avg(RatingParameters.faculty),
     infrastructure: avg(RatingParameters.infrastructure),
     placements: avg(RatingParameters.placements),
-    campusLife: avg(RatingParameters.sports),
+    campusLife: avg(RatingParameters.campus),
     hostel: avg(RatingParameters.hostel),
-    fees: avg(RatingParameters.food),
+    fees: avg(RatingParameters.fees) > 0
+        ? avg(RatingParameters.fees)
+        : avg(RatingParameters.feesValue),
     teaching: avg(RatingParameters.teaching),
     labs: avg(RatingParameters.labs),
     library: avg(RatingParameters.library),

@@ -2,39 +2,45 @@
 class ReviewYesNoQuestions {
   ReviewYesNoQuestions._();
 
-  static const String wouldRecommend = 'wouldRecommend';
   static const String raggingPresent = 'raggingPresent';
-  static const String placementsAsPromised = 'placementsAsPromised';
-  static const String facultySupportive = 'facultySupportive';
-  static const String hostelWorthIt = 'hostelWorthIt';
-  static const String wouldTakeAdmissionAgain = 'wouldTakeAdmissionAgain';
+  static const String hiddenFees = 'hiddenFees';
+  static const String wouldChooseAgain = 'wouldChooseAgain';
+  static const String placementSupport = 'placementSupport';
 
   static const List<ReviewYesNoQuestion> questions = [
     ReviewYesNoQuestion(
-      key: wouldRecommend,
-      label: 'Would you recommend this college?',
-    ),
-    ReviewYesNoQuestion(
       key: raggingPresent,
-      label: 'Is ragging present?',
+      label: 'Ragging?',
     ),
     ReviewYesNoQuestion(
-      key: placementsAsPromised,
-      label: 'Are placements as promised?',
+      key: hiddenFees,
+      label: 'Hidden fees?',
     ),
     ReviewYesNoQuestion(
-      key: facultySupportive,
-      label: 'Are faculty supportive?',
+      key: wouldChooseAgain,
+      label: 'Would you choose this college again?',
     ),
     ReviewYesNoQuestion(
-      key: hostelWorthIt,
-      label: 'Is hostel worth it?',
-    ),
-    ReviewYesNoQuestion(
-      key: wouldTakeAdmissionAgain,
-      label: 'Would you take admission here again?',
+      key: placementSupport,
+      label: 'Placement support?',
     ),
   ];
+
+  /// Legacy question keys from earlier app versions.
+  static const Map<String, String> legacyLabels = {
+    'wouldRecommend': 'Would you recommend this college?',
+    'placementsAsPromised': 'Are placements as promised?',
+    'facultySupportive': 'Are faculty supportive?',
+    'hostelWorthIt': 'Is hostel worth it?',
+    'wouldTakeAdmissionAgain': 'Would you take admission here again?',
+  };
+
+  static String labelFor(String key) {
+    for (final q in questions) {
+      if (q.key == key) return q.label;
+    }
+    return legacyLabels[key] ?? key;
+  }
 
   static Map<String, bool?> emptyAnswers() {
     return {for (final q in questions) q.key: null};

@@ -173,6 +173,7 @@ class CollegeRatings {
         return safety;
       case 'campus':
         return campusLife;
+      case 'fees':
       case 'feesValue':
         return fees;
       default:
@@ -186,9 +187,13 @@ class CollegeRatings {
       faculty: (json['faculty'] as num?)?.toDouble() ?? 0,
       infrastructure: (json['infrastructure'] as num?)?.toDouble() ?? 0,
       placements: (json['placements'] as num?)?.toDouble() ?? 0,
-      campusLife: (json['campusLife'] as num?)?.toDouble() ?? 0,
+      campusLife: (json['campusLife'] as num?)?.toDouble() ??
+          (json['campus'] as num?)?.toDouble() ??
+          0,
       hostel: (json['hostel'] as num?)?.toDouble() ?? 0,
-      fees: (json['fees'] as num?)?.toDouble() ?? 0,
+      fees: (json['fees'] as num?)?.toDouble() ??
+          (json['feesValue'] as num?)?.toDouble() ??
+          0,
       teaching: (json['teaching'] as num?)?.toDouble() ?? 0,
       labs: (json['labs'] as num?)?.toDouble() ?? 0,
       library: (json['library'] as num?)?.toDouble() ?? 0,

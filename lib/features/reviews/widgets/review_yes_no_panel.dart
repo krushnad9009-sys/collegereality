@@ -16,9 +16,7 @@ class ReviewYesNoPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final entries = ReviewYesNoQuestions.questions
-        .where((q) => answers.containsKey(q.key))
-        .toList();
+    final entries = answers.entries.toList();
     if (entries.isEmpty) return const SizedBox.shrink();
 
     return Column(
@@ -33,9 +31,7 @@ class ReviewYesNoPanel extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        ...entries.map((question) {
-          final value = answers[question.key];
-          if (value == null) return const SizedBox.shrink();
+        ...entries.map((entry) {
           return Padding(
             padding: const EdgeInsets.only(bottom: 6),
             child: Row(
@@ -43,7 +39,7 @@ class ReviewYesNoPanel extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    question.label,
+                    ReviewYesNoQuestions.labelFor(entry.key),
                     style: GoogleFonts.poppins(
                       fontSize: compact ? 11 : 12,
                       color: AppTheme.gray600,
@@ -51,7 +47,7 @@ class ReviewYesNoPanel extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                _AnswerChip(value: value),
+                _AnswerChip(value: entry.value),
               ],
             ),
           );

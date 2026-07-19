@@ -68,6 +68,28 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
     super.dispose();
   }
 
+  void _mapLegacyYesNoAnswers(Map<String, bool> answers) {
+    if (_yesNoAnswers[ReviewYesNoQuestions.wouldChooseAgain] == null) {
+      if (answers['wouldTakeAdmissionAgain'] != null) {
+        _yesNoAnswers[ReviewYesNoQuestions.wouldChooseAgain] =
+            answers['wouldTakeAdmissionAgain'];
+      } else if (answers['wouldRecommend'] != null) {
+        _yesNoAnswers[ReviewYesNoQuestions.wouldChooseAgain] =
+            answers['wouldRecommend'];
+      }
+    }
+    if (_yesNoAnswers[ReviewYesNoQuestions.placementSupport] == null &&
+        answers['placementsAsPromised'] != null) {
+      _yesNoAnswers[ReviewYesNoQuestions.placementSupport] =
+          answers['placementsAsPromised'];
+    }
+    if (_yesNoAnswers[ReviewYesNoQuestions.raggingPresent] == null &&
+        answers['raggingPresent'] != null) {
+      _yesNoAnswers[ReviewYesNoQuestions.raggingPresent] =
+          answers['raggingPresent'];
+    }
+  }
+
   Future<void> _loadExistingReview() async {
     final user = ref.read(currentUserProvider);
     if (user == null) return;
@@ -89,11 +111,17 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
         _photoUrls = List.from(review.photoUrls);
         _videoUrls = List.from(review.videoUrls);
         _ratings.addAll(review.ratings);
+        if ((_ratings[RatingParameters.fees] ?? 0) == 0 &&
+            review.ratings.containsKey(RatingParameters.feesValue)) {
+          _ratings[RatingParameters.fees] =
+              review.ratings[RatingParameters.feesValue]!;
+        }
         for (final q in ReviewYesNoQuestions.questions) {
           if (review.yesNoAnswers.containsKey(q.key)) {
             _yesNoAnswers[q.key] = review.yesNoAnswers[q.key];
           }
         }
+        _mapLegacyYesNoAnswers(review.yesNoAnswers);
       });
       return;
     }

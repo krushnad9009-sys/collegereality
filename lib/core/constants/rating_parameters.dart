@@ -1,4 +1,4 @@
-/// Verified-student review rating dimensions (13 categories).
+/// Verified-student review rating dimensions (10 categories).
 class RatingParameters {
   RatingParameters._();
 
@@ -7,17 +7,18 @@ class RatingParameters {
   static const String placements = 'placements';
   static const String hostel = 'hostel';
   static const String campus = 'campus';
-  static const String faculty = 'faculty';
   static const String labs = 'labs';
-  static const String sports = 'sports';
+  static const String faculty = 'faculty';
   static const String attendance = 'attendance';
-  static const String safety = 'safety';
-  static const String food = 'food';
-  static const String infrastructure = 'infrastructure';
-  static const String feesValue = 'feesValue';
+  static const String sports = 'sports';
+  static const String fees = 'fees';
 
-  /// Legacy key kept for reading older reviews.
+  /// Legacy keys kept for reading older reviews.
   static const String library = 'library';
+  static const String infrastructure = 'infrastructure';
+  static const String food = 'food';
+  static const String safety = 'safety';
+  static const String feesValue = 'feesValue';
 
   static const List<RatingCategory> categories = [
     RatingCategory(
@@ -28,33 +29,18 @@ class RatingParameters {
       ],
     ),
     RatingCategory(
-      id: 'academics',
-      label: 'Academics',
+      id: 'experience',
+      label: 'Rate your experience',
       parameters: [
         RatingParam(key: teaching, label: 'Teaching'),
-        RatingParam(key: faculty, label: 'Faculty'),
-        RatingParam(key: labs, label: 'Labs'),
-        RatingParam(key: attendance, label: 'Attendance'),
-      ],
-    ),
-    RatingCategory(
-      id: 'campus',
-      label: 'Campus Life',
-      parameters: [
-        RatingParam(key: campus, label: 'Campus'),
-        RatingParam(key: infrastructure, label: 'Infrastructure'),
-        RatingParam(key: sports, label: 'Sports'),
-        RatingParam(key: food, label: 'Food'),
-        RatingParam(key: hostel, label: 'Hostel'),
-        RatingParam(key: safety, label: 'Safety'),
-      ],
-    ),
-    RatingCategory(
-      id: 'career',
-      label: 'Career & Value',
-      parameters: [
         RatingParam(key: placements, label: 'Placements'),
-        RatingParam(key: feesValue, label: 'Fees Value'),
+        RatingParam(key: hostel, label: 'Hostel'),
+        RatingParam(key: campus, label: 'Campus'),
+        RatingParam(key: labs, label: 'Labs'),
+        RatingParam(key: faculty, label: 'Faculty'),
+        RatingParam(key: attendance, label: 'Attendance'),
+        RatingParam(key: sports, label: 'Sports'),
+        RatingParam(key: fees, label: 'Fees'),
       ],
     ),
   ];
@@ -68,6 +54,10 @@ class RatingParameters {
 
   static String labelFor(String key) {
     if (key == library) return 'Library';
+    if (key == infrastructure) return 'Infrastructure';
+    if (key == food) return 'Food';
+    if (key == safety) return 'Safety';
+    if (key == feesValue) return 'Fees';
     for (final category in categories) {
       for (final param in category.parameters) {
         if (param.key == key) return param.label;
