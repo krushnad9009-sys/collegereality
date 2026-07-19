@@ -7,11 +7,12 @@ import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/rating_parameters.dart';
 import '../../../core/constants/review_constants.dart';
+import '../../../core/constants/review_verification.dart';
+import '../../../core/constants/review_yes_no_questions.dart';
 import '../../../core/widgets/index.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/providers/user_provider.dart';
 import '../../colleges/providers/college_provider.dart';
-import '../../verification/providers/verification_provider.dart';
 import '../models/review_model.dart';
 import '../providers/review_provider.dart';
 import '../services/firestore_review_service.dart';
@@ -50,6 +51,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
   ReviewModel? _existingReview;
   List<String> _photoUrls = [];
   List<String> _videoUrls = [];
+  final Map<String, bool?> _yesNoAnswers = ReviewYesNoQuestions.emptyAnswers();
 
   @override
   void initState() {
@@ -87,6 +89,11 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
         _photoUrls = List.from(review.photoUrls);
         _videoUrls = List.from(review.videoUrls);
         _ratings.addAll(review.ratings);
+        for (final q in ReviewYesNoQuestions.questions) {
+          if (review.yesNoAnswers.containsKey(q.key)) {
+            _yesNoAnswers[q.key] = review.yesNoAnswers[q.key];
+          }
+        }
       });
       return;
     }
@@ -168,10 +175,30 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
 
     final userDetail = await ref.read(userRepositoryProvider).getUser(user.uid);
     if (!mounted) return;
-    if (userDetail == null || !isUserFullyVerified(userDetail)) {
+    if (userDetail == null || !canSubmitCollegeReview(userDetail)) {
       SnackBarHelper.showErrorSnackBar(
         context,
-        message: 'Only verified students can write reviews.',
+        message: 'Only verified students or alumni can write reviews.',
+      );
+      return;
+    }
+
+    if (_existingReview != null && !_existingReview!.canEditAgain) {
+      SnackBarHelper.showErrorSnackBar(
+        context,
+        message:
+            'You can edit your review again in ${_existingReview!.daysUntilEditAllowed} day(s).',
+      );
+      return;
+    }
+
+    final unanswered = ReviewYesNoQuestions.questions
+        .where((q) => _yesNoAnswers[q.key] == null)
+        .toList();
+    if (unanswered.isNotEmpty) {
+      SnackBarHelper.showErrorSnackBar(
+        context,
+        message: 'Please answer all yes/no questions.',
       );
       return;
     }
@@ -196,6 +223,12 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
     setState(() => _isSubmitting = true);
 
     try {
+      final yesNoAnswers = {
+        for (final q in ReviewYesNoQuestions.questions)
+          q.key: _yesNoAnswers[q.key]!,
+      };
+      final badgeLabel = reviewerBadgeLabel(userDetail);
+
       final review = ReviewModel(
         id: _existingReview?.id ?? '',
         collegeId: widget.collegeId.trim(),
@@ -204,6 +237,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
         anonymousAlias: generateAnonymousAlias(
           user.uid,
           isAnonymous: _isAnonymous,
+          badgeLabel: badgeLabel,
         ),
         isAnonymous: _isAnonymous,
         course: _courseController.text.trim().isEmpty
@@ -225,6 +259,8 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
         photoUrls: _photoUrls,
         videoUrls: _videoUrls,
         isVerifiedStudent: true,
+        reviewerBadge: badgeLabel,
+        yesNoAnswers: yesNoAnswers,
         status: ReviewModel.statusPublished,
         createdAt: _existingReview?.createdAt ?? DateTime.now(),
         updatedAt: DateTime.now(),
@@ -284,7 +320,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
           );
         }
 
-        if (!isUserFullyVerified(userDetail)) {
+        if (!canSubmitCollegeReview(userDetail)) {
           return Scaffold(
             appBar: AppBar(
               title: const Text('Write Review'),
@@ -303,7 +339,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
                       size: 64, color: AppTheme.primaryColor.withValues(alpha: 0.5)),
                   const SizedBox(height: 16),
                   Text(
-                    'Verified Students Only',
+                    'Verified Students & Alumni Only',
                     style: GoogleFonts.poppins(
                       fontSize: 20,
                       fontWeight: FontWeight.w700,
@@ -311,7 +347,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Complete student verification to share honest, trusted reviews.',
+                    'Complete student or alumni verification to share honest, trusted reviews.',
                     textAlign: TextAlign.center,
                     style: GoogleFonts.poppins(color: AppTheme.gray600),
                   ),
@@ -325,6 +361,9 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
             ),
           );
         }
+
+        final editLocked =
+            _existingReview != null && !_existingReview!.canEditAgain;
 
         return Scaffold(
           appBar: AppBar(
@@ -354,7 +393,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
-                        'India\'s Best Review — verified students only',
+                        'Verified students & alumni only — India\'s most trusted reviews',
                         style: GoogleFonts.poppins(
                           fontSize: 13,
                           color: AppTheme.gray600,
@@ -363,6 +402,25 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
                     ),
                   ],
                 ),
+                if (editLocked) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppTheme.warningColor.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      'You can edit again in ${_existingReview!.daysUntilEditAllowed} day(s). '
+                      'Reviews can be updated once every ${ReviewConstants.editCooldownDays} days.',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: AppTheme.gray700,
+                      ),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 16),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
@@ -396,6 +454,53 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
                     const SizedBox(height: 16),
                   ];
                 }),
+                Text(
+                  'Yes / No Questions',
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.primaryColor,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ...ReviewYesNoQuestions.questions.map((question) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          question.label,
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        SegmentedButton<bool>(
+                          segments: const [
+                            ButtonSegment(value: true, label: Text('Yes')),
+                            ButtonSegment(value: false, label: Text('No')),
+                          ],
+                          selected: _yesNoAnswers[question.key] != null
+                              ? {_yesNoAnswers[question.key]!}
+                              : {},
+                          emptySelectionAllowed: true,
+                          onSelectionChanged: editLocked
+                              ? null
+                              : (selected) {
+                                  if (selected.isEmpty) return;
+                                  setState(() {
+                                    _yesNoAnswers[question.key] =
+                                        selected.first;
+                                  });
+                                },
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+                const SizedBox(height: 8),
                 CustomTextField(
                   label: 'Course',
                   hint: 'e.g. B.Tech CSE',
@@ -465,7 +570,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
                 PrimaryButton(
                   label: _existingReview != null ? 'Update Review' : 'Submit Review',
                   isLoading: _isSubmitting,
-                  onPressed: _submit,
+                  onPressed: editLocked ? null : _submit,
                 ),
               ],
             ),

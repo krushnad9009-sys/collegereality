@@ -171,6 +171,10 @@ class CollegeRatings {
         return infrastructure;
       case 'safety':
         return safety;
+      case 'campus':
+        return campusLife;
+      case 'feesValue':
+        return fees;
       default:
         return 0;
     }

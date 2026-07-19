@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../config/theme/app_theme.dart';
+import '../../../core/constants/rating_parameters.dart';
 import '../../colleges/models/college_model.dart';
 import 'star_rating_widget.dart';
 import 'rating_distribution_chart.dart';
@@ -13,6 +14,10 @@ class ReviewSummaryPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ratings = college.aggregatedRatings;
+    final breakdown = RatingParameters.allKeys
+        .map((key) => (RatingParameters.labelFor(key), ratings.ratingFor(key)))
+        .where((item) => item.$2 > 0)
+        .toList();
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -41,7 +46,7 @@ class ReviewSummaryPanel extends StatelessWidget {
                   StarRatingDisplay(rating: ratings.overall, starSize: 16),
                   const SizedBox(height: 4),
                   Text(
-                    '${college.reviewCount} verified reviews',
+                    '${college.reviewCount} verified review${college.reviewCount == 1 ? '' : 's'}',
                     style: GoogleFonts.poppins(
                       fontSize: 11,
                       color: AppTheme.gray600,
@@ -57,6 +62,48 @@ class ReviewSummaryPanel extends StatelessWidget {
               ),
             ],
           ),
+          if (breakdown.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Text(
+              'Rating breakdown',
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+              ),
+            ),
+            const SizedBox(height: 8),
+            ...breakdown.take(6).map(
+                  (item) => Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            item.$1,
+                            style: GoogleFonts.poppins(fontSize: 11),
+                          ),
+                        ),
+                        Text(
+                          '${item.$2.toStringAsFixed(1)}/5',
+                          style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.primaryColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            if (breakdown.length > 6)
+              Text(
+                '+ ${breakdown.length - 6} more categories in Ratings tab',
+                style: GoogleFonts.poppins(
+                  fontSize: 10,
+                  color: AppTheme.gray500,
+                ),
+              ),
+          ],
           const SizedBox(height: 12),
           Wrap(
             spacing: 6,
@@ -64,7 +111,7 @@ class ReviewSummaryPanel extends StatelessWidget {
             children: [
               _TrustChip(
                 icon: Icons.verified,
-                label: 'Verified students only',
+                label: 'Verified students & alumni',
               ),
               _TrustChip(
                 icon: Icons.visibility_off_outlined,

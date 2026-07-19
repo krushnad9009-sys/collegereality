@@ -479,8 +479,6 @@ class _OverviewTab extends StatelessWidget {
           ),
           const SizedBox(height: 12),
         ],
-        ConnectStudentsSection(collegeId: college.id),
-        const SizedBox(height: 20),
         OfficialCollegeContentSection(collegeId: college.id),
         const SizedBox(height: 20),
         if (college.coursesDetailed.isNotEmpty) ...[
@@ -727,6 +725,8 @@ class _ReviewsTabState extends ConsumerState<_ReviewsTab> {
             padding: const EdgeInsets.all(16),
             children: [
               ReviewSummaryPanel(college: widget.college),
+              const SizedBox(height: 8),
+              ConnectStudentsSection(collegeId: _collegeId),
               Center(
                 child: Padding(
                   padding: const EdgeInsets.all(24),
@@ -745,7 +745,7 @@ class _ReviewsTabState extends ConsumerState<_ReviewsTab> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Only verified students can write reviews.',
+                        'Only verified students and alumni can write reviews.',
                         style: GoogleFonts.poppins(color: AppTheme.gray500),
                         textAlign: TextAlign.center,
                       ),
@@ -759,13 +759,19 @@ class _ReviewsTabState extends ConsumerState<_ReviewsTab> {
 
         return ListView.builder(
           padding: const EdgeInsets.all(16),
-          itemCount: reviews.length + 1 + (_hasMore ? 1 : 0),
+          itemCount: reviews.length + 2 + (_hasMore ? 1 : 0),
           itemBuilder: (context, index) {
             if (index == 0) {
               return ReviewSummaryPanel(college: widget.college);
             }
+            if (index == 1) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: ConnectStudentsSection(collegeId: _collegeId),
+              );
+            }
 
-            final reviewIndex = index - 1;
+            final reviewIndex = index - 2;
             if (reviewIndex == reviews.length) {
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 12),

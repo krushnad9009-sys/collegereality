@@ -39,6 +39,18 @@ class CollegeStorageService {
     );
   }
 
+  Future<String> uploadCollegeRequestPhoto({
+    required String userId,
+    required Uint8List bytes,
+    required String extension,
+  }) async {
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    return _upload(
+      path: 'college_requests/$userId/$timestamp.$extension',
+      bytes: bytes,
+    );
+  }
+
   Future<String> _upload({
     required String path,
     required Uint8List bytes,

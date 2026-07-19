@@ -63,6 +63,7 @@ class CollegeRequestModel {
   final String address;
   final String? website;
   final String? universityName;
+  final String? photoUrl;
   final String notes;
   final String status;
   final String? adminNotes;
@@ -82,6 +83,7 @@ class CollegeRequestModel {
     this.address = '',
     this.website,
     this.universityName,
+    this.photoUrl,
     this.notes = '',
     this.status = EcosystemConstants.statusPending,
     this.adminNotes,
@@ -103,6 +105,7 @@ class CollegeRequestModel {
       address: json['address'] as String? ?? '',
       website: json['website'] as String?,
       universityName: json['universityName'] as String?,
+      photoUrl: json['photoUrl'] as String?,
       notes: json['notes'] as String? ?? '',
       status: json['status'] as String? ?? EcosystemConstants.statusPending,
       adminNotes: json['adminNotes'] as String?,
@@ -124,6 +127,7 @@ class CollegeRequestModel {
         'address': address,
         'website': website,
         'universityName': universityName,
+        'photoUrl': photoUrl,
         'notes': notes,
         'status': status,
         'adminNotes': adminNotes,

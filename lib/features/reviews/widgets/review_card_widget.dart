@@ -6,6 +6,7 @@ import '../../../core/constants/rating_parameters.dart';
 import '../models/review_model.dart';
 import '../providers/review_provider.dart';
 import 'review_media_gallery.dart';
+import 'review_yes_no_panel.dart';
 import 'star_rating_widget.dart';
 
 class ReviewCardWidget extends ConsumerStatefulWidget {
@@ -95,7 +96,7 @@ class _ReviewCardWidgetState extends ConsumerState<ReviewCardWidget> {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          _VerifiedChip(),
+                          _VerifiedChip(label: review.reviewerBadge ?? 'Verified'),
                         ],
                       ),
                       if (review.course != null || review.batchYear != null)
@@ -169,6 +170,10 @@ class _ReviewCardWidgetState extends ConsumerState<ReviewCardWidget> {
                 items: review.cons,
                 color: AppTheme.errorColor,
               ),
+            ],
+            if (review.yesNoAnswers.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              ReviewYesNoPanel(answers: review.yesNoAnswers, compact: true),
             ],
             if (review.photoUrls.isNotEmpty || review.videoUrls.isNotEmpty) ...[
               const SizedBox(height: 12),
@@ -307,6 +312,10 @@ class _ReviewCardWidgetState extends ConsumerState<ReviewCardWidget> {
 }
 
 class _VerifiedChip extends StatelessWidget {
+  final String label;
+
+  const _VerifiedChip({this.label = 'Verified'});
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -321,7 +330,7 @@ class _VerifiedChip extends StatelessWidget {
           const Icon(Icons.verified, size: 12, color: AppTheme.accentColor),
           const SizedBox(width: 4),
           Text(
-            'Verified',
+            label,
             style: GoogleFonts.poppins(
               fontSize: 10,
               fontWeight: FontWeight.w600,

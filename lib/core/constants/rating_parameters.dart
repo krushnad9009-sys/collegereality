@@ -1,19 +1,23 @@
-/// India's Best Review System — 12 verified-student rating dimensions.
+/// Verified-student review rating dimensions (13 categories).
 class RatingParameters {
   RatingParameters._();
 
   static const String overall = 'overall';
   static const String teaching = 'teaching';
   static const String placements = 'placements';
+  static const String hostel = 'hostel';
+  static const String campus = 'campus';
   static const String faculty = 'faculty';
   static const String labs = 'labs';
-  static const String library = 'library';
   static const String sports = 'sports';
-  static const String food = 'food';
-  static const String hostel = 'hostel';
   static const String attendance = 'attendance';
-  static const String infrastructure = 'infrastructure';
   static const String safety = 'safety';
+  static const String food = 'food';
+  static const String infrastructure = 'infrastructure';
+  static const String feesValue = 'feesValue';
+
+  /// Legacy key kept for reading older reviews.
+  static const String library = 'library';
 
   static const List<RatingCategory> categories = [
     RatingCategory(
@@ -30,7 +34,6 @@ class RatingParameters {
         RatingParam(key: teaching, label: 'Teaching'),
         RatingParam(key: faculty, label: 'Faculty'),
         RatingParam(key: labs, label: 'Labs'),
-        RatingParam(key: library, label: 'Library'),
         RatingParam(key: attendance, label: 'Attendance'),
       ],
     ),
@@ -38,6 +41,7 @@ class RatingParameters {
       id: 'campus',
       label: 'Campus Life',
       parameters: [
+        RatingParam(key: campus, label: 'Campus'),
         RatingParam(key: infrastructure, label: 'Infrastructure'),
         RatingParam(key: sports, label: 'Sports'),
         RatingParam(key: food, label: 'Food'),
@@ -47,9 +51,10 @@ class RatingParameters {
     ),
     RatingCategory(
       id: 'career',
-      label: 'Career',
+      label: 'Career & Value',
       parameters: [
-        RatingParam(key: placements, label: 'Placement'),
+        RatingParam(key: placements, label: 'Placements'),
+        RatingParam(key: feesValue, label: 'Fees Value'),
       ],
     ),
   ];
@@ -62,6 +67,7 @@ class RatingParameters {
   }
 
   static String labelFor(String key) {
+    if (key == library) return 'Library';
     for (final category in categories) {
       for (final param in category.parameters) {
         if (param.key == key) return param.label;

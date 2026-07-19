@@ -32,7 +32,7 @@ class FirestoreReviewService {
   Future<ReviewModel> createReview({required ReviewModel review}) async {
     if (!review.isVerifiedStudent) {
       throw ReviewFirestoreException(
-        message: 'Only verified students can submit reviews.',
+        message: 'Only verified students or alumni can submit reviews.',
       );
     }
 
@@ -66,8 +66,20 @@ class FirestoreReviewService {
   Future<void> updateReview(ReviewModel review, {ReviewModel? previous}) async {
     if (!review.isVerifiedStudent) {
       throw ReviewFirestoreException(
-        message: 'Only verified students can update reviews.',
+        message: 'Only verified students or alumni can update reviews.',
       );
+    }
+
+    final existing = previous ?? await getReviewById(review.id);
+    if (existing != null) {
+      final elapsed = DateTime.now().difference(existing.updatedAt).inDays;
+      if (elapsed < ReviewConstants.editCooldownDays) {
+        final remaining = ReviewConstants.editCooldownDays - elapsed;
+        throw ReviewFirestoreException(
+          message:
+              'You can edit your review again in $remaining day${remaining == 1 ? '' : 's'}.',
+        );
+      }
     }
 
     final data = review.copyWith(updatedAt: DateTime.now()).toJson();
@@ -443,10 +455,14 @@ class ReviewFirestoreException implements Exception {
   String toString() => message;
 }
 
-String generateAnonymousAlias(String userId, {required bool isAnonymous}) {
+String generateAnonymousAlias(
+  String userId, {
+  required bool isAnonymous,
+  String badgeLabel = 'Verified Student',
+}) {
   final hash = userId.hashCode.abs() % 10000;
   if (isAnonymous) {
-    return 'Verified Student #$hash';
+    return '$badgeLabel #$hash';
   }
   return 'Student #$hash';
 }

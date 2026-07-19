@@ -444,27 +444,38 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
                           )
                         : _results.isEmpty
                             ? Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.search_off_rounded,
-                                        size: 56, color: AppTheme.gray400),
-                                    const SizedBox(height: 12),
-                                    Text(
-                                      'No colleges found',
-                                      style: GoogleFonts.poppins(
-                                        fontWeight: FontWeight.w600,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(24),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.search_off_rounded,
+                                          size: 56, color: AppTheme.gray400),
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        'No colleges found',
+                                        style: GoogleFonts.poppins(
+                                          fontWeight: FontWeight.w600,
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      'Try a different name, city, or filter',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 12,
-                                        color: AppTheme.gray500,
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'Try a different name, city, or filter',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 12,
+                                          color: AppTheme.gray500,
+                                        ),
+                                        textAlign: TextAlign.center,
                                       ),
-                                    ),
-                                  ],
+                                      const SizedBox(height: 20),
+                                      OutlinedButton.icon(
+                                        onPressed: () =>
+                                            context.push(RouteNames.requestCollege),
+                                        icon: const Icon(Icons.add_business_outlined),
+                                        label: const Text('Add My College'),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               )
                             : ListView.builder(

@@ -7,6 +7,7 @@ class ReviewConstants {
   static const int maxPhotoBytes = 5 * 1024 * 1024;
   static const int maxVideoBytes = 25 * 1024 * 1024;
   static const int pageSize = 20;
+  static const int editCooldownDays = 30;
 
   static const String reportStatusOpen = 'open';
   static const String reportStatusReviewed = 'reviewed';

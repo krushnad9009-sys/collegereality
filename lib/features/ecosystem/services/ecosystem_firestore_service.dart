@@ -61,11 +61,9 @@ class EcosystemFirestoreService {
     String address = '',
     String? website,
     String? universityName,
+    String? photoUrl,
     String notes = '',
   }) async {
-    if (user.verificationBadge == VerificationConstants.badgeNone) {
-      throw EcosystemException('Verified students can request new colleges.');
-    }
     if (await isDuplicateCollege(name: name, city: city)) {
       throw EcosystemException(
         'This college already exists or has a pending request.',
@@ -77,7 +75,7 @@ class EcosystemFirestoreService {
     final request = CollegeRequestModel(
       id: id,
       userId: user.uid,
-      userName: user.displayName ?? 'Student',
+      userName: user.displayName ?? 'User',
       name: name.trim(),
       nameLower: CollegeSearchUtils.normalizeName(name),
       city: city.trim(),
@@ -86,6 +84,7 @@ class EcosystemFirestoreService {
       address: address.trim(),
       website: website?.trim(),
       universityName: universityName?.trim(),
+      photoUrl: photoUrl,
       notes: notes.trim(),
       createdAt: now,
       updatedAt: now,

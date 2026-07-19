@@ -74,12 +74,12 @@ class _ConnectStudentsSectionState extends ConsumerState<ConnectStudentsSection>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Connect with Students',
+          'Talk to Students',
           style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 15),
         ),
         const SizedBox(height: 6),
         Text(
-          'Chat securely with students who allow a public profile. Phone numbers are never shared.',
+          'Admission seekers can chat with verified students and alumni who allow a public profile. Phone numbers are never shared.',
           style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.gray600),
         ),
         const SizedBox(height: 12),
@@ -104,7 +104,7 @@ class _ConnectStudentsSectionState extends ConsumerState<ConnectStudentsSection>
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  'No students have enabled public profiles at this college yet.',
+                  'No verified students or alumni have enabled public profiles at this college yet.',
                   style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.gray600),
                 ),
               );

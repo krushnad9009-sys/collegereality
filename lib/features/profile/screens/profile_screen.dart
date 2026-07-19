@@ -449,7 +449,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   OutlinedButton.icon(
                     onPressed: () => context.push(RouteNames.requestCollege),
                     icon: const Icon(Icons.add_business_outlined),
-                    label: const Text('Request New College'),
+                    label: const Text('Add My College'),
                   ),
                   const SizedBox(height: 12),
                   OutlinedButton.icon(

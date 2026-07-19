@@ -33,7 +33,7 @@ class CollegeEcosystemMenu extends StatelessWidget {
         }
       },
       itemBuilder: (context) => [
-        _item('request', Icons.add_business_outlined, 'Request New College'),
+        _item('request', Icons.add_business_outlined, 'Add My College'),
         _item('edit', Icons.edit_outlined, 'Suggest Edit'),
         _item('report', Icons.flag_outlined, 'Report Wrong Info'),
         _item('claim', Icons.verified_outlined, 'Claim College'),

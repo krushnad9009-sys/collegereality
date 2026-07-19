@@ -23,6 +23,8 @@ class ReviewModel {
   final List<String> videoUrls;
   final int helpfulCount;
   final bool isVerifiedStudent;
+  final String? reviewerBadge;
+  final Map<String, bool> yesNoAnswers;
   final String status;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -44,6 +46,8 @@ class ReviewModel {
     this.videoUrls = const [],
     this.helpfulCount = 0,
     this.isVerifiedStudent = false,
+    this.reviewerBadge,
+    this.yesNoAnswers = const {},
     this.status = statusPublished,
     required this.createdAt,
     required this.updatedAt,
@@ -83,6 +87,11 @@ class ReviewModel {
       (key, value) => MapEntry(key, (value as num).toDouble()),
     );
 
+    final yesNoRaw = json['yesNoAnswers'] as Map<String, dynamic>? ?? {};
+    final yesNoAnswers = yesNoRaw.map(
+      (key, value) => MapEntry(key, value == true),
+    );
+
     return ReviewModel(
       id: docId ?? json['id'] as String? ?? '',
       collegeId: (json['collegeId'] as String? ?? '').trim(),
@@ -114,6 +123,8 @@ class ReviewModel {
           (json['likeCount'] as num?)?.toInt() ??
           0,
       isVerifiedStudent: json['isVerifiedStudent'] as bool? ?? false,
+      reviewerBadge: json['reviewerBadge'] as String?,
+      yesNoAnswers: yesNoAnswers,
       status: normalizeStatus(json['status'] as String?),
       createdAt: _parseDate(json['createdAt']),
       updatedAt: _parseDate(json['updatedAt']),
@@ -138,6 +149,8 @@ class ReviewModel {
       'videoUrls': videoUrls,
       'helpfulCount': helpfulCount,
       'isVerifiedStudent': isVerifiedStudent,
+      'reviewerBadge': reviewerBadge,
+      'yesNoAnswers': yesNoAnswers,
       'status': normalizeStatus(status),
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
@@ -161,6 +174,8 @@ class ReviewModel {
     List<String>? videoUrls,
     int? helpfulCount,
     bool? isVerifiedStudent,
+    String? reviewerBadge,
+    Map<String, bool>? yesNoAnswers,
     String? status,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -182,9 +197,21 @@ class ReviewModel {
       videoUrls: videoUrls ?? this.videoUrls,
       helpfulCount: helpfulCount ?? this.helpfulCount,
       isVerifiedStudent: isVerifiedStudent ?? this.isVerifiedStudent,
+      reviewerBadge: reviewerBadge ?? this.reviewerBadge,
+      yesNoAnswers: yesNoAnswers ?? this.yesNoAnswers,
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
+  }
+
+  bool get canEditAgain {
+    final elapsed = DateTime.now().difference(updatedAt);
+    return elapsed.inDays >= 30;
+  }
+
+  int get daysUntilEditAllowed {
+    final remaining = 30 - DateTime.now().difference(updatedAt).inDays;
+    return remaining > 0 ? remaining : 0;
   }
 }
