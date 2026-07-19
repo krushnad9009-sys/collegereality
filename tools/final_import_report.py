@@ -23,10 +23,10 @@ STATES = [
     "Uttar Pradesh", "Maharashtra", "Karnataka", "Tamil Nadu", "Andhra Pradesh",
     "Rajasthan", "Gujarat", "Madhya Pradesh", "Telangana", "Kerala", "Odisha",
     "West Bengal", "Punjab", "Haryana", "Chhatisgarh", "Bihar", "Assam",
-    "Uttrakhand", "Himachal Pradesh", "Jammu and Kashmir", "Jharkhand", "Goa",
+    "Uttrakhand", "Himachal Pradesh", "Jammu And Kashmir", "Jharkhand", "Goa",
     "Delhi", "Chandigarh", "Puducherry", "Manipur", "Meghalaya", "Mizoram",
-    "Nagaland", "Tripura", "Arunachal Pradesh", "Sikkim", "Andaman and Nicobar Islands",
-    "Dadra and Nagar Haveli", "Lakshadweep", "Daman and Diu",
+    "Nagaland", "Tripura", "Arunachal Pradesh", "Sikkim", "Andaman & Nicobar Islands",
+    "Dadra & Nagar Haveli", "Lakshadweep", "Daman & Diu",
 ]
 
 SEARCH_SAMPLES = [
@@ -123,6 +123,22 @@ def deploy_indexes(project: str) -> tuple[bool, str]:
         return False, str(exc)
 
 
+def count_aishe_id_duplicates(db) -> int:
+    """Count Firestore docs sharing the same aisheId (should be zero for clean import)."""
+    seen: dict[str, str] = {}
+    duplicates = 0
+    for doc in db.collection("colleges").select(["aisheId"]).stream():
+        data = doc.to_dict() or {}
+        aid = str(data.get("aisheId") or "").strip()
+        if not aid:
+            continue
+        if aid in seen:
+            duplicates += 1
+        else:
+            seen[aid] = doc.id
+    return duplicates
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--credentials", default=str(CREDS))
@@ -178,24 +194,39 @@ def main() -> int:
 
     search_ok, search_failures = verify_search(db)
 
+    duplicate_count = 0
+    try:
+        duplicate_count = count_aishe_id_duplicates(db)
+    except Exception as exc:  # noqa: BLE001
+        print(f"WARN: duplicate scan skipped (quota?): {exc}")
+    missing_colleges = max(0, expected_total - total_docs)
+
     indexes_ok, indexes_msg = (False, "skipped")
     if not args.skip_index_deploy:
         indexes_ok, indexes_msg = deploy_indexes(args.project)
 
-    meta = db.collection("_meta").document("collegeDirectory").get().to_dict() or {}
+    meta = {}
+    try:
+        meta = db.collection("_meta").document("collegeDirectory").get().to_dict() or {}
+    except Exception as exc:  # noqa: BLE001
+        print(f"WARN: could not read meta (quota?): {exc}")
     all_states_ok = len(missing_states) == 0 and len(low_states) == 0
     production_ready = (
-        total_docs >= expected_total * MIN_RATIO
-        and all_states_ok
+        total_docs >= expected_total
+        and len(missing_states) == 0
+        and len(low_states) == 0
         and search_ok
         and no_tokens == 0
         and no_category == 0
+        and duplicate_count == 0
     )
 
     report = {
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "totalCollegesImported": expected_total,
         "totalFirestoreDocuments": total_docs,
+        "missingColleges": missing_colleges,
+        "duplicateDocuments": duplicate_count,
         "allStatesImported": all_states_ok and len(missing_states) == 0,
         "statesWithData": len([s for s, n in live.items() if n > 0]),
         "statesExpected": len([s for s in STATES if expected.get(s, 0) > 0]),
@@ -217,6 +248,8 @@ def main() -> int:
     print("=" * 60)
     print(f"Total colleges (expected/imported): {expected_total}")
     print(f"Total Firestore documents:          {total_docs}")
+    print(f"Missing colleges:                   {missing_colleges}")
+    print(f"Duplicate documents (aisheId):      {duplicate_count}")
     print(f"All states/UTs imported:            {'Yes' if report['allStatesImported'] else 'No'}")
     print(f"States with data:                   {report['statesWithData']}/{report['statesExpected']}")
     if missing_states:

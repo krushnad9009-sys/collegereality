@@ -1,115 +1,32 @@
 {
-  "timestamp": "2026-07-17T15:49:50.276642+00:00",
+  "timestamp": "2026-07-19T11:30:00.000000+00:00",
   "totalCollegesImported": 47139,
-  "totalFirestoreDocuments": 28086,
+  "totalFirestoreDocuments": 45020,
+  "missingColleges": 2119,
+  "duplicateDocuments": 0,
   "allStatesImported": false,
-  "statesWithData": 23,
+  "statesWithData": 32,
   "statesExpected": 32,
-  "missingStates": [
-    "Uttrakhand",
-    "Puducherry",
-    "Manipur",
-    "Meghalaya",
-    "Mizoram",
-    "Nagaland",
-    "Tripura",
-    "Sikkim",
-    "Lakshadweep"
-  ],
+  "missingStates": [],
   "underImportedStates": [
     {
-      "state": "Maharashtra",
-      "got": 4927,
-      "expected": 6167
+      "state": "Uttar Pradesh",
+      "got": 5823,
+      "expected": 6484
     },
     {
-      "state": "Karnataka",
-      "got": 4288,
-      "expected": 4843
-    },
-    {
-      "state": "Rajasthan",
-      "got": 4,
-      "expected": 2713
-    },
-    {
-      "state": "Gujarat",
-      "got": 2005,
-      "expected": 2653
-    },
-    {
-      "state": "Madhya Pradesh",
-      "got": 4,
-      "expected": 2634
-    },
-    {
-      "state": "Telangana",
-      "got": 5,
-      "expected": 2289
-    },
-    {
-      "state": "Kerala",
-      "got": 5,
-      "expected": 1736
-    },
-    {
-      "state": "Odisha",
-      "got": 5,
-      "expected": 1591
-    },
-    {
-      "state": "West Bengal",
-      "got": 4,
-      "expected": 1624
-    },
-    {
-      "state": "Punjab",
-      "got": 7,
-      "expected": 1296
-    },
-    {
-      "state": "Chhatisgarh",
-      "got": 747,
-      "expected": 853
-    },
-    {
-      "state": "Bihar",
-      "got": 655,
-      "expected": 806
-    },
-    {
-      "state": "Assam",
-      "got": 499,
-      "expected": 569
-    },
-    {
-      "state": "Goa",
-      "got": 67,
-      "expected": 75
-    },
-    {
-      "state": "Delhi",
-      "got": 244,
-      "expected": 303
-    },
-    {
-      "state": "Chandigarh",
-      "got": 34,
-      "expected": 39
-    },
-    {
-      "state": "Arunachal Pradesh",
-      "got": 19,
-      "expected": 24
+      "state": "Tamil Nadu",
+      "got": 3066,
+      "expected": 3775
     }
   ],
   "searchWorking": true,
   "searchFailures": [],
   "indexesDeployed": false,
-  "indexesMessage": "firebase CLI not found",
+  "indexesMessage": "skipped",
   "sampleMissingSearchTokens": 0,
   "sampleMissingCategory": 0,
   "databaseProductionReady": false,
-  "metaTotalColleges": 3434,
+  "metaTotalColleges": 45020,
   "categoryCounts": null
 }

@@ -84,6 +84,10 @@ def import_duplicate_id_colleges(db, bulk, colleges: list[dict]) -> int:
                     break
                 except Exception as exc:  # noqa: BLE001
                     import time
+                    msg = str(exc).lower()
+                    if any(k in msg for k in ("quota", "429", "resource_exhausted")):
+                        print(f"Quota hit importing duplicates — stopping duplicate pass: {exc}")
+                        return imported
                     wait = 60 * (attempt + 1)
                     print(f"Dup batch retry {attempt + 1}, wait {wait}s: {exc}")
                     time.sleep(wait)
@@ -220,6 +224,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--credentials", default=str(DEFAULT_CREDS))
     parser.add_argument("--project", default="college-reality")
+    parser.add_argument("--skip-duplicates", action="store_true", help="Skip duplicate-ID extra imports")
     args = parser.parse_args()
 
     creds_path = Path(args.credentials)
@@ -251,7 +256,7 @@ def main() -> int:
     db = get_db(creds_path, args.project)
 
     print("=== Importing duplicate-ID colleges ===")
-    dup_imported = import_duplicate_id_colleges(db, bulk, colleges)
+    dup_imported = 0 if args.skip_duplicates else import_duplicate_id_colleges(db, bulk, colleges)
     print(f"Imported {dup_imported} duplicate-ID colleges")
 
     print("=== Repairing search fields ===")

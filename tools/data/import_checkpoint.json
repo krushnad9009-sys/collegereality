@@ -1,0 +1,26 @@
+{
+  "timestamp": "2026-07-19T09:45:00Z",
+  "reason": "incomplete_total_state_name_fix",
+  "currentState": "Kerala",
+  "pendingStates": [
+    "Kerala",
+    "West Bengal",
+    "Assam",
+    "Bihar",
+    "Delhi",
+    "Goa",
+    "Uttrakhand",
+    "Manipur",
+    "Mizoram",
+    "Tripura",
+    "Sikkim",
+    "Lakshadweep",
+    "Arunachal Pradesh",
+    "Chandigarh",
+    "Andaman & Nicobar Islands",
+    "Dadra & Nagar Haveli",
+    "Daman & Diu",
+    "Jammu And Kashmir"
+  ],
+  "notes": "Fixed AISHE state names (& vs and). Resume with run_checkpoint_import.py"
+}

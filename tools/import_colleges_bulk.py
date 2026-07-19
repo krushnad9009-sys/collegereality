@@ -137,6 +137,34 @@ def commit_chunk(db, chunk: list, imported: int, delay: float) -> tuple[int, boo
     return done, True
 
 
+def filter_missing_by_lookup(db, colleges: list[dict], batch_size: int = 100) -> list[dict]:
+    """Check existence by document ID in batches (fewer reads than full state stream)."""
+    missing: list[dict] = []
+    for i in range(0, len(colleges), batch_size):
+        chunk = colleges[i : i + batch_size]
+        refs = []
+        ordered: list[dict] = []
+        for raw in chunk:
+            doc_id = str(raw.get("id") or raw.get("slug") or "")
+            if not doc_id:
+                missing.append(raw)
+                continue
+            refs.append(db.collection("colleges").document(doc_id))
+            ordered.append(raw)
+        if not refs:
+            continue
+        try:
+            snaps = db.get_all(refs)
+        except Exception as exc:  # noqa: BLE001
+            if is_quota_error(exc):
+                raise
+            raise
+        for raw, snap in zip(ordered, snaps):
+            if not snap.exists:
+                missing.append(raw)
+    return missing
+
+
 def existing_ids_for_state(db, state: str | None) -> set[str]:
     ids: set[str] = set()
     q = db.collection("colleges")
@@ -193,9 +221,14 @@ def main() -> int:
 
     if args.only_missing:
         scope = args.verify_state
-        print(f"Loading existing Firestore IDs{f' for {scope}' if scope else ''}...")
-        existing = existing_ids_for_state(db, scope)
-        colleges = filter_missing(colleges, existing)
+        print(f"Checking missing colleges{f' for {scope}' if scope else ''}...")
+        try:
+            colleges = filter_missing_by_lookup(db, colleges)
+        except Exception as exc:  # noqa: BLE001
+            if is_quota_error(exc):
+                print(f"Quota exceeded while checking existing docs: {exc}", file=sys.stderr)
+                return 2
+            raise
         print(f"Missing colleges to import: {len(colleges)}")
 
     if not colleges:
