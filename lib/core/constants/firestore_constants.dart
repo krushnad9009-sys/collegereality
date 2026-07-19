@@ -61,6 +61,7 @@ class FirestoreConstants {
   static const String savedEntranceExamsCollection = 'saved_entrance_exams';
   static const String savedQuestionsCollection = 'saved_questions';
   static const String collegeAnalyticsEventsCollection = 'college_analytics_events';
+  static const String studentChatIntentsCollection = 'student_chat_intents';
 
   // Ecosystem collections (Phase 22)
   static const String collegeRequestsCollection = 'college_requests';

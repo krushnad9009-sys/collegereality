@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../auth/providers/user_provider.dart';
+import '../../../core/constants/review_verification.dart';
 import '../models/review_model.dart';
 import '../repositories/review_repository.dart';
 import '../services/firestore_review_service.dart';
@@ -173,9 +175,9 @@ final reviewHelpfulMarkedProvider =
 });
 
 final isVerifiedForReviewProvider = FutureProvider<bool>((ref) async {
-  final user = ref.watch(currentUserProvider);
-  if (user == null) return false;
-  return ref.read(reviewRepositoryProvider).isUserVerified(user.uid);
+  final userDetail = ref.watch(currentUserDetailProvider).valueOrNull;
+  if (userDetail == null) return false;
+  return canSubmitCollegeReview(userDetail);
 });
 
 /// Instant helpful vote UI before Firestore confirms.

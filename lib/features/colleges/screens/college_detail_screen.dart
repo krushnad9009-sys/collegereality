@@ -726,7 +726,10 @@ class _ReviewsTabState extends ConsumerState<_ReviewsTab> {
             children: [
               ReviewSummaryPanel(college: widget.college),
               const SizedBox(height: 8),
-              ConnectStudentsSection(collegeId: _collegeId),
+              ConnectStudentsSection(
+                collegeId: _collegeId,
+                collegeName: widget.college.name,
+              ),
               Center(
                 child: Padding(
                   padding: const EdgeInsets.all(24),
@@ -759,19 +762,34 @@ class _ReviewsTabState extends ConsumerState<_ReviewsTab> {
 
         return ListView.builder(
           padding: const EdgeInsets.all(16),
-          itemCount: reviews.length + 2 + (_hasMore ? 1 : 0),
+          itemCount: reviews.length + 3 + (_hasMore ? 1 : 0),
           itemBuilder: (context, index) {
             if (index == 0) {
               return ReviewSummaryPanel(college: widget.college);
             }
             if (index == 1) {
               return Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: ConnectStudentsSection(collegeId: _collegeId),
+                padding: const EdgeInsets.only(bottom: 8),
+                child: ConnectStudentsSection(
+                  collegeId: _collegeId,
+                  collegeName: widget.college.name,
+                ),
+              );
+            }
+            if (index == 2) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12, top: 4),
+                child: Text(
+                  'Recent Reviews',
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                  ),
+                ),
               );
             }
 
-            final reviewIndex = index - 2;
+            final reviewIndex = index - 3;
             if (reviewIndex == reviews.length) {
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 12),

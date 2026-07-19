@@ -447,6 +447,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
                       (param) => RatingInputRow(
                         label: param.label,
                         value: _ratings[param.key] ?? 0,
+                        enabled: !editLocked,
                         onChanged: (v) =>
                             setState(() => _ratings[param.key] = v),
                       ),

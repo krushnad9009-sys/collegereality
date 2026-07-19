@@ -12,6 +12,7 @@ import '../../features/colleges/screens/college_browse_screen.dart';
 import '../../features/colleges/screens/college_search_screen.dart';
 import '../../features/legal/screens/legal_screens.dart';
 import '../../features/colleges/screens/college_detail_screen.dart';
+import '../../features/colleges/screens/talk_to_students_screen.dart';
 import '../../features/assistant/screens/ai_assistant_screen.dart';
 import '../../features/compare/screens/college_compare_screen.dart';
 import '../../features/reviews/screens/write_review_screen.dart';
@@ -334,6 +335,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           final id = state.pathParameters['id']!;
           final collegeName = state.uri.queryParameters['name'] ?? 'College';
           return WriteReviewScreen(collegeId: id, collegeName: collegeName);
+        },
+      ),
+      GoRoute(
+        path: RouteNames.talkToStudents,
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          final collegeName = state.uri.queryParameters['name'] ?? 'College';
+          return TalkToStudentsScreen(collegeId: id, collegeName: collegeName);
         },
       ),
       GoRoute(

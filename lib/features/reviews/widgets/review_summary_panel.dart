@@ -34,7 +34,17 @@ class ReviewSummaryPanel extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Text(
+                    'Overall Rating',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.gray600,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
                   Text(
                     ratings.overall > 0 ? ratings.overall.toStringAsFixed(1) : '—',
                     style: GoogleFonts.poppins(
@@ -56,8 +66,22 @@ class ReviewSummaryPanel extends StatelessWidget {
               ),
               const SizedBox(width: 20),
               Expanded(
-                child: RatingDistributionChart(
-                  distribution: college.ratingDistribution,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Star distribution',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.gray600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    RatingDistributionChart(
+                      distribution: college.ratingDistribution,
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -71,38 +95,45 @@ class ReviewSummaryPanel extends StatelessWidget {
                 fontSize: 13,
               ),
             ),
-            const SizedBox(height: 8),
-            ...breakdown.take(6).map(
-                  (item) => Padding(
-                    padding: const EdgeInsets.only(bottom: 6),
-                    child: Row(
+            const SizedBox(height: 10),
+            ...breakdown.map(
+              (item) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Expanded(
-                          child: Text(
-                            item.$1,
-                            style: GoogleFonts.poppins(fontSize: 11),
+                        Text(
+                          item.$1,
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                         Text(
                           '${item.$2.toStringAsFixed(1)}/5',
                           style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
                             color: AppTheme.primaryColor,
                           ),
                         ),
                       ],
                     ),
-                  ),
-                ),
-            if (breakdown.length > 6)
-              Text(
-                '+ ${breakdown.length - 6} more categories in Ratings tab',
-                style: GoogleFonts.poppins(
-                  fontSize: 10,
-                  color: AppTheme.gray500,
+                    const SizedBox(height: 4),
+                    LinearProgressIndicator(
+                      value: item.$2 / 5,
+                      minHeight: 6,
+                      borderRadius: BorderRadius.circular(4),
+                      backgroundColor: AppTheme.gray200,
+                      color: AppTheme.warningColor,
+                    ),
+                  ],
                 ),
               ),
+            ),
           ],
           const SizedBox(height: 12),
           Wrap(
@@ -111,7 +142,11 @@ class ReviewSummaryPanel extends StatelessWidget {
             children: [
               _TrustChip(
                 icon: Icons.verified,
-                label: 'Verified students & alumni',
+                label: 'Verified Student',
+              ),
+              _TrustChip(
+                icon: Icons.school_outlined,
+                label: 'Verified Alumni',
               ),
               _TrustChip(
                 icon: Icons.visibility_off_outlined,

@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:uuid/uuid.dart';
 import '../../../core/constants/communication_constants.dart';
 import '../../../core/constants/firestore_constants.dart';
+import '../../../core/constants/verification_constants.dart';
 import '../../auth/models/user_model.dart';
 import '../../auth/services/firestore_user_service.dart';
 import '../models/call_session_model.dart';
@@ -63,7 +64,13 @@ class CommunicationFirestoreService {
     return snapshot.docs
         .map((doc) => UserModel.fromJson(doc.data()))
         .where((user) =>
-            user.uid != excludeUserId && !blockedIds.contains(user.uid))
+            user.uid != excludeUserId &&
+            !blockedIds.contains(user.uid) &&
+            user.verificationStatus == VerificationConstants.statusApproved &&
+            (user.verificationBadge ==
+                    VerificationConstants.badgeVerifiedStudent ||
+                user.verificationBadge ==
+                    VerificationConstants.badgeVerifiedAlumni))
         .map(PublicStudentProfile.fromUser)
         .toList();
   }

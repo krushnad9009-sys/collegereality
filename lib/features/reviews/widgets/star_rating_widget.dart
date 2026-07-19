@@ -92,44 +92,70 @@ class RatingInputRow extends StatelessWidget {
   final String label;
   final double value;
   final ValueChanged<double> onChanged;
+  final bool enabled;
 
   const RatingInputRow({
     required this.label,
     required this.value,
     required this.onChanged,
+    this.enabled = true,
     super.key,
   });
 
   @override
   Widget build(BuildContext context) {
+    final hasValue = value > 0;
+    final sliderValue = hasValue ? value : 3.0;
+
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            flex: 2,
-            child: Text(
-              label,
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  label,
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
-            ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  hasValue ? '${value.toStringAsFixed(0)}/5' : 'Tap slider',
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                    color: AppTheme.primaryColor,
+                  ),
+                ),
+              ),
+            ],
           ),
-          Expanded(
-            flex: 3,
-            child: StarRatingWidget(
-              rating: value,
-              onRatingChanged: onChanged,
-              starSize: 24,
+          const SizedBox(height: 4),
+          SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              activeTrackColor: AppTheme.primaryColor,
+              inactiveTrackColor: AppTheme.gray200,
+              thumbColor: AppTheme.primaryColor,
+              overlayColor: AppTheme.primaryColor.withValues(alpha: 0.12),
+              trackHeight: 6,
             ),
-          ),
-          SizedBox(
-            width: 28,
-            child: Text(
-              value > 0 ? value.toStringAsFixed(0) : '-',
-              style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-              textAlign: TextAlign.center,
+            child: Slider(
+              value: sliderValue,
+              min: 1,
+              max: 5,
+              divisions: 4,
+              label: sliderValue.toStringAsFixed(0),
+              onChanged: enabled ? (v) => onChanged(v.roundToDouble()) : null,
             ),
           ),
         ],
