@@ -380,6 +380,14 @@ class FirestoreQuestionService {
         'answerCount': FieldValue.increment(1),
         'updatedAt': now.toIso8601String(),
       });
+      transaction.set(
+        _colleges.doc(question.collegeId.trim()),
+        {
+          'answersAnsweredCount': FieldValue.increment(1),
+          'updatedAt': now.toIso8601String(),
+        },
+        SetOptions(merge: true),
+      );
     });
 
     return answer;

@@ -59,4 +59,28 @@ class CollegeSessionCache {
     _search = List.unmodifiable(colleges);
     _searchAt = DateTime.now();
   }
+
+  static final Map<String, _CachedCollege> _byId = {};
+
+  static CollegeModel? getById(String id) {
+    final entry = _byId[id];
+    if (entry == null) return null;
+    if (DateTime.now().difference(entry.at) > _ttl) return null;
+    return entry.college;
+  }
+
+  static CollegeModel? getByIdStale(String id) => _byId[id]?.college;
+
+  static void setById(CollegeModel college) {
+    _byId[college.id] = _CachedCollege(college, DateTime.now());
+  }
+
+  static void clearById(String id) => _byId.remove(id);
+}
+
+class _CachedCollege {
+  final CollegeModel college;
+  final DateTime at;
+
+  _CachedCollege(this.college, this.at);
 }

@@ -13,6 +13,8 @@ class CollegeLocalCache {
   static const _topRatedKey = 'college_cache_top_rated_v1';
   static const _searchKey = 'college_cache_search_v1';
   static const _countKey = 'college_cache_count_v1';
+  static const _collegePrefix = 'college_cache_id_v1_';
+  static const _maxCachedColleges = 40;
 
   static Future<void> saveFeatured(List<CollegeModel> colleges) async {
     await _saveList(_featuredKey, colleges);
@@ -47,6 +49,43 @@ class CollegeLocalCache {
   static Future<int?> loadCollegeCount() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getInt(_countKey);
+  }
+
+  static Future<void> saveCollege(CollegeModel college) async {
+    if (college.id.isEmpty) return;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      '$_collegePrefix${college.id}',
+      jsonEncode(college.toJson()),
+    );
+    await _trimCollegeCache(prefs);
+  }
+
+  static Future<CollegeModel?> loadCollege(String id) async {
+    if (id.isEmpty) return null;
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString('$_collegePrefix$id');
+    if (raw == null || raw.isEmpty) return null;
+    try {
+      return CollegeModel.fromJson(
+        jsonDecode(raw) as Map<String, dynamic>,
+        docId: id,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static Future<void> _trimCollegeCache(SharedPreferences prefs) async {
+    final keys = prefs
+        .getKeys()
+        .where((k) => k.startsWith(_collegePrefix))
+        .toList();
+    if (keys.length <= _maxCachedColleges) return;
+    keys.sort();
+    for (final key in keys.take(keys.length - _maxCachedColleges)) {
+      await prefs.remove(key);
+    }
   }
 
   static Future<void> _saveDerivedLists(List<CollegeModel> featured) async {

@@ -3,6 +3,7 @@ import 'package:uuid/uuid.dart';
 import '../../../core/constants/firestore_constants.dart';
 import '../../../core/constants/rating_parameters.dart';
 import '../../../core/constants/review_constants.dart';
+import '../../../core/constants/review_yes_no_questions.dart';
 import '../../../core/constants/verification_constants.dart';
 import '../../colleges/models/college_model.dart';
 import '../models/review_model.dart';
@@ -384,6 +385,7 @@ class FirestoreReviewService {
     final nextMeta = _applyDeltaToMeta(meta, review, deltaSign);
     final aggregates = _averagesFromMeta(nextMeta);
     final distribution = _distributionFromMeta(nextMeta);
+    final chooseAgain = _wouldChooseAgainFromMeta(nextMeta);
 
     transaction.set(
       collegeRef,
@@ -392,6 +394,8 @@ class FirestoreReviewService {
         'aggregatedRatings': aggregates,
         'ratingDistribution': distribution,
         'reviewCount': nextMeta.reviewCount,
+        'wouldChooseAgainYes': chooseAgain.$1,
+        'wouldChooseAgainTotal': chooseAgain.$2,
         'updatedAt': DateTime.now().toIso8601String(),
       },
       SetOptions(merge: true),
@@ -406,6 +410,8 @@ class FirestoreReviewService {
     final sums = Map<String, double>.from(meta.dimensionSums);
     final counts = Map<String, int>.from(meta.dimensionCounts);
     final stars = Map<String, int>.from(meta.starDistribution);
+    final yesCounts = Map<String, int>.from(meta.yesNoYesCounts);
+    final totalCounts = Map<String, int>.from(meta.yesNoTotalCounts);
 
     review.ratings.forEach((key, value) {
       if (value <= 0) return;
@@ -417,11 +423,49 @@ class FirestoreReviewService {
     final starKey = '$star';
     stars[starKey] = ((stars[starKey] ?? 0) + deltaSign).clamp(0, 999999);
 
+    _applyYesNoDelta(review.yesNoAnswers, yesCounts, totalCounts, deltaSign);
+
     return ReviewAggregationMeta(
       dimensionSums: sums,
       dimensionCounts: counts,
       starDistribution: stars,
+      yesNoYesCounts: yesCounts,
+      yesNoTotalCounts: totalCounts,
       reviewCount: (meta.reviewCount + deltaSign).clamp(0, 999999),
+    );
+  }
+
+  void _applyYesNoDelta(
+    Map<String, bool> answers,
+    Map<String, int> yesCounts,
+    Map<String, int> totalCounts,
+    int deltaSign,
+  ) {
+    for (final entry in answers.entries) {
+      final canonical = _canonicalYesNoKey(entry.key);
+      totalCounts[canonical] =
+          ((totalCounts[canonical] ?? 0) + deltaSign).clamp(0, 999999);
+      if (entry.value) {
+        yesCounts[canonical] =
+            ((yesCounts[canonical] ?? 0) + deltaSign).clamp(0, 999999);
+      }
+    }
+  }
+
+  String _canonicalYesNoKey(String key) {
+    if (key == 'wouldRecommend' ||
+        key == 'wouldTakeAdmissionAgain' ||
+        key == ReviewYesNoQuestions.wouldChooseAgain) {
+      return ReviewYesNoQuestions.wouldChooseAgain;
+    }
+    return key;
+  }
+
+  (int, int) _wouldChooseAgainFromMeta(ReviewAggregationMeta meta) {
+    final key = ReviewYesNoQuestions.wouldChooseAgain;
+    return (
+      meta.yesNoYesCounts[key] ?? 0,
+      meta.yesNoTotalCounts[key] ?? 0,
     );
   }
 
@@ -468,6 +512,8 @@ class FirestoreReviewService {
       'aggregatedRatings': _averagesFromMeta(meta),
       'ratingDistribution': _distributionFromMeta(meta),
       'reviewCount': meta.reviewCount,
+      'wouldChooseAgainYes': _wouldChooseAgainFromMeta(meta).$1,
+      'wouldChooseAgainTotal': _wouldChooseAgainFromMeta(meta).$2,
       'updatedAt': DateTime.now().toIso8601String(),
     }, SetOptions(merge: true));
   }

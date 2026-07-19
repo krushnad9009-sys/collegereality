@@ -46,12 +46,16 @@ class ReviewAggregationMeta {
   final Map<String, double> dimensionSums;
   final Map<String, int> dimensionCounts;
   final Map<String, int> starDistribution;
+  final Map<String, int> yesNoYesCounts;
+  final Map<String, int> yesNoTotalCounts;
   final int reviewCount;
 
   const ReviewAggregationMeta({
     this.dimensionSums = const {},
     this.dimensionCounts = const {},
     this.starDistribution = const {},
+    this.yesNoYesCounts = const {},
+    this.yesNoTotalCounts = const {},
     this.reviewCount = 0,
   });
 
@@ -67,6 +71,12 @@ class ReviewAggregationMeta {
       starDistribution: (json['starDistribution'] as Map<String, dynamic>?)
               ?.map((k, v) => MapEntry(k, (v as num).toInt())) ??
           {},
+      yesNoYesCounts: (json['yesNoYesCounts'] as Map<String, dynamic>?)
+              ?.map((k, v) => MapEntry(k, (v as num).toInt())) ??
+          {},
+      yesNoTotalCounts: (json['yesNoTotalCounts'] as Map<String, dynamic>?)
+              ?.map((k, v) => MapEntry(k, (v as num).toInt())) ??
+          {},
       reviewCount: (json['reviewCount'] as num?)?.toInt() ?? 0,
     );
   }
@@ -75,6 +85,8 @@ class ReviewAggregationMeta {
         'dimensionSums': dimensionSums,
         'dimensionCounts': dimensionCounts,
         'starDistribution': starDistribution,
+        'yesNoYesCounts': yesNoYesCounts,
+        'yesNoTotalCounts': yesNoTotalCounts,
         'reviewCount': reviewCount,
       };
 }

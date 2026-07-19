@@ -229,6 +229,22 @@ class VerificationFirestoreService {
         .collection(FirestoreConstants.usersCollection)
         .doc(request.userId)
         .update(userUpdate);
+
+    if (request.collegeId != null && request.collegeId!.trim().isNotEmpty) {
+      final countField = badge == VerificationConstants.badgeVerifiedAlumni
+          ? 'verifiedAlumniCount'
+          : 'verifiedStudentCount';
+      await _firestore
+          .collection(FirestoreConstants.collegesCollection)
+          .doc(request.collegeId!.trim())
+          .set(
+        {
+          countField: FieldValue.increment(1),
+          'updatedAt': DateTime.now().toIso8601String(),
+        },
+        SetOptions(merge: true),
+      );
+    }
   }
 
   Future<void> rejectRequest({

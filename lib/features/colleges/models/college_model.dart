@@ -383,6 +383,82 @@ class CollegeCourse {
       };
 }
 
+/// Campus facilities shown on the college profile.
+class CollegeFacilities {
+  final bool library;
+  final bool labs;
+  final bool wifi;
+  final bool hostel;
+  final bool sports;
+  final bool cafeteria;
+  final bool medical;
+  final bool transport;
+
+  const CollegeFacilities({
+    this.library = false,
+    this.labs = false,
+    this.wifi = false,
+    this.hostel = false,
+    this.sports = false,
+    this.cafeteria = false,
+    this.medical = false,
+    this.transport = false,
+  });
+
+  factory CollegeFacilities.fromJson(Map<String, dynamic>? json) {
+    if (json == null) return const CollegeFacilities();
+    return CollegeFacilities(
+      library: json['library'] as bool? ?? false,
+      labs: json['labs'] as bool? ?? false,
+      wifi: json['wifi'] as bool? ?? false,
+      hostel: json['hostel'] as bool? ?? false,
+      sports: json['sports'] as bool? ?? false,
+      cafeteria: json['cafeteria'] as bool? ?? false,
+      medical: json['medical'] as bool? ?? false,
+      transport: json['transport'] as bool? ?? false,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'library': library,
+        'labs': labs,
+        'wifi': wifi,
+        'hostel': hostel,
+        'sports': sports,
+        'cafeteria': cafeteria,
+        'medical': medical,
+        'transport': transport,
+      };
+
+  /// Derive from hostel amenities when explicit flags are missing.
+  factory CollegeFacilities.inferFromHostel(CollegeHostel hostel) {
+    final amenities =
+        hostel.amenities.map((a) => a.toLowerCase()).toSet();
+    bool has(String token) => amenities.any((a) => a.contains(token));
+    return CollegeFacilities(
+      library: has('library'),
+      labs: has('lab'),
+      wifi: has('wifi') || has('internet'),
+      hostel: hostel.available,
+      sports: has('sport') || has('gym'),
+      cafeteria: has('cafeteria') || has('canteen') || has('mess'),
+      medical: has('medical') || has('hospital'),
+      transport: has('transport') || has('bus'),
+    );
+  }
+
+  List<MapEntry<String, bool>> get labeledEntries => [
+        MapEntry('Library', library),
+        MapEntry('Labs', labs),
+        MapEntry('WiFi', wifi),
+        MapEntry('Hostel', hostel),
+        MapEntry('Sports', sports),
+        MapEntry('Cafeteria', cafeteria),
+        MapEntry('Medical', medical),
+        MapEntry('Transport', transport),
+      ];
+}
+
 class CollegeModel implements CollegeModelLike {
   final String id;
   @override
@@ -397,6 +473,8 @@ class CollegeModel implements CollegeModelLike {
   final String state;
   final String address;
   final String type;
+  final String? ownership;
+  final int? establishedYear;
   final String category;
   final String? aisheId;
   @override
@@ -414,6 +492,14 @@ class CollegeModel implements CollegeModelLike {
   final String? phone;
   final String? email;
   final List<String> officialLinks;
+  final List<String> admissionLinks;
+  final CollegeFacilities facilities;
+  final int questionCount;
+  final int answersAnsweredCount;
+  final int wouldChooseAgainYes;
+  final int wouldChooseAgainTotal;
+  final int verifiedStudentCount;
+  final int verifiedAlumniCount;
   final String cityLower;
   final String districtLower;
   final String universityLower;
@@ -447,6 +533,8 @@ class CollegeModel implements CollegeModelLike {
     required this.state,
     required this.address,
     required this.type,
+    this.ownership,
+    this.establishedYear,
     this.category = 'General',
     this.aisheId,
     required this.courses,
@@ -462,6 +550,14 @@ class CollegeModel implements CollegeModelLike {
     this.phone,
     this.email,
     this.officialLinks = const [],
+    this.admissionLinks = const [],
+    this.facilities = const CollegeFacilities(),
+    this.questionCount = 0,
+    this.answersAnsweredCount = 0,
+    this.wouldChooseAgainYes = 0,
+    this.wouldChooseAgainTotal = 0,
+    this.verifiedStudentCount = 0,
+    this.verifiedAlumniCount = 0,
     String? cityLower,
     String? districtLower,
     String? universityLower,
@@ -517,6 +613,37 @@ class CollegeModel implements CollegeModelLike {
     return courses;
   }
 
+  String get ownershipLabel {
+    if (ownership != null && ownership!.trim().isNotEmpty) {
+      return ownership!.trim();
+    }
+    final normalized = type.toLowerCase();
+    if (normalized.contains('government') ||
+        normalized.contains('govt') ||
+        normalized.contains('public')) {
+      return 'Government';
+    }
+    if (normalized.contains('private')) return 'Private';
+    if (normalized.contains('deemed')) return 'Deemed';
+    if (normalized.contains('autonomous')) return 'Autonomous';
+    return type.isNotEmpty ? type : 'Not specified';
+  }
+
+  double? get wouldChooseAgainPercent {
+    if (wouldChooseAgainTotal <= 0) return null;
+    return (wouldChooseAgainYes / wouldChooseAgainTotal) * 100;
+  }
+
+  CollegeFacilities get effectiveFacilities {
+    if (facilities.labeledEntries.any((e) => e.value)) return facilities;
+    return CollegeFacilities.inferFromHostel(hostel);
+  }
+
+  List<String> get displayAdmissionLinks {
+    if (admissionLinks.isNotEmpty) return admissionLinks;
+    return officialLinks;
+  }
+
   factory CollegeModel.fromJson(Map<String, dynamic> json, {String? docId}) {
     final name = json['name'] as String? ?? '';
     return CollegeModel(
@@ -530,6 +657,8 @@ class CollegeModel implements CollegeModelLike {
       state: json['state'] as String? ?? '',
       address: json['address'] as String? ?? '',
       type: json['type'] as String? ?? 'private',
+      ownership: json['ownership'] as String?,
+      establishedYear: (json['establishedYear'] as num?)?.toInt(),
       category: json['category'] as String? ?? 'General',
       aisheId: json['aisheId'] as String?,
       courses: (json['courses'] as List<dynamic>?)
@@ -557,6 +686,21 @@ class CollegeModel implements CollegeModelLike {
               ?.map((e) => e.toString())
               .toList() ??
           [],
+      admissionLinks: (json['admissionLinks'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
+      facilities: CollegeFacilities.fromJson(
+        json['facilities'] as Map<String, dynamic>?,
+      ),
+      questionCount: (json['questionCount'] as num?)?.toInt() ?? 0,
+      answersAnsweredCount: (json['answersAnsweredCount'] as num?)?.toInt() ?? 0,
+      wouldChooseAgainYes: (json['wouldChooseAgainYes'] as num?)?.toInt() ?? 0,
+      wouldChooseAgainTotal:
+          (json['wouldChooseAgainTotal'] as num?)?.toInt() ?? 0,
+      verifiedStudentCount:
+          (json['verifiedStudentCount'] as num?)?.toInt() ?? 0,
+      verifiedAlumniCount: (json['verifiedAlumniCount'] as num?)?.toInt() ?? 0,
       cityLower: json['cityLower'] as String? ??
           CollegeSearchUtils.normalizeCity(json['city'] as String? ?? ''),
       districtLower: json['districtLower'] as String? ??
@@ -637,6 +781,8 @@ class CollegeModel implements CollegeModelLike {
       'state': state,
       'address': address,
       'type': type,
+      if (ownership != null) 'ownership': ownership,
+      if (establishedYear != null) 'establishedYear': establishedYear,
       'category': category,
       if (aisheId != null) 'aisheId': aisheId,
       'courses': courses,
@@ -652,6 +798,14 @@ class CollegeModel implements CollegeModelLike {
       'phone': phone,
       'email': email,
       'officialLinks': officialLinks,
+      'admissionLinks': admissionLinks,
+      'facilities': facilities.toJson(),
+      'questionCount': questionCount,
+      'answersAnsweredCount': answersAnsweredCount,
+      'wouldChooseAgainYes': wouldChooseAgainYes,
+      'wouldChooseAgainTotal': wouldChooseAgainTotal,
+      'verifiedStudentCount': verifiedStudentCount,
+      'verifiedAlumniCount': verifiedAlumniCount,
       'cityLower': cityLower.isNotEmpty
           ? cityLower
           : CollegeSearchUtils.normalizeCity(city),
@@ -693,6 +847,8 @@ class CollegeModel implements CollegeModelLike {
     String? state,
     String? address,
     String? type,
+    String? ownership,
+    int? establishedYear,
     String? category,
     String? aisheId,
     List<String>? courses,
@@ -708,6 +864,14 @@ class CollegeModel implements CollegeModelLike {
     String? phone,
     String? email,
     List<String>? officialLinks,
+    List<String>? admissionLinks,
+    CollegeFacilities? facilities,
+    int? questionCount,
+    int? answersAnsweredCount,
+    int? wouldChooseAgainYes,
+    int? wouldChooseAgainTotal,
+    int? verifiedStudentCount,
+    int? verifiedAlumniCount,
     String? cityLower,
     String? districtLower,
     String? universityLower,
@@ -744,6 +908,8 @@ class CollegeModel implements CollegeModelLike {
       state: nextState,
       address: address ?? this.address,
       type: type ?? this.type,
+      ownership: ownership ?? this.ownership,
+      establishedYear: establishedYear ?? this.establishedYear,
       category: category ?? this.category,
       aisheId: aisheId ?? this.aisheId,
       courses: courses ?? this.courses,
@@ -759,6 +925,15 @@ class CollegeModel implements CollegeModelLike {
       phone: phone ?? this.phone,
       email: email ?? this.email,
       officialLinks: officialLinks ?? this.officialLinks,
+      admissionLinks: admissionLinks ?? this.admissionLinks,
+      facilities: facilities ?? this.facilities,
+      questionCount: questionCount ?? this.questionCount,
+      answersAnsweredCount: answersAnsweredCount ?? this.answersAnsweredCount,
+      wouldChooseAgainYes: wouldChooseAgainYes ?? this.wouldChooseAgainYes,
+      wouldChooseAgainTotal:
+          wouldChooseAgainTotal ?? this.wouldChooseAgainTotal,
+      verifiedStudentCount: verifiedStudentCount ?? this.verifiedStudentCount,
+      verifiedAlumniCount: verifiedAlumniCount ?? this.verifiedAlumniCount,
       cityLower: cityLower ?? CollegeSearchUtils.normalizeCity(nextCity),
       districtLower: districtLower ??
           CollegeSearchUtils.normalizeDistrict(

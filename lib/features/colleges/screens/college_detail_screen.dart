@@ -28,6 +28,7 @@ import '../widgets/college_map_section.dart';
 import '../widgets/connect_students_section.dart';
 import '../../ecosystem/widgets/college_ecosystem_menu.dart';
 import '../../ecosystem/widgets/official_college_content_section.dart';
+import '../widgets/college_profile_widgets.dart';
 import '../models/college_model.dart';
 import '../providers/college_provider.dart';
 
@@ -46,7 +47,11 @@ class CollegeDetailScreen extends ConsumerStatefulWidget {
       _CollegeDetailScreenState();
 }
 
-class _CollegeDetailScreenState extends ConsumerState<CollegeDetailScreen> {
+class _CollegeDetailScreenState extends ConsumerState<CollegeDetailScreen>
+    with SingleTickerProviderStateMixin {
+  TabController? _tabController;
+  final Set<int> _loadedTabs = {0};
+
   int _initialTabIndex() {
     switch (widget.initialTab) {
       case 'reviews':
@@ -65,6 +70,64 @@ class _CollegeDetailScreenState extends ConsumerState<CollegeDetailScreen> {
         return 1;
       default:
         return 0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _tabController?.dispose();
+    super.dispose();
+  }
+
+  void _ensureTabController() {
+    if (_tabController != null) return;
+    final initial = _initialTabIndex();
+    _loadedTabs.add(initial);
+    _tabController = TabController(
+      length: 8,
+      vsync: this,
+      initialIndex: initial,
+    )..addListener(() {
+        if (_tabController!.indexIsChanging) return;
+        setState(() => _loadedTabs.add(_tabController!.index));
+      });
+  }
+
+  void _goToTab(int index) {
+    _ensureTabController();
+    setState(() => _loadedTabs.add(index));
+    _tabController!.animateTo(index);
+  }
+
+  Widget _tabChild(int index, CollegeModel college) {
+    if (!_loadedTabs.contains(index)) {
+      return const SizedBox.shrink();
+    }
+    switch (index) {
+      case 0:
+        return _OverviewTab(
+          college: college,
+          onPlacementsTap: () => _goToTab(1),
+          onHostelTap: () => _goToTab(4),
+          onFeesTap: () => _goToTab(5),
+          onReviewsTap: () => _goToTab(7),
+        );
+      case 1:
+        return PlacementsTabContent(college: college);
+      case 2:
+        return CollegeQuestionsTabContent(college: college);
+      case 3:
+        return _FacultyTab(college: college);
+      case 4:
+        return _HostelTab(college: college);
+      case 5:
+        return _FeesTab(college: college);
+      case 6:
+        return _RatingsTab(college: college);
+      case 7:
+        return _ReviewsTab(college: college);
+      default:
+        return const SizedBox.shrink();
     }
   }
 
@@ -94,11 +157,9 @@ class _CollegeDetailScreenState extends ConsumerState<CollegeDetailScreen> {
             ref.watch(favoriteCollegeIdsProvider).valueOrNull ?? {};
         final isFavorite = favoriteIds.contains(college.id);
         final user = ref.read(currentUserProvider);
+        _ensureTabController();
 
-        return DefaultTabController(
-          initialIndex: _initialTabIndex(),
-          length: 8,
-          child: Scaffold(
+        return Scaffold(
             floatingActionButton: Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: Column(
@@ -234,6 +295,7 @@ class _CollegeDetailScreenState extends ConsumerState<CollegeDetailScreen> {
                   pinned: true,
                   delegate: _TabBarDelegate(
                     TabBar(
+                      controller: _tabController,
                       isScrollable: true,
                       labelColor: AppTheme.primaryColor,
                       unselectedLabelColor: AppTheme.gray500,
@@ -253,21 +315,15 @@ class _CollegeDetailScreenState extends ConsumerState<CollegeDetailScreen> {
                 ),
               ],
               body: TabBarView(
-                children: [
-                  _OverviewTab(college: college),
-                  PlacementsTabContent(college: college),
-                  CollegeQuestionsTabContent(college: college),
-                  _FacultyTab(college: college),
-                  _HostelTab(college: college),
-                  _FeesTab(college: college),
-                  _RatingsTab(college: college),
-                  _ReviewsTab(college: college),
-                ],
+                controller: _tabController,
+                children: List.generate(
+                  8,
+                  (index) => _tabChild(index, college),
+                ),
               ),
             ),
             bottomNavigationBar: const CompareBasketBar(),
-          ),
-        );
+          );
       },
     );
   }
@@ -286,38 +342,71 @@ class _CollegeHeader extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (college.logoUrl != null && college.logoUrl!.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(right: 12),
                   child: CircleAvatar(
-                    radius: 24,
+                    radius: 32,
+                    backgroundColor: AppTheme.gray100,
                     backgroundImage: NetworkImage(college.logoUrl!),
                   ),
                 ),
-              const Icon(Icons.location_on_outlined,
-                  size: 16, color: AppTheme.gray500),
-              const SizedBox(width: 4),
               Expanded(
-                child: Text(
-                  college.locationLabel,
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    color: AppTheme.gray600,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      college.name,
+                      style: GoogleFonts.poppins(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        const Icon(Icons.location_on_outlined,
+                            size: 16, color: AppTheme.gray500),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            college.locationLabel,
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              color: AppTheme.gray600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      children: [
+                        _TypeChip(label: college.ownershipLabel),
+                        _TypeChip(label: college.type),
+                        if (college.establishedYear != null)
+                          _TypeChip(label: 'Est. ${college.establishedYear}'),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-              _TypeChip(type: college.type),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Row(
             children: [
               const Icon(Icons.star_rounded,
                   color: AppTheme.warningColor, size: 20),
               const SizedBox(width: 4),
               Text(
-                '${college.aggregatedRatings.overall}',
+                college.aggregatedRatings.overall > 0
+                    ? college.aggregatedRatings.overall.toStringAsFixed(1)
+                    : '—',
                 style: GoogleFonts.poppins(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
@@ -330,8 +419,23 @@ class _CollegeHeader extends StatelessWidget {
                   color: AppTheme.gray500,
                 ),
               ),
+              if (college.wouldChooseAgainPercent != null) ...[
+                const SizedBox(width: 12),
+                Icon(Icons.thumb_up_alt_outlined,
+                    size: 16, color: AppTheme.gray500),
+                const SizedBox(width: 4),
+                Text(
+                  '${college.wouldChooseAgainPercent!.round()}% would choose again',
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    color: AppTheme.gray600,
+                  ),
+                ),
+              ],
             ],
           ),
+          const SizedBox(height: 14),
+          CollegeProfileStatsStrip(college: college),
           const SizedBox(height: 12),
           Wrap(
             spacing: 10,
@@ -358,7 +462,7 @@ class _CollegeHeader extends StatelessWidget {
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: college.displayCourses
+            children: college.displayCourses.take(8)
                 .map(
                   (c) => Chip(
                     label: Text(c, style: GoogleFonts.poppins(fontSize: 12)),
@@ -376,8 +480,18 @@ class _CollegeHeader extends StatelessWidget {
 
 class _OverviewTab extends StatelessWidget {
   final CollegeModel college;
+  final VoidCallback? onPlacementsTap;
+  final VoidCallback? onHostelTap;
+  final VoidCallback? onFeesTap;
+  final VoidCallback? onReviewsTap;
 
-  const _OverviewTab({required this.college});
+  const _OverviewTab({
+    required this.college,
+    this.onPlacementsTap,
+    this.onHostelTap,
+    this.onFeesTap,
+    this.onReviewsTap,
+  });
 
   Future<void> _openUrl(BuildContext context, String url) async {
     final uri = Uri.parse(url.startsWith('http') ? url : 'https://$url');
@@ -415,128 +529,171 @@ class _OverviewTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        Text(
-          'Gallery',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 15),
-        ),
-        const SizedBox(height: 10),
-        CollegeGalleryWidget(photoUrls: college.photoUrls),
-        const SizedBox(height: 20),
-        Text(
-          'Accreditation & Affiliation',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 15),
-        ),
-        const SizedBox(height: 10),
-        AccreditationBadges(
-          accreditation: college.accreditation,
-          universityName: college.universityName,
-        ),
-        const SizedBox(height: 20),
-        CollegeMapSection(
-          mapsLink: college.mapsLink,
-          address: college.address,
-          latitude: college.latitude,
-          longitude: college.longitude,
-        ),
-        const SizedBox(height: 16),
-        _InfoCard(
-          title: 'Address',
-          content: college.address,
-          icon: Icons.place_outlined,
-        ),
-        if (college.website != null && college.website!.trim().isNotEmpty)
-          Card(
-            margin: const EdgeInsets.only(bottom: 12),
-            child: ListTile(
-              leading: const Icon(Icons.language, color: AppTheme.primaryColor),
-              title: Text('Website', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-              subtitle: Text(college.website!),
-              trailing: const Icon(Icons.open_in_new, size: 18),
-              onTap: () => _openUrl(context, college.website!),
-            ),
-          ),
-        if (college.phone != null && college.phone!.trim().isNotEmpty)
-          Card(
-            margin: const EdgeInsets.only(bottom: 12),
-            child: ListTile(
-              leading: const Icon(Icons.phone_outlined, color: AppTheme.primaryColor),
-              title: Text('Phone', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-              subtitle: Text(college.phone!),
-              onTap: () => _openPhone(context, college.phone!),
-            ),
-          ),
-        if (college.email != null && college.email!.trim().isNotEmpty)
-          Card(
-            margin: const EdgeInsets.only(bottom: 12),
-            child: ListTile(
-              leading: const Icon(Icons.email_outlined, color: AppTheme.primaryColor),
-              title: Text('Email', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-              subtitle: Text(college.email!),
-              onTap: () => _openEmail(context, college.email!),
-            ),
-          ),
-        if (college.officialLinks.isNotEmpty) ...[
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final wide = constraints.maxWidth >= 900;
+        final leftColumn = <Widget>[
           Text(
-            'Official Links',
+            'About',
             style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 15),
           ),
-          const SizedBox(height: 8),
-          ...college.officialLinks.map(
-            (link) => Card(
-              margin: const EdgeInsets.only(bottom: 8),
+          const SizedBox(height: 10),
+          CollegeProfileFactsGrid(college: college),
+          const SizedBox(height: 20),
+          CollegeProfileOverviewSections(
+            college: college,
+            onPlacementsTap: onPlacementsTap,
+            onHostelTap: onHostelTap,
+            onFeesTap: onFeesTap,
+            onReviewsTap: onReviewsTap,
+          ),
+        ];
+        final rightColumn = <Widget>[
+          Text(
+            'Gallery',
+            style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 15),
+          ),
+          const SizedBox(height: 10),
+          CollegeGalleryWidget(photoUrls: college.photoUrls),
+          const SizedBox(height: 20),
+          Text(
+            'Accreditation & Affiliation',
+            style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 15),
+          ),
+          const SizedBox(height: 10),
+          AccreditationBadges(
+            accreditation: college.accreditation,
+            universityName: college.universityName,
+          ),
+          const SizedBox(height: 20),
+          CollegeMapSection(
+            mapsLink: college.mapsLink,
+            address: college.address,
+            latitude: college.latitude,
+            longitude: college.longitude,
+          ),
+          const SizedBox(height: 16),
+          _InfoCard(
+            title: 'Address',
+            content: college.address,
+            icon: Icons.place_outlined,
+          ),
+          if (college.website != null && college.website!.trim().isNotEmpty)
+            Card(
+              margin: const EdgeInsets.only(bottom: 12),
               child: ListTile(
-                leading: const Icon(Icons.link, color: AppTheme.secondaryColor),
-                title: Text(link, style: GoogleFonts.poppins(fontSize: 13)),
+                leading: const Icon(Icons.language, color: AppTheme.primaryColor),
+                title: Text('Website',
+                    style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                subtitle: Text(college.website!),
                 trailing: const Icon(Icons.open_in_new, size: 18),
-                onTap: () => _openUrl(context, link),
+                onTap: () => _openUrl(context, college.website!),
               ),
             ),
-          ),
-          const SizedBox(height: 12),
-        ],
-        OfficialCollegeContentSection(collegeId: college.id),
-        const SizedBox(height: 20),
-        if (college.coursesDetailed.isNotEmpty) ...[
-          Text(
-            'Courses',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 15),
-          ),
-          const SizedBox(height: 8),
-          ...college.coursesDetailed.map(
-            (c) => Card(
-              margin: const EdgeInsets.only(bottom: 8),
+          if (college.phone != null && college.phone!.trim().isNotEmpty)
+            Card(
+              margin: const EdgeInsets.only(bottom: 12),
               child: ListTile(
-                title: Text(c.name, style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-                subtitle: Text(
-                  [
-                    if (c.degree.isNotEmpty) c.degree,
-                    if (c.duration.isNotEmpty) c.duration,
-                    if (c.seats > 0) '${c.seats} seats',
-                    if (c.annualFees != null)
-                      IndianCurrencyFormatter.format(c.annualFees!),
-                  ].join(' · '),
+                leading:
+                    const Icon(Icons.phone_outlined, color: AppTheme.primaryColor),
+                title: Text('Phone',
+                    style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                subtitle: Text(college.phone!),
+                onTap: () => _openPhone(context, college.phone!),
+              ),
+            ),
+          if (college.email != null && college.email!.trim().isNotEmpty)
+            Card(
+              margin: const EdgeInsets.only(bottom: 12),
+              child: ListTile(
+                leading:
+                    const Icon(Icons.email_outlined, color: AppTheme.primaryColor),
+                title: Text('Email',
+                    style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                subtitle: Text(college.email!),
+                onTap: () => _openEmail(context, college.email!),
+              ),
+            ),
+          if (college.officialLinks.isNotEmpty) ...[
+            Text(
+              'Official Links',
+              style:
+                  GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 15),
+            ),
+            const SizedBox(height: 8),
+            ...college.officialLinks.map(
+              (link) => Card(
+                margin: const EdgeInsets.only(bottom: 8),
+                child: ListTile(
+                  leading: const Icon(Icons.link, color: AppTheme.secondaryColor),
+                  title: Text(link, style: GoogleFonts.poppins(fontSize: 13)),
+                  trailing: const Icon(Icons.open_in_new, size: 18),
+                  onTap: () => _openUrl(context, link),
                 ),
               ),
             ),
-          ),
-        ] else
-          _InfoCard(
-            title: 'Courses Offered',
-            content: college.displayCourses.join(', '),
-            icon: Icons.menu_book_outlined,
-          ),
-        if (college.scholarships.isNotEmpty)
-          _InfoCard(
-            title: 'Scholarships',
-            content: college.scholarships
-                .map((s) => '${s.name}: ${s.amount} (${s.eligibility})')
-                .join('\n'),
-            icon: Icons.card_giftcard_outlined,
-          ),
-      ],
+          ],
+          const SizedBox(height: 12),
+          OfficialCollegeContentSection(collegeId: college.id),
+          const SizedBox(height: 20),
+          if (college.coursesDetailed.isNotEmpty) ...[
+            Text(
+              'Courses',
+              style:
+                  GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 15),
+            ),
+            const SizedBox(height: 8),
+            ...college.coursesDetailed.map(
+              (c) => Card(
+                margin: const EdgeInsets.only(bottom: 8),
+                child: ListTile(
+                  title: Text(c.name,
+                      style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                  subtitle: Text(
+                    [
+                      if (c.degree.isNotEmpty) c.degree,
+                      if (c.duration.isNotEmpty) c.duration,
+                      if (c.seats > 0) '${c.seats} seats',
+                      if (c.annualFees != null)
+                        IndianCurrencyFormatter.format(c.annualFees!),
+                    ].join(' · '),
+                  ),
+                ),
+              ),
+            ),
+          ] else
+            _InfoCard(
+              title: 'Courses Offered',
+              content: college.displayCourses.join(', '),
+              icon: Icons.menu_book_outlined,
+            ),
+          if (college.scholarships.isNotEmpty)
+            _InfoCard(
+              title: 'Scholarships',
+              content: college.scholarships
+                  .map((s) => '${s.name}: ${s.amount} (${s.eligibility})')
+                  .join('\n'),
+              icon: Icons.card_giftcard_outlined,
+            ),
+        ];
+
+        return ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            if (wide)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: Column(children: leftColumn)),
+                  const SizedBox(width: 24),
+                  Expanded(child: Column(children: rightColumn)),
+                ],
+              )
+            else
+              ...[...leftColumn, ...rightColumn],
+          ],
+        );
+      },
     );
   }
 }
@@ -1271,9 +1428,9 @@ class _StatCard extends StatelessWidget {
 }
 
 class _TypeChip extends StatelessWidget {
-  final String type;
+  final String label;
 
-  const _TypeChip({required this.type});
+  const _TypeChip({required this.label});
 
   @override
   Widget build(BuildContext context) {
@@ -1284,7 +1441,7 @@ class _TypeChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
-        type.toUpperCase(),
+        label.toUpperCase(),
         style: GoogleFonts.poppins(
           fontSize: 10,
           fontWeight: FontWeight.w700,

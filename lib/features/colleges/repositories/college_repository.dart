@@ -102,36 +102,58 @@ class CollegeRepositoryImpl implements CollegeRepository {
 
   @override
   Future<CollegeModel?> getCollegeById(String id) async {
+    final trimmedId = id.trim();
+    if (trimmedId.isEmpty) return null;
+
+    final sessionHit = CollegeSessionCache.getById(trimmedId);
+    if (sessionHit != null) return sessionHit;
+
+    final localHit = await CollegeLocalCache.loadCollege(trimmedId);
+    if (localHit != null) {
+      CollegeSessionCache.setById(localHit);
+      return localHit;
+    }
+
     if (FirestoreQuotaGuard.instance.shouldBlockRequest()) {
+      final stale = CollegeSessionCache.getByIdStale(trimmedId);
+      if (stale != null) return stale;
       final featured = CollegeSessionCache.getFeaturedStale(500);
       if (featured != null) {
         for (final college in featured) {
-          if (college.id == id) return college;
+          if (college.id == trimmedId) return college;
         }
       }
       final local = await CollegeLocalCache.loadFeatured();
       if (local != null) {
         for (final college in local) {
-          if (college.id == id) return college;
+          if (college.id == trimmedId) return college;
         }
       }
       final all = await CollegeBundledDataSource.loadAll();
       for (final college in all) {
-        if (college.id == id) return college;
+        if (college.id == trimmedId) return college;
       }
       return null;
     }
 
     try {
-      final college = await _service.getCollegeById(id);
+      final college = await _service.getCollegeById(trimmedId);
       FirestoreQuotaGuard.instance.markRecovered();
+      if (college != null) {
+        CollegeSessionCache.setById(college);
+        await CollegeLocalCache.saveCollege(college);
+      }
       return college;
     } on FirebaseException catch (e) {
       if (!FirestoreErrorUtils.isQuotaExceeded(e)) rethrow;
       FirestoreQuotaGuard.instance.markQuotaExceeded();
+      final stale = CollegeSessionCache.getByIdStale(trimmedId);
+      if (stale != null) return stale;
+      final cached = await CollegeLocalCache.loadCollege(trimmedId);
+      if (cached != null) return cached;
       final all = await CollegeBundledDataSource.loadAll();
       for (final college in all) {
-        if (college.id == id) return college;
+        if (college.id == trimmedId) return college;
       }
       return null;
     }

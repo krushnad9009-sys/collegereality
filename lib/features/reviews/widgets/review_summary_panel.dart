@@ -135,20 +135,58 @@ class ReviewSummaryPanel extends StatelessWidget {
               ),
             ),
           ],
+          if (college.wouldChooseAgainPercent != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF059669).withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.thumb_up_alt_outlined,
+                      color: Color(0xFF059669)),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      '${college.wouldChooseAgainPercent!.round()}% would choose this college again',
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 12),
           Wrap(
             spacing: 6,
             runSpacing: 6,
             children: [
-              _TrustChip(
-                icon: Icons.verified,
-                label: 'Verified Student',
-              ),
-              _TrustChip(
-                icon: Icons.school_outlined,
-                label: 'Verified Alumni',
-              ),
-              _TrustChip(
+              if (college.verifiedStudentCount > 0)
+                _TrustChip(
+                  icon: Icons.verified,
+                  label: '${college.verifiedStudentCount} verified students',
+                ),
+              if (college.verifiedAlumniCount > 0)
+                _TrustChip(
+                  icon: Icons.school_outlined,
+                  label: '${college.verifiedAlumniCount} verified alumni',
+                ),
+              if (college.questionCount > 0)
+                _TrustChip(
+                  icon: Icons.quiz_outlined,
+                  label: '${college.questionCount} questions',
+                ),
+              if (college.answersAnsweredCount > 0)
+                _TrustChip(
+                  icon: Icons.forum_outlined,
+                  label: '${college.answersAnsweredCount} answers',
+                ),
+              const _TrustChip(
                 icon: Icons.visibility_off_outlined,
                 label: 'Anonymous option',
               ),
