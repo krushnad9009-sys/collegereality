@@ -8,6 +8,7 @@ import '../../../config/theme/app_theme.dart';
 import '../../colleges/models/college_model.dart';
 import '../providers/question_provider.dart';
 import 'ask_question_sheet.dart';
+import 'ask_student_button.dart';
 import 'question_card_widget.dart';
 
 class CollegeQuestionsTabContent extends ConsumerStatefulWidget {
@@ -50,17 +51,41 @@ class _CollegeQuestionsTabContentState
         return ListView(
           padding: EdgeInsets.all(isWide ? 24 : 16),
           children: [
-            FilledButton.icon(
-              onPressed: () => showAskQuestionSheet(
-                context: context,
-                ref: ref,
-                collegeId: collegeId,
-                collegeName: widget.college.name,
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppTheme.secondaryColor.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: AppTheme.secondaryColor.withValues(alpha: 0.15),
+                ),
               ),
-              icon: const Icon(Icons.add_comment_outlined),
-              label: Text(
-                'Ask a Question',
-                style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Ask a Student',
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Get honest answers from verified students and alumni of ${widget.college.name}.',
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      color: AppTheme.gray600,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  AskStudentButton(
+                    collegeId: collegeId,
+                    collegeName: widget.college.name,
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 16),
@@ -83,6 +108,12 @@ class _CollegeQuestionsTabContentState
               _EmptyState(
                 hasSearch: filterState.searchQuery.isNotEmpty ||
                     filterState.filter != 'latest',
+                onAsk: () => showAskQuestionSheet(
+                  context: context,
+                  ref: ref,
+                  collegeId: collegeId,
+                  collegeName: widget.college.name,
+                ),
               )
             else
               ...questions.map(
@@ -102,8 +133,12 @@ class _CollegeQuestionsTabContentState
 
 class _EmptyState extends StatelessWidget {
   final bool hasSearch;
+  final VoidCallback onAsk;
 
-  const _EmptyState({required this.hasSearch});
+  const _EmptyState({
+    required this.hasSearch,
+    required this.onAsk,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -124,13 +159,21 @@ class _EmptyState extends StatelessWidget {
           Text(
             hasSearch
                 ? 'Try a different search or filter'
-                : 'Be the first to ask about this college',
+                : 'Be the first to ask a verified student',
             style: GoogleFonts.poppins(
               fontSize: 13,
               color: AppTheme.gray500,
             ),
             textAlign: TextAlign.center,
           ),
+          if (!hasSearch) ...[
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: onAsk,
+              icon: const Icon(Icons.question_answer_outlined),
+              label: const Text('Ask a Student'),
+            ),
+          ],
         ],
       ),
     );

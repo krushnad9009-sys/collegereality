@@ -10,6 +10,7 @@ class AnswerModel {
   final String authorDisplayName;
   final bool isAnonymous;
   final bool isVerifiedStudent;
+  final String? reviewerBadge;
   final String body;
   final int upvoteCount;
   final int downvoteCount;
@@ -27,6 +28,7 @@ class AnswerModel {
     required this.authorDisplayName,
     this.isAnonymous = false,
     this.isVerifiedStudent = false,
+    this.reviewerBadge,
     required this.body,
     this.upvoteCount = 0,
     this.downvoteCount = 0,
@@ -63,6 +65,7 @@ class AnswerModel {
       authorDisplayName: json['authorDisplayName'] as String? ?? 'Student',
       isAnonymous: json['isAnonymous'] as bool? ?? false,
       isVerifiedStudent: json['isVerifiedStudent'] as bool? ?? false,
+      reviewerBadge: json['reviewerBadge'] as String?,
       body: json['body'] as String? ?? '',
       upvoteCount: (json['upvoteCount'] as num?)?.toInt() ?? 0,
       downvoteCount: (json['downvoteCount'] as num?)?.toInt() ?? 0,
@@ -83,6 +86,7 @@ class AnswerModel {
       'authorDisplayName': authorDisplayName,
       'isAnonymous': isAnonymous,
       'isVerifiedStudent': isVerifiedStudent,
+      'reviewerBadge': reviewerBadge,
       'body': body,
       'upvoteCount': upvoteCount,
       'downvoteCount': downvoteCount,
@@ -102,6 +106,7 @@ class AnswerModel {
     String? authorDisplayName,
     bool? isAnonymous,
     bool? isVerifiedStudent,
+    String? reviewerBadge,
     String? body,
     int? upvoteCount,
     int? downvoteCount,
@@ -119,6 +124,7 @@ class AnswerModel {
       authorDisplayName: authorDisplayName ?? this.authorDisplayName,
       isAnonymous: isAnonymous ?? this.isAnonymous,
       isVerifiedStudent: isVerifiedStudent ?? this.isVerifiedStudent,
+      reviewerBadge: reviewerBadge ?? this.reviewerBadge,
       body: body ?? this.body,
       upvoteCount: upvoteCount ?? this.upvoteCount,
       downvoteCount: downvoteCount ?? this.downvoteCount,

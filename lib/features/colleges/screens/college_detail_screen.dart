@@ -16,6 +16,7 @@ import '../../reviews/providers/review_provider.dart';
 import '../../reviews/widgets/review_card_widget.dart';
 import '../../reviews/widgets/review_summary_panel.dart';
 import '../../reviews/widgets/star_rating_widget.dart';
+import '../../questions/widgets/ask_student_button.dart';
 import '../../reviews/widgets/write_review_button.dart';
 import '../../compare/providers/compare_basket_provider.dart';
 import '../../compare/widgets/compare_basket_bar.dart';
@@ -98,10 +99,25 @@ class _CollegeDetailScreenState extends ConsumerState<CollegeDetailScreen> {
           initialIndex: _initialTabIndex(),
           length: 8,
           child: Scaffold(
-            floatingActionButton: WriteReviewButton(
-              collegeId: college.id,
-              collegeName: college.name,
-              extended: true,
+            floatingActionButton: Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  AskStudentButton(
+                    collegeId: college.id,
+                    collegeName: college.name,
+                    fab: true,
+                  ),
+                  const SizedBox(height: 12),
+                  WriteReviewButton(
+                    collegeId: college.id,
+                    collegeName: college.name,
+                    extended: true,
+                  ),
+                ],
+              ),
             ),
             body: NestedScrollView(
               headerSliverBuilder: (context, innerBoxIsScrolled) => [
@@ -317,10 +333,21 @@ class _CollegeHeader extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          WriteReviewButton(
-            collegeId: college.id,
-            collegeName: college.name,
-            outlined: true,
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              AskStudentButton(
+                collegeId: college.id,
+                collegeName: college.name,
+                outlined: true,
+              ),
+              WriteReviewButton(
+                collegeId: college.id,
+                collegeName: college.name,
+                outlined: true,
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           AccreditationBadges(

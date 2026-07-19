@@ -7,8 +7,10 @@ import 'package:intl/intl.dart';
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/question_constants.dart';
+import '../../../core/constants/verification_constants.dart';
 import '../../../core/widgets/index.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../verification/widgets/verification_badge_widget.dart';
 import '../models/answer_model.dart';
 import '../models/question_model.dart';
 import '../providers/question_provider.dart';
@@ -78,7 +80,7 @@ class AnswerCardWidget extends ConsumerWidget {
                   child: _AuthorRow(
                     displayName: answer.authorDisplayName,
                     isAnonymous: answer.isAnonymous,
-                    isVerified: answer.isVerifiedStudent,
+                    reviewerBadge: answer.reviewerBadge,
                     authorId: answer.authorId,
                   ),
                 ),
@@ -203,13 +205,13 @@ class AnswerCardWidget extends ConsumerWidget {
 class _AuthorRow extends StatelessWidget {
   final String displayName;
   final bool isAnonymous;
-  final bool isVerified;
+  final String? reviewerBadge;
   final String authorId;
 
   const _AuthorRow({
     required this.displayName,
     required this.isAnonymous,
-    required this.isVerified,
+    required this.reviewerBadge,
     required this.authorId,
   });
 
@@ -222,6 +224,14 @@ class _AuthorRow extends StatelessWidget {
         fontSize: 13,
       ),
     );
+
+    final badge = reviewerBadge;
+    final showBadge = badge != null &&
+        badge != VerificationConstants.badgeNone &&
+        VerificationConstants.isApprovedStudentOrAlumni(
+          badge,
+          VerificationConstants.statusApproved,
+        );
 
     return Row(
       children: [
@@ -238,9 +248,9 @@ class _AuthorRow extends StatelessWidget {
           )
         else
           nameWidget,
-        if (isVerified) ...[
-          const SizedBox(width: 4),
-          const Icon(Icons.verified, size: 14, color: AppTheme.secondaryColor),
+        if (showBadge) ...[
+          const SizedBox(width: 6),
+          VerificationBadgeWidget(badge: badge, iconSize: 12),
         ],
       ],
     );

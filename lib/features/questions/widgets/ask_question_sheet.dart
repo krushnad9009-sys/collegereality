@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/question_constants.dart';
 import '../../../core/widgets/index.dart';
@@ -17,7 +19,12 @@ Future<QuestionModel?> showAskQuestionSheet({
   required String collegeName,
 }) async {
   final authUser = ref.read(authStateProvider).valueOrNull;
-  if (authUser == null) return null;
+  if (authUser == null) {
+    if (context.mounted) {
+      context.go(RouteNames.login);
+    }
+    return null;
+  }
 
   final titleController = TextEditingController();
   final bodyController = TextEditingController();
@@ -46,7 +53,7 @@ Future<QuestionModel?> showAskQuestionSheet({
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Ask a Question',
+                    'Ask a Student',
                     style: GoogleFonts.poppins(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
@@ -148,7 +155,7 @@ Future<QuestionModel?> showAskQuestionSheet({
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : Text(
-                              'Post Question',
+                              'Ask a Student',
                               style: GoogleFonts.poppins(
                                 fontWeight: FontWeight.w600,
                               ),

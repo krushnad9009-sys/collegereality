@@ -6,6 +6,18 @@ class QuestionConstants {
   static const int maxBodyLength = 2000;
   static const int maxAnswerLength = 3000;
 
+  /// Minimum minutes between questions from the same user at one college.
+  static const int questionCooldownMinutes = 5;
+
+  /// Minimum minutes between answers from the same user.
+  static const int answerCooldownMinutes = 2;
+
+  /// Max questions per user per college per day.
+  static const int maxQuestionsPerDayPerCollege = 10;
+
+  /// Max answers per user per day.
+  static const int maxAnswersPerDay = 25;
+
   static const String statusPublished = 'published';
   static const String statusHidden = 'hidden';
   static const String statusRemoved = 'removed';

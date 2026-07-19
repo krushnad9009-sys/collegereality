@@ -5,6 +5,15 @@ String buildQuestionSearchText(String title, String body) {
   return '${title.trim()} ${body.trim()}'.toLowerCase();
 }
 
+/// Normalized key for duplicate detection.
+String normalizeQuestionContent(String text) {
+  return text
+      .toLowerCase()
+      .replaceAll(RegExp(r'[^a-z0-9\s]'), '')
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .trim();
+}
+
 String buildAnonymousQuestionAlias(String userId) {
   final hash = userId.hashCode.abs() % 10000;
   return 'Anonymous Student #$hash';

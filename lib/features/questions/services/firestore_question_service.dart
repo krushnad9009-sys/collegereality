@@ -17,6 +17,14 @@ class FirestoreQuestionService {
   CollectionReference<Map<String, dynamic>> get _questions =>
       _firestore.collection(FirestoreConstants.collegeQuestionsCollection);
 
+  CollectionReference<Map<String, dynamic>> get _colleges =>
+      _firestore.collection(FirestoreConstants.collegesCollection);
+
+  CollectionReference<Map<String, dynamic>> _answers(String questionId) =>
+      _questions
+          .doc(questionId)
+          .collection(FirestoreConstants.questionAnswersSubcollection);
+
   Future<Map<String, dynamic>?> _userData(String userId) async {
     final doc = await _firestore
         .collection(FirestoreConstants.usersCollection)
@@ -45,6 +53,123 @@ class FirestoreQuestionService {
     return userCollegeId != null && userCollegeId == collegeId.trim();
   }
 
+  Future<void> _assertQuestionAllowed({
+    required String authorId,
+    required String collegeId,
+    required String title,
+    required String body,
+  }) async {
+    final normalizedId = collegeId.trim();
+    final contentKey = normalizeQuestionContent('$title $body');
+    final cutoff = DateTime.now().subtract(
+      Duration(minutes: QuestionConstants.questionCooldownMinutes),
+    );
+    final dayCutoff = DateTime.now().subtract(const Duration(hours: 24));
+
+    final recent = await _questions
+        .where('authorId', isEqualTo: authorId)
+        .where('collegeId', isEqualTo: normalizedId)
+        .orderBy('createdAt', descending: true)
+        .limit(12)
+        .get();
+
+    var todayCount = 0;
+    for (final doc in recent.docs) {
+      final data = doc.data();
+      final createdAt =
+          DateTime.tryParse(data['createdAt']?.toString() ?? '') ?? DateTime.now();
+      if (createdAt.isAfter(dayCutoff)) todayCount++;
+
+      if (createdAt.isAfter(cutoff)) {
+        throw QuestionFirestoreException(
+          message:
+              'Please wait ${QuestionConstants.questionCooldownMinutes} minutes before asking another question.',
+        );
+      }
+
+      final existingTitle = data['title'] as String? ?? '';
+      final existingBody = data['body'] as String? ?? '';
+      if (normalizeQuestionContent('$existingTitle $existingBody') ==
+          contentKey) {
+        throw QuestionFirestoreException(
+          message: 'You already asked a very similar question.',
+        );
+      }
+    }
+
+    if (todayCount >= QuestionConstants.maxQuestionsPerDayPerCollege) {
+      throw QuestionFirestoreException(
+        message:
+            'Daily question limit reached for this college. Try again tomorrow.',
+      );
+    }
+  }
+
+  Future<void> _assertAnswerAllowed({
+    required String authorId,
+    required String questionId,
+    required String body,
+  }) async {
+    final contentKey = normalizeQuestionContent(body);
+    final cutoff = DateTime.now().subtract(
+      Duration(minutes: QuestionConstants.answerCooldownMinutes),
+    );
+    final dayCutoff = DateTime.now().subtract(const Duration(hours: 24));
+
+    final existingForQuestion = await _answers(questionId)
+        .where('authorId', isEqualTo: authorId)
+        .limit(1)
+        .get();
+    if (existingForQuestion.docs.isNotEmpty) {
+      throw QuestionFirestoreException(
+        message: 'You already answered this question.',
+      );
+    }
+
+    final answersSnap = await _answers(questionId).get();
+    for (final doc in answersSnap.docs) {
+      final data = doc.data();
+      if (normalizeQuestionContent(data['body'] as String? ?? '') == contentKey) {
+        throw QuestionFirestoreException(
+          message: 'A similar answer already exists for this question.',
+        );
+      }
+    }
+
+    final question = await getQuestionById(questionId);
+    if (question == null) return;
+
+    final recentQuestions = await _questions
+        .where('collegeId', isEqualTo: question.collegeId)
+        .orderBy('createdAt', descending: true)
+        .limit(20)
+        .get();
+
+    var todayCount = 0;
+    for (final qDoc in recentQuestions.docs) {
+      final authorAnswers =
+          await _answers(qDoc.id).where('authorId', isEqualTo: authorId).get();
+      for (final aDoc in authorAnswers.docs) {
+        final data = aDoc.data();
+        final createdAt = DateTime.tryParse(data['createdAt']?.toString() ?? '') ??
+            DateTime.now();
+        if (createdAt.isAfter(dayCutoff)) todayCount++;
+        if (createdAt.isAfter(cutoff)) {
+          throw QuestionFirestoreException(
+            message:
+                'Please wait ${QuestionConstants.answerCooldownMinutes} minutes before posting another answer.',
+          );
+        }
+      }
+    }
+
+    if (todayCount >= QuestionConstants.maxAnswersPerDay) {
+      throw QuestionFirestoreException(
+        message: 'Daily answer limit reached. Try again tomorrow.',
+      );
+    }
+  }
+
   Future<QuestionModel> createQuestion({
     required String collegeId,
     required String collegeName,
@@ -63,6 +188,13 @@ class FirestoreQuestionService {
         message: 'Title must be at most ${QuestionConstants.maxTitleLength} characters.',
       );
     }
+
+    await _assertQuestionAllowed(
+      authorId: authorId,
+      collegeId: collegeId,
+      title: trimmedTitle,
+      body: body,
+    );
 
     final isVerified = await isVerifiedStudent(authorId);
     final id = _uuid.v4();
@@ -87,7 +219,17 @@ class FirestoreQuestionService {
       updatedAt: now,
     );
 
-    await _questions.doc(id).set(question.toJson());
+    await _firestore.runTransaction((transaction) async {
+      transaction.set(_questions.doc(id), question.toJson());
+      transaction.set(
+        _colleges.doc(collegeId.trim()),
+        {
+          'questionCount': FieldValue.increment(1),
+          'updatedAt': now.toIso8601String(),
+        },
+        SetOptions(merge: true),
+      );
+    });
     return question;
   }
 
@@ -137,6 +279,7 @@ class FirestoreQuestionService {
   }
 
   Future<void> deleteQuestion(String questionId) async {
+    final question = await getQuestionById(questionId);
     final answers = await _questions
         .doc(questionId)
         .collection(FirestoreConstants.questionAnswersSubcollection)
@@ -146,6 +289,16 @@ class FirestoreQuestionService {
       batch.delete(doc.reference);
     }
     batch.delete(_questions.doc(questionId));
+    if (question != null) {
+      batch.set(
+        _colleges.doc(question.collegeId),
+        {
+          'questionCount': FieldValue.increment(-1),
+          'updatedAt': DateTime.now().toIso8601String(),
+        },
+        SetOptions(merge: true),
+      );
+    }
     await batch.commit();
   }
 
@@ -180,9 +333,19 @@ class FirestoreQuestionService {
     );
     if (!canAnswer) {
       throw QuestionFirestoreException(
-        message: 'Only verified students of this college can answer.',
+        message:
+            'Only verified students or alumni of this college can answer.',
       );
     }
+
+    await _assertAnswerAllowed(
+      authorId: authorId,
+      questionId: questionId,
+      body: trimmedBody,
+    );
+
+    final authorData = await _userData(authorId);
+    final reviewerBadge = authorData?['verificationBadge'] as String?;
 
     final id = _uuid.v4();
     final now = DateTime.now();
@@ -198,6 +361,7 @@ class FirestoreQuestionService {
       ),
       isAnonymous: isAnonymous,
       isVerifiedStudent: true,
+      reviewerBadge: reviewerBadge,
       body: trimmedBody,
       status: QuestionConstants.statusPublished,
       createdAt: now,

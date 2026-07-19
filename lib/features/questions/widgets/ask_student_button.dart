@@ -6,51 +6,67 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../widgets/ask_question_sheet.dart';
 
-/// Navigates to the write-review flow for a college.
-class WriteReviewButton extends ConsumerWidget {
+/// Opens the Ask a Student sheet for a college.
+class AskStudentButton extends ConsumerWidget {
   final String collegeId;
   final String collegeName;
   final bool extended;
   final bool outlined;
+  final bool fab;
 
-  const WriteReviewButton({
+  const AskStudentButton({
     required this.collegeId,
     required this.collegeName,
     this.extended = false,
     this.outlined = false,
+    this.fab = false,
     super.key,
   });
 
-  void _onPressed(BuildContext context, WidgetRef ref) {
+  Future<void> _onPressed(BuildContext context, WidgetRef ref) async {
     final user = ref.read(currentUserProvider);
     if (user == null) {
       context.go(RouteNames.login);
       return;
     }
-    context.go(
-      '${RouteNames.writeReviewPath(collegeId)}?name=${Uri.encodeComponent(collegeName)}',
+    await showAskQuestionSheet(
+      context: context,
+      ref: ref,
+      collegeId: collegeId,
+      collegeName: collegeName,
     );
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (extended) {
+    if (fab) {
       return FloatingActionButton.extended(
-        heroTag: 'write_review_$collegeId',
+        heroTag: 'ask_student_$collegeId',
         elevation: 4,
         onPressed: () => _onPressed(context, ref),
-        icon: const Icon(Icons.rate_review),
-        label: const Text('Write Review'),
+        icon: const Icon(Icons.question_answer_outlined),
+        label: const Text('Ask a Student'),
+      );
+    }
+
+    if (extended) {
+      return FloatingActionButton.extended(
+        heroTag: 'ask_student_ext_$collegeId',
+        elevation: 4,
+        onPressed: () => _onPressed(context, ref),
+        icon: const Icon(Icons.question_answer_outlined),
+        label: const Text('Ask a Student'),
       );
     }
 
     if (outlined) {
       return OutlinedButton.icon(
         onPressed: () => _onPressed(context, ref),
-        icon: const Icon(Icons.rate_review_outlined, size: 18),
+        icon: const Icon(Icons.question_answer_outlined, size: 18),
         label: Text(
-          'Write Review',
+          'Ask a Student',
           style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
         ),
       );
@@ -58,13 +74,13 @@ class WriteReviewButton extends ConsumerWidget {
 
     return FilledButton.icon(
       onPressed: () => _onPressed(context, ref),
-      icon: const Icon(Icons.rate_review_outlined, size: 18),
+      icon: const Icon(Icons.question_answer_outlined, size: 18),
       label: Text(
-        'Write Review',
+        'Ask a Student',
         style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
       ),
       style: FilledButton.styleFrom(
-        backgroundColor: AppTheme.primaryColor,
+        backgroundColor: AppTheme.secondaryColor,
         foregroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       ),

@@ -216,7 +216,7 @@ class QuestionFilterBar extends StatelessWidget {
           child: Row(
             children: [
               _FilterChip(
-                label: 'Latest',
+                label: 'Recent',
                 selected: selectedFilter == QuestionConstants.filterLatest,
                 onTap: () => onFilterChanged(QuestionConstants.filterLatest),
               ),

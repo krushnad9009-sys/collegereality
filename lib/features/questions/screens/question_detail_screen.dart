@@ -184,7 +184,7 @@ class QuestionDetailScreen extends ConsumerWidget {
                         onPressed: () => context.go(RouteNames.verification),
                         icon: const Icon(Icons.verified_user_outlined),
                         label: const Text(
-                          'Verify as a student of this college to answer',
+                          'Verify as a student or alumni of this college to answer',
                         ),
                       ),
                     );
@@ -226,7 +226,7 @@ class QuestionDetailScreen extends ConsumerWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Verified students can share their experience',
+                            'Verified students and alumni can share their experience',
                             style: GoogleFonts.poppins(
                               fontSize: 13,
                               color: AppTheme.gray500,
