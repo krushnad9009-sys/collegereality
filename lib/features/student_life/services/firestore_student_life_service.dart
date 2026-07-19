@@ -282,7 +282,9 @@ class FirestoreStudentLifeService {
     if (!doc.exists) return false;
     final data = doc.data()!;
     return data['verificationBadge'] != VerificationConstants.badgeNone &&
-        data['verificationStatus'] == VerificationConstants.statusApproved;
+        data['verificationStatus'] == VerificationConstants.statusApproved &&
+        (data['verificationBadge'] == VerificationConstants.badgeVerifiedStudent ||
+            data['verificationBadge'] == VerificationConstants.badgeVerifiedAlumni);
   }
 
   Future<void> registerForEvent(String userId, String eventId) async {

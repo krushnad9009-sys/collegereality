@@ -9,8 +9,7 @@ import '../../../config/theme/app_theme.dart';
 import '../../../core/utils/indian_currency_formatter.dart';
 import '../../questions/widgets/ask_student_button.dart';
 import '../../reviews/widgets/review_summary_panel.dart';
-import '../../social/models/social_models.dart';
-import '../../social/providers/social_provider.dart';
+import '../../community_feed/providers/college_community_feed_provider.dart';
 import '../models/college_model.dart';
 import 'connect_students_section.dart';
 
@@ -548,7 +547,11 @@ class CollegeCommunitySection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final feedAsync = ref.watch(collegeDiscussionFeedProvider(college.id));
+    final feedAsync = ref.watch(
+      collegeCommunityFeedPreviewProvider(
+        (collegeId: college.id, collegeName: college.name),
+      ),
+    );
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -577,9 +580,12 @@ class CollegeCommunitySection extends ConsumerWidget {
               ),
               TextButton(
                 onPressed: () => context.push(
-                  RouteNames.talkToStudentsPath(college.id, name: college.name),
+                  RouteNames.collegeCommunityFeedPath(
+                    college.id,
+                    name: college.name,
+                  ),
                 ),
-                child: const Text('Talk to Students'),
+                child: const Text('Open Feed'),
               ),
             ],
           ),
@@ -593,8 +599,8 @@ class CollegeCommunitySection extends ConsumerWidget {
               'Join discussions with verified students at this college.',
               style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.gray600),
             ),
-            data: (items) {
-              if (items.isEmpty) {
+            data: (posts) {
+              if (posts.isEmpty) {
                 return Text(
                   'No community posts yet. Be the first to start a discussion!',
                   style: GoogleFonts.poppins(
@@ -604,48 +610,54 @@ class CollegeCommunitySection extends ConsumerWidget {
                 );
               }
               return Column(
-                children: items.take(3).map(_DiscussionPreview.new).toList(),
+                children: posts
+                    .map(
+                      (post) => ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: CircleAvatar(
+                          radius: 18,
+                          backgroundColor:
+                              AppTheme.secondaryColor.withValues(alpha: 0.15),
+                          child: const Icon(Icons.chat_bubble_outline, size: 18),
+                        ),
+                        title: Text(
+                          post.isPoll ? post.pollQuestion : post.content,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
+                        ),
+                        subtitle: Text(
+                          '${post.authorDisplayName} · ${post.likeCount} likes',
+                          style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            color: AppTheme.gray600,
+                          ),
+                        ),
+                      ),
+                    )
+                    .toList(),
               );
             },
           ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => context.push(
+                RouteNames.collegeCommunityFeedPath(
+                  college.id,
+                  name: college.name,
+                ),
+              ),
+              icon: const Icon(Icons.forum_outlined, size: 18),
+              label: const Text('View Community Feed'),
+            ),
+          ),
         ],
       ),
-    );
-  }
-}
-
-class _DiscussionPreview extends StatelessWidget {
-  final DiscussionFeedItem item;
-
-  const _DiscussionPreview(this.item);
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: CircleAvatar(
-        radius: 18,
-        backgroundColor: AppTheme.secondaryColor.withValues(alpha: 0.15),
-        child: const Icon(Icons.chat_bubble_outline, size: 18),
-      ),
-      title: Text(
-        item.title,
-        style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 13),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
-      subtitle: Text(
-        item.preview,
-        maxLines: 2,
-        overflow: TextOverflow.ellipsis,
-        style: GoogleFonts.poppins(fontSize: 11, color: AppTheme.gray600),
-      ),
-      trailing: item.actionRoute.isNotEmpty
-          ? IconButton(
-              icon: const Icon(Icons.open_in_new, size: 18),
-              onPressed: () => context.push(item.actionRoute),
-            )
-          : null,
     );
   }
 }

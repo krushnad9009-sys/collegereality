@@ -361,6 +361,8 @@ class PollOptionModel {
 class StudentCommunityPostModel {
   final String id;
   final String communityId;
+  final String collegeId;
+  final String collegeName;
   final String authorId;
   final String authorDisplayName;
   final bool isVerifiedStudent;
@@ -376,6 +378,10 @@ class StudentCommunityPostModel {
   final int likeCount;
   final List<String> likedBy;
   final int reportCount;
+  final int shareCount;
+  final int engagementScore;
+  final bool isPinned;
+  final DateTime? pinnedAt;
   final bool isAnonymous;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -383,6 +389,8 @@ class StudentCommunityPostModel {
   const StudentCommunityPostModel({
     required this.id,
     required this.communityId,
+    this.collegeId = '',
+    this.collegeName = '',
     required this.authorId,
     required this.authorDisplayName,
     this.isVerifiedStudent = false,
@@ -398,6 +406,10 @@ class StudentCommunityPostModel {
     this.likeCount = 0,
     this.likedBy = const [],
     this.reportCount = 0,
+    this.shareCount = 0,
+    this.engagementScore = 0,
+    this.isPinned = false,
+    this.pinnedAt,
     this.isAnonymous = false,
     required this.createdAt,
     required this.updatedAt,
@@ -405,6 +417,7 @@ class StudentCommunityPostModel {
 
   bool get isPoll => postType == StudentLifeConstants.postPoll;
   bool get isAnnouncement => postType == StudentLifeConstants.postAnnouncement;
+  bool get hasImages => imageUrls.isNotEmpty;
 
   static DateTime _parseDate(dynamic value) {
     if (value == null) return DateTime.now();
@@ -417,6 +430,8 @@ class StudentCommunityPostModel {
     return StudentCommunityPostModel(
       id: docId ?? json['id'] as String? ?? '',
       communityId: json['communityId'] as String? ?? '',
+      collegeId: json['collegeId'] as String? ?? '',
+      collegeName: json['collegeName'] as String? ?? '',
       authorId: json['authorId'] as String? ?? '',
       authorDisplayName: json['authorDisplayName'] as String? ?? 'Student',
       isVerifiedStudent: json['isVerifiedStudent'] as bool? ?? false,
@@ -435,6 +450,10 @@ class StudentCommunityPostModel {
       likeCount: (json['likeCount'] as num?)?.toInt() ?? 0,
       likedBy: (json['likedBy'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? const [],
       reportCount: (json['reportCount'] as num?)?.toInt() ?? 0,
+      shareCount: (json['shareCount'] as num?)?.toInt() ?? 0,
+      engagementScore: (json['engagementScore'] as num?)?.toInt() ?? 0,
+      isPinned: json['isPinned'] as bool? ?? false,
+      pinnedAt: json['pinnedAt'] != null ? _parseDate(json['pinnedAt']) : null,
       isAnonymous: json['isAnonymous'] as bool? ?? false,
       createdAt: _parseDate(json['createdAt']),
       updatedAt: _parseDate(json['updatedAt']),
@@ -444,6 +463,8 @@ class StudentCommunityPostModel {
   Map<String, dynamic> toJson() => {
         'id': id,
         'communityId': communityId,
+        'collegeId': collegeId,
+        'collegeName': collegeName,
         'authorId': authorId,
         'authorDisplayName': authorDisplayName,
         'isVerifiedStudent': isVerifiedStudent,
@@ -459,6 +480,10 @@ class StudentCommunityPostModel {
         'likeCount': likeCount,
         'likedBy': likedBy,
         'reportCount': reportCount,
+        'shareCount': shareCount,
+        'engagementScore': engagementScore,
+        'isPinned': isPinned,
+        if (pinnedAt != null) 'pinnedAt': pinnedAt!.toIso8601String(),
         'isAnonymous': isAnonymous,
         'createdAt': createdAt.toIso8601String(),
         'updatedAt': updatedAt.toIso8601String(),
@@ -473,6 +498,8 @@ class StudentCommunityCommentModel {
   final String authorDisplayName;
   final bool isVerifiedStudent;
   final String content;
+  final String? parentCommentId;
+  final int replyCount;
   final String status;
   final DateTime createdAt;
 
@@ -484,9 +511,14 @@ class StudentCommunityCommentModel {
     required this.authorDisplayName,
     this.isVerifiedStudent = false,
     required this.content,
+    this.parentCommentId,
+    this.replyCount = 0,
     this.status = StudentLifeConstants.statusPublished,
     required this.createdAt,
   });
+
+  bool get isReply =>
+      parentCommentId != null && parentCommentId!.trim().isNotEmpty;
 
   static DateTime _parseDate(dynamic value) {
     if (value == null) return DateTime.now();
@@ -504,6 +536,8 @@ class StudentCommunityCommentModel {
       authorDisplayName: json['authorDisplayName'] as String? ?? 'Student',
       isVerifiedStudent: json['isVerifiedStudent'] as bool? ?? false,
       content: json['content'] as String? ?? '',
+      parentCommentId: json['parentCommentId'] as String?,
+      replyCount: (json['replyCount'] as num?)?.toInt() ?? 0,
       status: json['status'] as String? ?? StudentLifeConstants.statusPublished,
       createdAt: _parseDate(json['createdAt']),
     );
@@ -517,6 +551,8 @@ class StudentCommunityCommentModel {
         'authorDisplayName': authorDisplayName,
         'isVerifiedStudent': isVerifiedStudent,
         'content': content,
+        if (parentCommentId != null) 'parentCommentId': parentCommentId,
+        'replyCount': replyCount,
         'status': status,
         'createdAt': createdAt.toIso8601String(),
       };

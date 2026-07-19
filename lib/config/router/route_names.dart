@@ -14,6 +14,7 @@ class RouteNames {
   static const String collegeDetails = '/college-details/:id';
   static const String writeReview = '/college-details/:id/write-review';
   static const String talkToStudents = '/college-details/:id/talk-to-students';
+  static const String collegeCommunityFeed = '/college-details/:id/community-feed';
   static const String submitPlacement = '/college-details/:id/submit-placement';
   static const String profile = '/profile';
   static const String myReviews = '/my-reviews';
@@ -107,6 +108,11 @@ class RouteNames {
       '/college-details/$collegeId/write-review';
   static String talkToStudentsPath(String collegeId, {String name = ''}) {
     final base = '/college-details/$collegeId/talk-to-students';
+    if (name.isEmpty) return base;
+    return '$base?name=${Uri.encodeComponent(name)}';
+  }
+  static String collegeCommunityFeedPath(String collegeId, {String name = ''}) {
+    final base = '/college-details/$collegeId/community-feed';
     if (name.isEmpty) return base;
     return '$base?name=${Uri.encodeComponent(name)}';
   }

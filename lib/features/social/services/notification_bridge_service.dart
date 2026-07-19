@@ -116,4 +116,26 @@ class NotificationBridgeService {
       actionRoute: RouteNames.careersSaved,
     );
   }
+
+  Future<void> notifyCommunityComment({
+    required String recipientId,
+    required String preview,
+    required String collegeId,
+    required String collegeName,
+    required String postId,
+    required bool isReply,
+  }) async {
+    await _engagement.notifyUser(
+      userId: recipientId,
+      type: isReply
+          ? EngagementConstants.typeCommunityReply
+          : EngagementConstants.typeCommunityComment,
+      category: EngagementConstants.categoryCommunity,
+      title: isReply ? 'New reply on your comment' : 'New comment on your post',
+      body: preview,
+      entityType: 'community_post',
+      entityId: postId,
+      actionRoute: RouteNames.collegeCommunityFeedPath(collegeId, name: collegeName),
+    );
+  }
 }

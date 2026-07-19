@@ -59,6 +59,15 @@ class StudentLifeConstants {
   // Community types
   static const String communityBranch = 'branch';
   static const String communityYear = 'year';
+  static const String communityCollege = 'college';
+
+  // Feed sort modes
+  static const String feedLatest = 'latest';
+  static const String feedTrending = 'trending';
+  static const String feedPinned = 'pinned';
+
+  static String collegeFeedCommunityId(String collegeId) =>
+      'college_feed_${collegeId.trim()}';
 
   // Post types
   static const String postDiscussion = 'discussion';

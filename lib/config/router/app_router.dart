@@ -37,6 +37,7 @@ import '../../features/community/screens/chat_screen.dart';
 import '../../features/community/screens/ask_seniors_screen.dart';
 import '../../features/community/screens/qa_board_screen.dart';
 import '../../features/social/screens/college_discussion_feed_screen.dart';
+import '../../features/community_feed/screens/college_community_feed_screen.dart';
 import '../../features/ranking/screens/ranking_hub_screen.dart';
 import '../../features/ranking/screens/college_rankings_screen.dart';
 import '../../features/ranking/screens/smart_recommendations_screen.dart';
@@ -343,6 +344,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           final id = state.pathParameters['id']!;
           final collegeName = state.uri.queryParameters['name'] ?? 'College';
           return TalkToStudentsScreen(collegeId: id, collegeName: collegeName);
+        },
+      ),
+      GoRoute(
+        path: RouteNames.collegeCommunityFeed,
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          final collegeName = state.uri.queryParameters['name'] ?? 'College';
+          return CollegeCommunityFeedScreen(
+            collegeId: id,
+            collegeName: collegeName,
+          );
         },
       ),
       GoRoute(

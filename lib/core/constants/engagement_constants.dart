@@ -26,6 +26,8 @@ class EngagementConstants {
   static const String typeEditSuggestionUpdate = 'edit_suggestion_update';
   static const String typeClaimUpdate = 'college_claim_update';
   static const String typeOfficialNotice = 'official_notice';
+  static const String typeCommunityComment = 'community_comment';
+  static const String typeCommunityReply = 'community_reply';
 
   static const String categoryReviews = 'reviews';
   static const String categoryQuestions = 'questions';
@@ -36,6 +38,7 @@ class EngagementConstants {
   static const String categoryEvents = 'events';
   static const String categoryAdmission = 'admission';
   static const String categoryCareers = 'careers';
+  static const String categoryCommunity = 'community';
 
   // Calendar categories
   static const String calendarCapRound = 'cap_round';
@@ -57,6 +60,7 @@ class EngagementConstants {
     categoryEvents,
     categoryAdmission,
     categoryCareers,
+    categoryCommunity,
   ];
 
   static String calendarCategoryLabel(String category) {
