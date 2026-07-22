@@ -23,6 +23,7 @@ dependencies:
   cloud_firestore: ^5.1.0
   firebase_storage: ^12.1.1
   firebase_messaging: ^15.0.2
+  flutter_local_notifications: ^18.0.1
   google_sign_in: ^6.2.1
   dio: ^5.4.0
   shared_preferences: ^2.5.3

@@ -10,8 +10,10 @@ import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/community_constants.dart';
 import '../../../core/widgets/index.dart';
+import '../../auth/models/user_model.dart';
 import '../../auth/providers/user_provider.dart';
 import '../models/chat_conversation_model.dart';
+import '../models/chat_message_model.dart';
 import '../providers/community_provider.dart';
 import '../services/community_firestore_service.dart';
 import '../widgets/chat_input_bar.dart';
@@ -31,6 +33,9 @@ class ChatScreen extends ConsumerStatefulWidget {
 class _ChatScreenState extends ConsumerState<ChatScreen> {
   Timer? _typingTimer;
   final _scrollController = ScrollController();
+  String _searchQuery = '';
+  List<ChatMessageModel>? _searchResults;
+  bool _searching = false;
 
   @override
   void initState() {
@@ -129,6 +134,21 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     if (mounted) context.pop();
   }
 
+  Future<void> _runSearch(String query) async {
+    setState(() {
+      _searchQuery = query;
+      _searching = query.trim().isNotEmpty;
+      _searchResults = null;
+    });
+    if (query.trim().isEmpty) return;
+    final results =
+        await ref.read(communityServiceProvider).searchMessagesInConversation(
+              conversationId: widget.conversationId,
+              query: query,
+            );
+    if (mounted) setState(() => _searchResults = results);
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(currentUserDetailProvider).valueOrNull;
@@ -189,6 +209,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               ],
             ),
             actions: [
+              IconButton(
+                icon: Icon(_searching ? Icons.close : Icons.search),
+                onPressed: () {
+                  if (_searching) {
+                    _runSearch('');
+                  } else {
+                    _showSearchSheet(context);
+                  }
+                },
+              ),
               if (peerId != null)
                 PopupMenuButton<String>(
                   onSelected: (v) {
@@ -208,8 +238,26 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           ),
           body: Column(
             children: [
+              if (_searching)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                  child: TextField(
+                    autofocus: true,
+                    decoration: InputDecoration(
+                      hintText: 'Search messages…',
+                      prefixIcon: const Icon(Icons.search),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      isDense: true,
+                    ),
+                    onChanged: _runSearch,
+                  ),
+                ),
               Expanded(
-                child: messagesAsync.when(
+                child: _searching
+                    ? _buildSearchResults(user)
+                    : messagesAsync.when(
                   loading: () => const Center(child: CircularProgressIndicator()),
                   error: (e, _) => Center(child: Text('$e')),
                   data: (messages) {
@@ -249,16 +297,55 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   },
                 ),
               ),
-              TypingIndicator(
-                conversation: conversation,
-                currentUserId: user.uid,
-              ),
-              ChatInputBar(
-                onSend: _send,
-                onTypingChanged: _onTypingChanged,
-              ),
+              if (!_searching)
+                TypingIndicator(
+                  conversation: conversation,
+                  currentUserId: user.uid,
+                ),
+              if (!_searching)
+                ChatInputBar(
+                  onSend: _send,
+                  onTypingChanged: _onTypingChanged,
+                ),
             ],
           ),
+        );
+      },
+    );
+  }
+
+  void _showSearchSheet(BuildContext context) {
+    setState(() => _searching = true);
+  }
+
+  Widget _buildSearchResults(UserModel user) {
+    if (_searchQuery.trim().isEmpty) {
+      return Center(
+        child: Text(
+          'Type to search this conversation',
+          style: GoogleFonts.poppins(color: AppTheme.gray600),
+        ),
+      );
+    }
+    if (_searchResults == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_searchResults!.isEmpty) {
+      return Center(
+        child: Text(
+          'No messages match "$_searchQuery"',
+          style: GoogleFonts.poppins(color: AppTheme.gray600),
+        ),
+      );
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      itemCount: _searchResults!.length,
+      itemBuilder: (context, index) {
+        final msg = _searchResults![index];
+        return MessageBubble(
+          message: msg,
+          isMine: msg.senderId == user.uid,
         );
       },
     );

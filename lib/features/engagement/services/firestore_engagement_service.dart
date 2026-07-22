@@ -4,9 +4,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../config/router/route_names.dart';
 import '../../../core/constants/engagement_constants.dart';
 import '../../../core/constants/firestore_constants.dart';
 import '../models/engagement_models.dart';
+import '../../social/services/notification_bridge_service.dart';
 import '../utils/alert_scanner.dart';
 import '../utils/engagement_filter_utils.dart';
 import '../../../core/utils/firestore_seed_guard.dart';
@@ -396,6 +398,75 @@ class FirestoreEngagementService {
         actionRoute: actionRoute,
       ),
     );
+  }
+
+  /// Broadcast an admin announcement to all users (batched for performance).
+  Future<int> broadcastAdminAnnouncement({
+    required String title,
+    required String body,
+    int batchSize = 100,
+  }) async {
+    final announcementId = _uuid.v4();
+    var notified = 0;
+    DocumentSnapshot<Map<String, dynamic>>? lastDoc;
+
+    while (true) {
+      Query<Map<String, dynamic>> query =
+          _users.orderBy(FieldPath.documentId).limit(batchSize);
+      if (lastDoc != null) {
+        query = query.startAfterDocument(lastDoc);
+      }
+      final snap = await query.get();
+      if (snap.docs.isEmpty) break;
+
+      for (final doc in snap.docs) {
+        final userId = doc.id;
+        await notifyUser(
+          userId: userId,
+          type: EngagementConstants.typeAdminAnnouncement,
+          category: EngagementConstants.categoryAdmin,
+          title: title,
+          body: body,
+          entityType: 'announcement',
+          entityId: announcementId,
+          actionRoute: RouteNames.notifications,
+        );
+        notified++;
+      }
+
+      lastDoc = snap.docs.last;
+      if (snap.docs.length < batchSize) break;
+    }
+
+    return notified;
+  }
+
+  /// Notify users who follow a college about a new community post.
+  Future<void> notifyFollowersOfCommunityPost({
+    required String collegeId,
+    required String collegeName,
+    required String postId,
+    required String preview,
+    required String authorId,
+    int limit = 50,
+  }) async {
+    final followers = await _users
+        .where('favoriteCollegeIds', arrayContains: collegeId.trim())
+        .limit(limit)
+        .get();
+
+    final bridge = NotificationBridgeService(this);
+    for (final doc in followers.docs) {
+      final userId = doc.id;
+      if (userId == authorId) continue;
+      await bridge.notifyFollowedCollegePost(
+        recipientId: userId,
+        collegeName: collegeName,
+        collegeId: collegeId,
+        postId: postId,
+        preview: preview,
+      );
+    }
   }
 }
 

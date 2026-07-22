@@ -76,6 +76,7 @@ import '../../features/engagement/screens/admission_calendar_screen.dart';
 import '../../features/engagement/screens/notification_preferences_screen.dart';
 import '../../features/admin/screens/admin_placements_screen.dart';
 import '../../features/admin/screens/admin_community_screen.dart';
+import '../../features/admin/screens/admin_announcements_screen.dart';
 import '../../features/admin/screens/admin_communication_screen.dart';
 import '../../features/admin/screens/admin_questions_screen.dart';
 import '../../features/admin/screens/admin_student_life_screen.dart';
@@ -575,6 +576,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RouteNames.adminCommunication,
         builder: (context, state) => const AdminCommunicationScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.adminAnnouncements,
+        builder: (context, state) => const AdminAnnouncementsScreen(),
       ),
       GoRoute(
         path: RouteNames.adminVerification,

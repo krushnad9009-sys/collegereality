@@ -7,7 +7,9 @@ import '../../../core/constants/firestore_constants.dart';
 import '../../../core/constants/verification_constants.dart';
 import '../../auth/models/user_model.dart';
 import '../../auth/services/firestore_user_service.dart';
+import '../../engagement/services/firestore_engagement_service.dart';
 import '../models/verification_request_model.dart';
+import '../../social/services/notification_bridge_service.dart';
 import 'document_validation_service.dart';
 import 'verification_storage_service.dart';
 
@@ -17,6 +19,8 @@ class VerificationFirestoreService {
   final _userService = FirestoreUserService();
   final _storageService = VerificationStorageService();
   final _validationService = DocumentValidationService();
+  final _notificationBridge =
+      NotificationBridgeService(FirestoreEngagementService());
 
   Future<VerificationRequestModel?> getActiveRequest(String userId) async {
     final snapshot = await _firestore
@@ -245,6 +249,12 @@ class VerificationFirestoreService {
         SetOptions(merge: true),
       );
     }
+
+    await _notificationBridge.notifyVerificationUpdate(
+      userId: request.userId,
+      approved: true,
+      collegeName: request.collegeName,
+    );
   }
 
   Future<void> rejectRequest({
@@ -275,6 +285,12 @@ class VerificationFirestoreService {
       'verificationStatus': VerificationConstants.statusRejected,
       'updatedAt': DateTime.now().toIso8601String(),
     });
+
+    await _notificationBridge.notifyVerificationUpdate(
+      userId: request.userId,
+      approved: false,
+      collegeName: request.collegeName,
+    );
   }
 
   Future<void> requestResubmission({

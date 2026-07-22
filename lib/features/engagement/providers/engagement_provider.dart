@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/bootstrap/startup_bootstrap.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../../config/router/app_router.dart';
 import '../models/engagement_models.dart';
 import '../repositories/engagement_repository.dart';
 import '../services/firebase_messaging_service.dart';
@@ -183,7 +184,10 @@ final engagementMessagingInitProvider = FutureProvider<void>((ref) async {
   if (!ready) return;
   final user = ref.watch(authStateProvider).valueOrNull;
   if (user == null) return;
-  await ref.watch(firebaseMessagingServiceProvider).initialize(userId: user.uid);
+  await ref.watch(firebaseMessagingServiceProvider).initialize(
+        userId: user.uid,
+        router: ref.read(appRouterProvider),
+      );
 });
 
 final alertScanProvider = FutureProvider<void>((ref) async {

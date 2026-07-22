@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:uuid/uuid.dart';
 
@@ -234,6 +236,20 @@ class CollegeCommunityFeedService {
     );
 
     await _posts.doc(id).set(post.toJson());
+
+    final preview = postType == StudentLifeConstants.postPoll
+        ? pollQuestion.trim()
+        : content.trim();
+    unawaited(
+      _engagement.notifyFollowersOfCommunityPost(
+        collegeId: collegeId,
+        collegeName: collegeName,
+        postId: id,
+        preview: preview.length > 120 ? '${preview.substring(0, 120)}…' : preview,
+        authorId: authorId,
+      ),
+    );
+
     return post;
   }
 

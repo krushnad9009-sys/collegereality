@@ -119,6 +119,18 @@ void main() {
       );
     });
 
+    test('isPreferenceEnabled maps verification and admin types', () {
+      final prefs = NotificationPreferencesModel.defaults('u1');
+      expect(
+        isPreferenceEnabled(prefs, EngagementConstants.typeAdminAnnouncement),
+        isTrue,
+      );
+      expect(
+        isPreferenceEnabled(prefs, EngagementConstants.typeReviewApproved),
+        isTrue,
+      );
+    });
+
     test('dedupeKey is stable', () {
       expect(
         dedupeKey('u1', EngagementConstants.typeNewReview, 'col_1'),

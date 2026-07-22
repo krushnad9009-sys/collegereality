@@ -110,6 +110,11 @@ class NotificationPreferencesModel {
   final bool newJob;
   final bool newInternship;
   final bool applicationUpdate;
+  final bool reviewApproved;
+  final bool reviewInteraction;
+  final bool verificationUpdates;
+  final bool communityUpdates;
+  final bool adminAnnouncements;
   final DateTime? lastAlertScanAt;
   final DateTime updatedAt;
 
@@ -133,6 +138,11 @@ class NotificationPreferencesModel {
     this.newJob = true,
     this.newInternship = true,
     this.applicationUpdate = true,
+    this.reviewApproved = true,
+    this.reviewInteraction = true,
+    this.verificationUpdates = true,
+    this.communityUpdates = true,
+    this.adminAnnouncements = true,
     this.lastAlertScanAt,
     required this.updatedAt,
   });
@@ -172,6 +182,11 @@ class NotificationPreferencesModel {
       newJob: json['newJob'] as bool? ?? true,
       newInternship: json['newInternship'] as bool? ?? true,
       applicationUpdate: json['applicationUpdate'] as bool? ?? true,
+      reviewApproved: json['reviewApproved'] as bool? ?? true,
+      reviewInteraction: json['reviewInteraction'] as bool? ?? true,
+      verificationUpdates: json['verificationUpdates'] as bool? ?? true,
+      communityUpdates: json['communityUpdates'] as bool? ?? true,
+      adminAnnouncements: json['adminAnnouncements'] as bool? ?? true,
       lastAlertScanAt: json['lastAlertScanAt'] != null
           ? _parseDate(json['lastAlertScanAt'])
           : null,
@@ -199,6 +214,11 @@ class NotificationPreferencesModel {
         'newJob': newJob,
         'newInternship': newInternship,
         'applicationUpdate': applicationUpdate,
+        'reviewApproved': reviewApproved,
+        'reviewInteraction': reviewInteraction,
+        'verificationUpdates': verificationUpdates,
+        'communityUpdates': communityUpdates,
+        'adminAnnouncements': adminAnnouncements,
         if (lastAlertScanAt != null)
           'lastAlertScanAt': lastAlertScanAt!.toIso8601String(),
         'updatedAt': updatedAt.toIso8601String(),
@@ -223,6 +243,11 @@ class NotificationPreferencesModel {
     bool? newJob,
     bool? newInternship,
     bool? applicationUpdate,
+    bool? reviewApproved,
+    bool? reviewInteraction,
+    bool? verificationUpdates,
+    bool? communityUpdates,
+    bool? adminAnnouncements,
     DateTime? lastAlertScanAt,
     DateTime? updatedAt,
   }) {
@@ -246,6 +271,11 @@ class NotificationPreferencesModel {
       newJob: newJob ?? this.newJob,
       newInternship: newInternship ?? this.newInternship,
       applicationUpdate: applicationUpdate ?? this.applicationUpdate,
+      reviewApproved: reviewApproved ?? this.reviewApproved,
+      reviewInteraction: reviewInteraction ?? this.reviewInteraction,
+      verificationUpdates: verificationUpdates ?? this.verificationUpdates,
+      communityUpdates: communityUpdates ?? this.communityUpdates,
+      adminAnnouncements: adminAnnouncements ?? this.adminAnnouncements,
       lastAlertScanAt: lastAlertScanAt ?? this.lastAlertScanAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

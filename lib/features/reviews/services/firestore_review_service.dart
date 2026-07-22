@@ -6,12 +6,16 @@ import '../../../core/constants/review_constants.dart';
 import '../../../core/constants/review_yes_no_questions.dart';
 import '../../../core/constants/verification_constants.dart';
 import '../../colleges/models/college_model.dart';
+import '../../engagement/services/firestore_engagement_service.dart';
+import '../../social/services/notification_bridge_service.dart';
 import '../models/review_model.dart';
 import '../models/review_page_model.dart';
 
 class FirestoreReviewService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final _uuid = const Uuid();
+  final _notificationBridge =
+      NotificationBridgeService(FirestoreEngagementService());
 
   CollectionReference<Map<String, dynamic>> get _reviews =>
       _firestore.collection(FirestoreConstants.reviewsCollection);
@@ -125,16 +129,16 @@ class FirestoreReviewService {
     final review = await getReviewById(reviewId);
     if (review == null) return;
 
+    final wasVisible = review.isPublicVisible;
+    final normalized = ReviewModel.normalizeStatus(status);
+    final nowVisible =
+        normalized == ReviewModel.statusPublished && review.isVerifiedStudent;
+
     await _firestore.runTransaction((transaction) async {
       transaction.update(_reviews.doc(reviewId), {
-        'status': ReviewModel.normalizeStatus(status),
+        'status': normalized,
         'updatedAt': DateTime.now().toIso8601String(),
       });
-
-      final wasVisible = review.isPublicVisible;
-      final normalized = ReviewModel.normalizeStatus(status);
-      final nowVisible =
-          normalized == ReviewModel.statusPublished && review.isVerifiedStudent;
 
       if (wasVisible && !nowVisible) {
         await _applyReviewDeltaInTransaction(
@@ -152,6 +156,15 @@ class FirestoreReviewService {
         );
       }
     });
+
+    if (!wasVisible && nowVisible) {
+      await _notificationBridge.notifyReviewApproved(
+        authorId: review.userId,
+        collegeName: review.collegeName,
+        collegeId: review.collegeId,
+        reviewId: reviewId,
+      );
+    }
   }
 
   Future<void> deleteReview(String reviewId) async {
@@ -344,6 +357,17 @@ class FirestoreReviewService {
         'updatedAt': DateTime.now().toIso8601String(),
       });
     });
+
+    final review = await getReviewById(reviewId);
+    if (review != null && review.userId != userId) {
+      await _notificationBridge.notifyReviewInteraction(
+        authorId: review.userId,
+        collegeName: review.collegeName,
+        collegeId: review.collegeId,
+        reviewId: reviewId,
+        preview: 'Someone found your review helpful',
+      );
+    }
   }
 
   Future<void> reportReview({

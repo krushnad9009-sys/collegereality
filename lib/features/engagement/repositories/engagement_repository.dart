@@ -39,6 +39,11 @@ abstract class EngagementRepository {
     String entityId,
     String actionRoute,
   });
+  Future<int> broadcastAdminAnnouncement({
+    required String title,
+    required String body,
+    int batchSize,
+  });
 }
 
 class EngagementRepositoryImpl implements EngagementRepository {
@@ -151,5 +156,17 @@ class EngagementRepositoryImpl implements EngagementRepository {
         entityType: entityType,
         entityId: entityId,
         actionRoute: actionRoute,
+      );
+
+  @override
+  Future<int> broadcastAdminAnnouncement({
+    required String title,
+    required String body,
+    int batchSize = 100,
+  }) =>
+      _service.broadcastAdminAnnouncement(
+        title: title,
+        body: body,
+        batchSize: batchSize,
       );
 }

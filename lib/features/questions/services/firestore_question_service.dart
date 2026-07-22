@@ -5,6 +5,8 @@ import '../../../core/constants/firestore_constants.dart';
 import '../../../core/constants/question_constants.dart';
 import '../../../core/constants/verification_constants.dart';
 import '../../social/services/moderation_service.dart';
+import '../../engagement/services/firestore_engagement_service.dart';
+import '../../social/services/notification_bridge_service.dart';
 import '../models/answer_model.dart';
 import '../models/question_model.dart';
 import '../utils/question_display_utils.dart';
@@ -13,6 +15,8 @@ class FirestoreQuestionService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final _uuid = const Uuid();
   final _moderationService = ModerationService();
+  final _notificationBridge =
+      NotificationBridgeService(FirestoreEngagementService());
 
   CollectionReference<Map<String, dynamic>> get _questions =>
       _firestore.collection(FirestoreConstants.collegeQuestionsCollection);
@@ -389,6 +393,15 @@ class FirestoreQuestionService {
         SetOptions(merge: true),
       );
     });
+
+    if (question.authorId != authorId) {
+      await _notificationBridge.notifyNewAnswer(
+        questionAuthorId: question.authorId,
+        questionTitle: question.title,
+        collegeId: question.collegeId,
+        questionId: questionId,
+      );
+    }
 
     return answer;
   }

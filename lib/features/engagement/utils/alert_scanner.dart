@@ -160,6 +160,18 @@ bool isPreferenceEnabled(
       return prefs.newInternship;
     case EngagementConstants.typeApplicationUpdate:
       return prefs.applicationUpdate;
+    case EngagementConstants.typeVerificationUpdate:
+      return prefs.verificationUpdates;
+    case EngagementConstants.typeReviewApproved:
+      return prefs.reviewApproved;
+    case EngagementConstants.typeReviewComment:
+      return prefs.reviewInteraction;
+    case EngagementConstants.typeCommunityPost:
+    case EngagementConstants.typeCommunityComment:
+    case EngagementConstants.typeCommunityReply:
+      return prefs.communityUpdates;
+    case EngagementConstants.typeAdminAnnouncement:
+      return prefs.adminAnnouncements;
     default:
       return true;
   }

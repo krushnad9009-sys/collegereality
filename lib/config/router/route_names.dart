@@ -35,6 +35,7 @@ class RouteNames {
   static const String adminExport = '/admin/export';
   static const String adminBulk = '/admin/bulk';
   static const String adminCommunication = '/admin/communication';
+  static const String adminAnnouncements = '/admin/announcements';
   static const String adminVerification = '/admin/verification';
   static const String verification = '/verification';
   static const String guidesDirectory = '/guides';

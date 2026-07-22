@@ -28,6 +28,12 @@ class EngagementConstants {
   static const String typeOfficialNotice = 'official_notice';
   static const String typeCommunityComment = 'community_comment';
   static const String typeCommunityReply = 'community_reply';
+  static const String typeReviewApproved = 'review_approved';
+  static const String typeReviewComment = 'review_comment';
+  static const String typeCommunityPost = 'community_post';
+  static const String typeAdminAnnouncement = 'admin_announcement';
+
+  static const String categoryAdmin = 'admin';
 
   static const String categoryReviews = 'reviews';
   static const String categoryQuestions = 'questions';
@@ -61,6 +67,7 @@ class EngagementConstants {
     categoryAdmission,
     categoryCareers,
     categoryCommunity,
+    categoryAdmin,
   ];
 
   static String calendarCategoryLabel(String category) {
@@ -122,6 +129,20 @@ class EngagementConstants {
         return 'New Internship';
       case typeApplicationUpdate:
         return 'Application Update';
+      case typeVerificationUpdate:
+        return 'Verification Update';
+      case typeReviewApproved:
+        return 'Review Approved';
+      case typeReviewComment:
+        return 'Review Interaction';
+      case typeCommunityPost:
+        return 'Community Post';
+      case typeCommunityComment:
+        return 'Community Comment';
+      case typeCommunityReply:
+        return 'Community Reply';
+      case typeAdminAnnouncement:
+        return 'Admin Announcement';
       default:
         return type;
     }

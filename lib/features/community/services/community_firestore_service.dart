@@ -314,6 +314,8 @@ class CommunityFirestoreService {
     String? attachmentName,
     String? replyToMessageId,
   }) async {
+    await _assertMessageRateLimit(conversationId: conversationId, senderId: sender.uid);
+
     final conversationDoc = await _conversations.doc(conversationId).get();
     if (!conversationDoc.exists) {
       throw CommunityException('Conversation not found.');
@@ -396,6 +398,53 @@ class CommunityFirestoreService {
     }
 
     return message;
+  }
+
+  Future<void> _assertMessageRateLimit({
+    required String conversationId,
+    required String senderId,
+  }) async {
+    final cutoff = DateTime.now().subtract(const Duration(minutes: 1));
+    final recent = await _messages
+        .where('conversationId', isEqualTo: conversationId)
+        .where('senderId', isEqualTo: senderId)
+        .orderBy('createdAt', descending: true)
+        .limit(SocialConstants.maxMessagesPerMinute)
+        .get();
+
+    final recentCount = recent.docs.where((doc) {
+      final created = DateTime.tryParse(doc.data()['createdAt']?.toString() ?? '');
+      return created != null && created.isAfter(cutoff);
+    }).length;
+
+    if (recentCount >= SocialConstants.maxMessagesPerMinute) {
+      throw CommunityException(
+        'Too many messages. Please wait a moment before sending more.',
+      );
+    }
+  }
+
+  Future<List<ChatMessageModel>> searchMessagesInConversation({
+    required String conversationId,
+    required String query,
+    int limit = 200,
+  }) async {
+    final trimmed = query.trim().toLowerCase();
+    if (trimmed.isEmpty) return [];
+
+    final snap = await _messages
+        .where('conversationId', isEqualTo: conversationId)
+        .orderBy('createdAt', descending: true)
+        .limit(limit)
+        .get();
+
+    return snap.docs
+        .map((d) => ChatMessageModel.fromJson(d.data(), docId: d.id))
+        .where((m) =>
+            m.status != SocialConstants.contentStatusHidden &&
+            m.text.toLowerCase().contains(trimmed))
+        .toList()
+      ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
   }
 
   String _previewText(ChatMessageModel message) {

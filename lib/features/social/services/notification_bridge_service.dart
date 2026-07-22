@@ -138,4 +138,95 @@ class NotificationBridgeService {
       actionRoute: RouteNames.collegeCommunityFeedPath(collegeId, name: collegeName),
     );
   }
+
+  Future<void> notifyReviewApproved({
+    required String authorId,
+    required String collegeName,
+    required String collegeId,
+    required String reviewId,
+  }) async {
+    await _engagement.notifyUser(
+      userId: authorId,
+      type: EngagementConstants.typeReviewApproved,
+      category: EngagementConstants.categoryReviews,
+      title: 'Your review was approved',
+      body: collegeName,
+      entityType: 'review',
+      entityId: reviewId,
+      actionRoute: RouteNames.collegeDetailsPath(collegeId, tab: 'reviews'),
+    );
+  }
+
+  Future<void> notifyReviewInteraction({
+    required String authorId,
+    required String collegeName,
+    required String collegeId,
+    required String reviewId,
+    required String preview,
+  }) async {
+    await _engagement.notifyUser(
+      userId: authorId,
+      type: EngagementConstants.typeReviewComment,
+      category: EngagementConstants.categoryReviews,
+      title: 'Activity on your review',
+      body: preview.isNotEmpty ? preview : collegeName,
+      entityType: 'review',
+      entityId: reviewId,
+      actionRoute: RouteNames.collegeDetailsPath(collegeId, tab: 'reviews'),
+    );
+  }
+
+  Future<void> notifyVerificationUpdate({
+    required String userId,
+    required bool approved,
+    String? collegeName,
+  }) async {
+    await _engagement.notifyUser(
+      userId: userId,
+      type: EngagementConstants.typeVerificationUpdate,
+      category: EngagementConstants.categoryColleges,
+      title: approved ? 'Verification approved' : 'Verification rejected',
+      body: collegeName ?? '',
+      entityType: 'verification',
+      entityId: userId,
+      actionRoute: RouteNames.verification,
+    );
+  }
+
+  Future<void> notifyFollowedCollegePost({
+    required String recipientId,
+    required String collegeName,
+    required String collegeId,
+    required String postId,
+    required String preview,
+  }) async {
+    await _engagement.notifyUser(
+      userId: recipientId,
+      type: EngagementConstants.typeCommunityPost,
+      category: EngagementConstants.categoryCommunity,
+      title: 'New post in $collegeName',
+      body: preview,
+      entityType: 'community_post',
+      entityId: postId,
+      actionRoute: RouteNames.collegeCommunityFeedPath(collegeId, name: collegeName),
+    );
+  }
+
+  Future<void> notifyAdminAnnouncement({
+    required String userId,
+    required String title,
+    required String body,
+    String announcementId = '',
+  }) async {
+    await _engagement.notifyUser(
+      userId: userId,
+      type: EngagementConstants.typeAdminAnnouncement,
+      category: EngagementConstants.categoryAdmin,
+      title: title,
+      body: body,
+      entityType: 'announcement',
+      entityId: announcementId.isNotEmpty ? announcementId : title,
+      actionRoute: RouteNames.notifications,
+    );
+  }
 }

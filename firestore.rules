@@ -604,7 +604,19 @@ service cloud.firestore {
     match /user_notifications/{notificationId} {
       allow read: if isAuthenticated() &&
         resource.data.userId == request.auth.uid;
-      allow create: if isAuthenticated();
+      allow create: if isAuthenticated() && (
+        isAdmin() ||
+        (
+          request.resource.data.userId is string &&
+          request.resource.data.type is string &&
+          request.resource.data.title is string &&
+          request.resource.data.category is string &&
+          request.resource.data.isRead == false &&
+          request.resource.data.keys().hasAll([
+            'userId', 'type', 'title', 'category', 'isRead', 'createdAt'
+          ])
+        )
+      );
       allow update: if isAuthenticated() &&
         resource.data.userId == request.auth.uid &&
         request.resource.data.diff(resource.data).affectedKeys()

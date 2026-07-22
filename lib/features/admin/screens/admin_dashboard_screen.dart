@@ -192,6 +192,12 @@ class AdminDashboardScreen extends ConsumerWidget {
             onTap: () => context.go(RouteNames.adminExport),
           ),
           _AdminMenuTile(
+            icon: Icons.campaign_outlined,
+            title: 'Broadcast Announcement',
+            subtitle: 'Push and in-app alerts to all users',
+            onTap: () => context.go(RouteNames.adminAnnouncements),
+          ),
+          _AdminMenuTile(
             icon: Icons.school_outlined,
             title: 'Manage Colleges',
             subtitle: 'View and edit college listings',

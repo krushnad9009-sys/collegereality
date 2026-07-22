@@ -5,6 +5,7 @@ import '../models/chat_conversation_model.dart';
 import '../models/chat_message_model.dart';
 import '../models/user_presence_model.dart';
 import '../services/community_firestore_service.dart';
+import '../services/message_cache_service.dart';
 
 final communityServiceProvider = Provider<CommunityFirestoreService>((ref) {
   return CommunityFirestoreService();
@@ -23,8 +24,14 @@ final conversationProvider =
 });
 
 final messagesProvider =
-    StreamProvider.family<List<ChatMessageModel>, String>((ref, conversationId) {
-  return ref.watch(communityServiceProvider).watchMessages(conversationId);
+    StreamProvider.family<List<ChatMessageModel>, String>((ref, conversationId) async* {
+  final cached = await MessageCacheService.loadMessages(conversationId);
+  if (cached.isNotEmpty) yield cached;
+  await for (final messages
+      in ref.watch(communityServiceProvider).watchMessages(conversationId)) {
+    await MessageCacheService.saveMessages(conversationId, messages);
+    yield messages;
+  }
 });
 
 final askSeniorsThreadsProvider =

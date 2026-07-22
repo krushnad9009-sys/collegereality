@@ -21,12 +21,69 @@ class NotificationsCenterScreen extends ConsumerStatefulWidget {
 
 class _NotificationsCenterScreenState
     extends ConsumerState<NotificationsCenterScreen> {
+  final _scrollController = ScrollController();
+  List<UserNotificationModel> _olderItems = [];
+  dynamic _lastDoc;
+  bool _hasMore = true;
+  bool _loadingMore = false;
+
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(alertScanProvider.future);
     });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (!_hasMore || _loadingMore || !_scrollController.hasClients) return;
+    final pos = _scrollController.position;
+    if (pos.pixels >= pos.maxScrollExtent - 240) {
+      _loadMore();
+    }
+  }
+
+  Future<void> _loadMore() async {
+    final user = ref.read(authStateProvider).valueOrNull;
+    if (user == null || _loadingMore || !_hasMore) return;
+    setState(() => _loadingMore = true);
+    try {
+      final page = await ref.read(engagementRepositoryProvider).fetchNotificationsPage(
+            userId: user.uid,
+            startAfter: _lastDoc,
+            limit: 20,
+          );
+      if (!mounted) return;
+      final liveIds = ref.read(filteredNotificationsProvider).valueOrNull
+              ?.map((n) => n.id)
+              .toSet() ??
+          {};
+      final existingOlder = _olderItems.map((n) => n.id).toSet();
+      final newItems = page.items
+          .where((n) => !liveIds.contains(n.id) && !existingOlder.contains(n.id))
+          .toList();
+      setState(() {
+        _olderItems = [..._olderItems, ...newItems];
+        _lastDoc = page.lastDocument;
+        _hasMore = page.hasMore;
+        _loadingMore = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _loadingMore = false);
+    }
+  }
+
+  List<UserNotificationModel> _mergeItems(List<UserNotificationModel> live) {
+    final ids = live.map((n) => n.id).toSet();
+    final merged = [...live, ..._olderItems.where((n) => !ids.contains(n.id))];
+    return merged;
   }
 
   @override
@@ -110,7 +167,8 @@ class _NotificationsCenterScreenState
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (e, _) => Center(child: Text('Error: $e')),
               data: (items) {
-                if (items.isEmpty) {
+                final merged = _mergeItems(items);
+                if (merged.isEmpty) {
                   return Center(
                     child: Text(
                       'No notifications yet',
@@ -119,10 +177,19 @@ class _NotificationsCenterScreenState
                   );
                 }
                 return ListView.separated(
+                  controller: _scrollController,
                   padding: const EdgeInsets.all(12),
-                  itemCount: items.length,
+                  itemCount: merged.length + (_loadingMore ? 1 : 0),
                   separatorBuilder: (_, _) => const SizedBox(height: 8),
-                  itemBuilder: (_, i) => _NotificationTile(notification: items[i]),
+                  itemBuilder: (_, i) {
+                    if (i >= merged.length) {
+                      return const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        child: Center(child: CircularProgressIndicator()),
+                      );
+                    }
+                    return _NotificationTile(notification: merged[i]);
+                  },
                 );
               },
             ),
@@ -152,6 +219,10 @@ class _NotificationsCenterScreenState
         return 'Admission';
       case EngagementConstants.categoryCareers:
         return 'Careers';
+      case EngagementConstants.categoryCommunity:
+        return 'Community';
+      case EngagementConstants.categoryAdmin:
+        return 'Admin';
       default:
         return c;
     }
@@ -304,6 +375,10 @@ class _NotificationTile extends ConsumerWidget {
         return Icons.calendar_today_outlined;
       case EngagementConstants.categoryCareers:
         return Icons.work_outline;
+      case EngagementConstants.categoryCommunity:
+        return Icons.groups_outlined;
+      case EngagementConstants.categoryAdmin:
+        return Icons.campaign_outlined;
       default:
         return Icons.notifications_outlined;
     }
