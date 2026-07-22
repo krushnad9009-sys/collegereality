@@ -2,6 +2,8 @@ import 'dart:typed_data';
 
 import 'package:firebase_storage/firebase_storage.dart';
 
+import '../../../core/utils/image_optimization_utils.dart';
+
 class ProfileStorageService {
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
@@ -10,10 +12,11 @@ class ProfileStorageService {
     required Uint8List bytes,
     required String extension,
   }) async {
+    final optimized = await ImageOptimizationUtils.optimizeForUpload(bytes);
     final path = 'profile_images/$userId/avatar.$extension';
     final ref = _storage.ref().child(path);
     await ref.putData(
-      bytes,
+      optimized,
       SettableMetadata(contentType: _imageType(extension)),
     );
     return ref.getDownloadURL();
@@ -24,10 +27,11 @@ class ProfileStorageService {
     required Uint8List bytes,
     required String extension,
   }) async {
+    final optimized = await ImageOptimizationUtils.optimizeForUpload(bytes);
     final path = 'profile_images/$userId/cover.$extension';
     final ref = _storage.ref().child(path);
     await ref.putData(
-      bytes,
+      optimized,
       SettableMetadata(contentType: _imageType(extension)),
     );
     return ref.getDownloadURL();

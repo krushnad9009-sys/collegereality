@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/ranking_constants.dart';
+import '../../../core/widgets/async_state_widgets.dart';
 import '../providers/ranking_provider.dart';
 import '../utils/college_ranking_utils.dart';
 
@@ -47,37 +48,35 @@ class CollegeRankingsScreen extends ConsumerWidget {
           ),
           const Divider(height: 1),
           Expanded(
-            child: rankedAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('Error: $e')),
-              data: (entries) {
-                if (entries.isEmpty) {
-                  return Center(
-                    child: Text(
-                      'No colleges found for this filter',
-                      style: GoogleFonts.poppins(color: AppTheme.gray500),
-                    ),
-                  );
-                }
-                return ListView.separated(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: entries.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 8),
-                  itemBuilder: (_, i) {
-                    final entry = entries[i];
-                    return Card(
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
-                          child: Text(
-                            '#${entry.rank}',
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 12,
-                              color: AppTheme.primaryColor,
-                            ),
+            child: AsyncStateView(
+              value: rankedAsync,
+              onRetry: () => ref.invalidate(rankedCollegesProvider),
+              showSkeleton: true,
+              isEmpty: (entries) => entries.isEmpty,
+              emptyBuilder: () => AsyncEmptyView(
+                icon: Icons.leaderboard_outlined,
+                title: 'No colleges found for this filter',
+                subtitle: 'Try a different ranking category or state filter.',
+              ),
+              builder: (entries) => ListView.separated(
+                padding: const EdgeInsets.all(16),
+                itemCount: entries.length,
+                separatorBuilder: (_, _) => const SizedBox(height: 8),
+                itemBuilder: (_, i) {
+                  final entry = entries[i];
+                  return Card(
+                    child: ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
+                        child: Text(
+                          '#${entry.rank}',
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
+                            color: AppTheme.primaryColor,
                           ),
                         ),
+                      ),
                         title: Text(
                           entry.college.name,
                           style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
@@ -111,10 +110,9 @@ class CollegeRankingsScreen extends ConsumerWidget {
                       ),
                     );
                   },
-                );
-              },
+                ),
+              ),
             ),
-          ),
         ],
       ),
     );

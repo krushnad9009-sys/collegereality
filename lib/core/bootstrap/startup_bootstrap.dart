@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../cache/college_local_cache.dart';
 import '../../features/engagement/providers/engagement_provider.dart';
 
 /// Runs non-critical warm-up work after the Home screen has painted.
@@ -16,7 +17,17 @@ class StartupBootstrap {
     if (_started) return;
     _started = true;
     unawaited(_warmAssets());
+    unawaited(_warmCollegeCache());
     unawaited(_initEngagement(ref));
+  }
+
+  static Future<void> _warmCollegeCache() async {
+    try {
+      await CollegeLocalCache.loadFeatured();
+      await CollegeLocalCache.loadCollegeCount();
+    } catch (_) {
+      // Cache warm-up is best-effort.
+    }
   }
 
   static Future<void> _warmAssets() async {

@@ -307,11 +307,19 @@ class AdmissionCalendarEventModel {
     required this.updatedAt,
   });
 
-  bool get isUpcoming => eventDate.isAfter(DateTime.now());
+  bool get isUpcoming {
+    final today = DateTime.now();
+    final startOfToday = DateTime(today.year, today.month, today.day);
+    final eventDay = DateTime(eventDate.year, eventDate.month, eventDate.day);
+    return !eventDay.isBefore(startOfToday);
+  }
 
   bool get isDeadlineSoon {
     final deadline = deadlineDate ?? eventDate;
-    final days = deadline.difference(DateTime.now()).inDays;
+    final deadlineDay = DateTime(deadline.year, deadline.month, deadline.day);
+    final today = DateTime.now();
+    final startOfToday = DateTime(today.year, today.month, today.day);
+    final days = deadlineDay.difference(startOfToday).inDays;
     return days >= 0 && days <= 14;
   }
 

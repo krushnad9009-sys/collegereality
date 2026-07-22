@@ -50,14 +50,15 @@ void main() {
     });
 
     test('filterCalendarEvents filters by category and upcoming', () {
-      final now = DateTime(2026, 7, 13);
+      final now = DateTime.now();
+      final startOfToday = DateTime(now.year, now.month, now.day);
       final events = [
         AdmissionCalendarEventModel(
           id: '1',
           title: 'CAP Round 1',
           category: EngagementConstants.calendarCapRound,
           state: 'Maharashtra',
-          eventDate: now.add(const Duration(days: 5)),
+          eventDate: startOfToday.add(const Duration(days: 5)),
           updatedAt: now,
         ),
         AdmissionCalendarEventModel(
@@ -65,7 +66,7 @@ void main() {
           title: 'Past Event',
           category: EngagementConstants.calendarCounselling,
           state: 'Maharashtra',
-          eventDate: now.subtract(const Duration(days: 3)),
+          eventDate: startOfToday.subtract(const Duration(days: 3)),
           updatedAt: now,
         ),
       ];

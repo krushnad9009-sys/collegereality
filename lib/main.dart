@@ -4,11 +4,13 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'config/router/app_router.dart';
 import 'config/theme/app_theme.dart';
 import 'config/theme/theme_provider.dart';
+import 'core/bootstrap/app_error_handler.dart';
 import 'core/bootstrap/firebase_bootstrap.dart';
 import 'features/engagement/services/firebase_messaging_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  AppErrorHandler.install();
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
   // Await Firebase before router/auth access (required on web).
   await FirebaseBootstrap.ensureInitialized();

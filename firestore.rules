@@ -656,9 +656,10 @@ service cloud.firestore {
     }
 
     match /college_analytics_events/{eventId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
-      allow update: if isAuthenticated();
+      allow read: if isStaff();
+      allow create: if isAuthenticated() &&
+        request.resource.data.userId == request.auth.uid;
+      allow update, delete: if false;
     }
 
     match /college_requests/{requestId} {
@@ -746,7 +747,8 @@ service cloud.firestore {
 
     match /audit_logs/{logId} {
       allow read: if isStaff();
-      allow create: if isAuthenticated();
+      allow create: if isAuthenticated() &&
+        request.resource.data.actorId == request.auth.uid;
       allow update, delete: if false;
     }
 

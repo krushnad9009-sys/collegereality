@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../config/theme/app_theme.dart';
@@ -165,6 +166,76 @@ class ListSkeletonLoader extends StatelessWidget {
       itemCount: itemCount,
       separatorBuilder: (_, _) => const SizedBox(height: 12),
       itemBuilder: (_, _) => const SkeletonBox(height: 88),
+    );
+  }
+}
+
+class AsyncOfflineView extends StatelessWidget {
+  final VoidCallback? onRetry;
+
+  const AsyncOfflineView({this.onRetry, super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return AsyncEmptyView(
+      icon: Icons.wifi_off_rounded,
+      title: 'You appear to be offline',
+      subtitle: 'Showing cached data where available. Check your connection and try again.',
+      action: onRetry == null
+          ? null
+          : OutlinedButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Retry'),
+            ),
+    );
+  }
+}
+
+/// Standard AsyncValue renderer with loading, empty, offline, and error states.
+class AsyncStateView<T> extends StatelessWidget {
+  final AsyncValue<T> value;
+  final Widget Function(T data) builder;
+  final bool Function(T data)? isEmpty;
+  final Widget Function()? emptyBuilder;
+  final VoidCallback? onRetry;
+  final bool showSkeleton;
+  final String? loadingMessage;
+
+  const AsyncStateView({
+    required this.value,
+    required this.builder,
+    this.isEmpty,
+    this.emptyBuilder,
+    this.onRetry,
+    this.showSkeleton = false,
+    this.loadingMessage,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return value.when(
+      loading: () => showSkeleton
+          ? const ListSkeletonLoader()
+          : AsyncLoadingView(message: loadingMessage),
+      error: (e, _) {
+        if (FirestoreErrorUtils.isQuotaExceededError(e) ||
+            FirestoreErrorUtils.isUserFacingQuotaMessage(e.toString())) {
+          return AsyncOfflineView(onRetry: onRetry);
+        }
+        return AsyncErrorView.fromError(e, onRetry: onRetry);
+      },
+      data: (data) {
+        if (isEmpty != null && isEmpty!(data)) {
+          return emptyBuilder?.call() ??
+              const AsyncEmptyView(
+                icon: Icons.inbox_outlined,
+                title: 'Nothing here yet',
+              );
+        }
+        return builder(data);
+      },
     );
   }
 }

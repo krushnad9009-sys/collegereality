@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:college_reality_india/core/bootstrap/app_error_handler.dart';
 import 'package:college_reality_india/core/cache/college_session_cache.dart';
 
 void main() {
@@ -13,6 +14,12 @@ void main() {
     test('clearFeatured resets cache state', () {
       CollegeSessionCache.clearFeatured();
       expect(CollegeSessionCache.getFeatured(6), isNull);
+    });
+  });
+
+  group('AppErrorHandler', () {
+    test('install completes without throwing', () {
+      expect(AppErrorHandler.install, returnsNormally);
     });
   });
 }

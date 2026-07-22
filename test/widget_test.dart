@@ -46,9 +46,9 @@ void main() {
     expect(AppTheme.darkTheme.brightness, Brightness.dark);
   });
 
-  test('RatingParameters defines 12 rating keys', () {
-    expect(RatingParameters.allKeys.length, 12);
-    expect(RatingParameters.emptyRatings().length, 12);
+  test('RatingParameters defines 10 rating keys', () {
+    expect(RatingParameters.allKeys.length, 10);
+    expect(RatingParameters.emptyRatings().length, 10);
   });
 
   test('mergeReviews combines optimistic and stream reviews', () {

@@ -14,7 +14,7 @@ class CollegeLocalCache {
   static const _searchKey = 'college_cache_search_v1';
   static const _countKey = 'college_cache_count_v1';
   static const _collegePrefix = 'college_cache_id_v1_';
-  static const _maxCachedColleges = 40;
+  static const _maxCachedColleges = 120;
 
   static Future<void> saveFeatured(List<CollegeModel> colleges) async {
     await _saveList(_featuredKey, colleges);
