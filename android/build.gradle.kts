@@ -1,4 +1,4 @@
-fiimport com.android.build.gradle.BaseExtension
+import com.android.build.gradle.BaseExtension
 
 allprojects {
     repositories {

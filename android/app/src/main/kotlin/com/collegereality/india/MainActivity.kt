@@ -1,4 +1,4 @@
-package com.example.college_reality_india
+package com.collegereality.india
 
 import io.flutter.embedding.android.FlutterActivity
 

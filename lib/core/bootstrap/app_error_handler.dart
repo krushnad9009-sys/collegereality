@@ -2,6 +2,8 @@ import 'dart:developer' as developer;
 
 import 'package:flutter/foundation.dart';
 
+import '../services/crashlytics_service.dart';
+
 /// Global crash and exception handling for production builds.
 class AppErrorHandler {
   AppErrorHandler._();
@@ -12,43 +14,43 @@ class AppErrorHandler {
     if (_initialized) return;
     _initialized = true;
 
+    if (!kDebugMode) {
+      // Crashlytics owns FlutterError.onError in release via CrashlyticsService.
+      return;
+    }
+
     FlutterError.onError = (details) {
       FlutterError.presentError(details);
-      _record(
-        details.exception,
-        details.stack,
-        label: details.library ?? 'FlutterError',
+      developer.log(
+        details.library ?? 'FlutterError',
+        error: details.exception,
+        stackTrace: details.stack,
+        name: 'CollegeReality',
       );
     };
 
     PlatformDispatcher.instance.onError = (error, stack) {
-      _record(error, stack, label: 'PlatformDispatcher');
+      developer.log(
+        'PlatformDispatcher',
+        error: error,
+        stackTrace: stack,
+        name: 'CollegeReality',
+      );
       return true;
     };
   }
 
-  static void _record(
+  static Future<void> recordNonFatal(
     Object error,
     StackTrace? stack, {
-    required String label,
-  }) {
+    String? reason,
+  }) async {
     developer.log(
-      label,
+      reason ?? 'NonFatal',
       error: error,
       stackTrace: stack,
       name: 'CollegeReality',
     );
-
-    if (kReleaseMode) {
-      // Enable Sentry in release builds with:
-      // flutter build --dart-define=SENTRY_DSN=your_dsn
-      assert(() {
-        developer.log(
-          'Configure SENTRY_DSN for remote crash reporting in production.',
-          name: 'CollegeReality',
-        );
-        return true;
-      }());
-    }
+    await CrashlyticsService.recordError(error, stack, reason: reason);
   }
 }

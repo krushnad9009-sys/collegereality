@@ -51,3 +51,6 @@ tools/data/firestore/india_colleges_firestore_full.json
 tools/data/firestore/states/
 tools/serviceAccount.json
 android/tools/serviceAccount.json
+android/key.properties
+android/upload-keystore.jks
+*.jks
