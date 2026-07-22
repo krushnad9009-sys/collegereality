@@ -257,6 +257,21 @@ class FirestoreQuestionService {
     });
   }
 
+  Future<List<QuestionModel>> getQuestionsByCollege(
+    String collegeId, {
+    int limit = 5,
+  }) async {
+    final snap = await _questions
+        .where('collegeId', isEqualTo: collegeId.trim())
+        .where('status', isEqualTo: QuestionConstants.statusPublished)
+        .orderBy('createdAt', descending: true)
+        .limit(limit)
+        .get();
+    return snap.docs
+        .map((doc) => QuestionModel.fromJson(doc.data(), docId: doc.id))
+        .toList();
+  }
+
   Future<List<QuestionModel>> getAllQuestions({
     int limit = 100,
     String? statusFilter,
@@ -418,6 +433,22 @@ class FirestoreQuestionService {
           .map((doc) => AnswerModel.fromJson(doc.data(), docId: doc.id))
           .toList();
     });
+  }
+
+  Future<List<AnswerModel>> getAnswersForQuestion(
+    String questionId, {
+    int limit = 3,
+  }) async {
+    final snap = await _questions
+        .doc(questionId)
+        .collection(FirestoreConstants.questionAnswersSubcollection)
+        .where('status', isEqualTo: QuestionConstants.statusPublished)
+        .orderBy('createdAt', descending: true)
+        .limit(limit)
+        .get();
+    return snap.docs
+        .map((doc) => AnswerModel.fromJson(doc.data(), docId: doc.id))
+        .toList();
   }
 
   Future<String?> getUserVote(String questionId, String answerId, String userId) async {

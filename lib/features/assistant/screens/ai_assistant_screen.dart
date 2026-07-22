@@ -7,9 +7,11 @@ import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/ai_assistant_constants.dart';
 import '../../compare/providers/compare_basket_provider.dart';
 import '../models/ai_assistant_message.dart';
+import '../models/ai_topic.dart';
 import '../providers/ai_assistant_provider.dart';
 import '../widgets/ai_comparison_table.dart';
 import '../widgets/ai_recommendation_card.dart';
+import '../widgets/ai_source_citations_panel.dart';
 import '../widgets/ai_suggestion_section.dart';
 
 class AiAssistantScreen extends ConsumerStatefulWidget {
@@ -95,6 +97,27 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
           ),
         ),
         actions: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: SegmentedButton<AiAssistantMode>(
+              segments: const [
+                ButtonSegment(
+                  value: AiAssistantMode.chat,
+                  label: Text('Chat', style: TextStyle(fontSize: 11)),
+                  icon: Icon(Icons.chat_outlined, size: 14),
+                ),
+                ButtonSegment(
+                  value: AiAssistantMode.compare,
+                  label: Text('Compare', style: TextStyle(fontSize: 11)),
+                  icon: Icon(Icons.compare_arrows, size: 14),
+                ),
+              ],
+              selected: {state.mode},
+              onSelectionChanged: (s) =>
+                  ref.read(aiAssistantProvider.notifier).setMode(s.first),
+              style: const ButtonStyle(visualDensity: VisualDensity.compact),
+            ),
+          ),
           if (basket.canCompare)
             TextButton.icon(
               onPressed: () => context.go(
@@ -181,7 +204,9 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Searching verified database...',
+                    state.mode == AiAssistantMode.compare
+                        ? 'Comparing colleges from verified data...'
+                        : 'Searching verified database...',
                     style: GoogleFonts.poppins(fontSize: 12),
                   ),
                 ],
@@ -242,8 +267,8 @@ class _EmptyState extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                'Get personalized college recommendations using verified '
-                'ratings, reviews, placements, fees, hostel, NAAC & NIRF data.',
+                'Get answers from verified profiles, reviews, student Q&A, '
+                'and community posts — no guesses, only College Reality data.',
                 style: GoogleFonts.poppins(fontSize: 13),
               ),
             ],
@@ -318,13 +343,17 @@ class _MessageBubble extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(top: 4, left: 4),
                 child: Text(
-                  '✓ Verified college data',
+                  message.sources.isNotEmpty
+                      ? '✓ ${message.sources.length} verified source${message.sources.length == 1 ? '' : 's'}'
+                      : '✓ Verified college data',
                   style: GoogleFonts.poppins(
                     fontSize: 10,
                     color: AppTheme.accentColor,
                   ),
                 ),
               ),
+            if (!isUser && message.sources.isNotEmpty)
+              AiSourceCitationsPanel(sources: message.sources),
             if (message.comparison != null) ...[
               const SizedBox(height: 8),
               AiComparisonTable(comparison: message.comparison!),

@@ -11,6 +11,7 @@ abstract class ReviewRepository {
   Future<ReviewPage> getReviewsPage(
     String collegeId, {
     String? startAfterDocumentId,
+    int? limit,
   });
   Stream<List<ReviewModel>> watchReviewsByCollege(String collegeId);
   Future<List<ReviewModel>> getReviewsByUser(String userId);
@@ -71,10 +72,12 @@ class ReviewRepositoryImpl implements ReviewRepository {
   Future<ReviewPage> getReviewsPage(
     String collegeId, {
     String? startAfterDocumentId,
+    int? limit,
   }) {
     return _service.getReviewsPage(
       collegeId,
       startAfterDocumentId: startAfterDocumentId,
+      limit: limit ?? 20,
     );
   }
 

@@ -1,25 +1,35 @@
 import '../../../core/constants/ai_assistant_constants.dart';
+import '../../../core/constants/ranking_constants.dart';
 import '../../colleges/models/college_model.dart';
 import '../../colleges/repositories/college_repository.dart';
+import '../../ranking/models/ranking_models.dart';
+import '../../ranking/utils/smart_recommendation_engine.dart';
 import '../models/ai_assistant_message.dart';
 import '../models/ai_college_recommendation.dart';
 import '../models/ai_query_intent.dart';
+import '../models/ai_topic.dart';
+import 'ai_college_data_service.dart';
 import 'ai_college_ranker.dart';
 import 'ai_comparison_service.dart';
 import 'ai_explanation_builder.dart';
+import 'ai_grounded_answer_builder.dart';
 import 'ai_query_parser.dart';
 import 'ai_suggestion_service.dart';
+import 'ai_topic_detector.dart';
 
-/// Orchestrates NL parsing → Firestore fetch → rank → explain. No LLM.
+/// Orchestrates NL parsing → Firestore fetch → rank → grounded explain. No LLM.
 class AiAssistantService {
+  AiAssistantService(this._collegeRepository, this._collegeDataService);
+
   final CollegeRepository _collegeRepository;
+  final AiCollegeDataService _collegeDataService;
   final AiQueryParser _parser = AiQueryParser();
   final AiCollegeRanker _ranker = AiCollegeRanker();
   final AiExplanationBuilder _explanationBuilder = AiExplanationBuilder();
   final AiComparisonService _comparisonService = AiComparisonService();
   final AiSuggestionService _suggestionService = AiSuggestionService();
-
-  AiAssistantService(this._collegeRepository);
+  final AiTopicDetector _topicDetector = AiTopicDetector();
+  final AiGroundedAnswerBuilder _groundedBuilder = AiGroundedAnswerBuilder();
 
   Future<AiAssistantMessage> processQuery({
     required String query,
@@ -27,7 +37,15 @@ class AiAssistantService {
     String? userCity,
     String? userState,
     CollegeModel? anchorCollege,
+    AiAssistantMode mode = AiAssistantMode.chat,
   }) async {
+    final hasContext =
+        contextCollegeIds.isNotEmpty || anchorCollege != null;
+
+    if (!_topicDetector.isCollegeRelated(query, hasCollegeContext: hasContext)) {
+      return _textReply(_topicDetector.offTopicMessage());
+    }
+
     final intent = _parser.parse(
       query,
       contextCollegeIds: contextCollegeIds,
@@ -35,8 +53,38 @@ class AiAssistantService {
       userState: userState,
     );
 
-    if (intent.type == AiQueryType.compare || intent.type == AiQueryType.question) {
-      return _handleComparison(query, intent, contextCollegeIds);
+    if (mode == AiAssistantMode.compare ||
+        intent.type == AiQueryType.compare ||
+        (intent.type == AiQueryType.question && contextCollegeIds.length >= 2)) {
+      return _handleComparison(query, intent, contextCollegeIds, mode);
+    }
+
+    final topic = _topicDetector.detectTopic(query);
+    if (topic == AiTopic.examScore) {
+      return _handleExamScoreQuery(query, intent, userState);
+    }
+
+    if (anchorCollege != null) {
+      return _answerAboutCollege(
+        college: anchorCollege,
+        question: query,
+        contextCollegeIds: contextCollegeIds,
+        userCity: userCity,
+        userState: userState,
+        mode: mode,
+      );
+    }
+
+    final resolvedCollege = await _resolveCollegeFromQuery(query);
+    if (resolvedCollege != null && _isCollegeSpecificQuestion(query, topic)) {
+      return _answerAboutCollege(
+        college: resolvedCollege,
+        question: query,
+        contextCollegeIds: contextCollegeIds,
+        userCity: userCity,
+        userState: userState,
+        mode: mode,
+      );
     }
 
     final candidates = await _fetchCandidates(intent, query);
@@ -75,6 +123,7 @@ class AiAssistantService {
       suggestions: suggestions,
       createdAt: DateTime.now(),
       dataGrounded: true,
+      mode: mode,
     );
   }
 
@@ -84,6 +133,24 @@ class AiAssistantService {
     List<String> contextCollegeIds = const [],
     String? userCity,
     String? userState,
+    AiAssistantMode mode = AiAssistantMode.chat,
+  }) =>
+      _answerAboutCollege(
+        college: college,
+        question: question,
+        contextCollegeIds: contextCollegeIds,
+        userCity: userCity,
+        userState: userState,
+        mode: mode,
+      );
+
+  Future<AiAssistantMessage> _answerAboutCollege({
+    required CollegeModel college,
+    required String question,
+    List<String> contextCollegeIds = const [],
+    String? userCity,
+    String? userState,
+    AiAssistantMode mode = AiAssistantMode.chat,
   }) async {
     final ids = [college.id, ...contextCollegeIds.where((id) => id != college.id)];
     final intent = _parser.parse(
@@ -93,48 +160,98 @@ class AiAssistantService {
       userState: userState,
     );
 
-    if (intent.type == AiQueryType.compare ||
-        intent.type == AiQueryType.question ||
+    if (mode == AiAssistantMode.compare ||
+        intent.type == AiQueryType.compare ||
         question.toLowerCase().contains('compare') ||
         question.toLowerCase().contains('better')) {
-      final compareIds = ids.take(AiAssistantConstants.maxCompareColleges).toList();
-      return _handleComparison(question, intent, compareIds);
+      return _handleComparison(
+        question,
+        intent,
+        ids.take(AiAssistantConstants.maxCompareColleges).toList(),
+        mode,
+      );
     }
 
-    final similarIntent = _parser.parse('similar ${college.type} colleges in ${college.city}');
-    final candidates = await _fetchCandidates(similarIntent, question);
-    final filtered = _applyClientFilters(candidates, similarIntent)
-      ..removeWhere((c) => c.id == college.id);
+    final topic = _topicDetector.detectTopic(question);
+    final bundle = await _collegeDataService.fetchBundle(college.id);
+    if (bundle == null) {
+      return _textReply('Could not load verified data for ${college.name}.');
+    }
 
-    final ranked = _ranker.rank(filtered, similarIntent, limit: 5);
-    final withReasons = ranked
-        .map(
-          (r) => AiCollegeRecommendation(
-            college: r.college,
-            score: r.score,
-            rank: r.rank,
-            reasons: _explanationBuilder.buildReasons(r.college, similarIntent),
-          ),
-        )
-        .toList();
-
-    final suggestions = _suggestionService.buildSuggestions(
-      topResults: withReasons,
-      allCandidates: filtered,
-      intent: similarIntent,
-      anchorCollege: college,
+    final grounded = _groundedBuilder.build(
+      bundle: bundle,
+      topic: topic,
+      query: question,
     );
-
-    final reasons = _explanationBuilder.buildReasons(college, intent);
-    final text = 'About ${college.name}:\n${reasons.join('\n')}\n\n'
-        '${withReasons.isNotEmpty ? 'Related alternatives:' : ''}';
 
     return AiAssistantMessage(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       role: AiMessageRole.assistant,
-      text: text,
-      recommendations: withReasons,
-      suggestions: suggestions,
+      text: grounded.text,
+      sources: grounded.sources,
+      createdAt: DateTime.now(),
+      dataGrounded: true,
+      mode: mode,
+    );
+  }
+
+  Future<AiAssistantMessage> _handleExamScoreQuery(
+    String query,
+    AiQueryIntent intent,
+    String? userState,
+  ) async {
+    final exam = _topicDetector.extractExamScore(query);
+    if (exam == null) {
+      return _textReply(
+        'Please include your exam score, e.g. "JEE rank 15000" or "CET percentile 92".',
+      );
+    }
+
+    final candidates = await _fetchCandidates(intent, query);
+    final criteria = SmartRecommendationCriteria(
+      examType: exam.examType,
+      examScore: exam.score,
+      preferredState: userState,
+      branchPreference: intent.course,
+      preferPlacements: true,
+    );
+
+    final picks = recommendColleges(
+      colleges: candidates,
+      criteria: criteria,
+      limit: AiAssistantConstants.maxRecommendations,
+    );
+
+    if (picks.isEmpty) {
+      return _textReply(
+        'No colleges in our database match your ${exam.examType.toUpperCase()} '
+        'score tier. Try broadening location or course filters.',
+      );
+    }
+
+    final recommendations = picks
+        .asMap()
+        .entries
+        .map(
+          (e) => AiCollegeRecommendation(
+            college: e.value.college,
+            score: e.value.matchScore.toDouble(),
+            rank: e.key + 1,
+            reasons: e.value.reasons,
+          ),
+        )
+        .toList();
+
+    final examLabel = exam.examType == RankingConstants.examCet
+        ? 'percentile ${exam.score}'
+        : 'rank ${exam.score}';
+
+    return AiAssistantMessage(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      role: AiMessageRole.assistant,
+      text: 'Best matches for ${exam.examType.toUpperCase()} $examLabel '
+          'using verified placement, fees, and rating data:',
+      recommendations: recommendations,
       createdAt: DateTime.now(),
       dataGrounded: true,
     );
@@ -144,6 +261,7 @@ class AiAssistantService {
     String query,
     AiQueryIntent intent,
     List<String> contextCollegeIds,
+    AiAssistantMode mode,
   ) async {
     var collegeIds = contextCollegeIds.take(AiAssistantConstants.maxCompareColleges).toList();
 
@@ -161,25 +279,19 @@ class AiAssistantService {
     }
 
     if (collegeIds.isEmpty) {
-      return AiAssistantMessage(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        role: AiMessageRole.assistant,
-        text: 'Please search for colleges first, then ask me to compare them '
-            '(up to ${AiAssistantConstants.maxCompareColleges}).',
-        createdAt: DateTime.now(),
-        dataGrounded: true,
+      return _textReply(
+        'Compare mode: search for colleges first or name two colleges '
+        '(e.g. "COEP vs VIT Pune"). Up to ${AiAssistantConstants.maxCompareColleges} colleges.',
+        mode: mode,
       );
     }
 
     final colleges = await _collegeRepository.getCollegesByIds(collegeIds);
     if (colleges.length < 2) {
-      return AiAssistantMessage(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        role: AiMessageRole.assistant,
-        text: 'Need at least 2 colleges in our database to compare. '
-            'Search and select colleges, then ask "which is better?"',
-        createdAt: DateTime.now(),
-        dataGrounded: true,
+      return _textReply(
+        'Need at least 2 colleges in our database to compare. '
+        'Add colleges to compare or name them in your message.',
+        mode: mode,
       );
     }
 
@@ -195,6 +307,45 @@ class AiAssistantService {
       comparison: comparison,
       createdAt: DateTime.now(),
       dataGrounded: true,
+      mode: mode,
+    );
+  }
+
+  Future<CollegeModel?> _resolveCollegeFromQuery(String query) async {
+    final hints = _parser.extractCollegeNameHints(query);
+    if (hints.isNotEmpty) {
+      final results = await _collegeRepository.autocomplete(hints.first);
+      if (results.isNotEmpty) return results.first;
+    }
+
+    final words = query.trim().split(RegExp(r'\s+')).where((w) => w.length > 4).toList();
+    if (words.length >= 2) {
+      final phrase = words.take(4).join(' ');
+      final results = await _collegeRepository.autocomplete(phrase);
+      if (results.length == 1) return results.first;
+    }
+    return null;
+  }
+
+  bool _isCollegeSpecificQuestion(String query, AiTopic topic) {
+    if (topic != AiTopic.general) return true;
+    final q = query.toLowerCase();
+    return q.contains('this college') ||
+        q.contains('is it good') ||
+        q.contains('how is') ||
+        q.contains('how are') ||
+        q.contains('review') ||
+        q.contains('?');
+  }
+
+  AiAssistantMessage _textReply(String text, {AiAssistantMode mode = AiAssistantMode.chat}) {
+    return AiAssistantMessage(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      role: AiMessageRole.assistant,
+      text: text,
+      createdAt: DateTime.now(),
+      dataGrounded: true,
+      mode: mode,
     );
   }
 

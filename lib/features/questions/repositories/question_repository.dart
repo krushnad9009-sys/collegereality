@@ -15,6 +15,7 @@ abstract class QuestionRepository {
 
   Future<QuestionModel?> getQuestionById(String questionId);
   Stream<List<QuestionModel>> watchQuestionsByCollege(String collegeId);
+  Future<List<QuestionModel>> getQuestionsByCollege(String collegeId, {int limit});
   Future<List<QuestionModel>> getAllQuestions({int limit, String? statusFilter});
   Future<void> updateQuestionStatus(String questionId, String status);
   Future<void> deleteQuestion(String questionId);
@@ -28,6 +29,7 @@ abstract class QuestionRepository {
   });
 
   Stream<List<AnswerModel>> watchAnswers(String questionId);
+  Future<List<AnswerModel>> getAnswersForQuestion(String questionId, {int limit});
   Future<String?> getUserVote(String questionId, String answerId, String userId);
   Future<void> voteAnswer({
     required String questionId,
@@ -100,6 +102,13 @@ class QuestionRepositoryImpl implements QuestionRepository {
       _service.watchQuestionsByCollege(collegeId);
 
   @override
+  Future<List<QuestionModel>> getQuestionsByCollege(
+    String collegeId, {
+    int limit = 5,
+  }) =>
+      _service.getQuestionsByCollege(collegeId, limit: limit);
+
+  @override
   Future<List<QuestionModel>> getAllQuestions({
     int limit = 100,
     String? statusFilter,
@@ -134,6 +143,13 @@ class QuestionRepositoryImpl implements QuestionRepository {
   @override
   Stream<List<AnswerModel>> watchAnswers(String questionId) =>
       _service.watchAnswers(questionId);
+
+  @override
+  Future<List<AnswerModel>> getAnswersForQuestion(
+    String questionId, {
+    int limit = 3,
+  }) =>
+      _service.getAnswersForQuestion(questionId, limit: limit);
 
   @override
   Future<String?> getUserVote(String questionId, String answerId, String userId) =>
