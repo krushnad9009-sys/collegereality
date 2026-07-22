@@ -44,6 +44,16 @@ abstract class EngagementRepository {
     required String body,
     int batchSize,
   });
+  Future<int> broadcastAdminAnnouncementByState({
+    required String state,
+    required String title,
+    required String body,
+  });
+  Future<int> broadcastAdminAnnouncementByCollege({
+    required String collegeId,
+    required String title,
+    required String body,
+  });
 }
 
 class EngagementRepositoryImpl implements EngagementRepository {
@@ -168,5 +178,29 @@ class EngagementRepositoryImpl implements EngagementRepository {
         title: title,
         body: body,
         batchSize: batchSize,
+      );
+
+  @override
+  Future<int> broadcastAdminAnnouncementByState({
+    required String state,
+    required String title,
+    required String body,
+  }) =>
+      _service.broadcastAdminAnnouncementByState(
+        state: state,
+        title: title,
+        body: body,
+      );
+
+  @override
+  Future<int> broadcastAdminAnnouncementByCollege({
+    required String collegeId,
+    required String title,
+    required String body,
+  }) =>
+      _service.broadcastAdminAnnouncementByCollege(
+        collegeId: collegeId,
+        title: title,
+        body: body,
       );
 }

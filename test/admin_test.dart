@@ -5,6 +5,7 @@ import 'package:college_reality_india/features/admin/services/admin_college_bulk
 import 'package:college_reality_india/features/admin/utils/admin_analytics_utils.dart';
 import 'package:college_reality_india/features/admin/utils/admin_export_utils.dart';
 import 'package:college_reality_india/features/admin/utils/admin_moderation_utils.dart';
+import 'package:college_reality_india/features/admin/utils/admin_permissions.dart';
 
 void main() {
   group('AdminAnalyticsUtils', () {
@@ -36,9 +37,47 @@ void main() {
   group('AdminExportUtils', () {
     test('exportDashboardStatsCsv includes KPI rows', () {
       final csv = exportDashboardStatsCsv(
-        AdminDashboardStats(totalColleges: 10, fetchedAt: DateTime(2026, 1, 1)),
+        AdminDashboardStats(
+          totalColleges: 10,
+          totalUsers: 100,
+          pendingVerifications: 5,
+          fetchedAt: DateTime(2026, 1, 1),
+        ),
       );
       expect(csv, contains('Total Colleges,10'));
+      expect(csv, contains('Total Users,100'));
+      expect(csv, contains('Pending Verifications,5'));
+    });
+
+    test('exportVerificationReportCsv includes headers', () {
+      final csv = exportVerificationReportCsv([
+        {
+          'id': 'v1',
+          'userId': 'u1',
+          'collegeName': 'ABC College',
+          'verificationRole': 'student',
+          'documentType': 'id_card',
+          'status': 'pending',
+          'createdAt': '2026-01-01',
+        },
+      ]);
+      expect(csv, contains('Request ID,User ID,College'));
+      expect(csv, contains('ABC College'));
+    });
+
+    test('exportUserReportsCsv includes headers', () {
+      final csv = exportUserReportsCsv([
+        {
+          'id': 'r1',
+          'reportedId': 'u2',
+          'reporterId': 'u1',
+          'reason': 'Harassment',
+          'status': 'open',
+          'createdAt': '2026-01-01',
+        },
+      ]);
+      expect(csv, contains('Report ID,Reported User'));
+      expect(csv, contains('Harassment'));
     });
 
     test('exportReportsCsv escapes commas', () {
@@ -77,6 +116,15 @@ void main() {
       expect(college.name, 'Test College');
       expect(college.city, 'Pune');
       expect(college.isActive, isTrue);
+    });
+  });
+
+  group('AdminPermissions', () {
+    test('role checks gate admin-only actions', () {
+      expect(AdminPermissions.canMergeColleges('super_admin'), isTrue);
+      expect(AdminPermissions.canMergeColleges('admin'), isFalse);
+      expect(AdminPermissions.canModerateContent('moderator'), isTrue);
+      expect(AdminPermissions.canBroadcast('moderator'), isFalse);
     });
   });
 

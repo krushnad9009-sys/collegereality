@@ -1,21 +1,29 @@
 class AdminDashboardStats {
   final int totalColleges;
+  final int totalUsers;
   final int verifiedStudents;
+  final int verifiedAlumni;
   final int totalReviews;
   final int totalQuestions;
   final int totalAnswers;
+  final int communityPosts;
   final int totalReports;
+  final int pendingVerifications;
   final int dailyActiveUsers;
   final int monthlyActiveUsers;
   final DateTime fetchedAt;
 
   const AdminDashboardStats({
     this.totalColleges = 0,
+    this.totalUsers = 0,
     this.verifiedStudents = 0,
+    this.verifiedAlumni = 0,
     this.totalReviews = 0,
     this.totalQuestions = 0,
     this.totalAnswers = 0,
+    this.communityPosts = 0,
     this.totalReports = 0,
+    this.pendingVerifications = 0,
     this.dailyActiveUsers = 0,
     this.monthlyActiveUsers = 0,
     required this.fetchedAt,
@@ -43,6 +51,24 @@ class AdminTopCollegeMetric {
   });
 }
 
+class AdminTopContributor {
+  final String userId;
+  final String displayName;
+  final int reviewCount;
+  final int answerCount;
+  final int postCount;
+
+  const AdminTopContributor({
+    required this.userId,
+    required this.displayName,
+    this.reviewCount = 0,
+    this.answerCount = 0,
+    this.postCount = 0,
+  });
+
+  int get totalActivity => reviewCount + answerCount + postCount;
+}
+
 class AdminAnalyticsData {
   final List<AdminGrowthPoint> reviewGrowth;
   final List<AdminGrowthPoint> userGrowth;
@@ -50,6 +76,10 @@ class AdminAnalyticsData {
   final List<AdminTopCollegeMetric> mostViewed;
   final List<AdminTopCollegeMetric> mostSearched;
   final List<AdminTopCollegeMetric> mostBookmarked;
+  final List<AdminTopCollegeMetric> topReviewed;
+  final List<AdminTopCollegeMetric> trendingColleges;
+  final List<AdminTopCollegeMetric> mostActiveColleges;
+  final List<AdminTopContributor> topContributors;
   final DateTime fetchedAt;
 
   const AdminAnalyticsData({
@@ -59,6 +89,10 @@ class AdminAnalyticsData {
     this.mostViewed = const [],
     this.mostSearched = const [],
     this.mostBookmarked = const [],
+    this.topReviewed = const [],
+    this.trendingColleges = const [],
+    this.mostActiveColleges = const [],
+    this.topContributors = const [],
     required this.fetchedAt,
   });
 }

@@ -2,256 +2,154 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
-import '../../colleges/providers/college_provider.dart';
-import '../../reviews/providers/review_provider.dart';
 import '../providers/admin_dashboard_provider.dart';
+import '../providers/admin_provider.dart';
+import '../utils/admin_permissions.dart';
+import '../widgets/admin_shell_layout.dart';
 
 class AdminDashboardScreen extends ConsumerWidget {
   const AdminDashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final collegeCountAsync = ref.watch(collegeCountProvider);
-    final reviewsAsync = ref.watch(allReviewsAdminProvider(null));
     final statsAsync = ref.watch(adminDashboardStatsProvider);
+    final isAdminUser = ref.watch(isAdminUserProvider).maybeWhen(data: (v) => v, orElse: () => false);
+    final userType = ref.watch(currentUserModelProvider).maybeWhen(data: (u) => u?.userType, orElse: () => null);
+    final width = MediaQuery.sizeOf(context).width;
+    final crossAxisCount = width >= 1200 ? 5 : width >= 960 ? 4 : width >= 600 ? 2 : 1;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Admin Dashboard'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-          onPressed: () => context.go(RouteNames.home),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              ref.invalidate(adminDashboardStatsProvider);
-              ref.invalidate(collegeCountProvider);
-            },
-          ),
-        ],
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          Text(
-            'College Reality Admin',
-            style: GoogleFonts.poppins(
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
+    return AdminShellLayout(
+      title: 'Dashboard',
+      showBack: false,
+      isAdminUser: isAdminUser,
+      child: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(adminDashboardStatsProvider);
+        },
+        child: ListView(
+          padding: const EdgeInsets.all(20),
+          children: [
+            Text(
+              'College Reality Admin',
+              style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.w700),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Manage colleges, reviews, and platform content.',
-            style: GoogleFonts.poppins(color: AppTheme.gray600),
-          ),
-          const SizedBox(height: 24),
-          Row(
-            children: [
-              Expanded(
-                child: _StatTile(
-                  label: 'Colleges',
-                  value: collegeCountAsync.maybeWhen(
-                    data: (count) => '$count',
-                    orElse: () => '...',
-                  ),
-                  icon: Icons.school,
-                  color: AppTheme.primaryColor,
-                ),
+            const SizedBox(height: 8),
+            Text(
+              'Platform overview and moderation tools.',
+              style: GoogleFonts.poppins(color: AppTheme.gray600),
+            ),
+            const SizedBox(height: 24),
+            statsAsync.when(
+              loading: () => const Padding(
+                padding: EdgeInsets.symmetric(vertical: 48),
+                child: Center(child: CircularProgressIndicator()),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _StatTile(
-                  label: 'Reviews',
-                  value: reviewsAsync.maybeWhen(
-                    data: (r) => '${r.length}',
-                    orElse: () => '...',
-                  ),
-                  icon: Icons.rate_review,
-                  color: AppTheme.secondaryColor,
-                ),
+              error: (e, _) => Text('Failed to load stats: $e'),
+              data: (stats) => GridView.count(
+                crossAxisCount: crossAxisCount,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                childAspectRatio: width >= 600 ? 1.6 : 2.2,
+                children: [
+                  _StatTile(label: 'Total Colleges', value: '${stats.totalColleges}', icon: Icons.school, color: AppTheme.primaryColor),
+                  _StatTile(label: 'Total Users', value: '${stats.totalUsers}', icon: Icons.people, color: Colors.blue),
+                  _StatTile(label: 'Verified Students', value: '${stats.verifiedStudents}', icon: Icons.verified_user, color: Colors.teal),
+                  _StatTile(label: 'Verified Alumni', value: '${stats.verifiedAlumni}', icon: Icons.school_outlined, color: Colors.cyan),
+                  _StatTile(label: 'Total Reviews', value: '${stats.totalReviews}', icon: Icons.rate_review, color: AppTheme.secondaryColor),
+                  _StatTile(label: 'Questions Asked', value: '${stats.totalQuestions}', icon: Icons.quiz, color: Colors.indigo),
+                  _StatTile(label: 'Answers Posted', value: '${stats.totalAnswers}', icon: Icons.question_answer, color: Colors.deepPurple),
+                  _StatTile(label: 'Community Posts', value: '${stats.communityPosts}', icon: Icons.forum, color: Colors.green),
+                  _StatTile(label: 'Daily Active Users', value: '${stats.dailyActiveUsers}', icon: Icons.today, color: Colors.orange),
+                  _StatTile(label: 'Pending Verifications', value: '${stats.pendingVerifications}', icon: Icons.pending_actions, color: Colors.amber),
+                ],
+              ),
+            ),
+            const SizedBox(height: 32),
+            Text('Quick Actions', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 12),
+            if (AdminPermissions.canViewAnalytics(userType))
+              _AdminMenuTile(
+                icon: Icons.analytics_outlined,
+                title: 'Analytics',
+                subtitle: 'Trending colleges, top contributors, growth charts',
+                onTap: () => context.go(RouteNames.adminAnalytics),
+              ),
+            if (AdminPermissions.canManageVerification(userType))
+              _AdminMenuTile(
+                icon: Icons.verified_user_outlined,
+                title: 'Verification Management',
+                subtitle: 'Approve or reject student and alumni verification',
+                onTap: () => context.go(RouteNames.adminVerification),
+              ),
+            if (AdminPermissions.canModerateContent(userType)) ...[
+              _AdminMenuTile(
+                icon: Icons.rate_review_outlined,
+                title: 'Review Moderation',
+                subtitle: 'Delete fake reviews, hide abusive content',
+                onTap: () => context.go(RouteNames.adminReviews),
+              ),
+              _AdminMenuTile(
+                icon: Icons.forum_outlined,
+                title: 'Community Moderation',
+                subtitle: 'Remove posts, suspend users, issue warnings',
+                onTap: () => context.go(RouteNames.adminCommunity),
+              ),
+              _AdminMenuTile(
+                icon: Icons.flag_outlined,
+                title: 'Reports Hub',
+                subtitle: 'Unified moderation queue',
+                onTap: () => context.go(RouteNames.adminReports),
               ),
             ],
-          ),
-          const SizedBox(height: 12),
-          statsAsync.when(
-            loading: () => const Padding(
-              padding: EdgeInsets.symmetric(vertical: 24),
-              child: Center(child: CircularProgressIndicator()),
+            if (AdminPermissions.canManageColleges(userType)) ...[
+              _AdminMenuTile(
+                icon: Icons.school_outlined,
+                title: 'College Management',
+                subtitle: 'Edit, add, and upload official images',
+                onTap: () => context.go(RouteNames.adminColleges),
+              ),
+              if (AdminPermissions.canMergeColleges(userType))
+                _AdminMenuTile(
+                  icon: Icons.merge_type,
+                  title: 'Merge Duplicate Colleges',
+                  subtitle: 'Consolidate duplicate listings',
+                  onTap: () => context.go(RouteNames.adminMergeColleges),
+                ),
+            ],
+            if (AdminPermissions.canManageUsers(userType))
+              _AdminMenuTile(
+                icon: Icons.people_outline,
+                title: 'User Management',
+                subtitle: 'Search, suspend, ban, and warn users',
+                onTap: () => context.go(RouteNames.adminUsers),
+              ),
+            if (AdminPermissions.canBroadcast(userType))
+              _AdminMenuTile(
+                icon: Icons.campaign_outlined,
+                title: 'Broadcast Notifications',
+                subtitle: 'All users, by state, or by college',
+                onTap: () => context.go(RouteNames.adminAnnouncements),
+              ),
+            if (AdminPermissions.canExportData(userType))
+              _AdminMenuTile(
+                icon: Icons.download_outlined,
+                title: 'Export Reports',
+                subtitle: 'Analytics, verification, and user reports (CSV)',
+                onTap: () => context.go(RouteNames.adminExport),
+              ),
+            _AdminMenuTile(
+              icon: Icons.hub_outlined,
+              title: 'Ecosystem Approvals',
+              subtitle: 'College requests, edits, claims, faculty',
+              onTap: () => context.go(RouteNames.adminEcosystem),
             ),
-            error: (_, _) => const SizedBox.shrink(),
-            data: (stats) => Column(
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: _StatTile(
-                        label: 'Verified Students',
-                        value: '${stats.verifiedStudents}',
-                        icon: Icons.verified_user,
-                        color: Colors.teal,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _StatTile(
-                        label: 'Questions',
-                        value: '${stats.totalQuestions}',
-                        icon: Icons.quiz,
-                        color: Colors.indigo,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _StatTile(
-                        label: 'Answers',
-                        value: '${stats.totalAnswers}',
-                        icon: Icons.question_answer,
-                        color: Colors.deepPurple,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _StatTile(
-                        label: 'Reports',
-                        value: '${stats.totalReports}',
-                        icon: Icons.flag,
-                        color: Colors.red,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _StatTile(
-                        label: 'DAU',
-                        value: '${stats.dailyActiveUsers}',
-                        icon: Icons.today,
-                        color: Colors.orange,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _StatTile(
-                        label: 'MAU',
-                        value: '${stats.monthlyActiveUsers}',
-                        icon: Icons.calendar_month,
-                        color: Colors.blueGrey,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-          _AdminMenuTile(
-            icon: Icons.hub_outlined,
-            title: 'Ecosystem Approvals',
-            subtitle: 'College requests, edits, claims, faculty, audit log',
-            onTap: () => context.go(RouteNames.adminEcosystem),
-          ),
-          _AdminMenuTile(
-            icon: Icons.analytics_outlined,
-            title: 'Analytics',
-            subtitle: 'Live charts, growth, and top colleges',
-            onTap: () => context.go(RouteNames.adminAnalytics),
-          ),
-          _AdminMenuTile(
-            icon: Icons.flag_outlined,
-            title: 'Reports Hub',
-            subtitle: 'Unified moderation with one-click actions',
-            onTap: () => context.go(RouteNames.adminReports),
-          ),
-          _AdminMenuTile(
-            icon: Icons.upload_file_outlined,
-            title: 'Bulk College Ops',
-            subtitle: 'CSV import, bulk images, approval workflow',
-            onTap: () => context.go(RouteNames.adminBulk),
-          ),
-          _AdminMenuTile(
-            icon: Icons.monitor_heart_outlined,
-            title: 'System Monitoring',
-            subtitle: 'Firebase usage, crashes, and performance',
-            onTap: () => context.go(RouteNames.adminSystem),
-          ),
-          _AdminMenuTile(
-            icon: Icons.download_outlined,
-            title: 'Export Data',
-            subtitle: 'CSV and Excel-compatible exports',
-            onTap: () => context.go(RouteNames.adminExport),
-          ),
-          _AdminMenuTile(
-            icon: Icons.campaign_outlined,
-            title: 'Broadcast Announcement',
-            subtitle: 'Push and in-app alerts to all users',
-            onTap: () => context.go(RouteNames.adminAnnouncements),
-          ),
-          _AdminMenuTile(
-            icon: Icons.school_outlined,
-            title: 'Manage Colleges',
-            subtitle: 'View and edit college listings',
-            onTap: () => context.go(RouteNames.adminColleges),
-          ),
-          _AdminMenuTile(
-            icon: Icons.rate_review_outlined,
-            title: 'Moderate Reviews',
-            subtitle: 'Review flagged and recent submissions',
-            onTap: () => context.go(RouteNames.adminReviews),
-          ),
-          _AdminMenuTile(
-            icon: Icons.work_outline,
-            title: 'Placement Approvals',
-            subtitle: 'Review verified student placement submissions',
-            onTap: () => context.go(RouteNames.adminPlacements),
-          ),
-          _AdminMenuTile(
-            icon: Icons.people_outline,
-            title: 'Users',
-            subtitle: 'Search, suspend, ban, and verify students',
-            onTap: () => context.go(RouteNames.adminUsers),
-          ),
-          _AdminMenuTile(
-            icon: Icons.report_outlined,
-            title: 'Communication Reports',
-            subtitle: 'Moderate call and chat reports',
-            onTap: () => context.go(RouteNames.adminCommunication),
-          ),
-          _AdminMenuTile(
-            icon: Icons.verified_user_outlined,
-            title: 'Student Verification',
-            subtitle: 'Review flagged documents and approve badges',
-            onTap: () => context.go(RouteNames.adminVerification),
-          ),
-          _AdminMenuTile(
-            icon: Icons.forum_outlined,
-            title: 'Community Moderation',
-            subtitle: 'Review reported messages and content',
-            onTap: () => context.go(RouteNames.adminCommunity),
-          ),
-          _AdminMenuTile(
-            icon: Icons.quiz_outlined,
-            title: 'Q&A Moderation',
-            subtitle: 'Moderate college questions, answers, and reports',
-            onTap: () => context.go(RouteNames.adminQuestions),
-          ),
-          _AdminMenuTile(
-            icon: Icons.event_outlined,
-            title: 'Campus Life Moderation',
-            subtitle: 'Review reported community posts and comments',
-            onTap: () => context.go(RouteNames.adminStudentLife),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -281,18 +179,15 @@ class _StatTile extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, color: color),
+          Icon(icon, color: color, size: 22),
           const SizedBox(height: 8),
           Text(
             value,
-            style: GoogleFonts.poppins(
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-              color: color,
-            ),
+            style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.w700, color: color),
           ),
-          Text(label, style: GoogleFonts.poppins(fontSize: 13)),
+          Text(label, style: GoogleFonts.poppins(fontSize: 12), maxLines: 2, overflow: TextOverflow.ellipsis),
         ],
       ),
     );

@@ -24,6 +24,10 @@ class AdminAnalyticsService {
       _firestore.collection(FirestoreConstants.collegesCollection);
   CollectionReference<Map<String, dynamic>> get _analyticsEvents =>
       _firestore.collection(FirestoreConstants.collegeAnalyticsEventsCollection);
+  CollectionReference<Map<String, dynamic>> get _communityPosts =>
+      _firestore.collection(FirestoreConstants.studentCommunityPostsCollection);
+  CollectionReference<Map<String, dynamic>> get _verifications =>
+      _firestore.collection(FirestoreConstants.verificationRequestsCollection);
 
   Future<int> _count(Query<Map<String, dynamic>> query) async {
     final snap = await query.count().get();
@@ -35,34 +39,55 @@ class AdminAnalyticsService {
 
     final results = await Future.wait([
       _count(_colleges.where('isActive', isEqualTo: true)),
+      _count(_users),
       _count(_reviews),
       _count(_questions.where('status', isEqualTo: QuestionConstants.statusPublished)),
       _countVerifiedStudents(),
+      _countVerifiedAlumni(),
       _countTotalAnswers(),
+      _count(_communityPosts),
       _countOpenReports(),
+      _countPendingVerifications(),
       _fetchActiveUserCounts(),
     ]);
 
-    final activeCounts = results[6] as (int, int);
+    final activeCounts = results[10] as (int, int);
 
     return AdminDashboardStats(
       totalColleges: results[0] as int,
-      totalReviews: results[1] as int,
-      totalQuestions: results[2] as int,
-      verifiedStudents: results[3] as int,
-      totalAnswers: results[4] as int,
-      totalReports: results[5] as int,
+      totalUsers: results[1] as int,
+      totalReviews: results[2] as int,
+      totalQuestions: results[3] as int,
+      verifiedStudents: results[4] as int,
+      verifiedAlumni: results[5] as int,
+      totalAnswers: results[6] as int,
+      communityPosts: results[7] as int,
+      totalReports: results[8] as int,
+      pendingVerifications: results[9] as int,
       dailyActiveUsers: activeCounts.$1,
       monthlyActiveUsers: activeCounts.$2,
       fetchedAt: now,
     );
   }
 
+  Future<int> _countVerifiedAlumni() async {
+    return _count(
+      _users.where('verificationBadge', isEqualTo: VerificationConstants.badgeVerifiedAlumni),
+    );
+  }
+
+  Future<int> _countPendingVerifications() async {
+    return _count(
+      _verifications.where(
+        'status',
+        isEqualTo: VerificationConstants.statusPendingReview,
+      ),
+    );
+  }
+
   Future<int> _countVerifiedStudents() async {
     return _count(
-      _users
-          .where('verificationStatus', isEqualTo: VerificationConstants.statusApproved)
-          .where('verificationBadge', isNotEqualTo: VerificationConstants.badgeNone),
+      _users.where('verificationBadge', isEqualTo: VerificationConstants.badgeVerifiedStudent),
     );
   }
 
@@ -182,6 +207,49 @@ class AdminAnalyticsService {
       }
     }
 
+    final topReviewedSnap = await _colleges
+        .where('isActive', isEqualTo: true)
+        .orderBy('reviewCount', descending: true)
+        .limit(10)
+        .get();
+    final topReviewed = topReviewedSnap.docs.map((d) {
+      final data = d.data();
+      return AdminTopCollegeMetric(
+        collegeId: d.id,
+        collegeName: data['name']?.toString() ?? d.id,
+        value: (data['reviewCount'] as num?)?.toInt() ?? 0,
+        label: 'reviews',
+      );
+    }).toList();
+
+    final trendingSnap = await _communityPosts
+        .orderBy('engagementScore', descending: true)
+        .limit(30)
+        .get();
+    final activityByCollege = <String, int>{};
+    for (final doc in trendingSnap.docs) {
+      final collegeId = doc.data()['collegeId']?.toString() ?? '';
+      if (collegeId.isEmpty) continue;
+      activityByCollege[collegeId] = (activityByCollege[collegeId] ?? 0) + 1;
+    }
+    final trendingColleges = activityByCollege.entries
+        .map(
+          (e) => AdminTopCollegeMetric(
+            collegeId: e.key,
+            collegeName: collegeNames[e.key] ?? e.key,
+            value: e.value,
+            label: 'trending',
+          ),
+        )
+        .toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
+    final mostActive = viewMetrics.isNotEmpty
+        ? viewMetrics.take(10).toList()
+        : topReviewed.take(10).toList();
+
+    final topContributors = await _fetchTopContributors();
+
     return AdminAnalyticsData(
       reviewGrowth: buildDailyGrowthSeries(timestamps: reviewDates),
       userGrowth: buildDailyGrowthSeries(timestamps: userDates),
@@ -189,8 +257,160 @@ class AdminAnalyticsService {
       mostViewed: viewMetrics.take(10).toList(),
       mostSearched: searchMetrics.take(10).toList(),
       mostBookmarked: rankBookmarkCounts(bookmarkCounts, collegeNames),
+      topReviewed: topReviewed,
+      trendingColleges: trendingColleges.take(10).toList(),
+      mostActiveColleges: mostActive,
+      topContributors: topContributors,
       fetchedAt: now,
     );
+  }
+
+  Future<List<AdminTopContributor>> _fetchTopContributors() async {
+    final reviewSnap = await _reviews
+        .orderBy('createdAt', descending: true)
+        .limit(AdminConstants.analyticsSampleLimit)
+        .get();
+    final counts = <String, ({String name, int reviews, int answers, int posts})>{};
+
+    void bump(String userId, String name, {int reviews = 0, int answers = 0, int posts = 0}) {
+      final current = counts[userId];
+      counts[userId] = (
+        name: name.isNotEmpty ? name : (current?.name ?? 'User'),
+        reviews: (current?.reviews ?? 0) + reviews,
+        answers: (current?.answers ?? 0) + answers,
+        posts: (current?.posts ?? 0) + posts,
+      );
+    }
+
+    for (final doc in reviewSnap.docs) {
+      final data = doc.data();
+      final uid = data['userId']?.toString() ?? '';
+      if (uid.isEmpty) continue;
+      bump(uid, data['anonymousAlias']?.toString() ?? '', reviews: 1);
+    }
+
+    final questionSnap = await _questions.limit(100).get();
+    for (final q in questionSnap.docs) {
+      final answers = (q.data()['answerCount'] as num?)?.toInt() ?? 0;
+      if (answers <= 0) continue;
+      final uid = q.data()['authorId']?.toString() ?? '';
+      if (uid.isEmpty) continue;
+      bump(uid, q.data()['authorDisplayName']?.toString() ?? '', answers: answers);
+    }
+
+    final postSnap = await _communityPosts.limit(100).get();
+    for (final p in postSnap.docs) {
+      final uid = p.data()['authorId']?.toString() ?? '';
+      if (uid.isEmpty) continue;
+      bump(uid, p.data()['authorDisplayName']?.toString() ?? '', posts: 1);
+    }
+
+    final list = counts.entries
+        .map(
+          (e) => AdminTopContributor(
+            userId: e.key,
+            displayName: e.value.name,
+            reviewCount: e.value.reviews,
+            answerCount: e.value.answers,
+            postCount: e.value.posts,
+          ),
+        )
+        .toList();
+    list.sort((a, b) => b.totalActivity.compareTo(a.totalActivity));
+    return list.take(10).toList();
+  }
+
+  Future<List<Map<String, dynamic>>> fetchVerificationReportExport({int limit = 200}) async {
+    final snap = await _verifications
+        .orderBy('createdAt', descending: true)
+        .limit(limit)
+        .get();
+    return snap.docs.map((d) {
+      final data = d.data();
+      return {
+        'id': d.id,
+        'userId': data['userId'],
+        'collegeName': data['collegeName'],
+        'status': data['status'],
+        'verificationRole': data['verificationRole'],
+        'documentType': data['documentType'],
+        'createdAt': data['createdAt'],
+      };
+    }).toList();
+  }
+
+  Future<List<Map<String, dynamic>>> fetchUserReportExport({int limit = 200}) async {
+    final snap = await _firestore
+        .collection(FirestoreConstants.userReportsCollection)
+        .orderBy('createdAt', descending: true)
+        .limit(limit)
+        .get();
+    return snap.docs.map((d) {
+      final data = d.data();
+      return {
+        'id': d.id,
+        'reportedId': data['reportedId'],
+        'reporterId': data['reporterId'],
+        'reason': data['reason'],
+        'status': data['status'],
+        'createdAt': data['createdAt'],
+      };
+    }).toList();
+  }
+
+  Future<void> mergeColleges({
+    required String sourceCollegeId,
+    required String targetCollegeId,
+  }) async {
+    if (sourceCollegeId == targetCollegeId) {
+      throw ArgumentError('Source and target must differ.');
+    }
+
+    final sourceRef = _colleges.doc(sourceCollegeId.trim());
+    final targetRef = _colleges.doc(targetCollegeId.trim());
+    final sourceDoc = await sourceRef.get();
+    final targetDoc = await targetRef.get();
+    if (!sourceDoc.exists || !targetDoc.exists) {
+      throw StateError('Both colleges must exist.');
+    }
+
+    final batch = _firestore.batch();
+
+    final reviewSnap = await _reviews
+        .where('collegeId', isEqualTo: sourceCollegeId.trim())
+        .limit(200)
+        .get();
+    for (final doc in reviewSnap.docs) {
+      batch.update(doc.reference, {
+        'collegeId': targetCollegeId.trim(),
+        'updatedAt': DateTime.now().toIso8601String(),
+      });
+    }
+
+    final questionSnap = await _questions
+        .where('collegeId', isEqualTo: sourceCollegeId.trim())
+        .limit(200)
+        .get();
+    for (final doc in questionSnap.docs) {
+      batch.update(doc.reference, {
+        'collegeId': targetCollegeId.trim(),
+        'updatedAt': DateTime.now().toIso8601String(),
+      });
+    }
+
+    batch.update(targetRef, {
+      'mergedFromIds': FieldValue.arrayUnion([sourceCollegeId.trim()]),
+      'updatedAt': DateTime.now().toIso8601String(),
+    });
+
+    batch.update(sourceRef, {
+      'isActive': false,
+      'mergedIntoId': targetCollegeId.trim(),
+      'adminNotes': 'Merged into ${targetDoc.data()?['name'] ?? targetCollegeId}',
+      'updatedAt': DateTime.now().toIso8601String(),
+    });
+
+    await batch.commit();
   }
 
   Future<List<AdminReportSummary>> fetchOpenReports({int limit = 100}) async {

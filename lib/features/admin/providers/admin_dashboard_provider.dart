@@ -50,3 +50,11 @@ final adminUserSearchProvider =
 final adminCollegeStatsExportProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
   return ref.watch(adminAnalyticsServiceProvider).fetchCollegeStatsForExport();
 });
+
+final adminVerificationExportProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+  return ref.watch(adminAnalyticsServiceProvider).fetchVerificationReportExport();
+});
+
+final adminUserReportsExportProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+  return ref.watch(adminAnalyticsServiceProvider).fetchUserReportExport();
+});

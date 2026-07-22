@@ -18,6 +18,8 @@ import '../../features/compare/screens/college_compare_screen.dart';
 import '../../features/reviews/screens/write_review_screen.dart';
 import '../../features/reviews/screens/my_reviews_screen.dart';
 import '../../features/admin/screens/admin_dashboard_screen.dart';
+import '../../features/admin/screens/admin_login_screen.dart';
+import '../../features/admin/screens/admin_merge_colleges_screen.dart';
 import '../../features/admin/screens/admin_college_edit_screen.dart';
 import '../../features/admin/screens/admin_colleges_screen.dart';
 import '../../features/admin/screens/admin_reviews_screen.dart';
@@ -105,6 +107,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final isPublicRoute = path == RouteNames.splash ||
           path == RouteNames.onboarding ||
           path == RouteNames.login ||
+          path == RouteNames.adminLogin ||
           path == RouteNames.signup ||
           path == RouteNames.forgotPassword ||
           path == RouteNames.home ||
@@ -115,6 +118,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           path.startsWith('/college-details');
 
       if (!isLoggedIn && !isPublicRoute) {
+        if (path.startsWith('/admin') && path != RouteNames.adminLogin) {
+          return RouteNames.adminLogin;
+        }
         return RouteNames.login;
       }
 
@@ -124,6 +130,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               path == RouteNames.onboarding ||
               path == RouteNames.forgotPassword)) {
         return RouteNames.home;
+      }
+
+      if (path == RouteNames.adminLogin) {
+        if (isLoggedIn) {
+          final isStaff = await ref.read(isStaffProvider.future);
+          if (isStaff) return RouteNames.admin;
+        }
+        return null;
       }
 
       final isAdminRoute = path.startsWith('/admin');
@@ -523,6 +537,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
+        path: RouteNames.adminLogin,
+        builder: (context, state) => const AdminLoginScreen(),
+      ),
+      GoRoute(
         path: RouteNames.admin,
         builder: (context, state) => const AdminDashboardScreen(),
       ),
@@ -540,6 +558,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           final id = state.pathParameters['id']!;
           return AdminCollegeEditScreen(collegeId: id);
         },
+      ),
+      GoRoute(
+        path: RouteNames.adminMergeColleges,
+        builder: (context, state) => const AdminMergeCollegesScreen(),
       ),
       GoRoute(
         path: RouteNames.adminReviews,

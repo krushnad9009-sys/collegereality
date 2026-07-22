@@ -441,6 +441,63 @@ class FirestoreEngagementService {
     return notified;
   }
 
+  Future<int> broadcastAdminAnnouncementByState({
+    required String state,
+    required String title,
+    required String body,
+  }) async {
+    final announcementId = _uuid.v4();
+    var notified = 0;
+    final snap = await _users.where('state', isEqualTo: state.trim()).limit(500).get();
+    for (final doc in snap.docs) {
+      await notifyUser(
+        userId: doc.id,
+        type: EngagementConstants.typeAdminAnnouncement,
+        category: EngagementConstants.categoryAdmin,
+        title: title,
+        body: body,
+        entityType: 'announcement',
+        entityId: announcementId,
+        actionRoute: RouteNames.notifications,
+      );
+      notified++;
+    }
+    return notified;
+  }
+
+  Future<int> broadcastAdminAnnouncementByCollege({
+    required String collegeId,
+    required String title,
+    required String body,
+    int limit = 200,
+  }) async {
+    final announcementId = _uuid.v4();
+    var notified = 0;
+    final seen = <String>{};
+
+    for (final snap in [
+      await _users.where('collegeId', isEqualTo: collegeId.trim()).limit(limit).get(),
+      await _users.where('favoriteCollegeIds', arrayContains: collegeId.trim()).limit(limit).get(),
+    ]) {
+      for (final doc in snap.docs) {
+        if (seen.contains(doc.id)) continue;
+        seen.add(doc.id);
+        await notifyUser(
+          userId: doc.id,
+          type: EngagementConstants.typeAdminAnnouncement,
+          category: EngagementConstants.categoryAdmin,
+          title: title,
+          body: body,
+          entityType: 'announcement',
+          entityId: announcementId,
+          actionRoute: RouteNames.notifications,
+        );
+        notified++;
+      }
+    }
+    return notified;
+  }
+
   /// Notify users who follow a college about a new community post.
   Future<void> notifyFollowersOfCommunityPost({
     required String collegeId,

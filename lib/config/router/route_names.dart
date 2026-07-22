@@ -23,9 +23,11 @@ class RouteNames {
   static const String notificationPreferences = '/notifications/preferences';
   static const String admissionCalendar = '/admission/calendar';
   static const String admin = '/admin';
+  static const String adminLogin = '/admin/login';
   static const String adminColleges = '/admin/colleges';
   static const String adminCollegeNew = '/admin/colleges/new';
   static const String adminCollegeEdit = '/admin/colleges/:id/edit';
+  static const String adminMergeColleges = '/admin/merge-colleges';
   static const String adminReviews = '/admin/reviews';
   static const String adminPlacements = '/admin/placements';
   static const String adminUsers = '/admin/users';

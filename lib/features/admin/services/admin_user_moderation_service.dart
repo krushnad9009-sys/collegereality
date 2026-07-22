@@ -104,6 +104,15 @@ class AdminUserModerationService {
     });
   }
 
+  Future<void> warnUser(String uid, {required String message}) async {
+    await _users.doc(uid).update({
+      'warningCount': FieldValue.increment(1),
+      'lastWarningAt': DateTime.now().toIso8601String(),
+      'moderationNote': message,
+      'updatedAt': DateTime.now().toIso8601String(),
+    });
+  }
+
   Future<void> attachCollegePhotos(String collegeId, List<String> photoUrls) async {
     if (photoUrls.isEmpty) return;
     await _firestore.collection(FirestoreConstants.collegesCollection).doc(collegeId).update({
