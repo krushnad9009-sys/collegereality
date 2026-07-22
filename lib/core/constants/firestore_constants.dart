@@ -1,5 +1,6 @@
 class FirestoreConstants {
   static const String usersCollection = 'users';
+  static const String displayNamesCollection = 'display_names';
   static const String collegesCollection = 'colleges';
   static const String reviewsCollection = 'reviews';
   static const String metaCollection = '_meta';

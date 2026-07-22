@@ -1,5 +1,8 @@
 import 'package:email_validator/email_validator.dart';
 
+import '../../social/utils/moderation_utils.dart';
+import '../../../core/constants/display_name_constants.dart';
+
 class ValidationUtil {
   // Email validation
   static String? validateEmail(String? value) {
@@ -91,6 +94,48 @@ class ValidationUtil {
 
     if (!RegExp(r'^[a-zA-Z\s]+$').hasMatch(value)) {
       return 'Name can only contain letters and spaces';
+    }
+
+    if (containsOffensiveContent(value)) {
+      return 'Name contains inappropriate language';
+    }
+
+    return null;
+  }
+
+  static String? validateCustomDisplayName(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Custom display name is required';
+    }
+
+    final trimmed = value.trim();
+    if (trimmed.length < DisplayNameConstants.customNameMinLength) {
+      return 'Display name must be at least ${DisplayNameConstants.customNameMinLength} characters';
+    }
+
+    if (trimmed.length > DisplayNameConstants.customNameMaxLength) {
+      return 'Display name must not exceed ${DisplayNameConstants.customNameMaxLength} characters';
+    }
+
+    if (!RegExp(r'^[a-zA-Z0-9 _.-]+$').hasMatch(trimmed)) {
+      return 'Display name can only contain letters, numbers, spaces, dots, and hyphens';
+    }
+
+    if (containsOffensiveContent(trimmed)) {
+      return 'Display name contains inappropriate language';
+    }
+
+    final lower = trimmed.toLowerCase();
+    for (final reserved in [
+      'admin',
+      'moderator',
+      'college reality',
+      'anonymous verified student',
+      'anonymous verified alumni',
+    ]) {
+      if (lower.contains(reserved)) {
+        return 'This display name is not allowed';
+      }
     }
 
     return null;

@@ -15,7 +15,6 @@ import '../../auth/providers/user_provider.dart';
 import '../../colleges/providers/college_provider.dart';
 import '../models/review_model.dart';
 import '../providers/review_provider.dart';
-import '../services/firestore_review_service.dart';
 import '../services/review_storage_service.dart';
 import '../widgets/star_rating_widget.dart';
 
@@ -46,7 +45,6 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
   int? _batchYear;
   final Map<String, double> _ratings = RatingParameters.emptyRatings();
   bool _isSubmitting = false;
-  bool _isAnonymous = true;
   bool _isUploadingMedia = false;
   ReviewModel? _existingReview;
   List<String> _photoUrls = [];
@@ -107,7 +105,6 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
         _consController.text = review.cons.join(', ');
         _courseController.text = review.course ?? '';
         _batchYear = review.batchYear;
-        _isAnonymous = review.isAnonymous;
         _photoUrls = List.from(review.photoUrls);
         _videoUrls = List.from(review.videoUrls);
         _ratings.addAll(review.ratings);
@@ -262,12 +259,8 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
         collegeId: widget.collegeId.trim(),
         collegeName: widget.collegeName,
         userId: user.uid,
-        anonymousAlias: generateAnonymousAlias(
-          user.uid,
-          isAnonymous: _isAnonymous,
-          badgeLabel: badgeLabel,
-        ),
-        isAnonymous: _isAnonymous,
+        anonymousAlias: userDetail.effectivePublicDisplayName,
+        isAnonymous: userDetail.usesAnonymousPublicDisplayName,
         course: _courseController.text.trim().isEmpty
             ? userDetail.course
             : _courseController.text.trim(),
@@ -450,14 +443,21 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
                   ),
                 ],
                 const SizedBox(height: 16),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('Post anonymously'),
-                  subtitle: const Text(
-                    'Your name is never shown. Only a verified student alias appears.',
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryColor.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  value: _isAnonymous,
-                  onChanged: (v) => setState(() => _isAnonymous = v),
+                  child: Text(
+                    'Posting as your public display name from profile settings. '
+                    'Verification badge remains visible.',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: AppTheme.gray700,
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 ...RatingParameters.categories.expand((category) {

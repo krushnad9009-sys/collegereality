@@ -439,7 +439,8 @@ class _CollegeCommunityFeedScreenState
               collegeId: widget.collegeId,
               collegeName: widget.collegeName,
               authorId: authUser.uid,
-              authorDisplayName: user.displayName ?? 'Student',
+              authorDisplayName: user.effectivePublicDisplayName,
+              isAnonymous: user.usesAnonymousPublicDisplayName,
               postType: _postType,
               content: '',
               pollQuestion: _postController.text.trim(),
@@ -457,7 +458,6 @@ class _CollegeCommunityFeedScreenState
                       : _pollOptionBController.text.trim(),
                 ),
               ],
-              isAnonymous: _postAnonymous,
             );
       } else {
         if (_postController.text.trim().isEmpty &&
@@ -468,11 +468,11 @@ class _CollegeCommunityFeedScreenState
               collegeId: widget.collegeId,
               collegeName: widget.collegeName,
               authorId: authUser.uid,
-              authorDisplayName: user.displayName ?? 'Student',
+              authorDisplayName: user.effectivePublicDisplayName,
+              isAnonymous: user.usesAnonymousPublicDisplayName,
               postType: _postType,
               content: _postController.text.trim(),
               imageUrls: List.from(_pendingImageUrls),
-              isAnonymous: _postAnonymous,
             );
       }
 

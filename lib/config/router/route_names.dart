@@ -17,6 +17,7 @@ class RouteNames {
   static const String collegeCommunityFeed = '/college-details/:id/community-feed';
   static const String submitPlacement = '/college-details/:id/submit-placement';
   static const String profile = '/profile';
+  static const String displayNameSetup = '/profile/display-name-setup';
   static const String myReviews = '/my-reviews';
   static const String favorites = '/favorites';
   static const String notifications = '/notifications';

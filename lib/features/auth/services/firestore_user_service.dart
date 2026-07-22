@@ -1,4 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+
+import '../../../core/constants/display_name_constants.dart';
 import '../models/user_model.dart';
 import '../../communication/models/guide_stats_model.dart';
 import '../../community/models/user_presence_model.dart';
@@ -61,6 +63,7 @@ class FirestoreUserService {
   Future<void> updateUserProfile({
     required String uid,
     String? displayName,
+    String? verifiedRealName,
     String? photoURL,
     String? coverPhotoURL,
     String? phone,
@@ -84,6 +87,9 @@ class FirestoreUserService {
 
       if (displayName != null) {
         updateData['displayName'] = displayName;
+      }
+      if (verifiedRealName != null) {
+        updateData['verifiedRealName'] = verifiedRealName;
       }
       if (photoURL != null) {
         updateData['photoURL'] = photoURL;
@@ -129,6 +135,21 @@ class FirestoreUserService {
       }
       if (metadata != null) {
         updateData['metadata'] = metadata;
+      }
+
+      if (displayName != null || verifiedRealName != null) {
+        final userDoc = await _firestore.collection(usersCollection).doc(uid).get();
+        if (userDoc.exists) {
+          final data = userDoc.data()!;
+          final mode = data['displayNameMode'] as String? ??
+              DisplayNameConstants.modeRealName;
+          if (mode == DisplayNameConstants.modeRealName) {
+            final realName = (verifiedRealName ?? displayName)?.trim();
+            if (realName != null && realName.isNotEmpty) {
+              updateData['publicDisplayName'] = realName;
+            }
+          }
+        }
       }
 
       await _firestore

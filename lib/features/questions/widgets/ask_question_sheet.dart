@@ -28,7 +28,6 @@ Future<QuestionModel?> showAskQuestionSheet({
 
   final titleController = TextEditingController();
   final bodyController = TextEditingController();
-  var isAnonymous = false;
   var isSubmitting = false;
 
   final result = await showModalBottomSheet<QuestionModel?>(
@@ -93,21 +92,12 @@ Future<QuestionModel?> showAskQuestionSheet({
                     ),
                   ),
                   const SizedBox(height: 8),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(
-                      'Ask anonymously',
-                      style: GoogleFonts.poppins(fontSize: 14),
+                  Text(
+                    'Your public display name from profile settings will be shown with your verification badge.',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: AppTheme.gray500,
                     ),
-                    subtitle: Text(
-                      'Your name will be hidden from other students',
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: AppTheme.gray500,
-                      ),
-                    ),
-                    value: isAnonymous,
-                    onChanged: (v) => setState(() => isAnonymous = v),
                   ),
                   const SizedBox(height: 16),
                   SizedBox(
@@ -127,8 +117,10 @@ Future<QuestionModel?> showAskQuestionSheet({
                                       collegeId: collegeId,
                                       collegeName: collegeName,
                                       authorId: authUser.uid,
-                                      displayName: user?.displayName,
-                                      isAnonymous: isAnonymous,
+                                      displayName: user?.effectivePublicDisplayName,
+                                      isAnonymous:
+                                          user?.usesAnonymousPublicDisplayName ??
+                                              false,
                                       title: titleController.text,
                                       body: bodyController.text,
                                     );
@@ -185,7 +177,6 @@ Future<void> showWriteAnswerSheet({
   if (authUser == null) return;
 
   final bodyController = TextEditingController();
-  var isAnonymous = false;
   var isSubmitting = false;
 
   await showModalBottomSheet<void>(
@@ -229,14 +220,12 @@ Future<void> showWriteAnswerSheet({
                     ),
                   ),
                   const SizedBox(height: 8),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(
-                      'Answer anonymously',
-                      style: GoogleFonts.poppins(fontSize: 14),
+                  Text(
+                    'Your public display name from profile settings will be shown with your verification badge.',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: AppTheme.gray500,
                     ),
-                    value: isAnonymous,
-                    onChanged: (v) => setState(() => isAnonymous = v),
                   ),
                   const SizedBox(height: 16),
                   SizedBox(
@@ -255,8 +244,10 @@ Future<void> showWriteAnswerSheet({
                                     .createAnswer(
                                       questionId: questionId,
                                       authorId: authUser.uid,
-                                      displayName: user?.displayName,
-                                      isAnonymous: isAnonymous,
+                                      displayName: user?.effectivePublicDisplayName,
+                                      isAnonymous:
+                                          user?.usesAnonymousPublicDisplayName ??
+                                              false,
                                       body: bodyController.text,
                                     );
                                 if (context.mounted) {

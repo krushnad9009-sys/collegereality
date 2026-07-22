@@ -1,3 +1,5 @@
+import '../../../core/utils/public_display_name_utils.dart';
+import '../../auth/models/user_model.dart';
 import '../models/answer_model.dart';
 import '../models/question_model.dart';
 
@@ -15,15 +17,19 @@ String normalizeQuestionContent(String text) {
 }
 
 String buildAnonymousQuestionAlias(String userId) {
-  final hash = userId.hashCode.abs() % 10000;
-  return 'Anonymous Student #$hash';
+  return buildAnonymousVerifiedStudentAlias(userId);
 }
 
 String resolveAuthorDisplayName({
   required String userId,
   required String? displayName,
   required bool isAnonymous,
+  UserModel? user,
 }) {
+  if (user != null) {
+    return resolvePublicDisplayNameFromUser(user);
+  }
+
   if (isAnonymous) {
     return buildAnonymousQuestionAlias(userId);
   }
@@ -32,6 +38,10 @@ String resolveAuthorDisplayName({
     return trimmed;
   }
   return 'Student #${userId.hashCode.abs() % 10000}';
+}
+
+String resolveAuthorDisplayNameFromUser(UserModel user) {
+  return resolvePublicDisplayNameFromUser(user);
 }
 
 bool matchesQuestionSearch(QuestionModel question, String query) {

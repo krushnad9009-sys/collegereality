@@ -7,6 +7,7 @@ import '../../../config/theme/app_theme.dart';
 import '../../../config/router/route_names.dart';
 import '../../../core/widgets/index.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../auth/providers/user_provider.dart';
 import '../../admin/providers/admin_provider.dart';
 import '../../engagement/providers/engagement_provider.dart';
 
@@ -20,7 +21,10 @@ class HomeHeaderWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final displayName = user.displayName ?? 'Student';
+    final userDetail = ref.watch(currentUserDetailProvider).valueOrNull;
+    final displayName = userDetail?.effectivePublicDisplayName ??
+        user.displayName ??
+        'Student';
     final firstLetter =
         displayName.isNotEmpty ? displayName[0].toUpperCase() : 'S';
 

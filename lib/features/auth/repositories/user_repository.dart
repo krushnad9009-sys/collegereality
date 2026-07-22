@@ -11,6 +11,7 @@ abstract class UserRepository {
   Future<void> updateUserProfile({
     required String uid,
     String? displayName,
+    String? verifiedRealName,
     String? photoURL,
     String? coverPhotoURL,
     String? phone,
@@ -58,6 +59,7 @@ class UserRepositoryImpl implements UserRepository {
   Future<void> updateUserProfile({
     required String uid,
     String? displayName,
+    String? verifiedRealName,
     String? photoURL,
     String? coverPhotoURL,
     String? phone,
@@ -77,6 +79,7 @@ class UserRepositoryImpl implements UserRepository {
     await _firestoreUserService.updateUserProfile(
       uid: uid,
       displayName: displayName,
+      verifiedRealName: verifiedRealName,
       photoURL: photoURL,
       coverPhotoURL: coverPhotoURL,
       phone: phone,
@@ -123,12 +126,15 @@ class UserRepositoryImpl implements UserRepository {
 
 // Helper function to create UserModel from Firebase User
 UserModel createUserModelFromFirebaseUser(User firebaseUser) {
+  final realName = firebaseUser.displayName?.trim();
   return UserModel(
     uid: firebaseUser.uid,
     email: firebaseUser.email ?? '',
-    displayName: firebaseUser.displayName,
+    displayName: realName,
+    verifiedRealName: realName,
     photoURL: firebaseUser.photoURL,
     isEmailVerified: firebaseUser.emailVerified,
+    displayNameSetupComplete: false,
     createdAt: firebaseUser.metadata.creationTime ?? DateTime.now(),
     updatedAt: DateTime.now(),
   );

@@ -281,7 +281,8 @@ class _CommunityBoardScreenState extends ConsumerState<CommunityBoardScreen> {
         await ref.read(studentLifeRepositoryProvider).createCommunityPost(
               communityId: widget.communityId,
               authorId: authUser.uid,
-              authorDisplayName: user.displayName ?? 'Student',
+              authorDisplayName: user.effectivePublicDisplayName,
+              isAnonymous: user.usesAnonymousPublicDisplayName,
               isVerifiedStudent: isVerified,
               postType: _postType,
               content: '',
@@ -290,17 +291,16 @@ class _CommunityBoardScreenState extends ConsumerState<CommunityBoardScreen> {
                 const PollOptionModel(id: 'opt_a', label: 'Option A'),
                 const PollOptionModel(id: 'opt_b', label: 'Option B'),
               ],
-              isAnonymous: _postAnonymous,
             );
       } else {
         await ref.read(studentLifeRepositoryProvider).createCommunityPost(
               communityId: widget.communityId,
               authorId: authUser.uid,
-              authorDisplayName: user.displayName ?? 'Student',
+              authorDisplayName: user.effectivePublicDisplayName,
+              isAnonymous: user.usesAnonymousPublicDisplayName,
               isVerifiedStudent: isVerified,
               postType: _postType,
               content: _postController.text.trim(),
-              isAnonymous: _postAnonymous,
             );
       }
       _postController.clear();
@@ -589,7 +589,7 @@ class _CommentsSectionState extends ConsumerState<_CommentsSection> {
             postId: widget.post.id,
             communityId: widget.communityId,
             authorId: authUser.uid,
-            authorDisplayName: user.displayName ?? 'Student',
+            authorDisplayName: user.effectivePublicDisplayName,
             isVerifiedStudent: isVerified,
             content: _controller.text.trim(),
           );

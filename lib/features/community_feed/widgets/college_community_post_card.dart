@@ -389,7 +389,7 @@ class _CollegeCommunityPostCardState
       await ref.read(collegeCommunityFeedRepositoryProvider).addComment(
             post: post,
             authorId: userId,
-            authorDisplayName: user?.displayName ?? 'Student',
+            authorDisplayName: user?.effectivePublicDisplayName ?? 'Student',
             content: _commentController.text.trim(),
             parentCommentId: _replyToCommentId,
           );

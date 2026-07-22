@@ -1,5 +1,7 @@
 // Manual JSON serialization without code generation
+import '../../../core/constants/display_name_constants.dart';
 import '../../../core/constants/verification_constants.dart';
+import '../../../core/utils/public_display_name_utils.dart';
 import '../../communication/models/guide_stats_model.dart';
 import '../../communication/utils/guide_stats_calculator.dart';
 import '../../community/models/user_presence_model.dart';
@@ -9,6 +11,12 @@ class UserModel {
   final String email;
   final String? phone;
   final String? displayName;
+  final String? verifiedRealName;
+  final String? publicDisplayName;
+  final String displayNameMode;
+  final String? customDisplayName;
+  final DateTime? displayNameChangedAt;
+  final bool displayNameSetupComplete;
   final String? photoURL;
   final String? coverPhotoURL;
   final String userType;
@@ -40,6 +48,12 @@ class UserModel {
     required this.email,
     this.phone,
     this.displayName,
+    this.verifiedRealName,
+    this.publicDisplayName,
+    this.displayNameMode = DisplayNameConstants.modeRealName,
+    this.customDisplayName,
+    this.displayNameChangedAt,
+    this.displayNameSetupComplete = false,
     this.photoURL,
     this.coverPhotoURL,
     this.userType = 'student',
@@ -79,6 +93,18 @@ class UserModel {
       email: json['email'] as String,
       phone: json['phone'] as String?,
       displayName: json['displayName'] as String?,
+      verifiedRealName: json['verifiedRealName'] as String?,
+      publicDisplayName: json['publicDisplayName'] as String?,
+      displayNameMode: json['displayNameMode'] as String? ??
+          DisplayNameConstants.modeRealName,
+      customDisplayName: json['customDisplayName'] as String?,
+      displayNameChangedAt: json['displayNameChangedAt'] == null
+          ? null
+          : json['displayNameChangedAt'] is DateTime
+              ? json['displayNameChangedAt'] as DateTime
+              : DateTime.parse(json['displayNameChangedAt'] as String),
+      displayNameSetupComplete:
+          json['displayNameSetupComplete'] as bool? ?? false,
       photoURL: json['photoURL'] as String?,
       coverPhotoURL: json['coverPhotoURL'] as String?,
       userType: json['userType'] as String? ?? 'student',
@@ -134,6 +160,12 @@ class UserModel {
       'email': email,
       'phone': phone,
       'displayName': displayName,
+      'verifiedRealName': verifiedRealName,
+      'publicDisplayName': publicDisplayName,
+      'displayNameMode': displayNameMode,
+      'customDisplayName': customDisplayName,
+      'displayNameChangedAt': displayNameChangedAt?.toIso8601String(),
+      'displayNameSetupComplete': displayNameSetupComplete,
       'photoURL': photoURL,
       'coverPhotoURL': coverPhotoURL,
       'userType': userType,
@@ -167,6 +199,12 @@ class UserModel {
     String? email,
     String? phone,
     String? displayName,
+    String? verifiedRealName,
+    String? publicDisplayName,
+    String? displayNameMode,
+    String? customDisplayName,
+    DateTime? displayNameChangedAt,
+    bool? displayNameSetupComplete,
     String? photoURL,
     String? coverPhotoURL,
     String? userType,
@@ -198,6 +236,13 @@ class UserModel {
       email: email ?? this.email,
       phone: phone ?? this.phone,
       displayName: displayName ?? this.displayName,
+      verifiedRealName: verifiedRealName ?? this.verifiedRealName,
+      publicDisplayName: publicDisplayName ?? this.publicDisplayName,
+      displayNameMode: displayNameMode ?? this.displayNameMode,
+      customDisplayName: customDisplayName ?? this.customDisplayName,
+      displayNameChangedAt: displayNameChangedAt ?? this.displayNameChangedAt,
+      displayNameSetupComplete:
+          displayNameSetupComplete ?? this.displayNameSetupComplete,
       photoURL: photoURL ?? this.photoURL,
       coverPhotoURL: coverPhotoURL ?? this.coverPhotoURL,
       userType: userType ?? this.userType,
@@ -226,4 +271,9 @@ class UserModel {
       metadata: metadata ?? this.metadata,
     );
   }
+
+  String get effectivePublicDisplayName => resolvePublicDisplayNameFromUser(this);
+
+  bool get usesAnonymousPublicDisplayName =>
+      isAnonymousDisplayNameMode(displayNameMode);
 }

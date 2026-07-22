@@ -65,13 +65,16 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       }
 
       // Create user model
+      final realName = _nameController.text.trim();
       final userModel = UserModel(
         uid: firebaseUser.uid,
         email: firebaseUser.email ?? '',
-        displayName: _nameController.text.trim(),
+        displayName: realName,
+        verifiedRealName: realName,
         userType: 'student',
         isVerified: false,
         isEmailVerified: firebaseUser.emailVerified,
+        displayNameSetupComplete: false,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
@@ -87,7 +90,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           message:
               'Account created! Please verify your email from your inbox.',
         );
-        context.go(RouteNames.home);
+        context.go(RouteNames.displayNameSetup);
       }
     } catch (e) {
       if (mounted) {
@@ -119,7 +122,12 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           context,
           message: 'Signed up with Google!',
         );
-        context.go(RouteNames.home);
+        final userDetail = ref.read(currentUserDetailProvider).valueOrNull;
+        if (userDetail != null && !userDetail.displayNameSetupComplete) {
+          context.go(RouteNames.displayNameSetup);
+        } else {
+          context.go(RouteNames.home);
+        }
       }
     } catch (e) {
       if (mounted) {

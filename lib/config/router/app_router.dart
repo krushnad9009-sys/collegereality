@@ -6,6 +6,7 @@ import '../../features/auth/screens/splash_screen.dart';
 import '../../features/auth/screens/onboarding_screen.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/signup_screen.dart';
+import '../../features/auth/screens/display_name_setup_screen.dart';
 import '../../features/auth/screens/forgot_password_screen.dart';
 import '../../features/home/screens/home_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
@@ -30,6 +31,7 @@ import '../../features/admin/screens/admin_reports_hub_screen.dart';
 import '../../features/admin/screens/admin_system_monitor_screen.dart';
 import '../../features/admin/screens/admin_college_bulk_screen.dart';
 import '../../features/admin/screens/admin_export_screen.dart';
+import '../../features/auth/providers/user_provider.dart';
 import '../../features/admin/providers/admin_provider.dart';
 import '../../features/admin/screens/admin_verification_screen.dart';
 import '../../features/profile/screens/premium_student_profile_screen.dart';
@@ -131,7 +133,20 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               path == RouteNames.signup ||
               path == RouteNames.onboarding ||
               path == RouteNames.forgotPassword)) {
+        final user = await ref.read(currentUserDetailProvider.future);
+        if (user != null && !user.displayNameSetupComplete) {
+          return RouteNames.displayNameSetup;
+        }
         return RouteNames.home;
+      }
+
+      if (isLoggedIn &&
+          path != RouteNames.displayNameSetup &&
+          path != RouteNames.profile) {
+        final user = await ref.read(currentUserDetailProvider.future);
+        if (user != null && !user.displayNameSetupComplete) {
+          return RouteNames.displayNameSetup;
+        }
       }
 
       if (path == RouteNames.adminLogin) {
@@ -189,6 +204,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: RouteNames.profile,
             builder: (context, state) => const ProfileScreen(),
+          ),
+          GoRoute(
+            path: RouteNames.displayNameSetup,
+            builder: (context, state) => const DisplayNameSetupScreen(),
           ),
           GoRoute(
             path: RouteNames.collegeSearch,

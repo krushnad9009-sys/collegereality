@@ -9,7 +9,6 @@ import '../../../core/constants/firestore_constants.dart';
 import '../../../core/constants/student_life_constants.dart';
 import '../../../core/constants/verification_constants.dart';
 import '../../engagement/services/firestore_engagement_service.dart';
-import '../../questions/utils/question_display_utils.dart';
 import '../../social/models/social_models.dart';
 import '../../social/services/moderation_service.dart';
 import '../../social/utils/content_filter_utils.dart';
@@ -203,13 +202,7 @@ class CollegeCommunityFeedService {
       }
     }
 
-    final displayName = isAnonymous
-        ? resolveAuthorDisplayName(
-            userId: authorId,
-            displayName: authorDisplayName,
-            isAnonymous: true,
-          )
-        : authorDisplayName;
+    final displayName = authorDisplayName;
 
     final id = _uuid.v4();
     final now = DateTime.now();

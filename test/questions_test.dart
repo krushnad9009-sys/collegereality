@@ -35,7 +35,7 @@ void main() {
 
     test('buildAnonymousQuestionAlias hides user identity', () {
       final alias = buildAnonymousQuestionAlias('user-abc');
-      expect(alias.startsWith('Anonymous Student #'), isTrue);
+      expect(alias.startsWith('Anonymous Verified Student #'), isTrue);
     });
 
     test('resolveAuthorDisplayName uses real name when not anonymous', () {

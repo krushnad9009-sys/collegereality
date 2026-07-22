@@ -155,6 +155,15 @@ service cloud.firestore {
         (isAuthenticated() && isGuideStatsOnlyUpdate());
     }
 
+    match /display_names/{nameKey} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() &&
+        request.resource.data.uid == request.auth.uid;
+      allow delete: if isAuthenticated() &&
+        resource.data.uid == request.auth.uid;
+      allow update: if false;
+    }
+
     match /colleges/{collegeId} {
       allow read: if isAuthenticated();
       allow create: if isAdmin() || isCollegeBootstrapCreate(collegeId);

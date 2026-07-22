@@ -7,6 +7,7 @@ import '../../../core/constants/community_constants.dart';
 import '../../../core/constants/firestore_constants.dart';
 import '../../../core/constants/profile_constants.dart';
 import '../../../core/constants/social_constants.dart';
+import '../../../core/utils/public_display_name_utils.dart';
 import '../../auth/models/user_model.dart';
 import '../../auth/services/firestore_user_service.dart';
 import '../../communication/services/communication_firestore_service.dart';
@@ -163,7 +164,7 @@ class CommunityFirestoreService {
       type: CommunityConstants.typePrivate,
       participantIds: ids,
       participantNames: {
-        currentUser.uid: currentUser.displayName ?? 'Student',
+        currentUser.uid: resolvePublicDisplayNameFromUser(currentUser),
         peerId: peerName,
       },
       createdAt: now,
@@ -361,7 +362,7 @@ class CommunityFirestoreService {
       id: messageId,
       conversationId: conversationId,
       senderId: sender.uid,
-      senderName: sender.displayName ?? 'Student',
+      senderName: resolvePublicDisplayNameFromUser(sender),
       senderPhoto: sender.photoURL,
       messageType: messageType,
       text: sanitizedText.isNotEmpty ? sanitizedText : text,
@@ -390,7 +391,7 @@ class CommunityFirestoreService {
       if (peer != null) {
         await _notificationBridge.notifyChatMessage(
           recipientId: peer,
-          senderName: sender.displayName ?? 'Student',
+          senderName: resolvePublicDisplayNameFromUser(sender),
           conversationId: conversationId,
           preview: preview,
         );

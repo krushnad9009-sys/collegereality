@@ -8,7 +8,6 @@ import '../../../core/constants/firestore_constants.dart';
 import '../../../core/constants/student_life_constants.dart';
 import '../../../core/constants/verification_constants.dart';
 import '../../../core/utils/firestore_seed_guard.dart';
-import '../../questions/utils/question_display_utils.dart';
 import '../../social/models/social_models.dart';
 import '../../social/services/moderation_service.dart';
 import '../../social/utils/content_filter_utils.dart';
@@ -367,13 +366,7 @@ class FirestoreStudentLifeService {
         throw StudentLifeException('Post blocked: content violates community guidelines.');
       }
     }
-    final displayName = isAnonymous
-        ? resolveAuthorDisplayName(
-            userId: authorId,
-            displayName: authorDisplayName,
-            isAnonymous: true,
-          )
-        : authorDisplayName;
+    final displayName = authorDisplayName;
     final id = _uuid.v4();
     await _posts.doc(id).set({
       'id': id,

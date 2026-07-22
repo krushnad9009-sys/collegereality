@@ -22,6 +22,7 @@ import '../../community/models/user_presence_model.dart';
 import '../../profile/widgets/premium_profile_edit_section.dart';
 import '../../profile/widgets/trust_score_card.dart';
 import '../../profile/models/student_trust_model.dart';
+import '../widgets/display_name_settings_section.dart';
 import '../widgets/phone_verification_section.dart';
 import '../widgets/email_verification_section.dart';
 
@@ -93,6 +94,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       await ref.read(userRepositoryProvider).updateUserProfile(
             uid: uid,
             displayName: _nameController.text.trim(),
+            verifiedRealName: _nameController.text.trim(),
             photoURL: _photoURL,
             coverPhotoURL: _coverPhotoURL,
             collegeId: _selectedCollegeId,
@@ -250,6 +252,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   if (userDetail != null)
                     TrustScoreCard(trust: StudentTrustModel.fromUser(userDetail)),
                   const SizedBox(height: 16),
+                  const DisplayNameSettingsSection(),
+                  const SizedBox(height: 16),
                   PremiumProfileEditSection(
                     user: userDetail ??
                         UserModel(
@@ -271,8 +275,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ),
                   const SizedBox(height: 24),
                   CustomTextField(
-                    label: 'Full Name',
-                    hint: 'Your name',
+                    label: 'Verified Real Name',
+                    hint: 'Your verified identity (stored securely)',
                     controller: _nameController,
                     validator: ValidationUtil.validateDisplayName,
                     prefixIcon: Icons.person_outline,
