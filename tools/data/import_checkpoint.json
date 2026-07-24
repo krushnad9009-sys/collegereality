@@ -1,9 +1,8 @@
 {
-  "timestamp": "2026-07-19T09:45:00Z",
-  "reason": "incomplete_total_state_name_fix",
-  "currentState": "Kerala",
+  "timestamp": "2026-07-24T11:00:54Z",
+  "reason": "firebase_daily_quota",
+  "currentState": "West Bengal",
   "pendingStates": [
-    "Kerala",
     "West Bengal",
     "Assam",
     "Bihar",
@@ -22,5 +21,74 @@
     "Daman & Diu",
     "Jammu And Kashmir"
   ],
-  "notes": "Fixed AISHE state names (& vs and). Resume with run_checkpoint_import.py"
+  "stateSnapshot": {
+    "West Bengal": {
+      "got": -1,
+      "expected": 1624
+    },
+    "Assam": {
+      "got": -1,
+      "expected": 569
+    },
+    "Bihar": {
+      "got": -1,
+      "expected": 806
+    },
+    "Delhi": {
+      "got": -1,
+      "expected": 303
+    },
+    "Goa": {
+      "got": -1,
+      "expected": 75
+    },
+    "Uttrakhand": {
+      "got": -1,
+      "expected": 578
+    },
+    "Manipur": {
+      "got": -1,
+      "expected": 70
+    },
+    "Mizoram": {
+      "got": -1,
+      "expected": 54
+    },
+    "Tripura": {
+      "got": -1,
+      "expected": 68
+    },
+    "Sikkim": {
+      "got": -1,
+      "expected": 36
+    },
+    "Lakshadweep": {
+      "got": -1,
+      "expected": 3
+    },
+    "Arunachal Pradesh": {
+      "got": -1,
+      "expected": 24
+    },
+    "Chandigarh": {
+      "got": -1,
+      "expected": 39
+    },
+    "Andaman & Nicobar Islands": {
+      "got": -1,
+      "expected": 8
+    },
+    "Dadra & Nagar Haveli": {
+      "got": -1,
+      "expected": 9
+    },
+    "Daman & Diu": {
+      "got": -1,
+      "expected": 9
+    },
+    "Jammu And Kashmir": {
+      "got": -1,
+      "expected": 381
+    }
+  }
 }

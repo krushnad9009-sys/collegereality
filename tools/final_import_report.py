@@ -159,7 +159,28 @@ def main() -> int:
     expected_total = sum(expected.values())
 
     db = get_db(creds, args.project)
-    total_docs = int(db.collection("colleges").count().get()[0][0].value)
+    total_docs = 0
+    for attempt in range(15):
+        try:
+            total_docs = int(db.collection("colleges").count().get()[0][0].value)
+            break
+        except Exception as exc:  # noqa: BLE001
+            if "quota" in str(exc).lower() or "429" in str(exc):
+                wait = min(300, 30 * (2 ** min(attempt, 4)))
+                print(f"Quota on count query, waiting {wait}s...")
+                import time
+                time.sleep(wait)
+            else:
+                raise
+    if total_docs == 0:
+        meta_fallback = {}
+        try:
+            meta_fallback = db.collection("_meta").document("collegeDirectory").get().to_dict() or {}
+        except Exception:  # noqa: BLE001
+            pass
+        total_docs = int(meta_fallback.get("totalColleges") or meta_fallback.get("metaTotalColleges") or 0)
+        if total_docs:
+            print(f"Using meta fallback total: {total_docs}")
 
     live: dict[str, int] = {}
     missing_states: list[str] = []
@@ -201,6 +222,14 @@ def main() -> int:
         print(f"WARN: duplicate scan skipped (quota?): {exc}")
     missing_colleges = max(0, expected_total - total_docs)
 
+    import_stats: dict = {}
+    stats_path = ROOT / "tools/data/import_session_stats.json"
+    if stats_path.exists():
+        try:
+            import_stats = json.loads(stats_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            import_stats = {}
+
     indexes_ok, indexes_msg = (False, "skipped")
     if not args.skip_index_deploy:
         indexes_ok, indexes_msg = deploy_indexes(args.project)
@@ -223,8 +252,14 @@ def main() -> int:
 
     report = {
         "timestamp": datetime.now(timezone.utc).isoformat(),
+        "totalColleges": total_docs,
+        "totalCollegesExpected": expected_total,
         "totalCollegesImported": expected_total,
         "totalFirestoreDocuments": total_docs,
+        "newlyImported": import_stats.get("newlyImported", 0),
+        "skippedDuplicates": import_stats.get("skippedDuplicates", 0),
+        "failedImports": import_stats.get("failedImports", 0),
+        "validationFailures": len(import_stats.get("validationFailures", [])),
         "missingColleges": missing_colleges,
         "duplicateDocuments": duplicate_count,
         "allStatesImported": all_states_ok and len(missing_states) == 0,
@@ -246,9 +281,12 @@ def main() -> int:
     print("=" * 60)
     print("FINAL INDIA IMPORT REPORT")
     print("=" * 60)
-    print(f"Total colleges (expected/imported): {expected_total}")
-    print(f"Total Firestore documents:          {total_docs}")
-    print(f"Missing colleges:                   {missing_colleges}")
+    print(f"Total colleges (Firestore):         {total_docs}")
+    print(f"Total colleges (expected):            {expected_total}")
+    print(f"Newly imported (this run):            {report['newlyImported']}")
+    print(f"Skipped duplicates:                   {report['skippedDuplicates']}")
+    print(f"Failed imports:                       {report['failedImports']}")
+    print(f"Missing colleges:                     {missing_colleges}")
     print(f"Duplicate documents (aisheId):      {duplicate_count}")
     print(f"All states/UTs imported:            {'Yes' if report['allStatesImported'] else 'No'}")
     print(f"States with data:                   {report['statesWithData']}/{report['statesExpected']}")

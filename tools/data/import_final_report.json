@@ -1,32 +1,108 @@
 {
-  "timestamp": "2026-07-19T11:30:00.000000+00:00",
+  "timestamp": "2026-07-24T10:51:18.670437+00:00",
+  "totalColleges": 45020,
+  "totalCollegesExpected": 47139,
   "totalCollegesImported": 47139,
   "totalFirestoreDocuments": 45020,
+  "newlyImported": 0,
+  "skippedDuplicates": 0,
+  "failedImports": 0,
+  "validationFailures": 0,
   "missingColleges": 2119,
-  "duplicateDocuments": 0,
+  "duplicateDocuments": 5823,
   "allStatesImported": false,
-  "statesWithData": 32,
-  "statesExpected": 32,
+  "statesWithData": 36,
+  "statesExpected": 36,
   "missingStates": [],
   "underImportedStates": [
     {
-      "state": "Uttar Pradesh",
-      "got": 5823,
-      "expected": 6484
+      "state": "West Bengal",
+      "got": 1420,
+      "expected": 1624
     },
     {
-      "state": "Tamil Nadu",
-      "got": 3066,
-      "expected": 3775
+      "state": "Bihar",
+      "got": 661,
+      "expected": 806
+    },
+    {
+      "state": "Assam",
+      "got": 499,
+      "expected": 569
+    },
+    {
+      "state": "Uttrakhand",
+      "got": 490,
+      "expected": 578
+    },
+    {
+      "state": "Goa",
+      "got": 67,
+      "expected": 75
+    },
+    {
+      "state": "Delhi",
+      "got": 247,
+      "expected": 303
+    },
+    {
+      "state": "Chandigarh",
+      "got": 34,
+      "expected": 39
+    },
+    {
+      "state": "Manipur",
+      "got": 26,
+      "expected": 70
+    },
+    {
+      "state": "Mizoram",
+      "got": 41,
+      "expected": 54
+    },
+    {
+      "state": "Tripura",
+      "got": 38,
+      "expected": 68
+    },
+    {
+      "state": "Arunachal Pradesh",
+      "got": 21,
+      "expected": 24
+    },
+    {
+      "state": "Sikkim",
+      "got": 31,
+      "expected": 36
+    },
+    {
+      "state": "Andaman & Nicobar Islands",
+      "got": 7,
+      "expected": 8
+    },
+    {
+      "state": "Dadra & Nagar Haveli",
+      "got": 8,
+      "expected": 9
+    },
+    {
+      "state": "Lakshadweep",
+      "got": 1,
+      "expected": 3
+    },
+    {
+      "state": "Daman & Diu",
+      "got": 8,
+      "expected": 9
     }
   ],
   "searchWorking": true,
   "searchFailures": [],
   "indexesDeployed": false,
-  "indexesMessage": "skipped",
+  "indexesMessage": "firebase CLI not found",
   "sampleMissingSearchTokens": 0,
   "sampleMissingCategory": 0,
   "databaseProductionReady": false,
-  "metaTotalColleges": 45020,
+  "metaTotalColleges": null,
   "categoryCounts": null
 }

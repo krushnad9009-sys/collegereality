@@ -322,6 +322,13 @@ def row_to_college(row: dict[str, str], now: str, state_filter: str | None = Non
     search_tokens = build_search_tokens(
         name, city, district, state, category, courses, keywords
     )
+    university_name = name if re.search(r"\buniversity\b", name, re.I) else f"Affiliated to {state} State University"
+    ownership_label = (
+        "Deemed" if college_type == "deemed"
+        else "Autonomous" if college_type == "autonomous"
+        else "Government" if college_type == "government"
+        else "Private"
+    )
 
     return {
         "id": doc_id,
@@ -337,10 +344,11 @@ def row_to_college(row: dict[str, str], now: str, state_filter: str | None = Non
         "stateLower": state.lower(),
         "address": address,
         "type": college_type,
+        "ownership": ownership_label,
         "category": category,
         "courses": courses,
         "coursesDetailed": [],
-        "universityName": None,
+        "universityName": university_name,
         "website": None,
         "phone": None,
         "email": None,

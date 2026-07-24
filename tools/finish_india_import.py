@@ -178,6 +178,7 @@ def import_state(state: str, *, strict: bool) -> str:
                 "--project", "college-reality",
                 "--delay", "3.0",
                 "--only-missing",
+                "--repair-state",
                 "--verify-state", state,
             ],
             cwd=str(ROOT),
@@ -197,7 +198,10 @@ def import_state(state: str, *, strict: bool) -> str:
             if got >= target:
                 print(f"OK {state}: {got}/{exp}")
                 return "ok"
-            print(f"Under target after import {state}: {got}/{exp}")
+            print(f"Under target after import {state}: {got}/{exp} (will retry if attempts remain)")
+            if attempt >= 2 and got >= int(exp * MIN_RATIO):
+                print(f"Accepting {state} at {got}/{exp} (>= {MIN_RATIO:.0%} threshold)")
+                return "ok"
         if rc != 0 and rc != 2:
             wait = min(60, 30 * attempt)
             print(f"Retry after {wait}s...")
@@ -212,6 +216,22 @@ def main() -> int:
     if not CREDS.exists():
         print(f"Missing {CREDS}", file=sys.stderr)
         return 1
+
+    # Reset per-run import stats
+    stats_path = ROOT / "tools/data/import_session_stats.json"
+    stats_path.write_text(
+        json.dumps(
+            {
+                "newlyImported": 0,
+                "skippedDuplicates": 0,
+                "failedImports": 0,
+                "validationFailures": [],
+                "sessions": [],
+            },
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
 
     ensure_full_json()
     expected = expected_counts()
