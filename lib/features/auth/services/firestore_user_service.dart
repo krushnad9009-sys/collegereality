@@ -1,6 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 import '../../../core/constants/display_name_constants.dart';
+import '../../../core/utils/firestore_auth_utils.dart';
+import '../../../core/utils/firestore_error_utils.dart';
 import '../models/user_model.dart';
 import '../../communication/models/guide_stats_model.dart';
 import '../../community/models/user_presence_model.dart';
@@ -12,11 +15,20 @@ class FirestoreUserService {
   // Create or update user document
   Future<void> createOrUpdateUser(UserModel user) async {
     try {
+      await FirestoreAuthUtils.ensureAuthenticated(expectedUid: user.uid);
       await _firestore.collection(usersCollection).doc(user.uid).set(
             user.toJson(),
             SetOptions(merge: true),
           );
+    } on FirebaseException catch (e) {
+      throw _mapFirestoreError(
+        e,
+        collectionPath: usersCollection,
+        documentPath: user.uid,
+        action: 'create/update user',
+      );
     } catch (e) {
+      if (e is FirestoreException) rethrow;
       throw FirestoreException(
         message: 'Failed to create/update user: $e',
       );
@@ -26,13 +38,22 @@ class FirestoreUserService {
   // Get user by UID
   Future<UserModel?> getUserByUID(String uid) async {
     try {
+      await FirestoreAuthUtils.ensureAuthenticated(expectedUid: uid);
       final doc =
           await _firestore.collection(usersCollection).doc(uid).get();
       if (doc.exists) {
         return UserModel.fromJson(doc.data() as Map<String, dynamic>);
       }
       return null;
+    } on FirebaseException catch (e) {
+      throw _mapFirestoreError(
+        e,
+        collectionPath: usersCollection,
+        documentPath: uid,
+        action: 'fetch user',
+      );
     } catch (e) {
+      if (e is FirestoreException) rethrow;
       throw FirestoreException(
         message: 'Failed to fetch user: $e',
       );
@@ -81,6 +102,7 @@ class FirestoreUserService {
     Map<String, dynamic>? metadata,
   }) async {
     try {
+      await FirestoreAuthUtils.ensureAuthenticated(expectedUid: uid);
       final updateData = <String, dynamic>{
         'updatedAt': DateTime.now().toIso8601String(),
       };
@@ -156,7 +178,15 @@ class FirestoreUserService {
           .collection(usersCollection)
           .doc(uid)
           .update(updateData);
+    } on FirebaseException catch (e) {
+      throw _mapFirestoreError(
+        e,
+        collectionPath: usersCollection,
+        documentPath: uid,
+        action: 'update user profile',
+      );
     } catch (e) {
+      if (e is FirestoreException) rethrow;
       throw FirestoreException(
         message: 'Failed to update user profile: $e',
       );
@@ -209,10 +239,19 @@ class FirestoreUserService {
   // Check if user exists
   Future<bool> userExists(String uid) async {
     try {
+      await FirestoreAuthUtils.ensureAuthenticated(expectedUid: uid);
       final doc =
           await _firestore.collection(usersCollection).doc(uid).get();
       return doc.exists;
+    } on FirebaseException catch (e) {
+      throw _mapFirestoreError(
+        e,
+        collectionPath: usersCollection,
+        documentPath: uid,
+        action: 'check user existence',
+      );
     } catch (e) {
+      if (e is FirestoreException) rethrow;
       throw FirestoreException(
         message: 'Failed to check user existence: $e',
       );
@@ -247,4 +286,26 @@ class FirestoreException implements Exception {
 
   @override
   String toString() => message;
+}
+
+FirestoreException _mapFirestoreError(
+  FirebaseException error, {
+  required String collectionPath,
+  required String documentPath,
+  required String action,
+}) {
+  if (FirestoreErrorUtils.isPermissionDenied(error)) {
+    return FirestoreException(
+      message: FirestoreErrorUtils.permissionException(
+        collectionPath: collectionPath,
+        documentPath: documentPath,
+      ).message,
+    );
+  }
+  if (FirestoreErrorUtils.isQuotaExceeded(error)) {
+    return FirestoreException(message: kFirestoreQuotaUserMessage);
+  }
+  return FirestoreException(
+    message: 'Failed to $action: ${error.message ?? error.code}',
+  );
 }

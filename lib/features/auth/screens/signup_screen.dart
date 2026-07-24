@@ -81,6 +81,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       final userRepository = ref.read(userRepositoryProvider);
       await userRepository.createUser(userModel);
       await ref.read(authServiceProvider).sendEmailVerification();
+      ref.invalidate(currentUserDetailProvider);
 
       if (mounted) {
         SnackBarHelper.showSuccessSnackBar(
@@ -114,13 +115,14 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       }
 
       await syncGoogleUserToFirestore(ref, authState.user!);
+      ref.invalidate(currentUserDetailProvider);
 
       if (mounted) {
         SnackBarHelper.showSuccessSnackBar(
           context,
           message: 'Signed up with Google!',
         );
-        final userDetail = ref.read(currentUserDetailProvider).valueOrNull;
+        final userDetail = await ref.read(currentUserDetailProvider.future);
         if (userDetail != null && !userDetail.displayNameSetupComplete) {
           context.go(RouteNames.displayNameSetup);
         } else {

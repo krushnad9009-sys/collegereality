@@ -1,8 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 import '../../../core/constants/display_name_constants.dart';
 import '../../../core/constants/firestore_constants.dart';
 import '../../../core/constants/verification_constants.dart';
+import '../../../core/utils/firestore_auth_utils.dart';
+import '../../../core/utils/firestore_error_utils.dart';
 import '../../../core/utils/public_display_name_utils.dart';
 import '../models/user_model.dart';
 import '../utils/validation_util.dart';
@@ -20,14 +23,24 @@ class DisplayNameService {
     String customName, {
     String? excludeUid,
   }) async {
+    await FirestoreAuthUtils.ensureAuthenticated(expectedUid: excludeUid);
+
     final key = normalizeCustomDisplayNameKey(customName);
     if (key.isEmpty) return false;
 
-    final doc = await _displayNames.doc(key).get();
-    if (!doc.exists) return true;
+    try {
+      final doc = await _displayNames.doc(key).get();
+      if (!doc.exists) return true;
 
-    final ownerUid = doc.data()?['uid'] as String?;
-    return ownerUid == excludeUid;
+      final ownerUid = doc.data()?['uid'] as String?;
+      return ownerUid == excludeUid;
+    } on FirebaseException catch (e) {
+      throw FirestoreErrorUtils.rethrowAsUserFacing(
+        e,
+        collectionPath: FirestoreConstants.displayNamesCollection,
+        documentPath: key,
+      );
+    }
   }
 
   Future<void> updateDisplayNameSettings({
@@ -36,6 +49,8 @@ class DisplayNameService {
     String? customDisplayName,
     bool isInitialSetup = false,
   }) async {
+    await FirestoreAuthUtils.ensureAuthenticated(expectedUid: user.uid);
+
     if (!DisplayNameConstants.allModes.contains(displayNameMode)) {
       throw DisplayNameException(message: 'Invalid display name mode.');
     }
@@ -113,71 +128,151 @@ class DisplayNameService {
         ? null
         : normalizeCustomDisplayNameKey(trimmedCustom);
 
-    await _firestore.runTransaction((transaction) async {
-      final userRef = _users.doc(user.uid);
-      final userSnap = await transaction.get(userRef);
-      if (!userSnap.exists) {
-        throw DisplayNameException(message: 'User profile not found.');
-      }
+    await _ensureUserProfile(user);
 
-      if (previousCustomKey != null &&
-          previousCustomKey.isNotEmpty &&
-          previousCustomKey != nextCustomKey) {
-        final oldRef = _displayNames.doc(previousCustomKey);
-        final oldSnap = await transaction.get(oldRef);
-        if (oldSnap.exists && oldSnap.data()?['uid'] == user.uid) {
-          transaction.delete(oldRef);
+    try {
+      await _firestore.runTransaction((transaction) async {
+        final userRef = _users.doc(user.uid);
+        final userSnap = await transaction.get(userRef);
+        if (!userSnap.exists) {
+          throw DisplayNameException(message: 'User profile not found.');
         }
-      }
 
-      if (nextCustomKey != null &&
-          nextCustomKey.isNotEmpty &&
-          nextCustomKey != previousCustomKey) {
-        final newRef = _displayNames.doc(nextCustomKey);
-        final newSnap = await transaction.get(newRef);
-        if (newSnap.exists && newSnap.data()?['uid'] != user.uid) {
-          throw DisplayNameException(
-            message: 'This display name is already taken. Please choose another.',
-          );
+        if (previousCustomKey != null &&
+            previousCustomKey.isNotEmpty &&
+            previousCustomKey != nextCustomKey) {
+          final oldRef = _displayNames.doc(previousCustomKey);
+          final oldSnap = await transaction.get(oldRef);
+          if (oldSnap.exists && oldSnap.data()?['uid'] == user.uid) {
+            transaction.delete(oldRef);
+          }
         }
-        transaction.set(newRef, {
-          'uid': user.uid,
-          'displayName': trimmedCustom,
+
+        if (nextCustomKey != null &&
+            nextCustomKey.isNotEmpty &&
+            nextCustomKey != previousCustomKey) {
+          final newRef = _displayNames.doc(nextCustomKey);
+          final newSnap = await transaction.get(newRef);
+          if (newSnap.exists && newSnap.data()?['uid'] != user.uid) {
+            throw DisplayNameException(
+              message:
+                  'This display name is already taken. Please choose another.',
+            );
+          }
+          if (!newSnap.exists) {
+            transaction.set(newRef, {
+              'uid': user.uid,
+              'displayName': trimmedCustom,
+              'updatedAt': now.toIso8601String(),
+            });
+          }
+        }
+
+        transaction.update(userRef, {
+          'publicDisplayName': publicName,
+          'displayNameMode': displayNameMode,
+          'customDisplayName': trimmedCustom,
+          'displayNameSetupComplete': true,
+          if (!isInitialSetup && modeChanged)
+            'displayNameChangedAt': now.toIso8601String(),
           'updatedAt': now.toIso8601String(),
         });
-      }
-
-      transaction.update(userRef, {
-        'publicDisplayName': publicName,
-        'displayNameMode': displayNameMode,
-        'customDisplayName': trimmedCustom,
-        'displayNameSetupComplete': true,
-        if (!isInitialSetup && modeChanged)
-          'displayNameChangedAt': now.toIso8601String(),
-        'updatedAt': now.toIso8601String(),
       });
-    });
+    } on DisplayNameException {
+      rethrow;
+    } on FirebaseException catch (e) {
+      final failingPath = _resolveFailingPath(
+        error: e,
+        userId: user.uid,
+        nextCustomKey: nextCustomKey,
+      );
+      throw FirestoreErrorUtils.rethrowAsUserFacing(
+        e,
+        collectionPath: failingPath.collectionPath,
+        documentPath: failingPath.documentPath,
+      );
+    }
   }
 
   Future<void> setVerifiedRealName({
     required String uid,
     required String realName,
   }) async {
+    await FirestoreAuthUtils.ensureAuthenticated(expectedUid: uid);
+
     final validationError = ValidationUtil.validateDisplayName(realName);
     if (validationError != null) {
       throw DisplayNameException(message: validationError);
     }
 
     final trimmed = realName.trim();
-    await _users.doc(uid).set(
+    try {
+      await _users.doc(uid).set(
+        {
+          'displayName': trimmed,
+          'verifiedRealName': trimmed,
+          'updatedAt': DateTime.now().toIso8601String(),
+        },
+        SetOptions(merge: true),
+      );
+    } on FirebaseException catch (e) {
+      throw FirestoreErrorUtils.rethrowAsUserFacing(
+        e,
+        collectionPath: FirestoreConstants.usersCollection,
+        documentPath: uid,
+      );
+    }
+  }
+
+  Future<void> _ensureUserProfile(UserModel user) async {
+    final userRef = _users.doc(user.uid);
+    final snap = await userRef.get();
+    if (snap.exists) return;
+
+    await userRef.set(
       {
-        'displayName': trimmed,
-        'verifiedRealName': trimmed,
+        'uid': user.uid,
+        'email': user.email,
+        'displayName': user.displayName,
+        'verifiedRealName': user.verifiedRealName,
+        'displayNameSetupComplete': false,
+        'displayNameMode': user.displayNameMode,
+        'userType': user.userType,
+        'createdAt': user.createdAt.toIso8601String(),
         'updatedAt': DateTime.now().toIso8601String(),
       },
       SetOptions(merge: true),
     );
   }
+
+  _FailingFirestorePath _resolveFailingPath({
+    required FirebaseException error,
+    required String userId,
+    String? nextCustomKey,
+  }) {
+    if (nextCustomKey != null &&
+        error.message?.contains('display_names') == true) {
+      return _FailingFirestorePath(
+        collectionPath: FirestoreConstants.displayNamesCollection,
+        documentPath: nextCustomKey,
+      );
+    }
+
+    return _FailingFirestorePath(
+      collectionPath: FirestoreConstants.usersCollection,
+      documentPath: userId,
+    );
+  }
+}
+
+class _FailingFirestorePath {
+  final String collectionPath;
+  final String documentPath;
+
+  const _FailingFirestorePath({
+    required this.collectionPath,
+    required this.documentPath,
+  });
 }
 
 class DisplayNameException implements Exception {

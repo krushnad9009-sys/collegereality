@@ -8,6 +8,7 @@ import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/display_name_constants.dart';
 import '../../../core/constants/verification_constants.dart';
 import '../../../core/utils/public_display_name_utils.dart';
+import '../../../core/utils/firestore_error_utils.dart';
 import '../../../core/widgets/index.dart';
 import '../../auth/models/user_model.dart';
 import '../../auth/providers/user_provider.dart';
@@ -111,7 +112,10 @@ class _DisplayNameSetupScreenState extends ConsumerState<DisplayNameSetupScreen>
       }
     } catch (e) {
       if (mounted) {
-        SnackBarHelper.showErrorSnackBar(context, message: e.toString());
+        SnackBarHelper.showErrorSnackBar(
+          context,
+          message: FirestoreErrorUtils.userMessage(e),
+        );
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -131,7 +135,15 @@ class _DisplayNameSetupScreenState extends ConsumerState<DisplayNameSetupScreen>
       ),
       body: userAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(
+              FirestoreErrorUtils.userMessage(e),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
         data: (user) {
           if (user == null) {
             return const Center(child: Text('Please sign in to continue.'));

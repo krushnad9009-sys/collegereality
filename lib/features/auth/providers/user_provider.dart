@@ -35,7 +35,12 @@ final currentUserDetailProvider = FutureProvider<UserModel?>((ref) async {
 
   if (authState != null) {
     final userRepository = ref.watch(userRepositoryProvider);
-    return userRepository.getUser(authState.uid);
+    var user = await userRepository.getUser(authState.uid);
+    if (user == null) {
+      user = createUserModelFromFirebaseUser(authState);
+      await userRepository.createUser(user);
+    }
+    return user;
   }
 
   return null;
