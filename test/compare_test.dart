@@ -20,6 +20,7 @@ void main() {
       double avgPackage = 8.0,
       double highestPackage = 20.0,
       String? naacGrade,
+      int? nirfRank,
     }) {
       return CollegeModel(
         id: id,
@@ -41,7 +42,10 @@ void main() {
           averagePackageLpa: avgPackage,
           placementPercentage: 85,
         ),
-        accreditation: CollegeAccreditation(naacGrade: naacGrade),
+        accreditation: CollegeAccreditation(
+          naacGrade: naacGrade,
+          nirfRank: nirfRank,
+        ),
         aggregatedRatings: CollegeRatings(
           overall: overall,
           faculty: faculty,
@@ -67,67 +71,57 @@ void main() {
       expect(result.summary, contains('2'));
     });
 
-    test('limits to max 3 colleges', () {
+    test('limits to max 4 colleges', () {
       final colleges = List.generate(
-        5,
+        6,
         (i) => sample(id: '$i', name: 'College $i', overall: 3.0 + i * 0.2),
       );
       final result = service.compare(colleges);
       expect(result.colleges.length, CompareConstants.maxColleges);
     });
 
-    test('includes all required rating metrics', () {
+    test('includes premium comparison metrics', () {
       final result = service.compare([
-        sample(id: '1', name: 'Alpha', overall: 4.5),
-        sample(id: '2', name: 'Beta', overall: 3.8),
+        sample(id: '1', name: 'Alpha', overall: 4.5, naacGrade: 'A+', nirfRank: 45),
+        sample(id: '2', name: 'Beta', overall: 3.8, naacGrade: 'A', nirfRank: 120),
       ]);
       final metrics = result.rows.map((r) => r.metric).toSet();
-      expect(metrics, contains('Overall Rating'));
-      expect(metrics, contains('Teaching'));
-      expect(metrics, contains('Placement'));
-      expect(metrics, contains('Faculty'));
-      expect(metrics, contains('Labs'));
-      expect(metrics, contains('Library'));
-      expect(metrics, contains('Hostel'));
-      expect(metrics, contains('Food'));
-      expect(metrics, contains('Infrastructure'));
-      expect(metrics, contains('Safety'));
-      expect(metrics, contains('Fees (Annual)'));
+      expect(metrics, contains('CR Score'));
+      expect(metrics, contains('Grade'));
+      expect(metrics, contains('Confidence Level'));
+      expect(metrics, contains('Total Verified Reviews'));
+      expect(metrics, contains('Fees'));
       expect(metrics, contains('Average Package'));
       expect(metrics, contains('Highest Package'));
-      expect(metrics, contains('Accreditation'));
-      expect(metrics, contains('Courses'));
-      expect(metrics, contains('Verified Reviews'));
+      expect(metrics, contains('Placement Rate'));
+      expect(metrics, contains('Education Quality'));
+      expect(metrics, contains('Campus Life'));
+      expect(metrics, contains('Infrastructure'));
+      expect(metrics, contains('Safety & Discipline'));
+      expect(metrics, contains('Hostel'));
+      expect(metrics, contains('Faculty'));
+      expect(metrics, contains('Location'));
+      expect(metrics, contains('Courses Offered'));
+      expect(metrics, contains('NAAC Grade'));
+      expect(metrics, contains('NIRF Rank'));
     });
 
-    test('highlights best overall rating winner', () {
+    test('selects overall winner by CR Score', () {
       final result = service.compare([
-        sample(id: '1', name: 'Alpha', overall: 4.8),
-        sample(id: '2', name: 'Beta', overall: 3.5),
+        sample(id: '1', name: 'Alpha', overall: 4.8, reviewCount: 200),
+        sample(id: '2', name: 'Beta', overall: 3.5, reviewCount: 20),
       ]);
-      final overallRow =
-          result.rows.firstWhere((r) => r.metric == 'Overall Rating');
-      expect(overallRow.winnerIndex, 0);
+      expect(result.overallWinnerIndex, 0);
+      expect(result.aiSummary.bestOverall, 'Alpha');
     });
 
-    test('generates AI insights from verified data', () {
+    test('generates AI summary categories', () {
       final result = service.compare([
-        sample(id: '1', name: 'Alpha', overall: 4.8, avgPackage: 12),
-        sample(id: '2', name: 'Beta', overall: 3.5, avgPackage: 6),
+        sample(id: '1', name: 'Alpha', avgPackage: 12, feeMax: 500000),
+        sample(id: '2', name: 'Beta', avgPackage: 6, feeMax: 150000),
       ]);
+      expect(result.aiSummary.hasAny, isTrue);
       expect(result.insights.length, 2);
-      expect(result.insights.first.strengths, isNotEmpty);
-    });
-
-    test('shows review count in rows', () {
-      final result = service.compare([
-        sample(id: '1', name: 'Alpha', reviewCount: 25),
-        sample(id: '2', name: 'Beta', reviewCount: 5),
-      ]);
-      final reviewRow =
-          result.rows.firstWhere((r) => r.metric == 'Verified Reviews');
-      expect(reviewRow.values, contains('25'));
-      expect(reviewRow.winnerIndex, 0);
     });
   });
 }

@@ -9,8 +9,13 @@ import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/compare_constants.dart';
 import '../models/college_comparison_result.dart';
 import '../providers/compare_basket_provider.dart';
-import '../widgets/ai_compare_insights_panel.dart';
+import '../widgets/compare_saved_sheet.dart';
+import '../widgets/compare_add_college_sheet.dart';
+import '../widgets/compare_ai_summary_panel.dart';
+import '../widgets/compare_pros_cons_panel.dart';
 import '../widgets/compare_table_widget.dart';
+import '../widgets/compare_winner_banner.dart';
+import '../widgets/ai_compare_insights_panel.dart';
 
 class CollegeCompareScreen extends ConsumerStatefulWidget {
   final List<String> collegeIds;
@@ -23,6 +28,8 @@ class CollegeCompareScreen extends ConsumerStatefulWidget {
 }
 
 class _CollegeCompareScreenState extends ConsumerState<CollegeCompareScreen> {
+  final _shareKey = GlobalKey();
+
   @override
   void initState() {
     super.initState();
@@ -33,12 +40,53 @@ class _CollegeCompareScreenState extends ConsumerState<CollegeCompareScreen> {
     });
   }
 
+  Future<void> _saveComparison(CollegeComparisonResult result) async {
+    final service = await ref.read(compareSavedServiceProvider.future);
+    await service.save(
+      collegeIds: result.colleges.map((c) => c.id).toList(),
+      title: result.colleges.map((c) => c.name).join(' vs '),
+    );
+    ref.invalidate(savedComparisonsProvider);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Comparison saved for later')),
+      );
+    }
+  }
+
+  Future<void> _shareComparison(CollegeComparisonResult result) async {
+    final link = RouteNames.comparePath(
+      ids: result.colleges.map((c) => c.id).toList(),
+    );
+    await ref.read(compareShareServiceProvider).shareLink(link);
+  }
+
+  Future<void> _shareImage() async {
+    await ref.read(compareShareServiceProvider).shareImage(_shareKey);
+  }
+
+  Future<void> _sharePdf(CollegeComparisonResult result) async {
+    await ref.read(compareShareServiceProvider).sharePdf(result);
+  }
+
+  void _removeCollege(String collegeId) {
+    ref.read(compareBasketProvider.notifier).remove(collegeId);
+    final ids = ref.read(compareBasketProvider).collegeIds;
+    CompareSessionCache.clear();
+    if (ids.length >= CompareConstants.minCollegesToCompare) {
+      context.go(RouteNames.comparePath(ids: ids));
+    } else {
+      context.go(RouteNames.collegeSearch);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final ids = widget.collegeIds.take(CompareConstants.maxColleges).toList();
+    final basket = ref.watch(compareBasketProvider);
+    final ids = basket.collegeIds.take(CompareConstants.maxColleges).toList();
     final cached = CompareSessionCache.get(ids);
     final comparisonAsync = ref.watch(compareCollegesProvider(ids));
-    final isWide = MediaQuery.of(context).size.width >= 720;
+    final isWide = MediaQuery.sizeOf(context).width >= 900;
 
     return Scaffold(
       appBar: AppBar(
@@ -53,7 +101,7 @@ class _CollegeCompareScreenState extends ConsumerState<CollegeCompareScreen> {
               ),
             ),
             Text(
-              'Up to ${CompareConstants.maxColleges} colleges • Verified data only',
+              '${CompareConstants.minCollegesToCompare}-${CompareConstants.maxColleges} colleges • Verified data only',
               style: GoogleFonts.poppins(fontSize: 10, color: AppTheme.gray500),
             ),
           ],
@@ -63,6 +111,16 @@ class _CollegeCompareScreenState extends ConsumerState<CollegeCompareScreen> {
           onPressed: () => context.canPop() ? context.pop() : context.go(RouteNames.home),
         ),
         actions: [
+          IconButton(
+            tooltip: 'Saved comparisons',
+            onPressed: () => showSavedComparisonsSheet(context, ref),
+            icon: const Icon(Icons.bookmarks_outlined),
+          ),
+          IconButton(
+            tooltip: 'Add college',
+            onPressed: basket.isFull ? null : () => showCompareAddCollegeSheet(context, ref),
+            icon: const Icon(Icons.add),
+          ),
           IconButton(
             tooltip: 'Clear selection',
             onPressed: () {
@@ -98,7 +156,7 @@ class _CollegeCompareScreenState extends ConsumerState<CollegeCompareScreen> {
                         size: 64, color: AppTheme.gray400),
                     const SizedBox(height: 16),
                     Text(
-                      'Select at least ${CompareConstants.minCollegesToCompare} colleges',
+                      'Select ${CompareConstants.minCollegesToCompare} to ${CompareConstants.maxColleges} colleges',
                       style: GoogleFonts.poppins(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -115,7 +173,6 @@ class _CollegeCompareScreenState extends ConsumerState<CollegeCompareScreen> {
               ),
             );
           }
-
           return _buildCompareContent(result, isWide);
         },
       ),
@@ -123,41 +180,92 @@ class _CollegeCompareScreenState extends ConsumerState<CollegeCompareScreen> {
   }
 
   Widget _buildCompareContent(CollegeComparisonResult result, bool isWide) {
+    final winner = result.overallWinnerIndex != null
+        ? result.colleges[result.overallWinnerIndex!]
+        : null;
+
     return SingleChildScrollView(
       padding: EdgeInsets.all(isWide ? 24 : 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withValues(alpha: 0.06),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: AppTheme.primaryColor.withValues(alpha: 0.15),
+      child: RepaintBoundary(
+        key: _shareKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                FilledButton.tonalIcon(
+                  onPressed: () => _saveComparison(result),
+                  icon: const Icon(Icons.bookmark_add_outlined, size: 18),
+                  label: const Text('Save'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => _shareComparison(result),
+                  icon: const Icon(Icons.link, size: 18),
+                  label: const Text('Share Link'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: _shareImage,
+                  icon: const Icon(Icons.image_outlined, size: 18),
+                  label: const Text('Share Image'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => _sharePdf(result),
+                  icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
+                  label: const Text('Share PDF'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            if (winner != null) ...[
+              CompareWinnerBanner(college: winner),
+              const SizedBox(height: 16),
+            ],
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: AppTheme.primaryColor.withValues(alpha: 0.15),
+                ),
+              ),
+              child: Text(result.summary, style: GoogleFonts.poppins(fontSize: 13)),
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: result.colleges.map((college) {
+                return InputChip(
+                  label: Text(college.name, style: GoogleFonts.poppins(fontSize: 11)),
+                  onDeleted: result.colleges.length >
+                          CompareConstants.minCollegesToCompare
+                      ? () => _removeCollege(college.id)
+                      : null,
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 20),
+            CompareTableWidget(result: result),
+            const SizedBox(height: 24),
+            CompareAiSummaryPanel(summary: result.aiSummary),
+            const SizedBox(height: 24),
+            CompareProsConsPanel(items: result.prosCons),
+            const SizedBox(height: 24),
+            AiCompareInsightsPanel(insights: result.insights),
+            const SizedBox(height: 24),
+            Center(
+              child: Text(
+                'Best values highlighted in green. All data from verified student feedback.',
+                style: GoogleFonts.poppins(fontSize: 11, color: AppTheme.gray500),
+                textAlign: TextAlign.center,
               ),
             ),
-            child: Text(
-              result.summary,
-              style: GoogleFonts.poppins(fontSize: 13),
-            ),
-          ),
-          const SizedBox(height: 20),
-          CompareTableWidget(result: result),
-          const SizedBox(height: 28),
-          AiCompareInsightsPanel(insights: result.insights),
-          const SizedBox(height: 24),
-          Center(
-            child: Text(
-              'Best values highlighted in green. All data from Firestore.',
-              style: GoogleFonts.poppins(
-                fontSize: 11,
-                color: AppTheme.gray500,
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

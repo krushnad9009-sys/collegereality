@@ -1,12 +1,19 @@
 import '../../../core/constants/compare_constants.dart';
+import '../../../core/constants/cr_score_constants.dart';
 import '../../../core/utils/indian_currency_formatter.dart';
 import '../../colleges/models/college_model.dart';
 import '../../ranking/utils/cr_score_engine.dart';
+import '../../reviews/models/review_model.dart';
 import '../models/college_comparison_result.dart';
+import '../utils/compare_ai_summary_utils.dart';
+import '../utils/compare_pros_cons_utils.dart';
 
 /// Full side-by-side comparison using verified Firestore data only.
 class CollegeComparisonService {
-  CollegeComparisonResult compare(List<CollegeModel> colleges) {
+  CollegeComparisonResult compare(
+    List<CollegeModel> colleges, {
+    Map<String, List<ReviewModel>> reviewsByCollege = const {},
+  }) {
     final limited = colleges.take(CompareConstants.maxColleges).toList();
     if (limited.isEmpty) {
       return const CollegeComparisonResult(
@@ -25,28 +32,41 @@ class CollegeComparisonService {
     }
 
     final rows = <ComparisonRow>[
-      _scoreRow('CR Score', 'CR Score', limited, (c) => CrScoreEngine.effectiveScore(c)),
-      _ratingRow('Overall Rating', 'Ratings', limited, (c) => c.aggregatedRatings.overall),
-      _ratingRow('Teaching', 'Ratings', limited, (c) => c.aggregatedRatings.teaching),
-      _ratingRow('Placement', 'Ratings', limited, (c) => c.aggregatedRatings.placements),
-      _ratingRow('Faculty', 'Ratings', limited, (c) => c.aggregatedRatings.faculty),
-      _ratingRow('Labs', 'Ratings', limited, (c) => c.aggregatedRatings.labs),
-      _ratingRow('Library', 'Ratings', limited, (c) => c.aggregatedRatings.library),
-      _ratingRow('Hostel', 'Ratings', limited, (c) => c.aggregatedRatings.hostel),
-      _ratingRow('Food', 'Ratings', limited, (c) => c.aggregatedRatings.food),
-      _ratingRow('Infrastructure', 'Ratings', limited, (c) => c.aggregatedRatings.infrastructure),
-      _ratingRow('Safety', 'Ratings', limited, (c) => c.aggregatedRatings.safety),
+      _scoreRow('CR Score', 'CR Score', limited, CrScoreEngine.effectiveScore),
       _textRow(
-        'Fees (Annual)',
-        'Fees & Career',
+        'Grade',
+        'CR Score',
         limited,
-        (c) => _feeLabel(c),
+        (c) {
+          final score = CrScoreEngine.effectiveScore(c);
+          return score > 0 ? CrScoreConstants.gradeForScore(score) : '—';
+        },
+      ),
+      _textRow(
+        'Confidence Level',
+        'CR Score',
+        limited,
+        (c) => CrScoreConstants.confidenceLabel(c.reviewCount),
+      ),
+      _textRow(
+        'Total Verified Reviews',
+        'CR Score',
+        limited,
+        (c) => c.reviewCount.toString(),
+        higherIsBetter: true,
+        numeric: (c) => c.reviewCount.toDouble(),
+      ),
+      _textRow(
+        'Fees',
+        'Fees & Placements',
+        limited,
+        _feeLabel,
         higherIsBetter: false,
-        numeric: _averageFee,
+        numeric: averageAnnualFee,
       ),
       _textRow(
         'Average Package',
-        'Fees & Career',
+        'Fees & Placements',
         limited,
         (c) => c.placements.averagePackageLpa > 0
             ? '${c.placements.averagePackageLpa.toStringAsFixed(1)} LPA'
@@ -56,7 +76,7 @@ class CollegeComparisonService {
       ),
       _textRow(
         'Highest Package',
-        'Fees & Career',
+        'Fees & Placements',
         limited,
         (c) => c.placements.highestPackageLpa > 0
             ? '${c.placements.highestPackageLpa.toStringAsFixed(1)} LPA'
@@ -65,35 +85,98 @@ class CollegeComparisonService {
         numeric: (c) => c.placements.highestPackageLpa,
       ),
       _textRow(
-        'Accreditation',
-        'Accreditation',
+        'Placement Rate',
+        'Fees & Placements',
         limited,
-        _accreditationLabel,
+        (c) => c.placements.placementPercentage > 0
+            ? '${c.placements.placementPercentage.toStringAsFixed(0)}%'
+            : '—',
+        higherIsBetter: true,
+        numeric: (c) => c.placements.placementPercentage.toDouble(),
+      ),
+      _scoreRow(
+        'Education Quality',
+        'Category Scores',
+        limited,
+        (c) => CrScoreEngine.compute(c).categories.education,
+      ),
+      _scoreRow(
+        'Campus Life',
+        'Category Scores',
+        limited,
+        (c) => CrScoreEngine.compute(c).categories.campusLife,
+      ),
+      _scoreRow(
+        'Infrastructure',
+        'Category Scores',
+        limited,
+        (c) => CrScoreEngine.compute(c).categories.infrastructure,
+      ),
+      _scoreRow(
+        'Safety & Discipline',
+        'Category Scores',
+        limited,
+        (c) => CrScoreEngine.compute(c).categories.safety,
+      ),
+      _ratingRow('Hostel', 'Student Life', limited, (c) => c.aggregatedRatings.hostel),
+      _ratingRow('Faculty', 'Student Life', limited, (c) => c.aggregatedRatings.faculty),
+      _textRow(
+        'Location',
+        'College Info',
+        limited,
+        (c) => c.locationLabel,
       ),
       _textRow(
-        'Courses',
-        'Academics',
+        'Courses Offered',
+        'College Info',
         limited,
         (c) {
           final courses = c.displayCourses;
           if (courses.isEmpty) return '—';
-          if (courses.length <= 3) return courses.join(', ');
-          return '${courses.take(3).join(', ')} +${courses.length - 3} more';
+          if (courses.length <= 4) return courses.join(', ');
+          return '${courses.take(4).join(', ')} +${courses.length - 4} more';
         },
       ),
       _textRow(
-        'Verified Reviews',
-        'Trust',
+        'NAAC Grade',
+        'Accreditation',
         limited,
-        (c) => c.reviewCount.toString(),
-        higherIsBetter: true,
-        numeric: (c) => c.reviewCount.toDouble(),
+        (c) {
+          final grade = c.accreditation.naacGrade;
+          return grade != null && grade.isNotEmpty ? grade : '—';
+        },
+      ),
+      _textRow(
+        'NIRF Rank',
+        'Accreditation',
+        limited,
+        (c) {
+          final rank = c.accreditation.nirfRank;
+          return rank != null && rank > 0 ? '#$rank' : '—';
+        },
+        higherIsBetter: false,
+        numeric: (c) {
+          final rank = c.accreditation.nirfRank;
+          if (rank == null || rank <= 0) return 0;
+          return rank.toDouble();
+        },
       ),
     ];
 
+    final prosCons = limited
+        .map(
+          (college) => CompareProsConsUtils.buildForCollege(
+            collegeId: college.id,
+            collegeName: college.name,
+            reviews: reviewsByCollege[college.id] ?? const [],
+          ),
+        )
+        .toList();
+
     final insights = _buildInsights(limited, rows);
+    final aiSummary = CompareAiSummaryUtils.build(limited);
     final winnerIndex = _bestIndex(
-      limited.map((c) => CrScoreEngine.effectiveScore(c)).toList(),
+      limited.map(CrScoreEngine.effectiveScore).toList(),
       higherIsBetter: true,
     );
     final summary = _buildSummary(limited, winnerIndex);
@@ -102,6 +185,8 @@ class CollegeComparisonService {
       colleges: limited,
       rows: rows,
       insights: insights,
+      prosCons: prosCons,
+      aiSummary: aiSummary,
       summary: summary,
       overallWinnerIndex: winnerIndex,
     );
@@ -111,8 +196,9 @@ class CollegeComparisonService {
     List<CollegeModel> colleges,
     List<ComparisonRow> rows,
   ) {
-    return colleges.map((college) {
-      final idx = colleges.indexOf(college);
+    return colleges.asMap().entries.map((entry) {
+      final idx = entry.key;
+      final college = entry.value;
       final strengths = <String>[];
       final weaknesses = <String>[];
 
@@ -122,23 +208,16 @@ class CollegeComparisonService {
         if (row.winnerIndex == idx) {
           strengths.add('$label: ${row.values[idx]} (best among compared)');
         } else if (row.higherIsBetter) {
-          final allNumeric = row.values.every((v) => v != '—');
-          if (allNumeric && row.winnerIndex != idx) {
-            final isLowest = _isLowestAmong(row, idx);
-            if (isLowest) {
-              weaknesses.add('$label: ${row.values[idx]} (lowest among compared)');
-            }
+          if (_isLowestAmong(row, idx)) {
+            weaknesses.add('$label: ${row.values[idx]} (lowest among compared)');
           }
-        } else {
-          final isHighest = _isHighestAmong(row, idx);
-          if (isHighest && row.winnerIndex != idx) {
-            weaknesses.add('$label: ${row.values[idx]} (highest among compared)');
-          }
+        } else if (_isHighestAmong(row, idx) && row.winnerIndex != idx) {
+          weaknesses.add('$label: ${row.values[idx]} (highest among compared)');
         }
       }
 
       if (college.reviewCount == 0) {
-        weaknesses.add('No verified student reviews yet in Firestore.');
+        weaknesses.add('No verified student reviews yet.');
       } else if (college.reviewCount >= 10) {
         strengths.add(
           '${college.reviewCount} verified reviews — strong data confidence.',
@@ -155,18 +234,16 @@ class CollegeComparisonService {
   }
 
   bool _isLowestAmong(ComparisonRow row, int index) {
-    final values = row.values;
-    final target = values[index];
-    return values.where((v) => v != '—').every((v) {
+    final target = row.values[index];
+    return row.values.where((v) => v != '—').every((v) {
       if (v == target) return true;
       return _parseNumeric(v) >= _parseNumeric(target);
     });
   }
 
   bool _isHighestAmong(ComparisonRow row, int index) {
-    final values = row.values;
-    final target = values[index];
-    return values.where((v) => v != '—').every((v) {
+    final target = row.values[index];
+    return row.values.where((v) => v != '—').every((v) {
       if (v == target) return true;
       return _parseNumeric(v) <= _parseNumeric(target);
     });
@@ -277,14 +354,13 @@ class CollegeComparisonService {
 
   String _buildSummary(List<CollegeModel> colleges, int? winnerIndex) {
     if (winnerIndex == null || winnerIndex >= colleges.length) {
-      return 'Side-by-side comparison using verified college records. '
+      return 'Side-by-side comparison using verified student feedback only. '
           'Missing fields are shown as —.';
     }
     final winner = colleges[winnerIndex];
-    return '${winner.name} leads on CR Score '
+    return '${winner.name} is the overall winner based on CR Score '
         '(${CrScoreEngine.effectiveScore(winner).toStringAsFixed(0)}/100, '
-        '${winner.reviewCount} verified reviews). All statistics are from Firestore — '
-        'nothing is generated or estimated.';
+        '${winner.reviewCount} verified reviews).';
   }
 
   static String _feeLabel(CollegeModel c) {
@@ -294,22 +370,10 @@ class CollegeComparisonService {
     );
   }
 
-  static double _averageFee(CollegeModel c) {
+  static double averageAnnualFee(CollegeModel c) {
     final min = c.fees.tuitionMin;
     final max = c.fees.tuitionMax;
     if (min > 0 && max > 0) return (min + max) / 2;
     return (max > 0 ? max : min).toDouble();
-  }
-
-  static String _accreditationLabel(CollegeModel c) {
-    final parts = <String>[];
-    final acc = c.accreditation;
-    if (acc.naacGrade != null && acc.naacGrade!.isNotEmpty) {
-      parts.add('NAAC ${acc.naacGrade}');
-    }
-    if (acc.nirfRank != null) parts.add('NIRF #${acc.nirfRank}');
-    if (acc.ugcRecognized) parts.add('UGC');
-    if (acc.aicteApproved) parts.add('AICTE');
-    return parts.isEmpty ? '—' : parts.join(' • ');
   }
 }

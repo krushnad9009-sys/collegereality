@@ -14,14 +14,14 @@ class CompareTableWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isWide = MediaQuery.of(context).size.width >= 720;
+    final isWide = MediaQuery.sizeOf(context).width >= 900;
     final colleges = result.colleges;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _CollegeHeaders(colleges: colleges),
-        const SizedBox(height: 12),
+        _CollegeHeaderCards(colleges: colleges),
+        const SizedBox(height: 16),
         if (isWide)
           _DesktopTable(result: result)
         else
@@ -31,68 +31,138 @@ class CompareTableWidget extends StatelessWidget {
   }
 }
 
-class _CollegeHeaders extends StatelessWidget {
+class _CollegeHeaderCards extends StatelessWidget {
   final List<CollegeModel> colleges;
 
-  const _CollegeHeaders({required this.colleges});
+  const _CollegeHeaderCards({required this.colleges});
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: colleges.map((c) {
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: AppTheme.primaryColor.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: AppTheme.primaryColor.withValues(alpha: 0.2),
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                c.name,
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cardWidth = constraints.maxWidth >= 900
+            ? (constraints.maxWidth - 24) / colleges.length
+            : 240.0;
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: colleges.asMap().entries.map((entry) {
+              final college = entry.value;
+              return Container(
+                width: cardWidth.clamp(220, 320),
+                margin: EdgeInsets.only(
+                  right: entry.key == colleges.length - 1 ? 0 : 12,
                 ),
-              ),
-              Text(
-                c.locationLabel,
-                style: GoogleFonts.poppins(
-                  fontSize: 11,
-                  color: AppTheme.gray500,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  CrScoreBadgeWidget(
-                    score: CrScoreEngine.effectiveScore(c),
-                    fontSize: 10,
-                  ),
-                  const SizedBox(width: 8),
-                  const Icon(Icons.verified_outlined,
-                      size: 12, color: AppTheme.accentColor),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${c.reviewCount} verified reviews',
-                    style: GoogleFonts.poppins(
-                      fontSize: 10,
-                      color: AppTheme.accentColor,
-                      fontWeight: FontWeight.w600,
+                child: _AnimatedCompareCard(
+                  delayMs: entry.key * 80,
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: AppTheme.gray200),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.primaryDark.withValues(alpha: 0.05),
+                          blurRadius: 18,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          college.name,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          college.locationLabel,
+                          style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            color: AppTheme.gray500,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        CrScoreBadgeWidget(
+                          score: CrScoreEngine.effectiveScore(college),
+                          showGrade: true,
+                          fontSize: 11,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '${college.reviewCount} verified reviews',
+                          style: GoogleFonts.poppins(
+                            fontSize: 10,
+                            color: AppTheme.accentColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
-            ],
+                ),
+              );
+            }).toList(),
           ),
         );
-      }).toList(),
+      },
+    );
+  }
+}
+
+class _AnimatedCompareCard extends StatefulWidget {
+  final Widget child;
+  final int delayMs;
+
+  const _AnimatedCompareCard({
+    required this.child,
+    required this.delayMs,
+  });
+
+  @override
+  State<_AnimatedCompareCard> createState() => _AnimatedCompareCardState();
+}
+
+class _AnimatedCompareCardState extends State<_AnimatedCompareCard>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 420),
+    );
+    Future.delayed(Duration(milliseconds: widget.delayMs), () {
+      if (mounted) _controller.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: CurvedAnimation(parent: _controller, curve: Curves.easeOut),
+      child: SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(0, 0.08),
+          end: Offset.zero,
+        ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut)),
+        child: widget.child,
+      ),
     );
   }
 }
@@ -104,32 +174,40 @@ class _DesktopTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: DataTable(
-        headingRowHeight: 48,
-        dataRowMinHeight: 44,
-        columnSpacing: 20,
-        headingTextStyle: GoogleFonts.poppins(
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-        ),
-        columns: [
-          const DataColumn(label: Text('Metric')),
-          ...result.colleges.map(
-            (c) => DataColumn(
-              label: SizedBox(
-                width: 120,
-                child: Text(
-                  c.name,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: const BorderSide(color: AppTheme.gray200),
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.all(8),
+        child: DataTable(
+          headingRowHeight: 48,
+          dataRowMinHeight: 48,
+          columnSpacing: 24,
+          headingTextStyle: GoogleFonts.poppins(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+          ),
+          columns: [
+            const DataColumn(label: Text('Metric')),
+            ...result.colleges.map(
+              (c) => DataColumn(
+                label: SizedBox(
+                  width: 140,
+                  child: Text(
+                    c.name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
-        rows: result.rows.map((row) => _dataRow(row)).toList(),
+          ],
+          rows: result.rows.map(_dataRow).toList(),
+        ),
       ),
     );
   }
@@ -139,9 +217,8 @@ class _DesktopTable extends StatelessWidget {
       cells: [
         DataCell(Text(row.metric)),
         ...row.values.asMap().entries.map((entry) {
-          final isWinner = row.winnerIndex == entry.key;
           return DataCell(
-            _ValueCell(value: entry.value, isWinner: isWinner),
+            _ValueCell(value: entry.value, isWinner: row.winnerIndex == entry.key),
           );
         }),
       ],
@@ -181,14 +258,14 @@ class _MobileCards extends StatelessWidget {
         }
         widgets.add(
           Card(
-            margin: const EdgeInsets.only(bottom: 8),
+            margin: const EdgeInsets.only(bottom: 10),
             elevation: 0,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-              side: BorderSide(color: AppTheme.gray200),
+              borderRadius: BorderRadius.circular(14),
+              side: const BorderSide(color: AppTheme.gray200),
             ),
             child: Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -199,16 +276,14 @@ class _MobileCards extends StatelessWidget {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
                   ...row.values.asMap().entries.map((entry) {
                     final college = result.colleges[entry.key];
-                    final isWinner = row.winnerIndex == entry.key;
                     return Padding(
-                      padding: const EdgeInsets.only(bottom: 4),
+                      padding: const EdgeInsets.only(bottom: 6),
                       child: Row(
                         children: [
                           Expanded(
-                            flex: 2,
                             child: Text(
                               college.name,
                               style: GoogleFonts.poppins(fontSize: 11),
@@ -216,11 +291,9 @@ class _MobileCards extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          Expanded(
-                            child: _ValueCell(
-                              value: entry.value,
-                              isWinner: isWinner,
-                            ),
+                          _ValueCell(
+                            value: entry.value,
+                            isWinner: row.winnerIndex == entry.key,
                           ),
                         ],
                       ),
@@ -245,12 +318,23 @@ class _ValueCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      value,
-      style: GoogleFonts.poppins(
-        fontSize: 12,
-        fontWeight: isWinner ? FontWeight.w700 : FontWeight.w500,
-        color: isWinner ? AppTheme.accentColor : null,
+    return Container(
+      padding: isWinner
+          ? const EdgeInsets.symmetric(horizontal: 8, vertical: 4)
+          : EdgeInsets.zero,
+      decoration: isWinner
+          ? BoxDecoration(
+              color: AppTheme.accentColor.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(8),
+            )
+          : null,
+      child: Text(
+        value,
+        style: GoogleFonts.poppins(
+          fontSize: 12,
+          fontWeight: isWinner ? FontWeight.w700 : FontWeight.w500,
+          color: isWinner ? AppTheme.accentColor : null,
+        ),
       ),
     );
   }

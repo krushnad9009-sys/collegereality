@@ -25,4 +25,9 @@ class CompareSessionCache {
     _cache[key] = result;
     _cacheAt[key] = DateTime.now();
   }
+
+  static void clear() {
+    _cache.clear();
+    _cacheAt.clear();
+  }
 }
