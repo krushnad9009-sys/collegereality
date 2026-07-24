@@ -5,8 +5,12 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 import '../../../config/router/route_names.dart';
+import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/engagement_constants.dart';
+import '../../../core/widgets/async_state_widgets.dart';
+import '../../../core/widgets/premium_components.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../models/engagement_models.dart';
 import '../providers/engagement_provider.dart';
@@ -88,6 +92,7 @@ class _NotificationsCenterScreenState
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
     final notificationsAsync = ref.watch(filteredNotificationsProvider);
     final filters = ref.watch(notificationFilterProvider);
 
@@ -97,7 +102,10 @@ class _NotificationsCenterScreenState
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
           onPressed: () => context.pop(),
         ),
-        title: const Text('Notifications'),
+        title: Text(
+          'Notifications',
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.settings_outlined),
@@ -118,23 +126,49 @@ class _NotificationsCenterScreenState
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: 'Search notifications...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                isDense: true,
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.md,
+              AppSpacing.lg,
+              AppSpacing.sm,
+            ),
+            child: PremiumCard(
+              radius: tokens.buttonRadius,
+              padding: EdgeInsets.zero,
+              child: TextField(
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  color: tokens.textPrimary,
+                ),
+                decoration: InputDecoration(
+                  hintText: 'Search notifications...',
+                  hintStyle: GoogleFonts.poppins(
+                    fontSize: 14,
+                    color: tokens.textTertiary,
+                  ),
+                  prefixIcon: Icon(
+                    Icons.search_rounded,
+                    color: tokens.textTertiary,
+                  ),
+                  filled: true,
+                  fillColor: tokens.surfaceElevated,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(tokens.buttonRadius),
+                    borderSide: BorderSide.none,
+                  ),
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                onChanged: (q) =>
+                    ref.read(notificationFilterProvider.notifier).setSearch(q),
               ),
-              onChanged: (q) =>
-                  ref.read(notificationFilterProvider.notifier).setSearch(q),
             ),
           ),
           SizedBox(
             height: 44,
             child: ListView(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
               children: [
                 _FilterChip(
                   label: 'All',
@@ -161,31 +195,36 @@ class _NotificationsCenterScreenState
               ],
             ),
           ),
-          const Divider(height: 1),
+          Divider(height: 1, color: tokens.borderSubtle),
           Expanded(
             child: notificationsAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('Error: $e')),
+              loading: () => const ListSkeletonLoader(itemCount: 8),
+              error: (e, _) => AsyncErrorView.fromError(e),
               data: (items) {
                 final merged = _mergeItems(items);
                 if (merged.isEmpty) {
-                  return Center(
-                    child: Text(
-                      'No notifications yet',
-                      style: GoogleFonts.poppins(color: AppTheme.gray500),
-                    ),
+                  return const AsyncEmptyView(
+                    icon: Icons.notifications_none_rounded,
+                    title: 'No notifications yet',
+                    subtitle: 'Updates about reviews, Q&A, and more will appear here.',
                   );
                 }
                 return ListView.separated(
                   controller: _scrollController,
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(AppSpacing.md),
                   itemCount: merged.length + (_loadingMore ? 1 : 0),
-                  separatorBuilder: (_, _) => const SizedBox(height: 8),
+                  separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
                   itemBuilder: (_, i) {
                     if (i >= merged.length) {
                       return const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 16),
-                        child: Center(child: CircularProgressIndicator()),
+                        padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+                        child: Center(
+                          child: SizedBox(
+                            width: 28,
+                            height: 28,
+                            child: CircularProgressIndicator(strokeWidth: 2.5),
+                          ),
+                        ),
                       );
                     }
                     return _NotificationTile(notification: merged[i]);
@@ -243,11 +282,11 @@ class _FilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: FilterChip(
-        label: Text(label),
+      padding: const EdgeInsets.only(right: AppSpacing.sm),
+      child: PremiumChip(
+        label: label,
         selected: selected,
-        onSelected: (_) => onTap(),
+        onTap: onTap,
       ),
     );
   }
@@ -260,96 +299,112 @@ class _NotificationTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final tokens = context.tokens;
     final dateFmt = DateFormat('MMM d, h:mm a');
     return Dismissible(
       key: ValueKey(notification.id),
       direction: DismissDirection.endToStart,
       background: Container(
         alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        color: AppTheme.errorColor.withValues(alpha: 0.85),
+        padding: const EdgeInsets.only(right: AppSpacing.xl),
+        margin: const EdgeInsets.only(bottom: 2),
+        decoration: BoxDecoration(
+          color: AppTheme.errorColor.withValues(alpha: 0.9),
+          borderRadius: BorderRadius.circular(tokens.buttonRadius),
+        ),
         child: const Icon(Icons.delete_outline, color: Colors.white),
       ),
       onDismissed: (_) {
         ref.read(engagementRepositoryProvider).deleteNotification(notification.id);
       },
-      child: Material(
+      child: PremiumCard(
+        radius: tokens.buttonRadius,
+        padding: const EdgeInsets.all(AppSpacing.lg),
         color: notification.isRead
-            ? Theme.of(context).cardColor
-            : AppTheme.primaryColor.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(12),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: () async {
-            if (!notification.isRead) {
-              await ref
-                  .read(engagementRepositoryProvider)
-                  .markAsRead(notification.id);
-            }
-            if (notification.actionRoute.isNotEmpty && context.mounted) {
-              context.push(notification.actionRoute);
-            }
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(
-                  _iconForCategory(notification.category),
-                  color: AppTheme.primaryColor,
-                  size: 22,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        notification.title,
-                        style: GoogleFonts.poppins(
-                          fontWeight:
-                              notification.isRead ? FontWeight.w500 : FontWeight.w700,
-                          fontSize: 14,
-                        ),
-                      ),
-                      if (notification.body.isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          notification.body,
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            color: AppTheme.gray600,
-                            height: 1.4,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                      const SizedBox(height: 6),
-                      Text(
-                        '${EngagementConstants.notificationTypeLabel(notification.type)} · ${dateFmt.format(notification.createdAt)}',
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          color: AppTheme.gray500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (!notification.isRead)
-                  Container(
-                    width: 8,
-                    height: 8,
-                    margin: const EdgeInsets.only(top: 6),
-                    decoration: const BoxDecoration(
-                      color: AppTheme.primaryColor,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-              ],
+            ? tokens.surfaceElevated
+            : AppTheme.primaryColor.withValues(alpha: 0.05),
+        onTap: () async {
+          if (!notification.isRead) {
+            await ref
+                .read(engagementRepositoryProvider)
+                .markAsRead(notification.id);
+          }
+          if (notification.actionRoute.isNotEmpty && context.mounted) {
+            context.push(notification.actionRoute);
+          }
+        },
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+              ),
+              child: Icon(
+                _iconForCategory(notification.category),
+                color: AppTheme.primaryColor,
+                size: 20,
+              ),
             ),
-          ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    notification.title,
+                    style: GoogleFonts.poppins(
+                      fontWeight:
+                          notification.isRead ? FontWeight.w500 : FontWeight.w700,
+                      fontSize: 14,
+                      color: tokens.textPrimary,
+                      height: 1.3,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (notification.body.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      notification.body,
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: tokens.textSecondary,
+                        height: 1.45,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                  const SizedBox(height: 6),
+                  Text(
+                    '${EngagementConstants.notificationTypeLabel(notification.type)} · ${dateFmt.format(notification.createdAt)}',
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: tokens.textTertiary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            if (!notification.isRead) ...[
+              const SizedBox(width: AppSpacing.sm),
+              Container(
+                width: 8,
+                height: 8,
+                margin: const EdgeInsets.only(top: 6),
+                decoration: const BoxDecoration(
+                  color: AppTheme.primaryColor,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ],
+          ],
         ),
       ),
     );

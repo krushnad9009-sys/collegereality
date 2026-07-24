@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../config/router/route_names.dart';
+import '../../config/theme/app_design_tokens.dart';
 import '../../config/theme/app_theme.dart';
 
 /// Premium bottom navigation shell for primary app destinations.
@@ -31,6 +33,7 @@ class AppShell extends StatelessWidget {
 
   void _onTap(BuildContext context, int index) {
     if (index == _selectedIndex(GoRouterState.of(context).uri.path)) return;
+    HapticFeedback.lightImpact();
     context.go(_tabRoutes[index]);
   }
 
@@ -39,35 +42,44 @@ class AppShell extends StatelessWidget {
     final location = GoRouterState.of(context).uri.path;
     final showNav = _showBottomNav(location);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final tokens = context.tokens;
+    final width = MediaQuery.sizeOf(context).width;
+    final isTablet = width >= 600;
 
     return Scaffold(
       body: child,
       extendBody: true,
       bottomNavigationBar: showNav
           ? Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              padding: EdgeInsets.fromLTRB(
+                isTablet ? 32 : 16,
+                0,
+                isTablet ? 32 : 16,
+                isTablet ? 16 : 12,
+              ),
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(24),
+                  borderRadius: BorderRadius.circular(tokens.navBarRadius),
                   boxShadow: [
                     BoxShadow(
-                      color: AppTheme.black.withValues(alpha: isDark ? 0.35 : 0.12),
-                      blurRadius: 24,
-                      offset: const Offset(0, 8),
+                      color: AppTheme.black.withValues(alpha: isDark ? 0.4 : 0.1),
+                      blurRadius: 28,
+                      offset: const Offset(0, 10),
                     ),
                   ],
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(24),
+                  borderRadius: BorderRadius.circular(tokens.navBarRadius),
                   child: NavigationBar(
                     selectedIndex: _selectedIndex(location),
                     onDestinationSelected: (index) => _onTap(context, index),
-                    height: 68,
+                    height: isTablet ? 72 : 68,
                     backgroundColor: isDark
-                        ? AppTheme.gray800.withValues(alpha: 0.94)
-                        : AppTheme.white.withValues(alpha: 0.94),
+                        ? AppTheme.gray800.withValues(alpha: 0.95)
+                        : AppTheme.white.withValues(alpha: 0.96),
                     indicatorColor: AppTheme.primaryColor.withValues(alpha: 0.14),
                     labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+                    animationDuration: const Duration(milliseconds: 280),
                     destinations: [
                       _destination(Icons.home_rounded, 'Home'),
                       _destination(Icons.search_rounded, 'Search'),

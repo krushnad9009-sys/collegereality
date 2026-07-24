@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../../config/theme/app_theme.dart';
+
 import '../../../config/router/route_names.dart';
-import '../../../core/widgets/premium_auth_background.dart';
-import '../../../core/widgets/index.dart';
+import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_spacing.dart';
+import '../../../config/theme/app_theme.dart';
 import '../../../core/services/preferences_service.dart';
+import '../../../core/widgets/index.dart';
+import '../../../core/widgets/premium_auth_background.dart';
 import '../../colleges/providers/college_provider.dart';
 import '../providers/auth_provider.dart';
 import '../utils/google_auth_helper.dart';
@@ -130,199 +132,235 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 600;
     final authState = ref.watch(authProvider);
+    final tokens = context.tokens;
+    final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
       body: PremiumAuthBackground(
         child: SafeArea(
           child: SingleChildScrollView(
-          child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: isMobile ? 20 : 40,
-              vertical: 24,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header
-                const SizedBox(height: 20),
-                Text(
-                  'Welcome Back',
-                  style: GoogleFonts.poppins(
-                    fontSize: isMobile ? 28 : 32,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Sign in to continue to College Reality',
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: AppTheme.gray600,
-                  ),
-                ),
-                const SizedBox(height: 40),
-
-                // Form
-                Form(
-                  key: _formKey,
-                  child: Column(
-                    children: [
-                      CustomTextField(
-                        label: 'Email Address',
-                        hint: 'Enter your email',
-                        controller: _emailController,
-                        keyboardType: TextInputType.emailAddress,
-                        validator: ValidationUtil.validateEmail,
-                        prefixIcon: Icons.email_outlined,
-                        isRequired: true,
-                      ),
-                      const SizedBox(height: 20),
-                      CustomTextField(
-                        label: 'Password',
-                        hint: 'Enter your password',
-                        controller: _passwordController,
-                        obscureText: true,
-                        validator: ValidationUtil.validateRequired,
-                        prefixIcon: Icons.lock_outline,
-                        isRequired: true,
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                // Remember Me & Forgot Password
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: isMobile ? AppSpacing.pageH : AppSpacing.section + 8,
+                vertical: AppSpacing.xxl,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  FadeInSection(
+                    delayMs: 0,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Checkbox(
-                          value: _rememberMe,
-                          onChanged: (value) {
-                            setState(() => _rememberMe = value ?? false);
-                          },
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(4),
+                        const SizedBox(height: AppSpacing.xl),
+                        Text(
+                          'Welcome Back',
+                          style: textTheme.headlineMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: tokens.textPrimary,
+                            letterSpacing: -0.5,
                           ),
                         ),
+                        const SizedBox(height: AppSpacing.sm),
                         Text(
-                          'Remember me',
-                          style: GoogleFonts.poppins(
-                            fontSize: 13,
+                          'Sign in to continue to College Reality',
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: tokens.textSecondary,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
                       ],
                     ),
-                    TextLink(
-                      text: 'Forgot password?',
-                      fontSize: 13,
-                      onPressed: () => context.go(RouteNames.forgotPassword),
-                    ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: AppSpacing.section + 8),
 
-                const SizedBox(height: 32),
-
-                // Login Button
-                PrimaryButton(
-                  label: 'Sign In',
-                  isLoading: authState.isLoading,
-                  onPressed: _handleEmailLogin,
-                ),
-
-                const SizedBox(height: 24),
-
-                // Divider
-                Row(
-                  children: [
-                    const Expanded(child: Divider()),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: Text(
-                        'OR',
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.gray400,
+                  FadeInSection(
+                    delayMs: 80,
+                    child: PremiumCard(
+                      padding: const EdgeInsets.all(AppSpacing.xxl),
+                      radius: tokens.cardRadius,
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          children: [
+                            CustomTextField(
+                              label: 'Email Address',
+                              hint: 'Enter your email',
+                              controller: _emailController,
+                              keyboardType: TextInputType.emailAddress,
+                              validator: ValidationUtil.validateEmail,
+                              prefixIcon: Icons.email_outlined,
+                              isRequired: true,
+                            ),
+                            const SizedBox(height: AppSpacing.xl),
+                            CustomTextField(
+                              label: 'Password',
+                              hint: 'Enter your password',
+                              controller: _passwordController,
+                              obscureText: true,
+                              validator: ValidationUtil.validateRequired,
+                              prefixIcon: Icons.lock_outline,
+                              isRequired: true,
+                            ),
+                            const SizedBox(height: AppSpacing.lg),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Row(
+                                    children: [
+                                      Checkbox(
+                                        value: _rememberMe,
+                                        onChanged: (value) {
+                                          setState(
+                                            () => _rememberMe = value ?? false,
+                                          );
+                                        },
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(4),
+                                        ),
+                                        visualDensity: VisualDensity.compact,
+                                      ),
+                                      Flexible(
+                                        child: Text(
+                                          'Remember me',
+                                          style: textTheme.bodySmall?.copyWith(
+                                            fontWeight: FontWeight.w500,
+                                            color: tokens.textPrimary,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                TextLink(
+                                  text: 'Forgot password?',
+                                  fontSize: 13,
+                                  onPressed: () =>
+                                      context.go(RouteNames.forgotPassword),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                    const Expanded(child: Divider()),
-                  ],
-                ),
+                  ),
 
-                const SizedBox(height: 24),
+                  const SizedBox(height: AppSpacing.section),
 
-                // Google Sign In
-                GoogleSignInButton(
-                  isLoading: authState.isLoading,
-                  onPressed: _handleGoogleLogin,
-                ),
-
-                const SizedBox(height: 32),
-
-                // Sign Up Link
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      "Don't have an account? ",
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: AppTheme.gray600,
-                      ),
+                  FadeInSection(
+                    delayMs: 140,
+                    child: PrimaryButton(
+                      label: 'Sign In',
+                      isLoading: authState.isLoading,
+                      onPressed: _handleEmailLogin,
                     ),
-                    TextLink(
-                      text: 'Sign Up',
-                      fontSize: 14,
-                      onPressed: () => context.go(RouteNames.signup),
-                    ),
-                  ],
-                ),
+                  ),
 
-                const SizedBox(height: 20),
+                  const SizedBox(height: AppSpacing.xxl),
 
-                // Error message if login failed
-                if (authState.error != null)
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppTheme.errorColor.withValues(alpha: 0.1),
-                      border: Border.all(color: AppTheme.errorColor),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
+                  FadeInSection(
+                    delayMs: 180,
                     child: Row(
                       children: [
-                        const Icon(
-                          Icons.error_outline,
-                          color: AppTheme.errorColor,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 12),
                         Expanded(
+                          child: Divider(color: tokens.borderSubtle),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.md,
+                          ),
                           child: Text(
-                            authState.error ?? '',
-                            style: GoogleFonts.poppins(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                              color: AppTheme.errorColor,
+                            'OR',
+                            style: textTheme.labelSmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: tokens.textTertiary,
+                              letterSpacing: 1,
                             ),
                           ),
+                        ),
+                        Expanded(
+                          child: Divider(color: tokens.borderSubtle),
                         ),
                       ],
                     ),
                   ),
-              ],
+
+                  const SizedBox(height: AppSpacing.xxl),
+
+                  FadeInSection(
+                    delayMs: 220,
+                    child: GoogleSignInButton(
+                      isLoading: authState.isLoading,
+                      onPressed: _handleGoogleLogin,
+                    ),
+                  ),
+
+                  const SizedBox(height: AppSpacing.section),
+
+                  FadeInSection(
+                    delayMs: 260,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          "Don't have an account? ",
+                          style: textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w500,
+                            color: tokens.textSecondary,
+                          ),
+                        ),
+                        TextLink(
+                          text: 'Sign Up',
+                          fontSize: 14,
+                          onPressed: () => context.go(RouteNames.signup),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: AppSpacing.xl),
+
+                  if (authState.error != null)
+                    FadeInSection(
+                      delayMs: 300,
+                      child: Container(
+                        padding: const EdgeInsets.all(AppSpacing.md),
+                        decoration: BoxDecoration(
+                          color: AppTheme.errorColor.withValues(alpha: 0.08),
+                          border: Border.all(
+                            color: AppTheme.errorColor.withValues(alpha: 0.4),
+                          ),
+                          borderRadius:
+                              BorderRadius.circular(tokens.buttonRadius),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.error_outline_rounded,
+                              color: AppTheme.errorColor,
+                              size: 20,
+                            ),
+                            const SizedBox(width: AppSpacing.md),
+                            Expanded(
+                              child: Text(
+                                authState.error ?? '',
+                                style: textTheme.bodySmall?.copyWith(
+                                  fontWeight: FontWeight.w500,
+                                  color: AppTheme.errorColor,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
         ),
       ),
-    ),
     );
   }
 }

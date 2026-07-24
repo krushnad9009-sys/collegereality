@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+
+import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/community_constants.dart';
 import '../models/chat_message_model.dart';
@@ -18,59 +20,90 @@ class MessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final textTheme = Theme.of(context).textTheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     final bg = isMine
         ? AppTheme.primaryColor
-        : AppTheme.gray100;
-    final fg = isMine ? Colors.white : AppTheme.gray800;
+        : (isDark ? tokens.surfaceElevated : tokens.surfaceElevated);
+    final fg = isMine ? Colors.white : tokens.textPrimary;
+    final borderColor = isMine
+        ? Colors.transparent
+        : tokens.borderSubtle;
 
     return Align(
       alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.75,
+          maxWidth: MediaQuery.of(context).size.width * 0.78,
         ),
-        margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.md,
+        ),
         decoration: BoxDecoration(
           color: bg,
           borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(16),
-            topRight: const Radius.circular(16),
-            bottomLeft: Radius.circular(isMine ? 16 : 4),
-            bottomRight: Radius.circular(isMine ? 4 : 16),
+            topLeft: const Radius.circular(AppSpacing.radiusMd),
+            topRight: const Radius.circular(AppSpacing.radiusMd),
+            bottomLeft: Radius.circular(isMine ? AppSpacing.radiusMd : 4),
+            bottomRight: Radius.circular(isMine ? 4 : AppSpacing.radiusMd),
           ),
+          border: Border.all(color: borderColor),
+          boxShadow: isMine
+              ? [
+                  BoxShadow(
+                    color: AppTheme.primaryColor.withValues(alpha: 0.22),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : isDark
+                  ? null
+                  : [
+                      BoxShadow(
+                        color: AppTheme.black.withValues(alpha: 0.04),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
         ),
         child: Column(
           crossAxisAlignment:
               isMine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
             if (!isMine)
-              Text(
-                message.senderName,
-                style: GoogleFonts.poppins(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.primaryColor,
+              Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+                child: Text(
+                  message.senderName,
+                  style: textTheme.labelSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.primaryColor,
+                  ),
                 ),
               ),
-            _content(fg),
-            const SizedBox(height: 4),
+            _content(fg, textTheme),
+            const SizedBox(height: AppSpacing.xs),
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   _timeLabel(message.createdAt),
-                  style: GoogleFonts.poppins(
+                  style: textTheme.labelSmall?.copyWith(
                     fontSize: 10,
-                    color: isMine ? Colors.white70 : AppTheme.gray500,
+                    color: isMine ? Colors.white70 : tokens.textTertiary,
                   ),
                 ),
                 if (isMine) ...[
-                  const SizedBox(width: 4),
+                  const SizedBox(width: AppSpacing.xs),
                   Icon(
-                    _isReadByPeer() ? Icons.done_all : Icons.done,
+                    _isReadByPeer() ? Icons.done_all_rounded : Icons.done_rounded,
                     size: 14,
-                    color: _isReadByPeer() ? Colors.lightBlueAccent : Colors.white70,
+                    color: _isReadByPeer()
+                        ? Colors.lightBlueAccent
+                        : Colors.white70,
                   ),
                 ],
               ],
@@ -86,17 +119,21 @@ class MessageBubble extends StatelessWidget {
     return peerLastReadMessageId == message.id;
   }
 
-  Widget _content(Color fg) {
+  Widget _content(Color fg, TextTheme textTheme) {
     switch (message.messageType) {
       case CommunityConstants.messageImage:
         if (message.attachmentUrl != null) {
           return ClipRRect(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
             child: Image.network(
               message.attachmentUrl!,
               height: 180,
               fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => Icon(Icons.broken_image_outlined, color: fg, size: 20),
+              errorBuilder: (_, _, _) => Icon(
+                Icons.broken_image_outlined,
+                color: fg,
+                size: 20,
+              ),
             ),
           );
         }
@@ -105,12 +142,12 @@ class MessageBubble extends StatelessWidget {
         return Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.picture_as_pdf, color: fg),
-            const SizedBox(width: 8),
+            Icon(Icons.picture_as_pdf_rounded, color: fg, size: 20),
+            const SizedBox(width: AppSpacing.sm),
             Flexible(
               child: Text(
                 message.attachmentName ?? 'Document.pdf',
-                style: GoogleFonts.poppins(color: fg),
+                style: textTheme.bodyMedium?.copyWith(color: fg),
               ),
             ),
           ],
@@ -123,7 +160,10 @@ class MessageBubble extends StatelessWidget {
       default:
         return Text(
           message.text,
-          style: GoogleFonts.poppins(color: fg, fontSize: 14),
+          style: textTheme.bodyMedium?.copyWith(
+            color: fg,
+            height: 1.45,
+          ),
         );
     }
   }

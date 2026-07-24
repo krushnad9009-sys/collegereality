@@ -4,7 +4,12 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../config/router/route_names.dart';
+import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_theme.dart';
+import '../../../core/widgets/async_state_widgets.dart';
+import '../../../core/widgets/premium_components.dart';
+import '../../../core/widgets/skeleton_loader.dart';
 import '../../admission/providers/admission_provider.dart';
 import '../../careers/providers/careers_provider.dart';
 import '../../colleges/providers/college_provider.dart';
@@ -63,12 +68,16 @@ class _CollegesTab extends ConsumerWidget {
     final collegesAsync = ref.watch(savedCollegesProvider);
 
     if (favoriteIds.isEmpty) {
-      return const Center(child: Text('No saved colleges'));
+      return const AsyncEmptyView(
+        icon: Icons.bookmark_border_rounded,
+        title: 'No saved colleges',
+        subtitle: 'Bookmark colleges while browsing to find them here.',
+      );
     }
 
     return collegesAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Error: $e')),
+      loading: () => const ListSkeletonLoader(itemCount: 6),
+      error: (e, _) => AsyncErrorView.fromError(e),
       data: (saved) {
         if (saved.isEmpty) {
           return ListView(
@@ -112,11 +121,17 @@ class _ScholarshipsTab extends ConsumerWidget {
     final scholarshipsAsync = ref.watch(scholarshipsProvider);
 
     return scholarshipsAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Error: $e')),
+      loading: () => const ListSkeletonLoader(itemCount: 5),
+      error: (e, _) => AsyncErrorView.fromError(e),
       data: (all) {
         final saved = all.where((s) => savedIds.contains(s.id)).toList();
-        if (saved.isEmpty) return const Center(child: Text('No saved scholarships'));
+        if (saved.isEmpty) {
+          return const AsyncEmptyView(
+            icon: Icons.card_giftcard_outlined,
+            title: 'No saved scholarships',
+            subtitle: 'Save scholarships from the admission hub to track them here.',
+          );
+        }
         return ListView.builder(
           padding: const EdgeInsets.all(16),
           itemCount: saved.length,
@@ -140,11 +155,17 @@ class _ExamsTab extends ConsumerWidget {
     final examsAsync = ref.watch(entranceExamsProvider);
 
     return examsAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Error: $e')),
+      loading: () => const ListSkeletonLoader(itemCount: 5),
+      error: (e, _) => AsyncErrorView.fromError(e),
       data: (all) {
         final saved = all.where((e) => savedIds.contains(e.id)).toList();
-        if (saved.isEmpty) return const Center(child: Text('No saved exams'));
+        if (saved.isEmpty) {
+          return const AsyncEmptyView(
+            icon: Icons.edit_note_outlined,
+            title: 'No saved exams',
+            subtitle: 'Bookmark entrance exams to keep deadlines handy.',
+          );
+        }
         return ListView.builder(
           padding: const EdgeInsets.all(16),
           itemCount: saved.length,
@@ -168,11 +189,17 @@ class _InternshipsTab extends ConsumerWidget {
     final internshipsAsync = ref.watch(internshipsProvider);
 
     return internshipsAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Error: $e')),
+      loading: () => const ListSkeletonLoader(itemCount: 5),
+      error: (e, _) => AsyncErrorView.fromError(e),
       data: (all) {
         final saved = all.where((i) => savedIds.contains(i.id)).toList();
-        if (saved.isEmpty) return const Center(child: Text('No saved internships'));
+        if (saved.isEmpty) {
+          return const AsyncEmptyView(
+            icon: Icons.work_outline_rounded,
+            title: 'No saved internships',
+            subtitle: 'Save internships from the careers section to revisit later.',
+          );
+        }
         return ListView.builder(
           padding: const EdgeInsets.all(16),
           itemCount: saved.length,
@@ -196,11 +223,17 @@ class _JobsTab extends ConsumerWidget {
     final jobsAsync = ref.watch(jobsProvider);
 
     return jobsAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Error: $e')),
+      loading: () => const ListSkeletonLoader(itemCount: 5),
+      error: (e, _) => AsyncErrorView.fromError(e),
       data: (all) {
         final saved = all.where((j) => savedIds.contains(j.id)).toList();
-        if (saved.isEmpty) return const Center(child: Text('No saved jobs'));
+        if (saved.isEmpty) {
+          return const AsyncEmptyView(
+            icon: Icons.business_center_outlined,
+            title: 'No saved jobs',
+            subtitle: 'Bookmark job listings to compare opportunities later.',
+          );
+        }
         return ListView.builder(
           padding: const EdgeInsets.all(16),
           itemCount: saved.length,
@@ -223,7 +256,11 @@ class _QuestionsTab extends ConsumerWidget {
     final savedIds = ref.watch(savedQuestionIdsProvider).valueOrNull ?? {};
 
     if (savedIds.isEmpty) {
-      return const Center(child: Text('No saved questions'));
+      return const AsyncEmptyView(
+        icon: Icons.help_outline_rounded,
+        title: 'No saved questions',
+        subtitle: 'Save Q&A threads to review answers anytime.',
+      );
     }
 
     return ListView.builder(
@@ -246,7 +283,10 @@ class _SavedQuestionTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final questionAsync = ref.watch(questionByIdProvider(questionId));
     return questionAsync.when(
-      loading: () => const ListTile(title: Text('Loading...')),
+      loading: () => const Padding(
+        padding: EdgeInsets.only(bottom: AppSpacing.sm),
+        child: SkeletonBox(height: 72),
+      ),
       error: (_, _) => const SizedBox.shrink(),
       data: (q) {
         if (q == null) return const SizedBox.shrink();
@@ -277,14 +317,67 @@ class _BookmarkTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 10),
-      child: ListTile(
-        leading: const Icon(Icons.bookmark, color: AppTheme.primaryColor),
-        title: Text(title, style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-        subtitle: Text(subtitle, style: GoogleFonts.poppins(fontSize: 12)),
-        trailing: trailing ?? const Icon(Icons.chevron_right),
+    final tokens = context.tokens;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: PremiumCard(
+        radius: tokens.buttonRadius,
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.md,
+        ),
         onTap: onTap,
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+              ),
+              child: const Icon(
+                Icons.bookmark_rounded,
+                color: AppTheme.primaryColor,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                      color: tokens.textPrimary,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: tokens.textSecondary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            if (trailing != null) ...[
+              const SizedBox(width: AppSpacing.sm),
+              trailing!,
+            ] else ...[
+              const SizedBox(width: AppSpacing.sm),
+              Icon(Icons.chevron_right_rounded, color: tokens.textTertiary),
+            ],
+          ],
+        ),
       ),
     );
   }

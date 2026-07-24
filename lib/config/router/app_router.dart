@@ -99,6 +99,7 @@ import '../../features/communication/screens/guide_public_profile_screen.dart';
 import '../../features/communication/screens/active_call_screen.dart';
 import 'route_names.dart';
 import '../../core/widgets/app_shell.dart';
+import '../../core/widgets/page_transitions.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final firebaseAuth = FirebaseAuth.instance;
@@ -314,11 +315,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: RouteNames.favorites,
-        builder: (context, state) => const BookmarksHubScreen(),
+        pageBuilder: (context, state) => fadeThroughPage(
+          key: state.pageKey,
+          name: state.name,
+          child: const BookmarksHubScreen(),
+        ),
       ),
       GoRoute(
         path: RouteNames.notifications,
-        builder: (context, state) => const NotificationsCenterScreen(),
+        pageBuilder: (context, state) => fadeThroughPage(
+          key: state.pageKey,
+          name: state.name,
+          child: const NotificationsCenterScreen(),
+        ),
       ),
       GoRoute(
         path: RouteNames.notificationPreferences,
@@ -326,14 +335,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: RouteNames.compare,
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final idsParam = state.uri.queryParameters['ids'] ?? '';
           final ids = idsParam
               .split(',')
               .map((e) => e.trim())
               .where((e) => e.isNotEmpty)
               .toList();
-          return CollegeCompareScreen(collegeIds: ids);
+          return fadeScalePage(
+            key: state.pageKey,
+            name: state.name,
+            child: CollegeCompareScreen(collegeIds: ids),
+          );
         },
       ),
       GoRoute(
@@ -366,10 +379,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: RouteNames.collegeDetails,
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final id = state.pathParameters['id']!;
           final tab = state.uri.queryParameters['tab'];
-          return CollegeDetailScreen(collegeId: id, initialTab: tab);
+          return fadeScalePage(
+            key: state.pageKey,
+            name: state.name,
+            child: CollegeDetailScreen(collegeId: id, initialTab: tab),
+          );
         },
       ),
       GoRoute(

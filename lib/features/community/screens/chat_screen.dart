@@ -4,9 +4,10 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../config/router/route_names.dart';
+import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/community_constants.dart';
 import '../../../core/widgets/index.dart';
@@ -154,6 +155,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final user = ref.watch(currentUserDetailProvider).valueOrNull;
     final conversationAsync = ref.watch(conversationProvider(widget.conversationId));
     final messagesAsync = ref.watch(messagesProvider(widget.conversationId));
+    final tokens = context.tokens;
+    final textTheme = Theme.of(context).textTheme;
 
     ref.listen(messagesProvider(widget.conversationId), (previous, next) {
       next.whenData((messages) {
@@ -167,23 +170,19 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     });
 
     return conversationAsync.when(
-      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (e, _) => Scaffold(body: Center(child: Text('$e'))),
+      loading: () => const Scaffold(
+        body: AsyncLoadingView(message: 'Loading conversation…'),
+      ),
+      error: (e, _) => Scaffold(
+        body: AsyncErrorView.fromError(e),
+      ),
       data: (conversation) {
         if (conversation == null || user == null) {
           return Scaffold(
-            body: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.forum_outlined, size: 48, color: AppTheme.gray400),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Unable to load this conversation',
-                    style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-                  ),
-                ],
-              ),
+            body: AsyncEmptyView(
+              icon: Icons.forum_outlined,
+              title: 'Unable to load this conversation',
+              subtitle: 'The chat may have been removed or you no longer have access.',
             ),
           );
         }
@@ -192,13 +191,20 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         final presenceAsync = peerId != null ? ref.watch(presenceProvider(peerId)) : null;
 
         return Scaffold(
+          backgroundColor: tokens.surfaceMuted,
           appBar: AppBar(
+            elevation: 0,
+            scrolledUnderElevation: 0.5,
+            backgroundColor: tokens.surfaceElevated,
             title: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   conversation.displayTitle(user.uid),
-                  style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600),
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: tokens.textPrimary,
+                  ),
                 ),
                 if (presenceAsync != null)
                   presenceAsync.when(
@@ -210,7 +216,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             ),
             actions: [
               IconButton(
-                icon: Icon(_searching ? Icons.close : Icons.search),
+                icon: Icon(_searching ? Icons.close_rounded : Icons.search_rounded),
                 onPressed: () {
                   if (_searching) {
                     _runSearch('');
@@ -240,16 +246,42 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             children: [
               if (_searching)
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.lg,
+                    AppSpacing.md,
+                    AppSpacing.lg,
+                    AppSpacing.sm,
+                  ),
                   child: TextField(
                     autofocus: true,
                     decoration: InputDecoration(
                       hintText: 'Search messages…',
-                      prefixIcon: const Icon(Icons.search),
+                      hintStyle: textTheme.bodyMedium?.copyWith(
+                        color: tokens.textTertiary,
+                      ),
+                      filled: true,
+                      fillColor: tokens.surfaceElevated,
+                      prefixIcon: Icon(
+                        Icons.search_rounded,
+                        color: tokens.textTertiary,
+                      ),
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(tokens.buttonRadius),
+                        borderSide: BorderSide(color: tokens.borderSubtle),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(tokens.buttonRadius),
+                        borderSide: BorderSide(color: tokens.borderSubtle),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(tokens.buttonRadius),
+                        borderSide: const BorderSide(color: AppTheme.primaryColor),
                       ),
                       isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.lg,
+                        vertical: AppSpacing.md,
+                      ),
                     ),
                     onChanged: _runSearch,
                   ),
@@ -258,54 +290,74 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 child: _searching
                     ? _buildSearchResults(user)
                     : messagesAsync.when(
-                  loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Center(child: Text('$e')),
-                  data: (messages) {
-                    if (messages.isEmpty) {
-                      return Center(
-                        child: Text(
-                          'Say hello! Free private student chat.',
-                          style: GoogleFonts.poppins(color: AppTheme.gray600),
-                        ),
-                      );
-                    }
-                    final peerReadId = peerId != null
-                        ? conversation.readReceipts[peerId]
-                        : null;
-                    return ListView.builder(
-                      controller: _scrollController,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      itemCount: messages.length,
-                      itemBuilder: (context, index) {
-                        if (index == messages.length - 1) {
-                          WidgetsBinding.instance.addPostFrameCallback((_) {
-                            if (_scrollController.hasClients) {
-                              _scrollController.jumpTo(
-                                _scrollController.position.maxScrollExtent,
+                        loading: () => const AsyncLoadingView(),
+                        error: (e, _) => AsyncErrorView.fromError(e),
+                        data: (messages) {
+                          if (messages.isEmpty) {
+                            return AsyncEmptyView(
+                              icon: Icons.chat_bubble_outline_rounded,
+                              title: 'Start the conversation',
+                              subtitle:
+                                  'Say hello! Free private student chat.',
+                            );
+                          }
+                          final peerReadId = peerId != null
+                              ? conversation.readReceipts[peerId]
+                              : null;
+                          return ListView.builder(
+                            controller: _scrollController,
+                            padding: const EdgeInsets.fromLTRB(
+                              AppSpacing.lg,
+                              AppSpacing.lg,
+                              AppSpacing.lg,
+                              AppSpacing.sm,
+                            ),
+                            itemCount: messages.length,
+                            itemBuilder: (context, index) {
+                              if (index == messages.length - 1) {
+                                WidgetsBinding.instance.addPostFrameCallback((_) {
+                                  if (_scrollController.hasClients) {
+                                    _scrollController.jumpTo(
+                                      _scrollController.position.maxScrollExtent,
+                                    );
+                                  }
+                                });
+                              }
+                              final msg = messages[index];
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                                child: MessageBubble(
+                                  message: msg,
+                                  isMine: msg.senderId == user.uid,
+                                  peerLastReadMessageId: peerReadId,
+                                ),
                               );
-                            }
-                          });
-                        }
-                        final msg = messages[index];
-                        return MessageBubble(
-                          message: msg,
-                          isMine: msg.senderId == user.uid,
-                          peerLastReadMessageId: peerReadId,
-                        );
-                      },
-                    );
-                  },
-                ),
+                            },
+                          );
+                        },
+                      ),
               ),
               if (!_searching)
-                TypingIndicator(
-                  conversation: conversation,
-                  currentUserId: user.uid,
-                ),
-              if (!_searching)
-                ChatInputBar(
-                  onSend: _send,
-                  onTypingChanged: _onTypingChanged,
+                Container(
+                  decoration: BoxDecoration(
+                    color: tokens.surfaceElevated,
+                    border: Border(
+                      top: BorderSide(color: tokens.borderSubtle),
+                    ),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TypingIndicator(
+                        conversation: conversation,
+                        currentUserId: user.uid,
+                      ),
+                      ChatInputBar(
+                        onSend: _send,
+                        onTypingChanged: _onTypingChanged,
+                      ),
+                    ],
+                  ),
                 ),
             ],
           ),
@@ -319,33 +371,43 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   Widget _buildSearchResults(UserModel user) {
+    final tokens = context.tokens;
+    final textTheme = Theme.of(context).textTheme;
+
     if (_searchQuery.trim().isEmpty) {
       return Center(
         child: Text(
           'Type to search this conversation',
-          style: GoogleFonts.poppins(color: AppTheme.gray600),
+          style: textTheme.bodyMedium?.copyWith(color: tokens.textSecondary),
         ),
       );
     }
     if (_searchResults == null) {
-      return const Center(child: CircularProgressIndicator());
+      return const AsyncLoadingView(message: 'Searching…');
     }
     if (_searchResults!.isEmpty) {
-      return Center(
-        child: Text(
-          'No messages match "$_searchQuery"',
-          style: GoogleFonts.poppins(color: AppTheme.gray600),
-        ),
+      return AsyncEmptyView(
+        icon: Icons.search_off_rounded,
+        title: 'No matches found',
+        subtitle: 'No messages match "$_searchQuery"',
       );
     }
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.lg,
+        AppSpacing.lg,
+        AppSpacing.sm,
+      ),
       itemCount: _searchResults!.length,
       itemBuilder: (context, index) {
         final msg = _searchResults![index];
-        return MessageBubble(
-          message: msg,
-          isMine: msg.senderId == user.uid,
+        return Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+          child: MessageBubble(
+            message: msg,
+            isMine: msg.senderId == user.uid,
+          ),
         );
       },
     );

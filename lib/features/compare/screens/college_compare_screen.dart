@@ -5,6 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/cache/compare_session_cache.dart';
 import '../../../config/router/route_names.dart';
+import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/compare_constants.dart';
 import '../models/college_comparison_result.dart';
@@ -82,6 +84,7 @@ class _CollegeCompareScreenState extends ConsumerState<CollegeCompareScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
     final basket = ref.watch(compareBasketProvider);
     final ids = basket.collegeIds.take(CompareConstants.maxColleges).toList();
     final cached = CompareSessionCache.get(ids);
@@ -90,21 +93,37 @@ class _CollegeCompareScreenState extends ConsumerState<CollegeCompareScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Compare Colleges',
-              style: GoogleFonts.poppins(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
+        titleSpacing: 0,
+        title: Padding(
+          padding: const EdgeInsets.only(right: AppSpacing.sm),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Compare Colleges',
+                style: GoogleFonts.poppins(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.3,
+                  color: tokens.textPrimary,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-            ),
-            Text(
-              '${CompareConstants.minCollegesToCompare}-${CompareConstants.maxColleges} colleges • Verified data only',
-              style: GoogleFonts.poppins(fontSize: 10, color: AppTheme.gray500),
-            ),
-          ],
+              const SizedBox(height: 2),
+              Text(
+                '${CompareConstants.minCollegesToCompare}-${CompareConstants.maxColleges} colleges · Verified data only',
+                style: GoogleFonts.poppins(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: tokens.textTertiary,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
@@ -185,15 +204,20 @@ class _CollegeCompareScreenState extends ConsumerState<CollegeCompareScreen> {
         : null;
 
     return SingleChildScrollView(
-      padding: EdgeInsets.all(isWide ? 24 : 16),
+      padding: EdgeInsets.fromLTRB(
+        isWide ? AppSpacing.section : AppSpacing.lg,
+        isWide ? AppSpacing.section : AppSpacing.lg,
+        isWide ? AppSpacing.section : AppSpacing.lg,
+        AppSpacing.section,
+      ),
       child: RepaintBoundary(
         key: _shareKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Wrap(
-              spacing: 8,
-              runSpacing: 8,
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.sm,
               children: [
                 FilledButton.tonalIcon(
                   onPressed: () => _saveComparison(result),
@@ -217,27 +241,34 @@ class _CollegeCompareScreenState extends ConsumerState<CollegeCompareScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.xl),
             if (winner != null) ...[
               CompareWinnerBanner(college: winner),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.xl),
             ],
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.all(AppSpacing.lg),
               decoration: BoxDecoration(
                 color: AppTheme.primaryColor.withValues(alpha: 0.06),
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
                 border: Border.all(
                   color: AppTheme.primaryColor.withValues(alpha: 0.15),
                 ),
               ),
-              child: Text(result.summary, style: GoogleFonts.poppins(fontSize: 13)),
+              child: Text(
+                result.summary,
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  height: 1.5,
+                  color: context.tokens.textSecondary,
+                ),
+              ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.xl),
             Wrap(
-              spacing: 8,
-              runSpacing: 8,
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.sm,
               children: result.colleges.map((college) {
                 return InputChip(
                   label: Text(college.name, style: GoogleFonts.poppins(fontSize: 11)),
@@ -248,9 +279,9 @@ class _CollegeCompareScreenState extends ConsumerState<CollegeCompareScreen> {
                 );
               }).toList(),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: AppSpacing.xxl),
             CompareTableWidget(result: result),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSpacing.section),
             CompareAiSummaryPanel(summary: result.aiSummary),
             const SizedBox(height: 24),
             CompareProsConsPanel(items: result.prosCons),

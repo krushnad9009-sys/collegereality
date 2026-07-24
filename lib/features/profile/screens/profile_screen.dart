@@ -2,9 +2,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../config/router/route_names.dart';
+import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/profile_constants.dart';
 import '../../../core/constants/verification_constants.dart';
@@ -210,45 +211,27 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               _communicationSettings ?? userDetail?.communicationSettings;
 
           return SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 96),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.pageH,
+              0,
+              AppSpacing.pageH,
+              96,
+            ),
             child: Form(
               key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Center(
-                    child: CircleAvatar(
-                      radius: 48,
-                      backgroundColor:
-                          AppTheme.primaryColor.withValues(alpha: 0.2),
-                      backgroundImage: (_photoURL ?? userDetail?.photoURL) != null
-                          ? NetworkImage((_photoURL ?? userDetail!.photoURL)!)
-                          : null,
-                      child: (_photoURL ?? userDetail?.photoURL) == null
-                          ? Text(
-                              (_nameController.text.isNotEmpty
-                                      ? _nameController.text[0]
-                                      : authUser.email?[0] ?? 'S')
-                                  .toUpperCase(),
-                              style: GoogleFonts.poppins(
-                                fontSize: 32,
-                                fontWeight: FontWeight.w700,
-                                color: AppTheme.primaryColor,
-                              ),
-                            )
-                          : null,
-                    ),
+                  _ProfileHeaderSection(
+                    photoUrl: _photoURL ?? userDetail?.photoURL,
+                    coverUrl: _coverPhotoURL ?? userDetail?.coverPhotoURL,
+                    displayName: _nameController.text.isNotEmpty
+                        ? _nameController.text
+                        : (userDetail?.displayName ?? authUser.email ?? 'Student'),
+                    email: authUser.email ?? '',
+                    verificationBadge: userDetail?.verificationBadge,
                   ),
-                  const SizedBox(height: 8),
-                  if (userDetail != null &&
-                      userDetail.verificationBadge !=
-                          VerificationConstants.badgeNone)
-                    Center(
-                      child: VerificationBadgeWidget(
-                        badge: userDetail.verificationBadge,
-                      ),
-                    ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.lg),
                   if (userDetail != null)
                     TrustScoreCard(trust: StudentTrustModel.fromUser(userDetail)),
                   const SizedBox(height: 16),
@@ -329,13 +312,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         setState(() => _languagesKnown = langs),
                   ),
                   if (settings != null) ...[
-                    const SizedBox(height: 24),
-                    Text(
-                      'Guide Settings',
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    const SizedBox(height: AppSpacing.xxl),
+                    SectionHeader(
+                      title: 'Guide Settings',
+                      subtitle: 'Control how others can connect with you',
                     ),
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
@@ -493,6 +473,131 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           );
         },
       ),
+    );
+  }
+}
+
+class _ProfileHeaderSection extends StatelessWidget {
+  final String? photoUrl;
+  final String? coverUrl;
+  final String displayName;
+  final String email;
+  final String? verificationBadge;
+
+  const _ProfileHeaderSection({
+    required this.photoUrl,
+    required this.coverUrl,
+    required this.displayName,
+    required this.email,
+    required this.verificationBadge,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final textTheme = Theme.of(context).textTheme;
+    final initial = displayName.isNotEmpty
+        ? displayName[0].toUpperCase()
+        : (email.isNotEmpty ? email[0].toUpperCase() : 'S');
+
+    return Column(
+      children: [
+        Stack(
+          clipBehavior: Clip.none,
+          alignment: Alignment.bottomCenter,
+          children: [
+            Container(
+              height: 140,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                borderRadius: const BorderRadius.vertical(
+                  bottom: Radius.circular(AppSpacing.radiusLg),
+                ),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppTheme.primaryColor,
+                    AppTheme.primaryColor.withValues(alpha: 0.75),
+                  ],
+                ),
+                image: coverUrl != null
+                    ? DecorationImage(
+                        image: NetworkImage(coverUrl!),
+                        fit: BoxFit.cover,
+                        colorFilter: ColorFilter.mode(
+                          AppTheme.primaryDark.withValues(alpha: 0.35),
+                          BlendMode.darken,
+                        ),
+                      )
+                    : null,
+              ),
+            ),
+            Positioned(
+              bottom: -44,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: tokens.surfaceElevated,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.black.withValues(alpha: 0.1),
+                      blurRadius: 16,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: CircleAvatar(
+                  radius: 48,
+                  backgroundColor:
+                      AppTheme.primaryColor.withValues(alpha: 0.15),
+                  backgroundImage:
+                      photoUrl != null ? NetworkImage(photoUrl!) : null,
+                  child: photoUrl == null
+                      ? Text(
+                          initial,
+                          style: textTheme.headlineMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.primaryColor,
+                          ),
+                        )
+                      : null,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 56),
+        Text(
+          displayName,
+          style: textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w700,
+            color: tokens.textPrimary,
+            letterSpacing: -0.3,
+          ),
+          textAlign: TextAlign.center,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+        if (email.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            email,
+            style: textTheme.bodySmall?.copyWith(
+              color: tokens.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+        if (verificationBadge != null &&
+            verificationBadge != VerificationConstants.badgeNone) ...[
+          const SizedBox(height: AppSpacing.md),
+          VerificationBadgeWidget(badge: verificationBadge!),
+        ],
+      ],
     );
   }
 }

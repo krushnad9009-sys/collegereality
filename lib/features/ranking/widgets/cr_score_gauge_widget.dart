@@ -32,7 +32,7 @@ class _CrScoreGaugeWidgetState extends State<CrScoreGaugeWidget>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1200),
+      duration: const Duration(milliseconds: 1400),
     );
     _animation = Tween<double>(begin: 0, end: widget.score / 100).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),

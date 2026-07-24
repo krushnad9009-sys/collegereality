@@ -30,7 +30,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
   void _setupAnimations() {
     _animationController = AnimationController(
-      duration: const Duration(milliseconds: 900),
+      duration: const Duration(milliseconds: 1100),
       vsync: this,
     );
 
@@ -148,14 +148,22 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                     ),
                     const SizedBox(height: 48),
                     SizedBox(
-                      width: 36,
-                      height: 36,
+                      width: 32,
+                      height: 32,
                       child: CircularProgressIndicator(
-                        strokeWidth: 2.8,
+                        strokeWidth: 2.5,
                         valueColor: AlwaysStoppedAnimation<Color>(
-                          AppTheme.white.withValues(alpha: 0.95),
+                          AppTheme.white.withValues(alpha: 0.9),
                         ),
                       ),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      'Loading your experience…',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppTheme.white.withValues(alpha: 0.75),
+                            fontWeight: FontWeight.w500,
+                          ),
                     ),
                   ],
                 ),

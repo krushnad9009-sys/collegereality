@@ -4,7 +4,11 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../config/router/route_names.dart';
+import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_theme.dart';
+import '../../../core/widgets/premium_components.dart';
+import '../../../core/widgets/skeleton_loader.dart';
 import '../providers/admin_dashboard_provider.dart';
 import '../providers/admin_provider.dart';
 import '../utils/admin_permissions.dart';
@@ -15,6 +19,7 @@ class AdminDashboardScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final tokens = context.tokens;
     final statsAsync = ref.watch(adminDashboardStatsProvider);
     final isAdminUser = ref.watch(isAdminUserProvider).maybeWhen(data: (v) => v, orElse: () => false);
     final userType = ref.watch(currentUserModelProvider).maybeWhen(data: (u) => u?.userType, orElse: () => null);
@@ -30,31 +35,39 @@ class AdminDashboardScreen extends ConsumerWidget {
           ref.invalidate(adminDashboardStatsProvider);
         },
         child: ListView(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(AppSpacing.xl),
           children: [
             Text(
               'College Reality Admin',
-              style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.w700),
+              style: GoogleFonts.poppins(
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.3,
+                color: tokens.textPrimary,
+              ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             Text(
               'Platform overview and moderation tools.',
-              style: GoogleFonts.poppins(color: AppTheme.gray600),
-            ),
-            const SizedBox(height: 24),
-            statsAsync.when(
-              loading: () => const Padding(
-                padding: EdgeInsets.symmetric(vertical: 48),
-                child: Center(child: CircularProgressIndicator()),
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                color: tokens.textSecondary,
               ),
-              error: (e, _) => Text('Failed to load stats: $e'),
+            ),
+            const SizedBox(height: AppSpacing.xxl),
+            statsAsync.when(
+              loading: () => const DashboardSkeleton(),
+              error: (e, _) => Text(
+                'Failed to load stats: $e',
+                style: GoogleFonts.poppins(color: tokens.textSecondary),
+              ),
               data: (stats) => GridView.count(
                 crossAxisCount: crossAxisCount,
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                childAspectRatio: width >= 600 ? 1.6 : 2.2,
+                mainAxisSpacing: AppSpacing.md,
+                crossAxisSpacing: AppSpacing.md,
+                childAspectRatio: width >= 600 ? 1.55 : 2.1,
                 children: [
                   _StatTile(label: 'Total Colleges', value: '${stats.totalColleges}', icon: Icons.school, color: AppTheme.primaryColor),
                   _StatTile(label: 'Total Users', value: '${stats.totalUsers}', icon: Icons.people, color: Colors.blue),
@@ -69,9 +82,16 @@ class AdminDashboardScreen extends ConsumerWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 32),
-            Text('Quick Actions', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.section),
+            Text(
+              'Quick Actions',
+              style: GoogleFonts.poppins(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: tokens.textPrimary,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
             if (AdminPermissions.canViewAnalytics(userType))
               _AdminMenuTile(
                 icon: Icons.analytics_outlined,
@@ -177,24 +197,45 @@ class _StatTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
+    final tokens = context.tokens;
+    return PremiumCard(
+      radius: tokens.cardRadius,
+      padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, color: color, size: 22),
-          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+            ),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          const Spacer(),
           Text(
             value,
-            style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.w700, color: color),
+            style: GoogleFonts.poppins(
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.5,
+              color: color,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-          Text(label, style: GoogleFonts.poppins(fontSize: 12), maxLines: 2, overflow: TextOverflow.ellipsis),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: tokens.textSecondary,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
         ],
       ),
     );

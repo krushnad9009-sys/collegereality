@@ -2,11 +2,13 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../../config/theme/app_theme.dart';
+
 import '../../../config/router/route_names.dart';
-import '../../../core/widgets/premium_auth_background.dart';
+import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_spacing.dart';
+import '../../../config/theme/app_theme.dart';
 import '../../../core/widgets/index.dart';
+import '../../../core/widgets/premium_auth_background.dart';
 import '../models/user_model.dart';
 import '../providers/auth_provider.dart';
 import '../providers/user_provider.dart';
@@ -51,20 +53,17 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     }
 
     try {
-      // Sign up with email and password
       final authNotifier = ref.read(authProvider.notifier);
       await authNotifier.signUpWithEmail(
         _emailController.text.trim(),
         _passwordController.text,
       );
 
-      // Get the Firebase user
       final firebaseUser = ref.read(authProvider).user;
       if (firebaseUser == null) {
         throw Exception('Failed to get user data');
       }
 
-      // Create user model
       final realName = _nameController.text.trim();
       final userModel = UserModel(
         uid: firebaseUser.uid,
@@ -79,7 +78,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
         updatedAt: DateTime.now(),
       );
 
-      // Save user to Firestore
       final userRepository = ref.read(userRepositoryProvider);
       await userRepository.createUser(userModel);
       await ref.read(authServiceProvider).sendEmailVerification();
@@ -143,270 +141,319 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 600;
     final authState = ref.watch(authProvider);
+    final tokens = context.tokens;
+    final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
       body: PremiumAuthBackground(
         child: SafeArea(
           child: SingleChildScrollView(
-          child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: isMobile ? 20 : 40,
-              vertical: 24,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Back button
-                GestureDetector(
-                  onTap: () => context.pop(),
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? AppTheme.gray800
-                          : AppTheme.gray100,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(Icons.arrow_back_ios_new, size: 18),
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-
-                // Header
-                Text(
-                  'Create Account',
-                  style: GoogleFonts.poppins(
-                    fontSize: isMobile ? 28 : 32,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Join India\'s largest college review platform',
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: AppTheme.gray600,
-                  ),
-                ),
-                const SizedBox(height: 32),
-
-                // Form
-                Form(
-                  key: _formKey,
-                  child: Column(
-                    children: [
-                      CustomTextField(
-                        label: 'Full Name',
-                        hint: 'Enter your full name',
-                        controller: _nameController,
-                        keyboardType: TextInputType.name,
-                        validator: ValidationUtil.validateDisplayName,
-                        prefixIcon: Icons.person_outline,
-                        isRequired: true,
-                      ),
-                      const SizedBox(height: 20),
-                      CustomTextField(
-                        label: 'Email Address',
-                        hint: 'Enter your email',
-                        controller: _emailController,
-                        keyboardType: TextInputType.emailAddress,
-                        validator: ValidationUtil.validateEmail,
-                        prefixIcon: Icons.email_outlined,
-                        isRequired: true,
-                      ),
-                      const SizedBox(height: 20),
-                      CustomTextField(
-                        label: 'Password',
-                        hint: 'Create a strong password',
-                        controller: _passwordController,
-                        obscureText: true,
-                        validator: ValidationUtil.validatePassword,
-                        prefixIcon: Icons.lock_outline,
-                        isRequired: true,
-                      ),
-                      const SizedBox(height: 8),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 0),
-                        child: Text(
-                          'Must contain uppercase, lowercase, numbers, and be at least 8 characters',
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w400,
-                            color: AppTheme.gray500,
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: isMobile ? AppSpacing.pageH : AppSpacing.section + 8,
+                vertical: AppSpacing.xxl,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  FadeInSection(
+                    delayMs: 0,
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () => context.pop(),
+                        borderRadius:
+                            BorderRadius.circular(tokens.buttonRadius),
+                        child: Container(
+                          padding: const EdgeInsets.all(AppSpacing.sm),
+                          decoration: BoxDecoration(
+                            color: tokens.surfaceMuted,
+                            borderRadius:
+                                BorderRadius.circular(tokens.buttonRadius),
+                            border: Border.all(color: tokens.borderSubtle),
+                          ),
+                          child: Icon(
+                            Icons.arrow_back_ios_new,
+                            size: 18,
+                            color: tokens.textPrimary,
                           ),
                         ),
                       ),
-                      const SizedBox(height: 20),
-                      CustomTextField(
-                        label: 'Confirm Password',
-                        hint: 'Re-enter your password',
-                        controller: _confirmPasswordController,
-                        obscureText: true,
-                        validator: (value) => ValidationUtil.validateConfirmPassword(
-                          value,
-                          _passwordController.text,
-                        ),
-                        prefixIcon: Icons.lock_outline,
-                        isRequired: true,
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-
-                // Terms checkbox
-                Row(
-                  children: [
-                    Checkbox(
-                      value: _agreeToTerms,
-                      onChanged: (value) {
-                        setState(() => _agreeToTerms = value ?? false);
-                      },
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(4),
-                      ),
                     ),
-                    Expanded(
-                      child: RichText(
-                        text: TextSpan(
-                          style: GoogleFonts.poppins(
-                            fontSize: 13,
+                  ),
+                  const SizedBox(height: AppSpacing.xxl),
+
+                  FadeInSection(
+                    delayMs: 40,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Create Account',
+                          style: textTheme.headlineMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: tokens.textPrimary,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        Text(
+                          'Join India\'s largest college review platform',
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: tokens.textSecondary,
                             fontWeight: FontWeight.w500,
-                            color: AppTheme.gray700,
                           ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.section),
+
+                  FadeInSection(
+                    delayMs: 100,
+                    child: PremiumCard(
+                      padding: const EdgeInsets.all(AppSpacing.xxl),
+                      radius: tokens.cardRadius,
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
                           children: [
-                            const TextSpan(text: 'I agree to the '),
-                            TextSpan(
-                              text: 'Terms & Conditions',
-                              style: GoogleFonts.poppins(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.primaryColor,
-                                decoration: TextDecoration.underline,
-                              ),
-                              recognizer: TapGestureRecognizer()
-                                ..onTap = () =>
-                                    context.push(RouteNames.termsOfService),
+                            CustomTextField(
+                              label: 'Full Name',
+                              hint: 'Enter your full name',
+                              controller: _nameController,
+                              keyboardType: TextInputType.name,
+                              validator: ValidationUtil.validateDisplayName,
+                              prefixIcon: Icons.person_outline,
+                              isRequired: true,
                             ),
-                            const TextSpan(text: ' and '),
-                            TextSpan(
-                              text: 'Privacy Policy',
-                              style: GoogleFonts.poppins(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.primaryColor,
-                                decoration: TextDecoration.underline,
+                            const SizedBox(height: AppSpacing.xl),
+                            CustomTextField(
+                              label: 'Email Address',
+                              hint: 'Enter your email',
+                              controller: _emailController,
+                              keyboardType: TextInputType.emailAddress,
+                              validator: ValidationUtil.validateEmail,
+                              prefixIcon: Icons.email_outlined,
+                              isRequired: true,
+                            ),
+                            const SizedBox(height: AppSpacing.xl),
+                            CustomTextField(
+                              label: 'Password',
+                              hint: 'Create a strong password',
+                              controller: _passwordController,
+                              obscureText: true,
+                              validator: ValidationUtil.validatePassword,
+                              prefixIcon: Icons.lock_outline,
+                              isRequired: true,
+                            ),
+                            const SizedBox(height: AppSpacing.sm),
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                'Must contain uppercase, lowercase, numbers, and be at least 8 characters',
+                                style: textTheme.bodySmall?.copyWith(
+                                  color: tokens.textTertiary,
+                                ),
                               ),
-                              recognizer: TapGestureRecognizer()
-                                ..onTap = () =>
-                                    context.push(RouteNames.privacyPolicy),
+                            ),
+                            const SizedBox(height: AppSpacing.xl),
+                            CustomTextField(
+                              label: 'Confirm Password',
+                              hint: 'Re-enter your password',
+                              controller: _confirmPasswordController,
+                              obscureText: true,
+                              validator: (value) =>
+                                  ValidationUtil.validateConfirmPassword(
+                                value,
+                                _passwordController.text,
+                              ),
+                              prefixIcon: Icons.lock_outline,
+                              isRequired: true,
                             ),
                           ],
                         ),
                       ),
                     ),
-                  ],
-                ),
+                  ),
 
-                const SizedBox(height: 24),
+                  const SizedBox(height: AppSpacing.xxl),
 
-                // Sign Up Button
-                PrimaryButton(
-                  label: 'Create Account',
-                  isLoading: authState.isLoading,
-                  onPressed: _handleSignup,
-                ),
-
-                const SizedBox(height: 24),
-
-                Row(
-                  children: [
-                    const Expanded(child: Divider()),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: Text(
-                        'OR',
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.gray400,
-                        ),
-                      ),
-                    ),
-                    const Expanded(child: Divider()),
-                  ],
-                ),
-
-                const SizedBox(height: 24),
-
-                GoogleSignInButton(
-                  isLoading: authState.isLoading,
-                  onPressed: _handleGoogleSignup,
-                ),
-
-                const SizedBox(height: 20),
-
-                // Sign In Link
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Already have an account? ',
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: AppTheme.gray600,
-                      ),
-                    ),
-                    TextLink(
-                      text: 'Sign In',
-                      fontSize: 14,
-                      onPressed: () => context.go(RouteNames.login),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 20),
-
-                // Error message if signup failed
-                if (authState.error != null)
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppTheme.errorColor.withValues(alpha: 0.1),
-                      border: Border.all(color: AppTheme.errorColor),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
+                  FadeInSection(
+                    delayMs: 160,
                     child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(
-                          Icons.error_outline,
-                          color: AppTheme.errorColor,
-                          size: 20,
+                        Checkbox(
+                          value: _agreeToTerms,
+                          onChanged: (value) {
+                            setState(() => _agreeToTerms = value ?? false);
+                          },
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          visualDensity: VisualDensity.compact,
                         ),
-                        const SizedBox(width: 12),
                         Expanded(
-                          child: Text(
-                            authState.error ?? '',
-                            style: GoogleFonts.poppins(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                              color: AppTheme.errorColor,
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 10),
+                            child: RichText(
+                              text: TextSpan(
+                                style: textTheme.bodySmall?.copyWith(
+                                  fontWeight: FontWeight.w500,
+                                  color: tokens.textSecondary,
+                                ),
+                                children: [
+                                  const TextSpan(text: 'I agree to the '),
+                                  TextSpan(
+                                    text: 'Terms & Conditions',
+                                    style: textTheme.bodySmall?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      color: AppTheme.primaryColor,
+                                      decoration: TextDecoration.underline,
+                                    ),
+                                    recognizer: TapGestureRecognizer()
+                                      ..onTap = () => context.push(
+                                            RouteNames.termsOfService,
+                                          ),
+                                  ),
+                                  const TextSpan(text: ' and '),
+                                  TextSpan(
+                                    text: 'Privacy Policy',
+                                    style: textTheme.bodySmall?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      color: AppTheme.primaryColor,
+                                      decoration: TextDecoration.underline,
+                                    ),
+                                    recognizer: TapGestureRecognizer()
+                                      ..onTap = () => context.push(
+                                            RouteNames.privacyPolicy,
+                                          ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
                       ],
                     ),
                   ),
-              ],
+
+                  const SizedBox(height: AppSpacing.xxl),
+
+                  FadeInSection(
+                    delayMs: 200,
+                    child: PrimaryButton(
+                      label: 'Create Account',
+                      isLoading: authState.isLoading,
+                      onPressed: _handleSignup,
+                    ),
+                  ),
+
+                  const SizedBox(height: AppSpacing.xxl),
+
+                  FadeInSection(
+                    delayMs: 240,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Divider(color: tokens.borderSubtle),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.md,
+                          ),
+                          child: Text(
+                            'OR',
+                            style: textTheme.labelSmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: tokens.textTertiary,
+                              letterSpacing: 1,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: Divider(color: tokens.borderSubtle),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: AppSpacing.xxl),
+
+                  FadeInSection(
+                    delayMs: 280,
+                    child: GoogleSignInButton(
+                      isLoading: authState.isLoading,
+                      onPressed: _handleGoogleSignup,
+                    ),
+                  ),
+
+                  const SizedBox(height: AppSpacing.xl),
+
+                  FadeInSection(
+                    delayMs: 320,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Already have an account? ',
+                          style: textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w500,
+                            color: tokens.textSecondary,
+                          ),
+                        ),
+                        TextLink(
+                          text: 'Sign In',
+                          fontSize: 14,
+                          onPressed: () => context.go(RouteNames.login),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: AppSpacing.xl),
+
+                  if (authState.error != null)
+                    FadeInSection(
+                      delayMs: 360,
+                      child: Container(
+                        padding: const EdgeInsets.all(AppSpacing.md),
+                        decoration: BoxDecoration(
+                          color: AppTheme.errorColor.withValues(alpha: 0.08),
+                          border: Border.all(
+                            color: AppTheme.errorColor.withValues(alpha: 0.4),
+                          ),
+                          borderRadius:
+                              BorderRadius.circular(tokens.buttonRadius),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.error_outline_rounded,
+                              color: AppTheme.errorColor,
+                              size: 20,
+                            ),
+                            const SizedBox(width: AppSpacing.md),
+                            Expanded(
+                              child: Text(
+                                authState.error ?? '',
+                                style: textTheme.bodySmall?.copyWith(
+                                  fontWeight: FontWeight.w500,
+                                  color: AppTheme.errorColor,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
         ),
       ),
-    ),
     );
   }
 }

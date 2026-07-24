@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../config/theme/app_design_tokens.dart';
 import '../../config/theme/app_spacing.dart';
 import '../../config/theme/app_theme.dart';
 
@@ -24,7 +25,8 @@ class PremiumCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = color ?? (isDark ? AppTheme.gray800 : AppTheme.white);
+    final tokens = context.tokens;
+    final bg = color ?? tokens.surfaceElevated;
 
     final card = Container(
       decoration: BoxDecoration(
@@ -46,8 +48,8 @@ class PremiumCard extends StatelessWidget {
               ],
         border: Border.all(
           color: isDark
-              ? AppTheme.gray700.withValues(alpha: 0.6)
-              : AppTheme.gray200.withValues(alpha: 0.7),
+              ? tokens.borderSubtle.withValues(alpha: 0.6)
+              : tokens.borderSubtle.withValues(alpha: 0.7),
         ),
       ),
       padding: padding,

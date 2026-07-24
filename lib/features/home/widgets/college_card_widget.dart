@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../ranking/widgets/cr_score_badge_widget.dart';
 import '../../reviews/widgets/star_rating_widget.dart';
@@ -38,19 +40,24 @@ class CollegeCardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final radius = tokens.cardRadius;
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(radius),
         child: Container(
           decoration: BoxDecoration(
-            color: isDark ? AppTheme.gray800 : AppTheme.white,
-            borderRadius: BorderRadius.circular(20),
+            color: tokens.surfaceElevated,
+            borderRadius: BorderRadius.circular(radius),
             border: Border.all(
-              color: isDark ? AppTheme.gray700 : AppTheme.gray200.withValues(alpha: 0.8),
+              color: isSelectedForCompare
+                  ? AppTheme.accentColor.withValues(alpha: 0.5)
+                  : tokens.borderSubtle,
+              width: isSelectedForCompare ? 1.5 : 1,
             ),
             boxShadow: isDark
                 ? null
@@ -59,6 +66,11 @@ class CollegeCardWidget extends StatelessWidget {
                       color: AppTheme.primaryDark.withValues(alpha: 0.06),
                       blurRadius: 20,
                       offset: const Offset(0, 8),
+                    ),
+                    BoxShadow(
+                      color: AppTheme.black.withValues(alpha: 0.03),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
                     ),
                   ],
           ),
@@ -70,13 +82,18 @@ class CollegeCardWidget extends StatelessWidget {
                 collegeId: collegeId,
                 imageUrl: imageUrl,
                 height: 168,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(20),
-                  topRight: Radius.circular(20),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(radius),
+                  topRight: Radius.circular(radius),
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  AppSpacing.lg,
+                  AppSpacing.lg,
+                  AppSpacing.xl,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -99,6 +116,8 @@ class CollegeCardWidget extends StatelessWidget {
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
                               height: 1.3,
+                              letterSpacing: -0.2,
+                              color: tokens.textPrimary,
                             ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
@@ -106,13 +125,13 @@ class CollegeCardWidget extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: AppSpacing.sm),
                     Row(
                       children: [
                         Icon(
                           Icons.location_on_outlined,
                           size: 15,
-                          color: AppTheme.primaryColor.withValues(alpha: 0.8),
+                          color: AppTheme.primaryColor.withValues(alpha: 0.85),
                         ),
                         const SizedBox(width: 4),
                         Expanded(
@@ -121,7 +140,7 @@ class CollegeCardWidget extends StatelessWidget {
                             style: GoogleFonts.poppins(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
-                              color: AppTheme.gray600,
+                              color: tokens.textSecondary,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -129,9 +148,8 @@ class CollegeCardWidget extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSpacing.md),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Expanded(
@@ -144,49 +162,52 @@ class CollegeCardWidget extends StatelessWidget {
                                 starSize: 14,
                               ),
                               if (crScore != null && crScore! > 0) ...[
-                                const SizedBox(height: 8),
+                                const SizedBox(height: AppSpacing.sm),
                                 CrScoreBadgeWidget(score: crScore!),
                               ],
                             ],
                           ),
                         ),
-                        Row(
-                          children: [
-                            if (onCompareToggle != null)
-                              IconButton(
-                                tooltip: isSelectedForCompare
-                                    ? 'Remove from compare'
-                                    : 'Add to compare',
-                                onPressed: onCompareToggle,
-                                icon: Icon(
-                                  isSelectedForCompare
-                                      ? Icons.check_circle_rounded
-                                      : Icons.compare_arrows_outlined,
-                                  color: isSelectedForCompare
-                                      ? AppTheme.accentColor
-                                      : AppTheme.gray500,
-                                  size: 22,
-                                ),
-                              ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppTheme.primaryColor.withValues(alpha: 0.08),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                'View',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppTheme.primaryColor,
-                                ),
-                              ),
+                        const SizedBox(width: AppSpacing.sm),
+                        if (onCompareToggle != null)
+                          IconButton(
+                            visualDensity: VisualDensity.compact,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(
+                              minWidth: 36,
+                              minHeight: 36,
                             ),
-                          ],
+                            tooltip: isSelectedForCompare
+                                ? 'Remove from compare'
+                                : 'Add to compare',
+                            onPressed: onCompareToggle,
+                            icon: Icon(
+                              isSelectedForCompare
+                                  ? Icons.check_circle_rounded
+                                  : Icons.compare_arrows_outlined,
+                              color: isSelectedForCompare
+                                  ? AppTheme.accentColor
+                                  : tokens.textTertiary,
+                              size: 22,
+                            ),
+                          ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 7,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryColor.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(tokens.chipRadius),
+                          ),
+                          child: Text(
+                            'View',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.primaryColor,
+                            ),
+                          ),
                         ),
                       ],
                     ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../config/theme/app_design_tokens.dart';
 import '../../config/theme/app_theme.dart';
 import '../utils/firestore_error_utils.dart';
 import 'skeleton_loader.dart';
@@ -13,16 +14,27 @@ class AsyncLoadingView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const CircularProgressIndicator(),
+          SizedBox(
+            width: 40,
+            height: 40,
+            child: CircularProgressIndicator(
+              strokeWidth: 2.8,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+          ),
           if (message != null) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             Text(
               message!,
-              style: GoogleFonts.poppins(color: AppTheme.gray600),
+              style: GoogleFonts.poppins(
+                color: tokens.textSecondary,
+                fontSize: 14,
+              ),
               textAlign: TextAlign.center,
             ),
           ],
@@ -48,37 +60,49 @@ class AsyncEmptyView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 56, color: AppTheme.gray400),
-            const SizedBox(height: 16),
+            Container(
+              width: 88,
+              height: 88,
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withValues(alpha: isDark ? 0.15 : 0.08),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 40, color: AppTheme.primaryColor),
+            ),
+            const SizedBox(height: 24),
             Text(
               title,
               style: GoogleFonts.poppins(
                 fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: AppTheme.gray800,
+                fontWeight: FontWeight.w700,
+                color: tokens.textPrimary,
+                letterSpacing: -0.2,
               ),
               textAlign: TextAlign.center,
             ),
             if (subtitle != null) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
               Text(
                 subtitle!,
                 style: GoogleFonts.poppins(
                   fontSize: 14,
-                  color: AppTheme.gray600,
-                  height: 1.4,
+                  color: tokens.textSecondary,
+                  height: 1.5,
                 ),
                 textAlign: TextAlign.center,
               ),
             ],
             if (action != null) ...[
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
               action!,
             ],
           ],
@@ -116,34 +140,55 @@ class AsyncErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
     final isQuota = FirestoreErrorUtils.isUserFacingQuotaMessage(message);
+    final iconColor = isQuota ? tokens.textTertiary : AppTheme.errorColor;
 
     return Center(
       child: Padding(
-        padding: EdgeInsets.all(compact ? 16 : 24),
+        padding: EdgeInsets.all(compact ? 16 : 32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: compact ? MainAxisSize.min : MainAxisSize.max,
           children: [
-            Icon(
-              isQuota ? Icons.cloud_off_rounded : Icons.error_outline,
-              size: compact ? 36 : 48,
-              color: isQuota ? AppTheme.gray500 : AppTheme.errorColor,
+            Container(
+              width: compact ? 56 : 72,
+              height: compact ? 56 : 72,
+              decoration: BoxDecoration(
+                color: iconColor.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                isQuota ? Icons.cloud_off_rounded : Icons.error_outline_rounded,
+                size: compact ? 28 : 36,
+                color: iconColor,
+              ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
+            Text(
+              isQuota ? 'Service temporarily busy' : 'Something went wrong',
+              style: GoogleFonts.poppins(
+                fontSize: compact ? 15 : 17,
+                fontWeight: FontWeight.w700,
+                color: tokens.textPrimary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
             Text(
               message,
               style: GoogleFonts.poppins(
-                color: AppTheme.gray700,
+                color: tokens.textSecondary,
                 fontSize: compact ? 13 : 14,
+                height: 1.45,
               ),
               textAlign: TextAlign.center,
             ),
             if (onRetry != null) ...[
-              const SizedBox(height: 16),
-              OutlinedButton.icon(
+              const SizedBox(height: 20),
+              FilledButton.tonalIcon(
                 onPressed: onRetry,
-                icon: const Icon(Icons.refresh),
+                icon: const Icon(Icons.refresh_rounded, size: 18),
                 label: const Text('Try again'),
               ),
             ],
@@ -180,12 +225,13 @@ class AsyncOfflineView extends StatelessWidget {
     return AsyncEmptyView(
       icon: Icons.wifi_off_rounded,
       title: 'You appear to be offline',
-      subtitle: 'Showing cached data where available. Check your connection and try again.',
+      subtitle:
+          'Showing cached data where available. Check your connection and try again.',
       action: onRetry == null
           ? null
           : OutlinedButton.icon(
               onPressed: onRetry,
-              icon: const Icon(Icons.refresh),
+              icon: const Icon(Icons.refresh_rounded),
               label: const Text('Retry'),
             ),
     );
@@ -232,6 +278,7 @@ class AsyncStateView<T> extends StatelessWidget {
               const AsyncEmptyView(
                 icon: Icons.inbox_outlined,
                 title: 'Nothing here yet',
+                subtitle: 'Check back later for new content.',
               );
         }
         return builder(data);
