@@ -2,6 +2,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../core/services/analytics_service.dart';
+import 'go_router_refresh_stream.dart';
 import '../../features/auth/screens/splash_screen.dart';
 import '../../features/auth/screens/onboarding_screen.dart';
 import '../../features/auth/screens/login_screen.dart';
@@ -32,6 +33,7 @@ import '../../features/admin/screens/admin_system_monitor_screen.dart';
 import '../../features/admin/screens/admin_college_bulk_screen.dart';
 import '../../features/admin/screens/admin_export_screen.dart';
 import '../../features/auth/providers/user_provider.dart';
+import '../../features/auth/models/user_model.dart';
 import '../../features/admin/providers/admin_provider.dart';
 import '../../features/admin/screens/admin_verification_screen.dart';
 import '../../features/profile/screens/premium_student_profile_screen.dart';
@@ -103,16 +105,23 @@ import '../../core/widgets/page_transitions.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final firebaseAuth = FirebaseAuth.instance;
+  final authRefresh = GoRouterRefreshStream(firebaseAuth.authStateChanges());
+
+  ref.onDispose(authRefresh.dispose);
 
   return GoRouter(
     initialLocation: RouteNames.splash,
     debugLogDiagnostics: false,
+    refreshListenable: authRefresh,
     observers: [AnalyticsService.observer],
     redirect: (context, state) async {
-      final isLoggedIn = firebaseAuth.currentUser != null;
       final path = state.uri.path;
-      final isPublicRoute = path == RouteNames.splash ||
-          path == RouteNames.onboarding ||
+
+      // Never block splash — it handles its own navigation.
+      if (path == RouteNames.splash) return null;
+
+      final isLoggedIn = firebaseAuth.currentUser != null;
+      final isPublicRoute = path == RouteNames.onboarding ||
           path == RouteNames.login ||
           path == RouteNames.adminLogin ||
           path == RouteNames.signup ||
@@ -131,12 +140,22 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return RouteNames.login;
       }
 
+      Future<UserModel?> userDetail() async {
+        try {
+          return await ref
+              .read(currentUserDetailProvider.future)
+              .timeout(const Duration(seconds: 4));
+        } catch (_) {
+          return null;
+        }
+      }
+
       if (isLoggedIn &&
           (path == RouteNames.login ||
               path == RouteNames.signup ||
               path == RouteNames.onboarding ||
               path == RouteNames.forgotPassword)) {
-        final user = await ref.read(currentUserDetailProvider.future);
+        final user = await userDetail();
         if (user != null && !user.displayNameSetupComplete) {
           return RouteNames.displayNameSetup;
         }
@@ -146,7 +165,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       if (isLoggedIn &&
           path != RouteNames.displayNameSetup &&
           path != RouteNames.profile) {
-        final user = await ref.read(currentUserDetailProvider.future);
+        final user = await userDetail();
         if (user != null && !user.displayNameSetupComplete) {
           return RouteNames.displayNameSetup;
         }

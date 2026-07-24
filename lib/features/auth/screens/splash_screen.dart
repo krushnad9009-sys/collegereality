@@ -8,6 +8,9 @@ import '../../../config/theme/app_theme.dart';
 import '../../../config/router/route_names.dart';
 import '../../../core/bootstrap/firebase_bootstrap.dart';
 
+/// Maximum time to wait for Firebase/auth/prefs before forcing navigation.
+const _kSplashTimeout = Duration(seconds: 8);
+
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
@@ -20,12 +23,13 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
+  bool _navigated = false;
 
   @override
   void initState() {
     super.initState();
     _setupAnimations();
-    _navigateWhenReady();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _navigateWhenReady());
   }
 
   void _setupAnimations() {
@@ -50,27 +54,53 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   }
 
   Future<void> _navigateWhenReady() async {
-    SharedPreferences? prefs;
+    if (_navigated) return;
+
+    try {
+      await _resolveAndNavigate().timeout(_kSplashTimeout);
+    } catch (e, st) {
+      debugPrint('Splash navigation error: $e\n$st');
+      _goTo(RouteNames.login);
+    }
+  }
+
+  Future<void> _resolveAndNavigate() async {
     await Future.wait([
-      Future.delayed(const Duration(milliseconds: 450)),
+      Future.delayed(const Duration(milliseconds: 400)),
       FirebaseBootstrap.ensureInitialized(),
-      SharedPreferences.getInstance().then((p) => prefs = p),
     ]);
 
-    if (!mounted) return;
+    final prefs = await SharedPreferences.getInstance();
 
-    final hasSeenOnboarding = prefs?.getBool('hasSeenOnboarding') ?? false;
-    final isLoggedIn = FirebaseAuth.instance.currentUser != null;
+    // Wait for Firebase Auth to restore persisted session (critical on web).
+    final auth = FirebaseAuth.instance;
+    User? user;
+    try {
+      user = await auth.authStateChanges().first.timeout(
+            const Duration(seconds: 5),
+          );
+    } catch (_) {
+      user = auth.currentUser;
+    }
 
-    if (!mounted) return;
+    if (!mounted || _navigated) return;
+
+    final hasSeenOnboarding = prefs.getBool('hasSeenOnboarding') ?? false;
+    final isLoggedIn = user != null;
 
     if (isLoggedIn) {
-      context.go(RouteNames.home);
+      _goTo(RouteNames.home);
     } else if (hasSeenOnboarding) {
-      context.go(RouteNames.login);
+      _goTo(RouteNames.login);
     } else {
-      context.go(RouteNames.onboarding);
+      _goTo(RouteNames.onboarding);
     }
+  }
+
+  void _goTo(String route) {
+    if (_navigated || !mounted) return;
+    _navigated = true;
+    context.go(route);
   }
 
   @override
@@ -174,4 +204,14 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       ),
     );
   }
+}
+
+/// Resolves the post-splash route without requiring a BuildContext (testable).
+String resolveSplashRoute({
+  required bool isLoggedIn,
+  required bool hasSeenOnboarding,
+}) {
+  if (isLoggedIn) return RouteNames.home;
+  if (hasSeenOnboarding) return RouteNames.login;
+  return RouteNames.onboarding;
 }
