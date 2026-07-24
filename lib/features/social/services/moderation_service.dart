@@ -114,4 +114,30 @@ class ModerationService {
       'updatedAt': DateTime.now().toIso8601String(),
     });
   }
+
+  Future<void> incrementAnswerReportCount(
+    String questionId,
+    String answerId,
+  ) async {
+    final ref = _firestore
+        .collection(FirestoreConstants.collegeQuestionsCollection)
+        .doc(questionId)
+        .collection(FirestoreConstants.questionAnswersSubcollection)
+        .doc(answerId);
+    await _firestore.runTransaction((tx) async {
+      final snap = await tx.get(ref);
+      if (!snap.exists) return;
+      final current = (snap.data()?['reportCount'] as num?)?.toInt() ?? 0;
+      final next = current + 1;
+      final updates = <String, dynamic>{
+        'reportCount': next,
+        'updatedAt': DateTime.now().toIso8601String(),
+      };
+      if (shouldAutoHide(next)) {
+        updates['status'] = QuestionConstants.statusHidden;
+        updates['moderationFlag'] = SocialConstants.moderationFlagReported;
+      }
+      tx.update(ref, updates);
+    });
+  }
 }

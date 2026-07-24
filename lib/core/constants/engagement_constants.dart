@@ -6,6 +6,9 @@ class EngagementConstants {
   // Notification types
   static const String typeNewReview = 'new_review';
   static const String typeNewAnswer = 'new_answer';
+  static const String typeAnswerReply = 'answer_reply';
+  static const String typeQuestionMention = 'question_mention';
+  static const String typeAcceptedAnswer = 'accepted_answer';
   static const String typeNewChatMessage = 'new_chat_message';
   static const String typeCollegeUpdate = 'college_update';
   static const String typePlacementUpdate = 'placement_update';

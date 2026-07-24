@@ -4,17 +4,23 @@ import 'package:uuid/uuid.dart';
 import '../../../core/constants/firestore_constants.dart';
 import '../../../core/constants/question_constants.dart';
 import '../../../core/constants/verification_constants.dart';
+import '../../communication/services/communication_firestore_service.dart';
 import '../../social/services/moderation_service.dart';
+import '../../social/utils/moderation_utils.dart';
 import '../../engagement/services/firestore_engagement_service.dart';
 import '../../social/services/notification_bridge_service.dart';
 import '../models/answer_model.dart';
+import '../models/answer_reply_model.dart';
 import '../models/question_model.dart';
 import '../utils/question_display_utils.dart';
+import '../utils/question_mention_utils.dart';
+import '../services/question_cache_service.dart';
 
 class FirestoreQuestionService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final _uuid = const Uuid();
   final _moderationService = ModerationService();
+  final _communicationService = CommunicationFirestoreService();
   final _notificationBridge =
       NotificationBridgeService(FirestoreEngagementService());
 
@@ -24,10 +30,93 @@ class FirestoreQuestionService {
   CollectionReference<Map<String, dynamic>> get _colleges =>
       _firestore.collection(FirestoreConstants.collegesCollection);
 
+  CollectionReference<Map<String, dynamic>> _replies(
+    String questionId,
+    String answerId,
+  ) =>
+      _answers(questionId)
+          .doc(answerId)
+          .collection(FirestoreConstants.answerRepliesSubcollection);
+
+  Future<void> _assertContentAllowed(String text) async {
+    final moderation = moderateContent(text);
+    if (!moderation.allowed) {
+      throw QuestionFirestoreException(
+        message: 'Content blocked: ${moderation.reason.isEmpty ? 'community guidelines' : moderation.reason}.',
+      );
+    }
+    if (containsOffensiveContent(text)) {
+      throw QuestionFirestoreException(
+        message: 'Content contains inappropriate language.',
+      );
+    }
+  }
+
+  Future<List<String>> getBlockedUserIds(String userId) =>
+      _communicationService.getBlockedUserIds(userId);
+
+  Future<void> blockUser({
+    required String blockerId,
+    required String blockedId,
+  }) =>
+      _communicationService.blockUser(
+        blockerId: blockerId,
+        blockedId: blockedId,
+      );
+
   CollectionReference<Map<String, dynamic>> _answers(String questionId) =>
       _questions
           .doc(questionId)
           .collection(FirestoreConstants.questionAnswersSubcollection);
+
+  Future<QuestionPageResult> fetchQuestionsPage({
+    required String collegeId,
+    DocumentSnapshot<Map<String, dynamic>>? startAfter,
+    int limit = QuestionConstants.pageSize,
+  }) async {
+    Query<Map<String, dynamic>> query = _questions
+        .where('collegeId', isEqualTo: collegeId.trim())
+        .where('status', isEqualTo: QuestionConstants.statusPublished)
+        .orderBy('createdAt', descending: true)
+        .limit(limit);
+
+    if (startAfter != null) {
+      query = query.startAfterDocument(startAfter);
+    }
+
+    final snapshot = await query.get();
+    final questions = snapshot.docs
+        .map((doc) => QuestionModel.fromJson(doc.data(), docId: doc.id))
+        .toList();
+
+    if (questions.isNotEmpty && startAfter == null) {
+      await QuestionCacheService.saveCollegeQuestions(collegeId, questions);
+    }
+
+    return QuestionPageResult(
+      questions: questions,
+      lastDocument:
+          snapshot.docs.isEmpty ? null : snapshot.docs.last,
+      hasMore: snapshot.docs.length >= limit,
+    );
+  }
+
+  Future<List<QuestionModel>> getUnansweredQuestions(
+    String collegeId, {
+    int limit = 5,
+  }) async {
+    final snap = await _questions
+        .where('collegeId', isEqualTo: collegeId.trim())
+        .where('status', isEqualTo: QuestionConstants.statusPublished)
+        .where('answerCount', isEqualTo: 0)
+        .orderBy('answerCount')
+        .orderBy('createdAt', descending: true)
+        .limit(limit)
+        .get();
+    return snap.docs
+        .map((doc) => QuestionModel.fromJson(doc.data(), docId: doc.id))
+        .toList();
+  }
 
   Future<Map<String, dynamic>?> _userData(String userId) async {
     final doc = await _firestore
@@ -182,8 +271,11 @@ class FirestoreQuestionService {
     required bool isAnonymous,
     required String title,
     String body = '',
+    String category = QuestionConstants.categoryAdmission,
+    List<String> imageUrls = const [],
   }) async {
     final trimmedTitle = title.trim();
+    final trimmedBody = body.trim();
     if (trimmedTitle.isEmpty) {
       throw QuestionFirestoreException(message: 'Question title is required.');
     }
@@ -192,15 +284,23 @@ class FirestoreQuestionService {
         message: 'Title must be at most ${QuestionConstants.maxTitleLength} characters.',
       );
     }
+    if (imageUrls.length > QuestionConstants.maxImagesPerPost) {
+      throw QuestionFirestoreException(
+        message: 'Maximum ${QuestionConstants.maxImagesPerPost} images allowed.',
+      );
+    }
+
+    await _assertContentAllowed('$trimmedTitle $trimmedBody');
 
     await _assertQuestionAllowed(
       authorId: authorId,
       collegeId: collegeId,
       title: trimmedTitle,
-      body: body,
+      body: trimmedBody,
     );
 
     final isVerified = await isVerifiedStudent(authorId);
+    final mentionUserIds = QuestionMentionUtils.extractMentionUserIds(trimmedBody);
     final id = _uuid.v4();
     final now = DateTime.now();
     final question = QuestionModel(
@@ -216,8 +316,11 @@ class FirestoreQuestionService {
       isAnonymous: isAnonymous,
       isAuthorVerified: isVerified,
       title: trimmedTitle,
-      body: body.trim(),
-      searchText: buildQuestionSearchText(trimmedTitle, body),
+      body: trimmedBody,
+      searchText: buildQuestionSearchText(trimmedTitle, trimmedBody, category: category),
+      category: category,
+      imageUrls: imageUrls,
+      mentionUserIds: mentionUserIds,
       status: QuestionConstants.statusPublished,
       createdAt: now,
       updatedAt: now,
@@ -238,9 +341,12 @@ class FirestoreQuestionService {
   }
 
   Future<QuestionModel?> getQuestionById(String questionId) async {
+    final cached = await QuestionCacheService.loadQuestionDetail(questionId);
     final doc = await _questions.doc(questionId).get();
-    if (!doc.exists) return null;
-    return QuestionModel.fromJson(doc.data()!, docId: doc.id);
+    if (!doc.exists) return cached;
+    final question = QuestionModel.fromJson(doc.data()!, docId: doc.id);
+    await QuestionCacheService.saveQuestionDetail(question);
+    return question;
   }
 
   Stream<List<QuestionModel>> watchQuestionsByCollege(String collegeId) {
@@ -248,7 +354,7 @@ class FirestoreQuestionService {
         .where('collegeId', isEqualTo: collegeId.trim())
         .where('status', isEqualTo: QuestionConstants.statusPublished)
         .orderBy('createdAt', descending: true)
-        .limit(200)
+        .limit(QuestionConstants.pageSize * 5)
         .snapshots()
         .map((snapshot) {
       return snapshot.docs
@@ -327,6 +433,7 @@ class FirestoreQuestionService {
     required String? displayName,
     required bool isAnonymous,
     required String body,
+    List<String> imageUrls = const [],
   }) async {
     final trimmedBody = body.trim();
     if (trimmedBody.isEmpty) {
@@ -337,6 +444,13 @@ class FirestoreQuestionService {
         message: 'Answer must be at most ${QuestionConstants.maxAnswerLength} characters.',
       );
     }
+    if (imageUrls.length > QuestionConstants.maxImagesPerPost) {
+      throw QuestionFirestoreException(
+        message: 'Maximum ${QuestionConstants.maxImagesPerPost} images allowed.',
+      );
+    }
+
+    await _assertContentAllowed(trimmedBody);
 
     final question = await getQuestionById(questionId);
     if (question == null) {
@@ -365,6 +479,7 @@ class FirestoreQuestionService {
 
     final authorData = await _userData(authorId);
     final reviewerBadge = authorData?['verificationBadge'] as String?;
+    final mentionUserIds = QuestionMentionUtils.extractMentionUserIds(trimmedBody);
 
     final id = _uuid.v4();
     final now = DateTime.now();
@@ -382,6 +497,8 @@ class FirestoreQuestionService {
       isVerifiedStudent: true,
       reviewerBadge: reviewerBadge,
       body: trimmedBody,
+      imageUrls: imageUrls,
+      mentionUserIds: mentionUserIds,
       status: QuestionConstants.statusPublished,
       createdAt: now,
       updatedAt: now,
@@ -416,6 +533,17 @@ class FirestoreQuestionService {
         collegeId: question.collegeId,
         questionId: questionId,
       );
+    }
+
+    for (final mentionedId in mentionUserIds) {
+      if (mentionedId != authorId) {
+        await _notificationBridge.notifyQuestionMention(
+          recipientId: mentionedId,
+          questionTitle: question.title,
+          collegeId: question.collegeId,
+          questionId: questionId,
+        );
+      }
     }
 
     return answer;
@@ -542,6 +670,20 @@ class FirestoreQuestionService {
         'score': newUp - newDown,
         'updatedAt': DateTime.now().toIso8601String(),
       });
+
+      final newScore = newUp - newDown;
+      final questionRef = _questions.doc(questionId);
+      final questionSnap = await transaction.get(questionRef);
+      if (questionSnap.exists) {
+        final topScore =
+            (questionSnap.data()?['topAnswerScore'] as num?)?.toInt() ?? 0;
+        if (newScore > topScore) {
+          transaction.update(questionRef, {
+            'topAnswerScore': newScore,
+            'updatedAt': DateTime.now().toIso8601String(),
+          });
+        }
+      }
     });
   }
 
@@ -594,6 +736,176 @@ class FirestoreQuestionService {
     });
 
     await batch.commit();
+  }
+
+  Future<void> acceptAnswer({
+    required String questionId,
+    required String answerId,
+    required String userId,
+  }) async {
+    final question = await getQuestionById(questionId);
+    if (question == null) {
+      throw QuestionFirestoreException(message: 'Question not found.');
+    }
+    if (question.authorId != userId) {
+      throw QuestionFirestoreException(
+        message: 'Only the question author can accept an answer.',
+      );
+    }
+
+    final answersSnap = await _answers(questionId).get();
+    final batch = _firestore.batch();
+    final now = DateTime.now().toIso8601String();
+
+    for (final doc in answersSnap.docs) {
+      batch.update(doc.reference, {
+        'isAccepted': doc.id == answerId,
+        'updatedAt': now,
+      });
+    }
+
+    batch.update(_questions.doc(questionId), {
+      'acceptedAnswerId': answerId,
+      'updatedAt': now,
+    });
+
+    await batch.commit();
+
+    for (final doc in answersSnap.docs) {
+      if (doc.id == answerId) {
+        final authorId = doc.data()['authorId'] as String? ?? '';
+        if (authorId.isNotEmpty && authorId != userId) {
+          await _notificationBridge.notifyAcceptedAnswer(
+            answerAuthorId: authorId,
+            questionTitle: question.title,
+            collegeId: question.collegeId,
+            questionId: questionId,
+          );
+        }
+        break;
+      }
+    }
+  }
+
+  Future<AnswerReplyModel> createReply({
+    required String questionId,
+    required String answerId,
+    required String authorId,
+    required String? displayName,
+    required bool isAnonymous,
+    required String body,
+    String? parentReplyId,
+    List<String> imageUrls = const [],
+  }) async {
+    final trimmedBody = body.trim();
+    if (trimmedBody.isEmpty) {
+      throw QuestionFirestoreException(message: 'Reply cannot be empty.');
+    }
+    if (trimmedBody.length > QuestionConstants.maxReplyLength) {
+      throw QuestionFirestoreException(
+        message: 'Reply must be at most ${QuestionConstants.maxReplyLength} characters.',
+      );
+    }
+
+    await _assertContentAllowed(trimmedBody);
+
+    final question = await getQuestionById(questionId);
+    if (question == null) {
+      throw QuestionFirestoreException(message: 'Question not found.');
+    }
+
+    final canReply = await isVerifiedStudentOfCollege(authorId, question.collegeId);
+    if (!canReply) {
+      throw QuestionFirestoreException(
+        message: 'Only verified students or alumni of this college can reply.',
+      );
+    }
+
+    final authorData = await _userData(authorId);
+    final reviewerBadge = authorData?['verificationBadge'] as String?;
+    final mentionUserIds = QuestionMentionUtils.extractMentionUserIds(trimmedBody);
+    final answerRef = _answers(questionId).doc(answerId);
+    final answerSnap = await answerRef.get();
+    if (!answerSnap.exists) {
+      throw QuestionFirestoreException(message: 'Answer not found.');
+    }
+    final answerAuthorId = answerSnap.data()?['authorId'] as String? ?? '';
+
+    final id = _uuid.v4();
+    final now = DateTime.now();
+    final reply = AnswerReplyModel(
+      id: id,
+      questionId: questionId,
+      answerId: answerId,
+      parentReplyId: parentReplyId,
+      authorId: authorId,
+      authorDisplayName: resolveAuthorDisplayName(
+        userId: authorId,
+        displayName: displayName,
+        isAnonymous: isAnonymous,
+      ),
+      isAnonymous: isAnonymous,
+      reviewerBadge: reviewerBadge,
+      body: trimmedBody,
+      imageUrls: imageUrls,
+      mentionUserIds: mentionUserIds,
+      createdAt: now,
+      updatedAt: now,
+    );
+
+    await _firestore.runTransaction((transaction) async {
+      transaction.set(_replies(questionId, answerId).doc(id), reply.toJson());
+      transaction.update(answerRef, {
+        'replyCount': FieldValue.increment(1),
+        'updatedAt': now.toIso8601String(),
+      });
+    });
+
+    if (answerAuthorId.isNotEmpty && answerAuthorId != authorId) {
+      await _notificationBridge.notifyAnswerReply(
+        recipientId: answerAuthorId,
+        questionTitle: question.title,
+        collegeId: question.collegeId,
+        questionId: questionId,
+      );
+    }
+
+    if (question.authorId != authorId && question.authorId != answerAuthorId) {
+      await _notificationBridge.notifyAnswerReply(
+        recipientId: question.authorId,
+        questionTitle: question.title,
+        collegeId: question.collegeId,
+        questionId: questionId,
+      );
+    }
+
+    for (final mentionedId in mentionUserIds) {
+      if (mentionedId != authorId) {
+        await _notificationBridge.notifyQuestionMention(
+          recipientId: mentionedId,
+          questionTitle: question.title,
+          collegeId: question.collegeId,
+          questionId: questionId,
+        );
+      }
+    }
+
+    return reply;
+  }
+
+  Stream<List<AnswerReplyModel>> watchReplies(
+    String questionId,
+    String answerId,
+  ) {
+    return _replies(questionId, answerId)
+        .where('status', isEqualTo: QuestionConstants.statusPublished)
+        .orderBy('createdAt', descending: false)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs
+          .map((doc) => AnswerReplyModel.fromJson(doc.data(), docId: doc.id))
+          .toList();
+    });
   }
 
   Future<void> updateAnswerStatus(String questionId, String answerId, String status) async {
@@ -674,6 +986,7 @@ class FirestoreQuestionService {
       'status': QuestionConstants.reportStatusOpen,
       'createdAt': DateTime.now().toIso8601String(),
     });
+    await _moderationService.incrementAnswerReportCount(questionId, answerId);
   }
 
   Future<List<Map<String, dynamic>>> getOpenQuestionReports({int limit = 100}) async {
@@ -726,4 +1039,16 @@ class QuestionFirestoreException implements Exception {
   QuestionFirestoreException({required this.message});
   @override
   String toString() => message;
+}
+
+class QuestionPageResult {
+  final List<QuestionModel> questions;
+  final DocumentSnapshot<Map<String, dynamic>>? lastDocument;
+  final bool hasMore;
+
+  const QuestionPageResult({
+    required this.questions,
+    required this.lastDocument,
+    required this.hasMore,
+  });
 }

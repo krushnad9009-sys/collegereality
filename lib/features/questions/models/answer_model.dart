@@ -12,10 +12,14 @@ class AnswerModel {
   final bool isVerifiedStudent;
   final String? reviewerBadge;
   final String body;
+  final List<String> imageUrls;
+  final List<String> mentionUserIds;
   final int upvoteCount;
   final int downvoteCount;
   final int score;
+  final int replyCount;
   final bool isMostHelpful;
+  final bool isAccepted;
   final String status;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -30,10 +34,14 @@ class AnswerModel {
     this.isVerifiedStudent = false,
     this.reviewerBadge,
     required this.body,
+    this.imageUrls = const [],
+    this.mentionUserIds = const [],
     this.upvoteCount = 0,
     this.downvoteCount = 0,
     this.score = 0,
+    this.replyCount = 0,
     this.isMostHelpful = false,
+    this.isAccepted = false,
     this.status = QuestionConstants.statusPublished,
     required this.createdAt,
     required this.updatedAt,
@@ -67,10 +75,20 @@ class AnswerModel {
       isVerifiedStudent: json['isVerifiedStudent'] as bool? ?? false,
       reviewerBadge: json['reviewerBadge'] as String?,
       body: json['body'] as String? ?? '',
+      imageUrls: (json['imageUrls'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
+      mentionUserIds: (json['mentionUserIds'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
       upvoteCount: (json['upvoteCount'] as num?)?.toInt() ?? 0,
       downvoteCount: (json['downvoteCount'] as num?)?.toInt() ?? 0,
       score: (json['score'] as num?)?.toInt() ?? 0,
+      replyCount: (json['replyCount'] as num?)?.toInt() ?? 0,
       isMostHelpful: json['isMostHelpful'] as bool? ?? false,
+      isAccepted: json['isAccepted'] as bool? ?? false,
       status: normalizeStatus(json['status'] as String?),
       createdAt: _parseDate(json['createdAt']),
       updatedAt: _parseDate(json['updatedAt']),
@@ -88,10 +106,14 @@ class AnswerModel {
       'isVerifiedStudent': isVerifiedStudent,
       'reviewerBadge': reviewerBadge,
       'body': body,
+      'imageUrls': imageUrls,
+      'mentionUserIds': mentionUserIds,
       'upvoteCount': upvoteCount,
       'downvoteCount': downvoteCount,
       'score': score,
+      'replyCount': replyCount,
       'isMostHelpful': isMostHelpful,
+      'isAccepted': isAccepted,
       'status': status,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
@@ -108,10 +130,14 @@ class AnswerModel {
     bool? isVerifiedStudent,
     String? reviewerBadge,
     String? body,
+    List<String>? imageUrls,
+    List<String>? mentionUserIds,
     int? upvoteCount,
     int? downvoteCount,
     int? score,
+    int? replyCount,
     bool? isMostHelpful,
+    bool? isAccepted,
     String? status,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -126,10 +152,14 @@ class AnswerModel {
       isVerifiedStudent: isVerifiedStudent ?? this.isVerifiedStudent,
       reviewerBadge: reviewerBadge ?? this.reviewerBadge,
       body: body ?? this.body,
+      imageUrls: imageUrls ?? this.imageUrls,
+      mentionUserIds: mentionUserIds ?? this.mentionUserIds,
       upvoteCount: upvoteCount ?? this.upvoteCount,
       downvoteCount: downvoteCount ?? this.downvoteCount,
       score: score ?? this.score,
+      replyCount: replyCount ?? this.replyCount,
       isMostHelpful: isMostHelpful ?? this.isMostHelpful,
+      isAccepted: isAccepted ?? this.isAccepted,
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,

@@ -66,7 +66,17 @@ service cloud.firestore {
 
     function isQuestionAggregateUpdate() {
       return request.resource.data.diff(resource.data).affectedKeys()
-        .hasOnly(['answerCount', 'mostHelpfulAnswerId', 'mostHelpfulScore', 'updatedAt']);
+        .hasOnly(['answerCount', 'mostHelpfulAnswerId', 'mostHelpfulScore', 'topAnswerScore', 'acceptedAnswerId', 'updatedAt']);
+    }
+
+    function isAnswerReplyCountUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys()
+        .hasOnly(['replyCount', 'updatedAt']);
+    }
+
+    function isAcceptedAnswerUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys()
+        .hasOnly(['isAccepted', 'updatedAt']);
     }
 
     function isAnswerVoteCountUpdate() {
@@ -329,13 +339,26 @@ service cloud.firestore {
         allow update: if isAdmin() ||
           (isAuthenticated() && resource.data.authorId == request.auth.uid) ||
           (isAuthenticated() && isAnswerVoteCountUpdate()) ||
-          (isAuthenticated() && isMostHelpfulAnswerUpdate());
+          (isAuthenticated() && isMostHelpfulAnswerUpdate()) ||
+          (isAuthenticated() && isAcceptedAnswerUpdate()) ||
+          (isAuthenticated() && isAnswerReplyCountUpdate());
         allow delete: if isAdmin();
 
         match /votes/{voterId} {
           allow read: if isAuthenticated();
           allow create, update: if isAuthenticated() && request.auth.uid == voterId;
           allow delete: if isAuthenticated() && request.auth.uid == voterId;
+        }
+
+        match /replies/{replyId} {
+          allow read: if isAuthenticated();
+          allow create: if isAuthenticated() &&
+            isVerifiedStudentOfCollege(
+              get(/databases/$(database)/documents/college_questions/$(questionId)).data.collegeId
+            ) &&
+            request.resource.data.authorId == request.auth.uid;
+          allow update, delete: if isAdmin() ||
+            (isAuthenticated() && resource.data.authorId == request.auth.uid);
         }
       }
     }

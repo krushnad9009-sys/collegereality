@@ -1,4 +1,7 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 import '../models/answer_model.dart';
+import '../models/answer_reply_model.dart';
 import '../models/question_model.dart';
 import '../services/firestore_question_service.dart';
 
@@ -11,10 +14,18 @@ abstract class QuestionRepository {
     required bool isAnonymous,
     required String title,
     String body,
+    String category,
+    List<String> imageUrls,
   });
 
   Future<QuestionModel?> getQuestionById(String questionId);
   Stream<List<QuestionModel>> watchQuestionsByCollege(String collegeId);
+  Future<QuestionPageResult> fetchQuestionsPage({
+    required String collegeId,
+    DocumentSnapshot<Map<String, dynamic>>? startAfter,
+    int limit,
+  });
+  Future<List<QuestionModel>> getUnansweredQuestions(String collegeId, {int limit});
   Future<List<QuestionModel>> getQuestionsByCollege(String collegeId, {int limit});
   Future<List<QuestionModel>> getAllQuestions({int limit, String? statusFilter});
   Future<void> updateQuestionStatus(String questionId, String status);
@@ -26,9 +37,22 @@ abstract class QuestionRepository {
     required String? displayName,
     required bool isAnonymous,
     required String body,
+    List<String> imageUrls,
+  });
+
+  Future<AnswerReplyModel> createReply({
+    required String questionId,
+    required String answerId,
+    required String authorId,
+    required String? displayName,
+    required bool isAnonymous,
+    required String body,
+    String? parentReplyId,
+    List<String> imageUrls,
   });
 
   Stream<List<AnswerModel>> watchAnswers(String questionId);
+  Stream<List<AnswerReplyModel>> watchReplies(String questionId, String answerId);
   Future<List<AnswerModel>> getAnswersForQuestion(String questionId, {int limit});
   Future<String?> getUserVote(String questionId, String answerId, String userId);
   Future<void> voteAnswer({
@@ -38,6 +62,11 @@ abstract class QuestionRepository {
     required String vote,
   });
   Future<void> markMostHelpful({
+    required String questionId,
+    required String answerId,
+    required String userId,
+  });
+  Future<void> acceptAnswer({
     required String questionId,
     required String answerId,
     required String userId,
@@ -58,6 +87,9 @@ abstract class QuestionRepository {
     required String reporterId,
     required String reason,
   });
+
+  Future<void> blockUser({required String blockerId, required String blockedId});
+  Future<List<String>> getBlockedUserIds(String userId);
 
   Future<bool> isVerifiedStudent(String userId);
   Future<bool> isVerifiedStudentOfCollege(String userId, String collegeId);
@@ -81,17 +113,20 @@ class QuestionRepositoryImpl implements QuestionRepository {
     required bool isAnonymous,
     required String title,
     String body = '',
-  }) {
-    return _service.createQuestion(
-      collegeId: collegeId,
-      collegeName: collegeName,
-      authorId: authorId,
-      displayName: displayName,
-      isAnonymous: isAnonymous,
-      title: title,
-      body: body,
-    );
-  }
+    String category = 'admission',
+    List<String> imageUrls = const [],
+  }) =>
+      _service.createQuestion(
+        collegeId: collegeId,
+        collegeName: collegeName,
+        authorId: authorId,
+        displayName: displayName,
+        isAnonymous: isAnonymous,
+        title: title,
+        body: body,
+        category: category,
+        imageUrls: imageUrls,
+      );
 
   @override
   Future<QuestionModel?> getQuestionById(String questionId) =>
@@ -100,6 +135,25 @@ class QuestionRepositoryImpl implements QuestionRepository {
   @override
   Stream<List<QuestionModel>> watchQuestionsByCollege(String collegeId) =>
       _service.watchQuestionsByCollege(collegeId);
+
+  @override
+  Future<QuestionPageResult> fetchQuestionsPage({
+    required String collegeId,
+    DocumentSnapshot<Map<String, dynamic>>? startAfter,
+    int limit = 20,
+  }) =>
+      _service.fetchQuestionsPage(
+        collegeId: collegeId,
+        startAfter: startAfter,
+        limit: limit,
+      );
+
+  @override
+  Future<List<QuestionModel>> getUnansweredQuestions(
+    String collegeId, {
+    int limit = 5,
+  }) =>
+      _service.getUnansweredQuestions(collegeId, limit: limit);
 
   @override
   Future<List<QuestionModel>> getQuestionsByCollege(
@@ -130,19 +184,49 @@ class QuestionRepositoryImpl implements QuestionRepository {
     required String? displayName,
     required bool isAnonymous,
     required String body,
-  }) {
-    return _service.createAnswer(
-      questionId: questionId,
-      authorId: authorId,
-      displayName: displayName,
-      isAnonymous: isAnonymous,
-      body: body,
-    );
-  }
+    List<String> imageUrls = const [],
+  }) =>
+      _service.createAnswer(
+        questionId: questionId,
+        authorId: authorId,
+        displayName: displayName,
+        isAnonymous: isAnonymous,
+        body: body,
+        imageUrls: imageUrls,
+      );
+
+  @override
+  Future<AnswerReplyModel> createReply({
+    required String questionId,
+    required String answerId,
+    required String authorId,
+    required String? displayName,
+    required bool isAnonymous,
+    required String body,
+    String? parentReplyId,
+    List<String> imageUrls = const [],
+  }) =>
+      _service.createReply(
+        questionId: questionId,
+        answerId: answerId,
+        authorId: authorId,
+        displayName: displayName,
+        isAnonymous: isAnonymous,
+        body: body,
+        parentReplyId: parentReplyId,
+        imageUrls: imageUrls,
+      );
 
   @override
   Stream<List<AnswerModel>> watchAnswers(String questionId) =>
       _service.watchAnswers(questionId);
+
+  @override
+  Stream<List<AnswerReplyModel>> watchReplies(
+    String questionId,
+    String answerId,
+  ) =>
+      _service.watchReplies(questionId, answerId);
 
   @override
   Future<List<AnswerModel>> getAnswersForQuestion(
@@ -176,6 +260,18 @@ class QuestionRepositoryImpl implements QuestionRepository {
     required String userId,
   }) =>
       _service.markMostHelpful(
+        questionId: questionId,
+        answerId: answerId,
+        userId: userId,
+      );
+
+  @override
+  Future<void> acceptAnswer({
+    required String questionId,
+    required String answerId,
+    required String userId,
+  }) =>
+      _service.acceptAnswer(
         questionId: questionId,
         answerId: answerId,
         userId: userId,
@@ -218,6 +314,14 @@ class QuestionRepositoryImpl implements QuestionRepository {
         reporterId: reporterId,
         reason: reason,
       );
+
+  @override
+  Future<void> blockUser({required String blockerId, required String blockedId}) =>
+      _service.blockUser(blockerId: blockerId, blockedId: blockedId);
+
+  @override
+  Future<List<String>> getBlockedUserIds(String userId) =>
+      _service.getBlockedUserIds(userId);
 
   @override
   Future<bool> isVerifiedStudent(String userId) =>

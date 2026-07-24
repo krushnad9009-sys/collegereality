@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/question_constants.dart';
 import '../models/question_model.dart';
+import '../utils/question_rich_text_utils.dart';
 
 class QuestionCardWidget extends StatelessWidget {
   final QuestionModel question;
@@ -20,122 +21,210 @@ class QuestionCardWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final date = DateFormat('MMM d, yyyy').format(question.createdAt);
 
-    return Card(
-      elevation: 0,
-      margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: AppTheme.gray200.withValues(alpha: 0.9)),
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Text(
-                      question.title,
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 15,
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 280),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        return Opacity(
+          opacity: value,
+          child: Transform.translate(
+            offset: Offset(0, (1 - value) * 12),
+            child: child,
+          ),
+        );
+      },
+      child: Card(
+        elevation: 0,
+        margin: const EdgeInsets.only(bottom: 12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: AppTheme.gray200.withValues(alpha: 0.9)),
+        ),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    _CategoryChip(category: question.category),
+                    const Spacer(),
+                    if (question.hasAcceptedAnswer)
+                      _BadgeChip(
+                        label: 'Accepted',
+                        color: AppTheme.accentColor,
+                        icon: Icons.check_circle,
+                      )
+                    else if (question.mostHelpfulAnswerId != null)
+                      _BadgeChip(
+                        label: 'Helpful',
+                        color: AppTheme.secondaryColor,
+                        icon: Icons.emoji_events_outlined,
                       ),
-                    ),
-                  ),
-                  if (question.mostHelpfulAnswerId != null)
-                    Container(
-                      margin: const EdgeInsets.only(left: 8),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppTheme.accentColor.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        'Helpful',
-                        style: GoogleFonts.poppins(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.accentColor,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-              if (question.body.isNotEmpty) ...[
-                const SizedBox(height: 8),
+                  ],
+                ),
+                const SizedBox(height: 10),
                 Text(
-                  question.body,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                  question.title,
                   style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    color: AppTheme.gray600,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
                   ),
                 ),
-              ],
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Icon(
-                    question.isAnonymous
-                        ? Icons.visibility_off_outlined
-                        : Icons.person_outline,
-                    size: 14,
-                    color: AppTheme.gray500,
+                if (question.body.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  QuestionRichTextUtils.buildRichText(
+                    question.body,
+                    maxLines: 2,
+                    baseStyle: GoogleFonts.poppins(
+                      fontSize: 13,
+                      color: AppTheme.gray600,
+                    ),
                   ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      question.authorDisplayName,
+                ],
+                if (question.imageUrls.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(Icons.image_outlined, size: 14, color: AppTheme.gray500),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${question.imageUrls.length} image(s)',
+                        style: GoogleFonts.poppins(fontSize: 11, color: AppTheme.gray500),
+                      ),
+                    ],
+                  ),
+                ],
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Icon(
+                      question.isAnonymous
+                          ? Icons.visibility_off_outlined
+                          : Icons.person_outline,
+                      size: 14,
+                      color: AppTheme.gray500,
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        question.authorDisplayName,
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: AppTheme.gray500,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (question.isAuthorVerified)
+                      const Padding(
+                        padding: EdgeInsets.only(left: 4),
+                        child: Icon(
+                          Icons.verified,
+                          size: 14,
+                          color: AppTheme.secondaryColor,
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    _MetaChip(
+                      icon: Icons.chat_bubble_outline,
+                      label: question.isUnanswered
+                          ? 'Unanswered'
+                          : '${question.answerCount} answer${question.answerCount == 1 ? '' : 's'}',
+                      highlight: question.isUnanswered,
+                    ),
+                    if (question.topAnswerScore > 0) ...[
+                      const SizedBox(width: 12),
+                      _MetaChip(
+                        icon: Icons.arrow_upward,
+                        label: '${question.topAnswerScore} upvotes',
+                      ),
+                    ],
+                    const Spacer(),
+                    Text(
+                      date,
                       style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: AppTheme.gray500,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  if (question.isAuthorVerified)
-                    const Padding(
-                      padding: EdgeInsets.only(left: 4),
-                      child: Icon(
-                        Icons.verified,
-                        size: 14,
-                        color: AppTheme.secondaryColor,
+                        fontSize: 11,
+                        color: AppTheme.gray400,
                       ),
                     ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  _MetaChip(
-                    icon: Icons.chat_bubble_outline,
-                    label: question.isUnanswered
-                        ? 'Unanswered'
-                        : '${question.answerCount} answer${question.answerCount == 1 ? '' : 's'}',
-                    highlight: question.isUnanswered,
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    date,
-                    style: GoogleFonts.poppins(
-                      fontSize: 11,
-                      color: AppTheme.gray400,
-                    ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _CategoryChip extends StatelessWidget {
+  final String category;
+
+  const _CategoryChip({required this.category});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppTheme.primaryColor.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        QuestionConstants.categoryLabel(category),
+        style: GoogleFonts.poppins(
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+          color: AppTheme.primaryColor,
+        ),
+      ),
+    );
+  }
+}
+
+class _BadgeChip extends StatelessWidget {
+  final String label;
+  final Color color;
+  final IconData icon;
+
+  const _BadgeChip({
+    required this.label,
+    required this.color,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: color),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: GoogleFonts.poppins(
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -178,13 +267,17 @@ class _MetaChip extends StatelessWidget {
 
 class QuestionFilterBar extends StatelessWidget {
   final String selectedFilter;
+  final String selectedCategory;
   final ValueChanged<String> onFilterChanged;
+  final ValueChanged<String> onCategoryChanged;
   final ValueChanged<String> onSearchChanged;
   final TextEditingController searchController;
 
   const QuestionFilterBar({
     required this.selectedFilter,
+    required this.selectedCategory,
     required this.onFilterChanged,
+    required this.onCategoryChanged,
     required this.onSearchChanged,
     required this.searchController,
     super.key,
@@ -199,7 +292,7 @@ class QuestionFilterBar extends StatelessWidget {
           controller: searchController,
           onChanged: onSearchChanged,
           decoration: InputDecoration(
-            hintText: 'Search questions...',
+            hintText: 'Search questions instantly...',
             prefixIcon: const Icon(Icons.search, size: 20),
             filled: true,
             fillColor: AppTheme.gray100,
@@ -211,12 +304,17 @@ class QuestionFilterBar extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
+        Text(
+          'Sort',
+          style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 6),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
             children: [
               _FilterChip(
-                label: 'Recent',
+                label: 'Latest',
                 selected: selectedFilter == QuestionConstants.filterLatest,
                 onTap: () => onFilterChanged(QuestionConstants.filterLatest),
               ),
@@ -228,11 +326,38 @@ class QuestionFilterBar extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               _FilterChip(
+                label: 'Most Upvoted',
+                selected: selectedFilter == QuestionConstants.filterMostUpvoted,
+                onTap: () => onFilterChanged(QuestionConstants.filterMostUpvoted),
+              ),
+              const SizedBox(width: 8),
+              _FilterChip(
                 label: 'Unanswered',
                 selected: selectedFilter == QuestionConstants.filterUnanswered,
                 onTap: () => onFilterChanged(QuestionConstants.filterUnanswered),
               ),
             ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          'Topic',
+          style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 6),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: QuestionConstants.allCategories.map((cat) {
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: _FilterChip(
+                  label: QuestionConstants.categoryLabel(cat),
+                  selected: selectedCategory == cat,
+                  onTap: () => onCategoryChanged(cat),
+                ),
+              );
+            }).toList(),
           ),
         ),
       ],

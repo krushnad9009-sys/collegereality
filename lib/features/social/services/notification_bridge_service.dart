@@ -44,6 +44,60 @@ class NotificationBridgeService {
     );
   }
 
+  Future<void> notifyAnswerReply({
+    required String recipientId,
+    required String questionTitle,
+    required String collegeId,
+    required String questionId,
+  }) async {
+    await _engagement.notifyUser(
+      userId: recipientId,
+      type: EngagementConstants.typeAnswerReply,
+      category: EngagementConstants.categoryQuestions,
+      title: 'New reply on a question you follow',
+      body: questionTitle,
+      entityType: 'question',
+      entityId: questionId,
+      actionRoute: RouteNames.collegeQuestionPath(collegeId, questionId),
+    );
+  }
+
+  Future<void> notifyQuestionMention({
+    required String recipientId,
+    required String questionTitle,
+    required String collegeId,
+    required String questionId,
+  }) async {
+    await _engagement.notifyUser(
+      userId: recipientId,
+      type: EngagementConstants.typeQuestionMention,
+      category: EngagementConstants.categoryQuestions,
+      title: 'You were mentioned in a Q&A post',
+      body: questionTitle,
+      entityType: 'question',
+      entityId: questionId,
+      actionRoute: RouteNames.collegeQuestionPath(collegeId, questionId),
+    );
+  }
+
+  Future<void> notifyAcceptedAnswer({
+    required String answerAuthorId,
+    required String questionTitle,
+    required String collegeId,
+    required String questionId,
+  }) async {
+    await _engagement.notifyUser(
+      userId: answerAuthorId,
+      type: EngagementConstants.typeAcceptedAnswer,
+      category: EngagementConstants.categoryQuestions,
+      title: 'Your answer was accepted',
+      body: questionTitle,
+      entityType: 'question',
+      entityId: questionId,
+      actionRoute: RouteNames.collegeQuestionPath(collegeId, questionId),
+    );
+  }
+
   Future<void> notifyNewReview({
     required String userId,
     required String collegeName,

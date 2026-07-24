@@ -1,3 +1,4 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -11,6 +12,7 @@ import '../../auth/providers/auth_provider.dart';
 import '../../auth/providers/user_provider.dart';
 import '../models/question_model.dart';
 import '../providers/question_provider.dart';
+import 'question_rich_text_field.dart';
 
 Future<QuestionModel?> showAskQuestionSheet({
   required BuildContext context,
@@ -28,7 +30,9 @@ Future<QuestionModel?> showAskQuestionSheet({
 
   final titleController = TextEditingController();
   final bodyController = TextEditingController();
+  var selectedCategory = QuestionConstants.categoryAdmission;
   var isSubmitting = false;
+  final imageUrls = <String>[];
 
   final result = await showModalBottomSheet<QuestionModel?>(
     context: context,
@@ -79,16 +83,72 @@ Future<QuestionModel?> showAskQuestionSheet({
                     ),
                   ),
                   const SizedBox(height: 8),
-                  TextField(
-                    controller: bodyController,
-                    maxLines: 4,
-                    maxLength: QuestionConstants.maxBodyLength,
+                  DropdownButtonFormField<String>(
+                    value: selectedCategory,
                     decoration: InputDecoration(
-                      labelText: 'Details (optional)',
-                      hintText: 'Add more context...',
+                      labelText: 'Topic',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
+                    ),
+                    items: QuestionConstants.allCategories
+                        .where((c) => c != QuestionConstants.categoryAll)
+                        .map(
+                          (c) => DropdownMenuItem(
+                            value: c,
+                            child: Text(QuestionConstants.categoryLabel(c)),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (v) {
+                      if (v != null) setState(() => selectedCategory = v);
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  QuestionRichTextField(
+                    controller: bodyController,
+                    hint: 'Add details (optional)',
+                    maxLength: QuestionConstants.maxBodyLength,
+                  ),
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    onPressed: imageUrls.length >= QuestionConstants.maxImagesPerPost
+                        ? null
+                        : () async {
+                            final result = await FilePicker.platform.pickFiles(
+                              type: FileType.image,
+                              withData: true,
+                            );
+                            if (result == null || result.files.isEmpty) return;
+                            final file = result.files.first;
+                            if (file.bytes == null) return;
+                            setState(() => isSubmitting = true);
+                            try {
+                              final url = await ref
+                                  .read(questionStorageServiceProvider)
+                                  .uploadImage(
+                                    userId: authUser.uid,
+                                    questionId: 'draft_${DateTime.now().millisecondsSinceEpoch}',
+                                    bytes: file.bytes!,
+                                    extension: file.extension ?? 'jpg',
+                                  );
+                              setState(() => imageUrls.add(url));
+                            } catch (e) {
+                              if (context.mounted) {
+                                SnackBarHelper.showErrorSnackBar(
+                                  context,
+                                  message: e.toString(),
+                                );
+                              }
+                            } finally {
+                              setState(() => isSubmitting = false);
+                            }
+                          },
+                    icon: const Icon(Icons.image_outlined, size: 18),
+                    label: Text(
+                      imageUrls.isEmpty
+                          ? 'Add image (optional)'
+                          : '${imageUrls.length} image(s) attached',
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -123,6 +183,8 @@ Future<QuestionModel?> showAskQuestionSheet({
                                               false,
                                       title: titleController.text,
                                       body: bodyController.text,
+                                      category: selectedCategory,
+                                      imageUrls: imageUrls,
                                     );
                                 ref
                                     .read(optimisticQuestionsProvider.notifier)
@@ -178,6 +240,7 @@ Future<void> showWriteAnswerSheet({
 
   final bodyController = TextEditingController();
   var isSubmitting = false;
+  final imageUrls = <String>[];
 
   await showModalBottomSheet<void>(
     context: context,
@@ -208,16 +271,44 @@ Future<void> showWriteAnswerSheet({
                     ),
                   ),
                   const SizedBox(height: 16),
-                  TextField(
+                  QuestionRichTextField(
                     controller: bodyController,
+                    hint: 'Share your experience or advice...',
                     maxLines: 6,
                     maxLength: QuestionConstants.maxAnswerLength,
-                    decoration: InputDecoration(
-                      hintText: 'Share your experience or advice...',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    onPressed: () async {
+                      final result = await FilePicker.platform.pickFiles(
+                        type: FileType.image,
+                        withData: true,
+                      );
+                      if (result == null || result.files.isEmpty) return;
+                      final file = result.files.first;
+                      if (file.bytes == null) return;
+                      try {
+                        final url = await ref
+                            .read(questionStorageServiceProvider)
+                            .uploadImage(
+                              userId: authUser.uid,
+                              questionId: questionId,
+                              bytes: file.bytes!,
+                              extension: file.extension ?? 'jpg',
+                              subPath: 'answers',
+                            );
+                        setState(() => imageUrls.add(url));
+                      } catch (e) {
+                        if (context.mounted) {
+                          SnackBarHelper.showErrorSnackBar(
+                            context,
+                            message: e.toString(),
+                          );
+                        }
+                      }
+                    },
+                    icon: const Icon(Icons.image_outlined, size: 18),
+                    label: const Text('Attach image (optional)'),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -249,6 +340,7 @@ Future<void> showWriteAnswerSheet({
                                           user?.usesAnonymousPublicDisplayName ??
                                               false,
                                       body: bodyController.text,
+                                      imageUrls: imageUrls,
                                     );
                                 if (context.mounted) {
                                   Navigator.pop(sheetContext);

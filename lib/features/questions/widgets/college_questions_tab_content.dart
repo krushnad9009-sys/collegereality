@@ -10,6 +10,8 @@ import '../providers/question_provider.dart';
 import 'ask_question_sheet.dart';
 import 'ask_student_button.dart';
 import 'question_card_widget.dart';
+import 'question_shimmer.dart';
+import 'unanswered_questions_banner.dart';
 
 class CollegeQuestionsTabContent extends ConsumerStatefulWidget {
   final CollegeModel college;
@@ -24,38 +26,57 @@ class CollegeQuestionsTabContent extends ConsumerStatefulWidget {
 class _CollegeQuestionsTabContentState
     extends ConsumerState<CollegeQuestionsTabContent> {
   late final TextEditingController _searchController;
+  late final ScrollController _scrollController;
 
   @override
   void initState() {
     super.initState();
     _searchController = TextEditingController();
+    _scrollController = ScrollController()..addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    final max = _scrollController.position.maxScrollExtent;
+    final current = _scrollController.position.pixels;
+    if (current >= max - 200) {
+      ref.read(questionListFilterProvider(widget.college.id).notifier).showMore();
+    }
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final collegeId = widget.college.id;
-    final questionsAsync = ref.watch(displayedCollegeQuestionsProvider(collegeId));
+    final resultAsync = ref.watch(displayedCollegeQuestionsProvider(collegeId));
     final filterState = ref.watch(questionListFilterProvider(collegeId));
     final isWide = MediaQuery.of(context).size.width >= 600;
 
-    return questionsAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+    return resultAsync.when(
+      loading: () => const QuestionListShimmer(),
       error: (e, _) => Center(child: Text('Error loading questions: $e')),
-      data: (questions) {
+      data: (result) {
+        final questions = result.questions;
         return ListView(
+          controller: _scrollController,
           padding: EdgeInsets.all(isWide ? 24 : 16),
           children: [
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppTheme.secondaryColor.withValues(alpha: 0.08),
+                gradient: LinearGradient(
+                  colors: [
+                    AppTheme.secondaryColor.withValues(alpha: 0.12),
+                    AppTheme.primaryColor.withValues(alpha: 0.08),
+                  ],
+                ),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: AppTheme.secondaryColor.withValues(alpha: 0.15),
@@ -89,25 +110,41 @@ class _CollegeQuestionsTabContentState
               ),
             ),
             const SizedBox(height: 16),
+            UnansweredQuestionsBanner(
+              collegeId: collegeId,
+              collegeName: widget.college.name,
+            ),
             QuestionFilterBar(
               searchController: _searchController,
               selectedFilter: filterState.filter,
+              selectedCategory: filterState.category,
               onFilterChanged: (filter) {
-                ref
-                    .read(questionListFilterProvider(collegeId).notifier)
-                    .setFilter(filter);
+                ref.read(questionListFilterProvider(collegeId).notifier)
+                  ..setFilter(filter)
+                  ..resetPagination();
+              },
+              onCategoryChanged: (category) {
+                ref.read(questionListFilterProvider(collegeId).notifier)
+                  ..setCategory(category)
+                  ..resetPagination();
               },
               onSearchChanged: (query) {
-                ref
-                    .read(questionListFilterProvider(collegeId).notifier)
-                    .setSearchQuery(query);
+                ref.read(questionListFilterProvider(collegeId).notifier)
+                  ..setSearchQuery(query)
+                  ..resetPagination();
               },
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
+            Text(
+              '${result.totalFiltered} question${result.totalFiltered == 1 ? '' : 's'}',
+              style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.gray500),
+            ),
+            const SizedBox(height: 12),
             if (questions.isEmpty)
               _EmptyState(
                 hasSearch: filterState.searchQuery.isNotEmpty ||
-                    filterState.filter != 'latest',
+                    filterState.filter != 'latest' ||
+                    filterState.category != 'all',
                 onAsk: () => showAskQuestionSheet(
                   context: context,
                   ref: ref,
@@ -121,6 +158,19 @@ class _CollegeQuestionsTabContentState
                   question: question,
                   onTap: () => context.push(
                     RouteNames.collegeQuestionPath(collegeId, question.id),
+                  ),
+                ),
+              ),
+            if (result.hasMore)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Center(
+                  child: OutlinedButton.icon(
+                    onPressed: () => ref
+                        .read(questionListFilterProvider(collegeId).notifier)
+                        .showMore(),
+                    icon: const Icon(Icons.expand_more),
+                    label: const Text('Load more questions'),
                   ),
                 ),
               ),
@@ -158,7 +208,7 @@ class _EmptyState extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             hasSearch
-                ? 'Try a different search or filter'
+                ? 'Try a different search, topic, or sort filter'
                 : 'Be the first to ask a verified student',
             style: GoogleFonts.poppins(
               fontSize: 13,

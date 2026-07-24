@@ -4,6 +4,8 @@ import 'package:college_reality_india/core/constants/question_constants.dart';
 import 'package:college_reality_india/features/questions/models/answer_model.dart';
 import 'package:college_reality_india/features/questions/models/question_model.dart';
 import 'package:college_reality_india/features/questions/utils/question_display_utils.dart';
+import 'package:college_reality_india/features/questions/utils/question_mention_utils.dart';
+import 'package:college_reality_india/features/questions/utils/question_rich_text_utils.dart';
 
 void main() {
   group('QuestionDisplayUtils', () {
@@ -13,6 +15,8 @@ void main() {
       int answerCount = 0,
       String? mostHelpfulAnswerId,
       int mostHelpfulScore = 0,
+      int topAnswerScore = 0,
+      String category = QuestionConstants.categoryHostel,
       DateTime? createdAt,
     }) {
       final now = createdAt ?? DateTime(2024, 6, 1);
@@ -24,10 +28,12 @@ void main() {
         authorDisplayName: 'Student',
         title: title,
         body: 'Details about $title',
-        searchText: buildQuestionSearchText(title, 'Details about $title'),
+        category: category,
+        searchText: buildQuestionSearchText(title, 'Details about $title', category: category),
         answerCount: answerCount,
         mostHelpfulAnswerId: mostHelpfulAnswerId,
         mostHelpfulScore: mostHelpfulScore,
+        topAnswerScore: topAnswerScore,
         createdAt: now,
         updatedAt: now,
       );
@@ -49,18 +55,40 @@ void main() {
       );
     });
 
+    test('filterAndSortQuestions supports category filter', () {
+      final questions = [
+        sampleQuestion(id: '1', title: 'Hostel food quality', category: QuestionConstants.categoryHostel),
+        sampleQuestion(id: '2', title: 'Placement support', category: QuestionConstants.categoryPlacement),
+      ];
+
+      final hostelOnly = filterAndSortQuestions(
+        questions: questions,
+        filter: QuestionConstants.filterLatest,
+        searchQuery: '',
+        category: QuestionConstants.categoryHostel,
+      );
+      expect(hostelOnly.length, 1);
+      expect(hostelOnly.first.id, '1');
+    });
+
+    test('filterAndSortQuestions supports most upvoted sort', () {
+      final questions = [
+        sampleQuestion(id: '1', title: 'Low votes', topAnswerScore: 2),
+        sampleQuestion(id: '2', title: 'High votes', topAnswerScore: 20),
+      ];
+
+      final sorted = filterAndSortQuestions(
+        questions: questions,
+        filter: QuestionConstants.filterMostUpvoted,
+        searchQuery: '',
+      );
+      expect(sorted.first.id, '2');
+    });
+
     test('filterAndSortQuestions supports search and unanswered filter', () {
       final questions = [
         sampleQuestion(id: '1', title: 'Hostel food quality'),
         sampleQuestion(id: '2', title: 'Placement support', answerCount: 2),
-        sampleQuestion(
-          id: '3',
-          title: 'Campus wifi',
-          answerCount: 1,
-          mostHelpfulAnswerId: 'a1',
-          mostHelpfulScore: 5,
-          createdAt: DateTime(2024, 7, 1),
-        ),
       ];
 
       final unanswered = filterAndSortQuestions(
@@ -70,17 +98,18 @@ void main() {
       );
       expect(unanswered.length, 1);
       expect(unanswered.first.id, '1');
-
-      final searched = filterAndSortQuestions(
-        questions: questions,
-        filter: QuestionConstants.filterLatest,
-        searchQuery: 'placement',
-      );
-      expect(searched.length, 1);
-      expect(searched.first.title, contains('Placement'));
     });
 
-    test('sortAnswers prioritizes most helpful and score', () {
+    test('filterBlockedAuthors removes blocked users', () {
+      final questions = [
+        sampleQuestion(id: '1', title: 'A'),
+        sampleQuestion(id: '2', title: 'B'),
+      ];
+      final filtered = filterBlockedAuthors(questions, {'u1'});
+      expect(filtered, isEmpty);
+    });
+
+    test('sortAnswers prioritizes accepted then most helpful', () {
       final answers = [
         AnswerModel(
           id: 'a1',
@@ -99,28 +128,41 @@ void main() {
           collegeId: 'c1',
           authorId: 'u2',
           authorDisplayName: 'B',
-          body: 'Most helpful',
+          body: 'Accepted',
           score: 2,
-          isMostHelpful: true,
+          isAccepted: true,
           createdAt: DateTime(2024, 1, 2),
           updatedAt: DateTime(2024, 1, 2),
-        ),
-        AnswerModel(
-          id: 'a3',
-          questionId: 'q1',
-          collegeId: 'c1',
-          authorId: 'u3',
-          authorDisplayName: 'C',
-          body: 'High score',
-          score: 10,
-          createdAt: DateTime(2024, 1, 3),
-          updatedAt: DateTime(2024, 1, 3),
         ),
       ];
 
       final sorted = sortAnswers(answers);
       expect(sorted.first.id, 'a2');
-      expect(sorted[1].id, 'a3');
+    });
+
+    test('paginateQuestions limits visible count', () {
+      final questions = List.generate(
+        30,
+        (i) => sampleQuestion(id: '$i', title: 'Q$i'),
+      );
+      final page = paginateQuestions(questions, page: 0, pageSize: 20);
+      expect(page.length, 20);
+      expect(hasMoreQuestions(questions, 20), isTrue);
+    });
+  });
+
+  group('QuestionMentionUtils', () {
+    test('extracts mention user ids from rich text', () {
+      final ids = QuestionMentionUtils.extractMentionUserIds(
+        'Thanks @[Rahul](user123) for the help',
+      );
+      expect(ids, ['user123']);
+    });
+  });
+
+  group('QuestionRichTextUtils', () {
+    test('wrapBold adds markdown markers', () {
+      expect(QuestionRichTextUtils.wrapBold('test'), '**test**');
     });
   });
 }

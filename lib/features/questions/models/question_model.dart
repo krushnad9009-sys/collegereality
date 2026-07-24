@@ -13,9 +13,14 @@ class QuestionModel {
   final String title;
   final String body;
   final String searchText;
+  final String category;
+  final List<String> imageUrls;
+  final List<String> mentionUserIds;
   final int answerCount;
   final int mostHelpfulScore;
+  final int topAnswerScore;
   final String? mostHelpfulAnswerId;
+  final String? acceptedAnswerId;
   final String status;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -31,9 +36,14 @@ class QuestionModel {
     required this.title,
     this.body = '',
     this.searchText = '',
+    this.category = QuestionConstants.categoryAdmission,
+    this.imageUrls = const [],
+    this.mentionUserIds = const [],
     this.answerCount = 0,
     this.mostHelpfulScore = 0,
+    this.topAnswerScore = 0,
     this.mostHelpfulAnswerId,
+    this.acceptedAnswerId,
     this.status = QuestionConstants.statusPublished,
     required this.createdAt,
     required this.updatedAt,
@@ -43,6 +53,9 @@ class QuestionModel {
       normalizeStatus(status) == QuestionConstants.statusPublished;
 
   bool get isUnanswered => answerCount <= 0;
+
+  bool get hasAcceptedAnswer =>
+      acceptedAnswerId != null && acceptedAnswerId!.isNotEmpty;
 
   static String normalizeStatus(String? raw) {
     if (raw == null || raw.trim().isEmpty) {
@@ -70,9 +83,20 @@ class QuestionModel {
       title: json['title'] as String? ?? '',
       body: json['body'] as String? ?? '',
       searchText: json['searchText'] as String? ?? '',
+      category: json['category'] as String? ?? QuestionConstants.categoryAdmission,
+      imageUrls: (json['imageUrls'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
+      mentionUserIds: (json['mentionUserIds'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
       answerCount: (json['answerCount'] as num?)?.toInt() ?? 0,
       mostHelpfulScore: (json['mostHelpfulScore'] as num?)?.toInt() ?? 0,
+      topAnswerScore: (json['topAnswerScore'] as num?)?.toInt() ?? 0,
       mostHelpfulAnswerId: json['mostHelpfulAnswerId'] as String?,
+      acceptedAnswerId: json['acceptedAnswerId'] as String?,
       status: normalizeStatus(json['status'] as String?),
       createdAt: _parseDate(json['createdAt']),
       updatedAt: _parseDate(json['updatedAt']),
@@ -91,9 +115,14 @@ class QuestionModel {
       'title': title,
       'body': body,
       'searchText': searchText,
+      'category': category,
+      'imageUrls': imageUrls,
+      'mentionUserIds': mentionUserIds,
       'answerCount': answerCount,
       'mostHelpfulScore': mostHelpfulScore,
+      'topAnswerScore': topAnswerScore,
       'mostHelpfulAnswerId': mostHelpfulAnswerId,
+      'acceptedAnswerId': acceptedAnswerId,
       'status': status,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
@@ -111,9 +140,14 @@ class QuestionModel {
     String? title,
     String? body,
     String? searchText,
+    String? category,
+    List<String>? imageUrls,
+    List<String>? mentionUserIds,
     int? answerCount,
     int? mostHelpfulScore,
+    int? topAnswerScore,
     String? mostHelpfulAnswerId,
+    String? acceptedAnswerId,
     String? status,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -129,9 +163,14 @@ class QuestionModel {
       title: title ?? this.title,
       body: body ?? this.body,
       searchText: searchText ?? this.searchText,
+      category: category ?? this.category,
+      imageUrls: imageUrls ?? this.imageUrls,
+      mentionUserIds: mentionUserIds ?? this.mentionUserIds,
       answerCount: answerCount ?? this.answerCount,
       mostHelpfulScore: mostHelpfulScore ?? this.mostHelpfulScore,
+      topAnswerScore: topAnswerScore ?? this.topAnswerScore,
       mostHelpfulAnswerId: mostHelpfulAnswerId ?? this.mostHelpfulAnswerId,
+      acceptedAnswerId: acceptedAnswerId ?? this.acceptedAnswerId,
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,

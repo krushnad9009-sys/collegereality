@@ -8,7 +8,9 @@ import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../engagement/providers/engagement_provider.dart';
+import '../../../core/constants/question_constants.dart';
 import '../providers/question_provider.dart';
+import '../utils/question_rich_text_utils.dart';
 import '../widgets/answer_card_widget.dart';
 import '../widgets/ask_question_sheet.dart';
 
@@ -91,10 +93,19 @@ class QuestionDetailScreen extends ConsumerWidget {
           }
 
           final canMarkHelpful = authUser != null && authUser.uid == question.authorId;
+          final canAccept = canMarkHelpful;
+          final canReply = canAnswerAsync.valueOrNull ?? false;
 
           return ListView(
             padding: EdgeInsets.all(isWide ? 24 : 16),
             children: [
+              if (question.category.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Chip(
+                    label: Text(QuestionConstants.categoryLabel(question.category)),
+                  ),
+                ),
               Text(
                 question.title,
                 style: GoogleFonts.poppins(
@@ -104,12 +115,32 @@ class QuestionDetailScreen extends ConsumerWidget {
               ),
               if (question.body.isNotEmpty) ...[
                 const SizedBox(height: 12),
-                Text(
+                QuestionRichTextUtils.buildRichText(
                   question.body,
-                  style: GoogleFonts.poppins(
+                  baseStyle: GoogleFonts.poppins(
                     fontSize: 14,
                     color: AppTheme.gray700,
                     height: 1.5,
+                  ),
+                ),
+              ],
+              if (question.imageUrls.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: 120,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: question.imageUrls.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 8),
+                    itemBuilder: (_, i) => ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.network(
+                        question.imageUrls[i],
+                        width: 120,
+                        height: 120,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -243,7 +274,9 @@ class QuestionDetailScreen extends ConsumerWidget {
                           (answer) => AnswerCardWidget(
                             answer: answer,
                             question: question,
-                            canMarkMostHelpful: canMarkHelpful,
+                            canMarkHelpful: canMarkHelpful,
+                            canAccept: canAccept,
+                            canReply: canReply,
                             onReport: authUser == null
                                 ? null
                                 : () => showReportContentDialog(

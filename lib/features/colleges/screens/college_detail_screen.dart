@@ -22,6 +22,7 @@ import '../../compare/providers/compare_basket_provider.dart';
 import '../../compare/widgets/compare_basket_bar.dart';
 import '../../placements/widgets/placements_tab_content.dart';
 import '../../questions/widgets/college_questions_tab_content.dart';
+import '../../questions/widgets/unanswered_questions_banner.dart';
 import '../widgets/accreditation_badges.dart';
 import '../widgets/college_gallery_widget.dart';
 import '../widgets/college_map_section.dart';
@@ -478,7 +479,7 @@ class _CollegeHeader extends StatelessWidget {
   }
 }
 
-class _OverviewTab extends StatelessWidget {
+class _OverviewTab extends ConsumerWidget {
   final CollegeModel college;
   final VoidCallback? onPlacementsTap;
   final VoidCallback? onHostelTap;
@@ -528,7 +529,7 @@ class _OverviewTab extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final wide = constraints.maxWidth >= 900;
@@ -546,6 +547,11 @@ class _OverviewTab extends StatelessWidget {
             onHostelTap: onHostelTap,
             onFeesTap: onFeesTap,
             onReviewsTap: onReviewsTap,
+          ),
+          const SizedBox(height: 16),
+          UnansweredQuestionsBanner(
+            collegeId: college.id,
+            collegeName: college.name,
           ),
         ];
         final rightColumn = <Widget>[
