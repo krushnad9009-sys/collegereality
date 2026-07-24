@@ -49,6 +49,8 @@ import '../../features/ranking/screens/smart_recommendations_screen.dart';
 import '../../features/ranking/screens/compare_recommendations_screen.dart';
 import '../../features/ranking/screens/college_insights_screen.dart';
 import '../../features/ranking/screens/college_analytics_screen.dart';
+import '../../features/ranking/screens/how_cr_score_works_screen.dart';
+import '../../features/admin/screens/admin_cr_score_screen.dart';
 import '../../features/placements/screens/submit_placement_screen.dart';
 import '../../features/questions/screens/question_detail_screen.dart';
 import '../../features/admission/screens/admission_hub_screen.dart';
@@ -359,6 +361,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const CollegeAnalyticsScreen(),
       ),
       GoRoute(
+        path: RouteNames.howCrScoreWorks,
+        builder: (context, state) => const HowCrScoreWorksScreen(),
+      ),
+      GoRoute(
         path: RouteNames.collegeDetails,
         builder: (context, state) {
           final id = state.pathParameters['id']!;
@@ -607,6 +613,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RouteNames.adminSystem,
         builder: (context, state) => const AdminSystemMonitorScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.adminRecalculateCrScore,
+        builder: (context, state) => const AdminCrScoreScreen(),
       ),
       GoRoute(
         path: RouteNames.adminBulk,

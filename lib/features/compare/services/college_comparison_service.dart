@@ -1,6 +1,7 @@
 import '../../../core/constants/compare_constants.dart';
 import '../../../core/utils/indian_currency_formatter.dart';
 import '../../colleges/models/college_model.dart';
+import '../../ranking/utils/cr_score_engine.dart';
 import '../models/college_comparison_result.dart';
 
 /// Full side-by-side comparison using verified Firestore data only.
@@ -24,6 +25,7 @@ class CollegeComparisonService {
     }
 
     final rows = <ComparisonRow>[
+      _scoreRow('CR Score', 'CR Score', limited, (c) => CrScoreEngine.effectiveScore(c)),
       _ratingRow('Overall Rating', 'Ratings', limited, (c) => c.aggregatedRatings.overall),
       _ratingRow('Teaching', 'Ratings', limited, (c) => c.aggregatedRatings.teaching),
       _ratingRow('Placement', 'Ratings', limited, (c) => c.aggregatedRatings.placements),
@@ -91,7 +93,7 @@ class CollegeComparisonService {
 
     final insights = _buildInsights(limited, rows);
     final winnerIndex = _bestIndex(
-      limited.map((c) => c.aggregatedRatings.overall).toList(),
+      limited.map((c) => CrScoreEngine.effectiveScore(c)).toList(),
       higherIsBetter: true,
     );
     final summary = _buildSummary(limited, winnerIndex);
@@ -175,6 +177,32 @@ class CollegeComparisonService {
     return double.tryParse(cleaned) ?? 0;
   }
 
+  ComparisonRow _scoreRow(
+    String metric,
+    String category,
+    List<CollegeModel> colleges,
+    double Function(CollegeModel) getter,
+  ) {
+    final values = colleges.map((c) {
+      final v = getter(c);
+      return v > 0 ? '${v.toStringAsFixed(0)}/100' : '—';
+    }).toList();
+
+    var winnerIndex = _bestIndex(
+      colleges.map(getter).toList(),
+      higherIsBetter: true,
+    );
+    if (colleges.every((c) => getter(c) <= 0)) winnerIndex = null;
+
+    return ComparisonRow(
+      metric: metric,
+      category: category,
+      values: values,
+      winnerIndex: winnerIndex,
+      higherIsBetter: true,
+    );
+  }
+
   ComparisonRow _ratingRow(
     String metric,
     String category,
@@ -253,9 +281,9 @@ class CollegeComparisonService {
           'Missing fields are shown as —.';
     }
     final winner = colleges[winnerIndex];
-    return '${winner.name} leads on overall verified rating '
-        '(${winner.aggregatedRatings.overall.toStringAsFixed(1)}/5, '
-        '${winner.reviewCount} reviews). All statistics are from Firestore — '
+    return '${winner.name} leads on CR Score '
+        '(${CrScoreEngine.effectiveScore(winner).toStringAsFixed(0)}/100, '
+        '${winner.reviewCount} verified reviews). All statistics are from Firestore — '
         'nothing is generated or estimated.';
   }
 

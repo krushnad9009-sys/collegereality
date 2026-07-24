@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../config/theme/app_theme.dart';
+import '../../ranking/widgets/cr_score_badge_widget.dart';
 import '../../reviews/widgets/star_rating_widget.dart';
 import '../../../core/widgets/college_logo_widget.dart';
 import '../../../core/widgets/college_image_widget.dart';
@@ -11,6 +12,7 @@ class CollegeCardWidget extends StatelessWidget {
   final String location;
   final String city;
   final double rating;
+  final double? crScore;
   final int reviewCount;
   final String? imageUrl;
   final String? logoUrl;
@@ -24,6 +26,7 @@ class CollegeCardWidget extends StatelessWidget {
     required this.location,
     required this.city,
     required this.rating,
+    this.crScore,
     required this.reviewCount,
     this.imageUrl,
     this.logoUrl,
@@ -129,11 +132,23 @@ class CollegeCardWidget extends StatelessWidget {
                     const SizedBox(height: 12),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        StarRatingDisplay(
-                          rating: rating,
-                          reviewCount: reviewCount,
-                          starSize: 14,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              StarRatingDisplay(
+                                rating: rating,
+                                reviewCount: reviewCount,
+                                starSize: 14,
+                              ),
+                              if (crScore != null && crScore! > 0) ...[
+                                const SizedBox(height: 8),
+                                CrScoreBadgeWidget(score: crScore!),
+                              ],
+                            ],
+                          ),
                         ),
                         Row(
                           children: [

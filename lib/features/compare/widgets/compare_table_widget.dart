@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../config/theme/app_theme.dart';
 import '../../colleges/models/college_model.dart';
+import '../../ranking/utils/cr_score_engine.dart';
+import '../../ranking/widgets/cr_score_badge_widget.dart';
 import '../models/college_comparison_result.dart';
 
 class CompareTableWidget extends StatelessWidget {
@@ -69,6 +71,11 @@ class _CollegeHeaders extends StatelessWidget {
               const SizedBox(height: 4),
               Row(
                 children: [
+                  CrScoreBadgeWidget(
+                    score: CrScoreEngine.effectiveScore(c),
+                    fontSize: 10,
+                  ),
+                  const SizedBox(width: 8),
                   const Icon(Icons.verified_outlined,
                       size: 12, color: AppTheme.accentColor),
                   const SizedBox(width: 4),

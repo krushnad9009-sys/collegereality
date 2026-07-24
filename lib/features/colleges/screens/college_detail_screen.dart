@@ -23,6 +23,9 @@ import '../../compare/widgets/compare_basket_bar.dart';
 import '../../placements/widgets/placements_tab_content.dart';
 import '../../questions/widgets/college_questions_tab_content.dart';
 import '../../questions/widgets/unanswered_questions_banner.dart';
+import '../../ranking/widgets/cr_score_card_widget.dart';
+import '../../ranking/widgets/cr_score_badge_widget.dart';
+import '../../ranking/utils/cr_score_engine.dart';
 import '../widgets/accreditation_badges.dart';
 import '../widgets/college_gallery_widget.dart';
 import '../widgets/college_map_section.dart';
@@ -401,6 +404,12 @@ class _CollegeHeader extends StatelessWidget {
           const SizedBox(height: 12),
           Row(
             children: [
+              CrScoreBadgeWidget(
+                score: CrScoreEngine.effectiveScore(college),
+                showGrade: true,
+                fontSize: 13,
+              ),
+              const SizedBox(width: 12),
               const Icon(Icons.star_rounded,
                   color: AppTheme.warningColor, size: 20),
               const SizedBox(width: 4),
@@ -534,6 +543,8 @@ class _OverviewTab extends ConsumerWidget {
       builder: (context, constraints) {
         final wide = constraints.maxWidth >= 900;
         final leftColumn = <Widget>[
+          CrScoreCardWidget(college: college),
+          const SizedBox(height: 20),
           Text(
             'About',
             style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 15),
@@ -1198,6 +1209,8 @@ class _RatingsTab extends StatelessWidget {
       return ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          CrScoreCardWidget(college: college, compact: true),
+          const SizedBox(height: 16),
           ReviewSummaryPanel(college: college),
           const SizedBox(height: 16),
           WriteReviewButton(
@@ -1218,6 +1231,8 @@ class _RatingsTab extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        CrScoreCardWidget(college: college),
+        const SizedBox(height: 16),
         ReviewSummaryPanel(college: college),
         const SizedBox(height: 12),
         WriteReviewButton(

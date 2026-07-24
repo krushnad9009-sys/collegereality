@@ -8,6 +8,7 @@ import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/utils/firestore_error_utils.dart';
 import '../../home/widgets/college_card_widget.dart';
+import '../../ranking/utils/cr_score_engine.dart';
 import '../../compare/providers/compare_basket_provider.dart';
 import '../../compare/widgets/compare_basket_bar.dart';
 import '../models/college_model.dart';
@@ -500,6 +501,7 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
                               location: college.state,
                               city: college.city,
                               rating: college.aggregatedRatings.overall,
+                              crScore: CrScoreEngine.effectiveScore(college),
                               reviewCount: college.reviewCount,
                               imageUrl: college.coverPhotoUrl ?? college.logoUrl,
                               logoUrl: college.logoUrl,

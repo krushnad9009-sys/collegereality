@@ -6,6 +6,8 @@ import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/widgets/college_image_widget.dart';
+import '../../ranking/utils/cr_score_engine.dart';
+import '../../ranking/widgets/cr_score_badge_widget.dart';
 import '../../reviews/widgets/star_rating_widget.dart';
 import '../../colleges/models/college_model.dart';
 
@@ -109,6 +111,12 @@ class PremiumCollegeCarouselCard extends StatelessWidget {
                         fontSize: 11,
                         color: AppTheme.gray500,
                       ),
+                    ),
+                    const SizedBox(height: 8),
+                    CrScoreBadgeWidget(
+                      score: CrScoreEngine.effectiveScore(college),
+                      showGrade: true,
+                      fontSize: 11,
                     ),
                     const SizedBox(height: 8),
                     StarRatingDisplay(

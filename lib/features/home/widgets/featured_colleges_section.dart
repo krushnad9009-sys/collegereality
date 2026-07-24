@@ -7,6 +7,7 @@ import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/widgets/index.dart';
 import '../../colleges/providers/college_provider.dart';
+import '../../ranking/utils/cr_score_engine.dart';
 import 'college_card_widget.dart';
 
 class FeaturedCollegesSection extends ConsumerWidget {
@@ -79,6 +80,7 @@ class FeaturedCollegesSection extends ConsumerWidget {
                         location: college.state,
                         city: college.city,
                         rating: college.aggregatedRatings.overall,
+                        crScore: CrScoreEngine.effectiveScore(college),
                         reviewCount: college.reviewCount,
                         imageUrl: college.coverPhotoUrl,
                         logoUrl: college.logoUrl,

@@ -9,6 +9,7 @@ import '../../../core/constants/ranking_constants.dart';
 import '../../../core/widgets/async_state_widgets.dart';
 import '../providers/ranking_provider.dart';
 import '../utils/college_ranking_utils.dart';
+import '../widgets/cr_score_badge_widget.dart';
 
 class CollegeRankingsScreen extends ConsumerWidget {
   const CollegeRankingsScreen({super.key});
@@ -88,6 +89,11 @@ class CollegeRankingsScreen extends ConsumerWidget {
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
+                            CrScoreBadgeWidget(
+                              score: entry.overallScore,
+                              showGrade: true,
+                            ),
+                            const SizedBox(height: 4),
                             Text(
                               '${formatScore(entry.overallScore)}/100',
                               style: GoogleFonts.poppins(

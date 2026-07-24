@@ -106,6 +106,13 @@ class AdminDashboardScreen extends ConsumerWidget {
                 onTap: () => context.go(RouteNames.adminReports),
               ),
             ],
+            if (AdminPermissions.canManageColleges(userType))
+              _AdminMenuTile(
+                icon: Icons.calculate_outlined,
+                title: 'Recalculate CR Score',
+                subtitle: 'Rebuild verified review scores for all colleges',
+                onTap: () => context.go(RouteNames.adminRecalculateCrScore),
+              ),
             if (AdminPermissions.canManageColleges(userType)) ...[
               _AdminMenuTile(
                 icon: Icons.school_outlined,

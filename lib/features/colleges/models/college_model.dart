@@ -1,4 +1,5 @@
 import '../../../core/constants/college_constants.dart';
+import '../../ranking/models/cr_score_model.dart';
 import '../utils/college_search_utils.dart';
 
 class CollegeFees {
@@ -511,6 +512,9 @@ class CollegeModel implements CollegeModelLike {
   final CollegeAccreditation accreditation;
   final CollegeRatings aggregatedRatings;
   final int reviewCount;
+  final double crScore;
+  final CrScoreCategories crScoreCategories;
+  final DateTime? crScoreUpdatedAt;
   final Map<String, int> ratingDistribution;
   @override
   final List<String> searchKeywords;
@@ -569,6 +573,9 @@ class CollegeModel implements CollegeModelLike {
     this.accreditation = const CollegeAccreditation(),
     required this.aggregatedRatings,
     this.reviewCount = 0,
+    this.crScore = 0,
+    this.crScoreCategories = const CrScoreCategories(),
+    this.crScoreUpdatedAt,
     this.ratingDistribution = const {},
     this.searchKeywords = const [],
     this.searchTokens = const [],
@@ -731,6 +738,13 @@ class CollegeModel implements CollegeModelLike {
         (json['aggregatedRatings'] as Map<String, dynamic>?) ?? {},
       ),
       reviewCount: (json['reviewCount'] as num?)?.toInt() ?? 0,
+      crScore: (json['crScore'] as num?)?.toDouble() ?? 0,
+      crScoreCategories: CrScoreCategories.fromJson(
+        json['crScoreCategories'] as Map<String, dynamic>?,
+      ),
+      crScoreUpdatedAt: json['crScoreUpdatedAt'] != null
+          ? DateTime.tryParse(json['crScoreUpdatedAt'].toString())
+          : null,
       ratingDistribution:
           (json['ratingDistribution'] as Map<String, dynamic>?)
                   ?.map((k, v) => MapEntry(k, (v as num).toInt())) ??
@@ -825,6 +839,10 @@ class CollegeModel implements CollegeModelLike {
       'accreditation': accreditation.toJson(),
       'aggregatedRatings': aggregatedRatings.toJson(),
       'reviewCount': reviewCount,
+      'crScore': crScore,
+      'crScoreCategories': crScoreCategories.toJson(),
+      if (crScoreUpdatedAt != null)
+        'crScoreUpdatedAt': crScoreUpdatedAt!.toIso8601String(),
       'ratingDistribution': ratingDistribution,
       'searchKeywords': searchKeywords,
       'searchTokens': tokens,
@@ -883,6 +901,9 @@ class CollegeModel implements CollegeModelLike {
     CollegeAccreditation? accreditation,
     CollegeRatings? aggregatedRatings,
     int? reviewCount,
+    double? crScore,
+    CrScoreCategories? crScoreCategories,
+    DateTime? crScoreUpdatedAt,
     Map<String, int>? ratingDistribution,
     List<String>? searchKeywords,
     List<String>? searchTokens,
@@ -949,6 +970,9 @@ class CollegeModel implements CollegeModelLike {
       accreditation: accreditation ?? this.accreditation,
       aggregatedRatings: aggregatedRatings ?? this.aggregatedRatings,
       reviewCount: reviewCount ?? this.reviewCount,
+      crScore: crScore ?? this.crScore,
+      crScoreCategories: crScoreCategories ?? this.crScoreCategories,
+      crScoreUpdatedAt: crScoreUpdatedAt ?? this.crScoreUpdatedAt,
       ratingDistribution: ratingDistribution ?? this.ratingDistribution,
       searchKeywords: searchKeywords ?? this.searchKeywords,
       searchTokens: searchTokens ?? this.searchTokens,

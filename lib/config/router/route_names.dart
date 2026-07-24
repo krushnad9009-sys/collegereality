@@ -91,6 +91,8 @@ class RouteNames {
   static const String rankingCompare = '/rankings/compare';
   static const String rankingInsights = '/rankings/insights';
   static const String rankingAnalytics = '/rankings/analytics';
+  static const String howCrScoreWorks = '/how-cr-score-works';
+  static const String adminRecalculateCrScore = '/admin/cr-score';
 
   // Ecosystem (Phase 22)
   static const String requestCollege = '/ecosystem/request-college';

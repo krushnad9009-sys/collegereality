@@ -8,6 +8,8 @@ import '../../../config/theme/app_theme.dart';
 import '../../admission/providers/admission_provider.dart';
 import '../../careers/providers/careers_provider.dart';
 import '../../colleges/providers/college_provider.dart';
+import '../../ranking/utils/cr_score_engine.dart';
+import '../../ranking/widgets/cr_score_badge_widget.dart';
 import '../../questions/providers/question_provider.dart';
 import '../providers/engagement_provider.dart';
 
@@ -83,11 +85,18 @@ class _CollegesTab extends ConsumerWidget {
         return ListView.builder(
           padding: const EdgeInsets.all(16),
           itemCount: saved.length,
-          itemBuilder: (_, i) => _BookmarkTile(
-            title: saved[i].name,
-            subtitle: '${saved[i].city}, ${saved[i].state}',
-            onTap: () => context.push(RouteNames.collegeDetailsPath(saved[i].id)),
-          ),
+          itemBuilder: (_, i) {
+            final college = saved[i];
+            final crScore = CrScoreEngine.effectiveScore(college);
+            return _BookmarkTile(
+            title: college.name,
+            subtitle: '${college.city}, ${college.state}',
+            trailing: crScore > 0
+                ? CrScoreBadgeWidget(score: crScore, fontSize: 11)
+                : null,
+            onTap: () => context.push(RouteNames.collegeDetailsPath(college.id)),
+          );
+          },
         );
       },
     );
@@ -256,11 +265,13 @@ class _SavedQuestionTile extends ConsumerWidget {
 class _BookmarkTile extends StatelessWidget {
   final String title;
   final String subtitle;
+  final Widget? trailing;
   final VoidCallback onTap;
 
   const _BookmarkTile({
     required this.title,
     required this.subtitle,
+    this.trailing,
     required this.onTap,
   });
 
@@ -272,7 +283,7 @@ class _BookmarkTile extends StatelessWidget {
         leading: const Icon(Icons.bookmark, color: AppTheme.primaryColor),
         title: Text(title, style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
         subtitle: Text(subtitle, style: GoogleFonts.poppins(fontSize: 12)),
-        trailing: const Icon(Icons.chevron_right),
+        trailing: trailing ?? const Icon(Icons.chevron_right),
         onTap: onTap,
       ),
     );

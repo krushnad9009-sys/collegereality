@@ -11,6 +11,7 @@ import '../../../core/widgets/premium_components.dart';
 import '../../../core/widgets/skeleton_loader.dart';
 import '../../careers/models/careers_models.dart';
 import '../../colleges/models/college_model.dart';
+import '../../ranking/utils/cr_score_engine.dart';
 import '../../reviews/models/review_model.dart';
 import '../../reviews/widgets/star_rating_widget.dart';
 import '../providers/home_content_provider.dart';
@@ -131,6 +132,7 @@ class TopRatedCollegesSection extends ConsumerWidget {
                     location: college.state,
                     city: college.city,
                     rating: college.aggregatedRatings.overall,
+                    crScore: CrScoreEngine.effectiveScore(college),
                     reviewCount: college.reviewCount,
                     imageUrl: college.coverPhotoUrl,
                     logoUrl: college.logoUrl,

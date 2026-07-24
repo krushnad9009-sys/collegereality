@@ -6,6 +6,7 @@ import '../../../core/constants/review_constants.dart';
 import '../../../core/constants/review_yes_no_questions.dart';
 import '../../../core/constants/verification_constants.dart';
 import '../../colleges/models/college_model.dart';
+import '../../ranking/utils/cr_score_engine.dart';
 import '../../engagement/services/firestore_engagement_service.dart';
 import '../../social/services/notification_bridge_service.dart';
 import '../models/review_model.dart';
@@ -410,6 +411,10 @@ class FirestoreReviewService {
     final aggregates = _averagesFromMeta(nextMeta);
     final distribution = _distributionFromMeta(nextMeta);
     final chooseAgain = _wouldChooseAgainFromMeta(nextMeta);
+    final crPayload = _crScorePayloadFromAggregates(
+      aggregates,
+      nextMeta.reviewCount,
+    );
 
     transaction.set(
       collegeRef,
@@ -420,6 +425,7 @@ class FirestoreReviewService {
         'reviewCount': nextMeta.reviewCount,
         'wouldChooseAgainYes': chooseAgain.$1,
         'wouldChooseAgainTotal': chooseAgain.$2,
+        ...crPayload,
         'updatedAt': DateTime.now().toIso8601String(),
       },
       SetOptions(merge: true),
@@ -521,6 +527,19 @@ class FirestoreReviewService {
     };
   }
 
+  Map<String, dynamic> _crScorePayloadFromAggregates(
+    Map<String, dynamic> aggregates,
+    int reviewCount,
+  ) {
+    final ratings = CollegeRatings.fromJson(aggregates);
+    final snapshot = CrScoreEngine.computeFromRatings(
+      ratings: ratings,
+      reviewCount: reviewCount,
+      updatedAt: DateTime.now(),
+    );
+    return CrScoreEngine.firestorePayload(snapshot);
+  }
+
   /// Full recompute fallback for admin/migration.
   Future<void> updateCollegeAggregates(
     String collegeId,
@@ -531,13 +550,17 @@ class FirestoreReviewService {
       meta = _applyDeltaToMeta(meta, review, 1);
     }
 
+    final aggregates = _averagesFromMeta(meta);
+    final crPayload = _crScorePayloadFromAggregates(aggregates, meta.reviewCount);
+
     await _colleges.doc(collegeId.trim()).set({
       'reviewAggregation': meta.toJson(),
-      'aggregatedRatings': _averagesFromMeta(meta),
+      'aggregatedRatings': aggregates,
       'ratingDistribution': _distributionFromMeta(meta),
       'reviewCount': meta.reviewCount,
       'wouldChooseAgainYes': _wouldChooseAgainFromMeta(meta).$1,
       'wouldChooseAgainTotal': _wouldChooseAgainFromMeta(meta).$2,
+      ...crPayload,
       'updatedAt': DateTime.now().toIso8601String(),
     }, SetOptions(merge: true));
   }

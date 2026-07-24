@@ -1,42 +1,31 @@
-import 'dart:math';
-
-import '../../../core/utils/indian_currency_formatter.dart';
 import '../../colleges/models/college_model.dart';
+import '../../../core/constants/cr_score_constants.dart';
+import '../../../core/utils/indian_currency_formatter.dart';
 import '../models/ranking_models.dart';
+import 'cr_score_engine.dart';
 
-/// Computes normalized overall score (0–100) from verified college data.
+/// Computes normalized CR Score (0–100) from verified review aggregates.
 double computeOverallScore100(CollegeModel college) {
-  final ratings = college.aggregatedRatings;
-  final placements = college.placements;
-
-  var score = ratings.overall * 12;
-  score += min(placements.placementPercentage * 0.2, 20);
-  score += min(placements.averagePackageLpa * 2, 10);
-  score += min(college.reviewCount * 0.2, 10);
-  score += _naacBonus(college.accreditation.naacGrade);
-
-  if (college.isFeatured) score += 2;
-  return score.clamp(0, 100);
+  return CrScoreEngine.effectiveScore(college);
 }
 
 double categoryRatingScore(CollegeModel college, String category) {
-  final ratings = college.aggregatedRatings;
+  final snapshot = CrScoreEngine.compute(college);
   switch (category) {
     case 'placements':
-      return ratings.placements * 15 +
-          college.placements.placementPercentage * 0.15 +
-          college.placements.averagePackageLpa;
+      return snapshot.categories.placements;
     case 'teaching':
-      return ratings.teaching * 18 + ratings.faculty * 6;
+    case 'education':
+      return snapshot.categories.education;
     case 'infrastructure':
-      return ratings.infrastructure * 18 + ratings.labs * 4 + ratings.library * 4;
+      return snapshot.categories.infrastructure;
     case 'hostel':
-      return ratings.hostel * 18 + (college.hostel.available ? 10 : 0);
-    case 'fees':
-      final fee = _averageAnnualFee(college);
-      return ratings.fees * 12 + max(0, (400000 - fee) / 8000);
     case 'campusLife':
-      return ratings.campusLife * 15 + ratings.sports * 4 + ratings.food * 4;
+      return snapshot.categories.campusLife;
+    case 'fees':
+      return college.aggregatedRatings.fees * 20;
+    case 'safety':
+      return snapshot.categories.safety;
     default:
       return computeOverallScore100(college);
   }
@@ -110,6 +99,14 @@ List<CollegeRankEntry> rankByType(List<CollegeModel> colleges, {String? collegeT
   return rankColleges(colleges: colleges, collegeType: collegeType);
 }
 
+String formatScore(double score) => score.toStringAsFixed(1);
+
+String formatFees(CollegeModel college) {
+  final fee = _averageAnnualFee(college);
+  if (fee <= 0) return 'Not available';
+  return IndianCurrencyFormatter.format(fee.round());
+}
+
 int _averageAnnualFee(CollegeModel college) {
   final min = college.fees.tuitionMin;
   final max = college.fees.tuitionMax;
@@ -119,35 +116,14 @@ int _averageAnnualFee(CollegeModel college) {
   return 0;
 }
 
-double _naacBonus(String? grade) {
-  if (grade == null || grade.isEmpty) return 0;
-  final g = grade.replaceAll(' ', '').toUpperCase();
-  switch (g) {
-    case 'A++':
-      return 8;
-    case 'A+':
-      return 6;
-    case 'A':
-      return 4;
-    case 'B++':
-    case 'B+':
-      return 2;
-    default:
-      return 0;
-  }
-}
-
-String formatScore(double score) => score.toStringAsFixed(1);
-
-String formatFees(CollegeModel college) {
-  final fee = _averageAnnualFee(college);
-  if (fee <= 0) return 'Not available';
-  return IndianCurrencyFormatter.format(fee.round());
-}
-
 double computeRoiScore(CollegeModel college) {
   final fee = _averageAnnualFee(college);
   if (fee <= 0 || college.placements.averagePackageLpa <= 0) return 0;
   final annualSalary = college.placements.averagePackageLpa * 100000;
   return ((annualSalary / fee) * 10).clamp(0, 100);
 }
+
+String crScoreGrade(double score) => CrScoreConstants.gradeForScore(score);
+
+String crScoreConfidence(int reviewCount) =>
+    CrScoreConstants.confidenceLabel(reviewCount);
