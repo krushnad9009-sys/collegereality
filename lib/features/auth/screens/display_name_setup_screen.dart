@@ -9,6 +9,7 @@ import '../../../core/constants/display_name_constants.dart';
 import '../../../core/constants/verification_constants.dart';
 import '../../../core/utils/public_display_name_utils.dart';
 import '../../../core/utils/firestore_error_utils.dart';
+import '../../auth/services/display_name_diagnostics.dart';
 import '../../../core/widgets/index.dart';
 import '../../auth/models/user_model.dart';
 import '../../auth/providers/user_provider.dart';
@@ -47,8 +48,13 @@ class _DisplayNameSetupScreenState extends ConsumerState<DisplayNameSetupScreen>
     _selectedMode = user.displayNameMode;
     _customNameController.text = user.customDisplayName ?? '';
     if (!user.displayNameSetupComplete) {
-      _selectedMode = defaultDisplayNameModeForBadge(user.verificationBadge) ??
-          DisplayNameConstants.modeRealName;
+      final hasRealName =
+          (user.verifiedRealName ?? user.displayName)?.trim().isNotEmpty ??
+              false;
+      _selectedMode = hasRealName
+          ? (defaultDisplayNameModeForBadge(user.verificationBadge) ??
+              DisplayNameConstants.modeRealName)
+          : DisplayNameConstants.modeCustom;
     }
   }
 
@@ -90,6 +96,10 @@ class _DisplayNameSetupScreenState extends ConsumerState<DisplayNameSetupScreen>
       _customNameError = null;
     });
 
+    final usersPath = 'users/${user.uid}';
+    debugPrint('[DisplayName] Continue tapped mode=$_selectedMode path=$usersPath');
+    debugPrint('[DisplayName] authUid=${DisplayNameDiagnostics.authUid}');
+
     try {
       await ref.read(displayNameServiceProvider).updateDisplayNameSettings(
             user: user,
@@ -102,6 +112,7 @@ class _DisplayNameSetupScreenState extends ConsumerState<DisplayNameSetupScreen>
           );
 
       ref.invalidate(currentUserDetailProvider);
+      await ref.read(currentUserDetailProvider.future);
 
       if (mounted) {
         SnackBarHelper.showSuccessSnackBar(
@@ -110,11 +121,17 @@ class _DisplayNameSetupScreenState extends ConsumerState<DisplayNameSetupScreen>
         );
         context.go(RouteNames.home);
       }
-    } catch (e) {
+    } catch (e, stack) {
+      DisplayNameDiagnostics.logFailure(
+        e,
+        stack,
+        operation: 'display_name_setup_screen._save',
+        firestorePath: usersPath,
+      );
       if (mounted) {
         SnackBarHelper.showErrorSnackBar(
           context,
-          message: FirestoreErrorUtils.userMessage(e),
+          message: '$e',
         );
       }
     } finally {

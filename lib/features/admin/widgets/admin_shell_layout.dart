@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
+import '../../auth/providers/auth_provider.dart';
+import 'super_admin_scope.dart';
 
 class AdminNavItem {
   final String title;
@@ -49,10 +52,15 @@ class AdminShellLayout extends StatelessWidget {
     super.key,
   });
 
+  String _dashboardRoute(BuildContext context) {
+    return SuperAdminScope.maybeOf(context)?.dashboardRoute ?? RouteNames.admin;
+  }
+
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     final isWide = width >= 960;
+    final dashboardRoute = _dashboardRoute(context);
 
     if (isWide) {
       return Scaffold(
@@ -63,7 +71,7 @@ class AdminShellLayout extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _TopBar(title: title, showBack: showBack),
+                  _TopBar(title: title, showBack: showBack, dashboardRoute: dashboardRoute),
                   Expanded(child: child),
                 ],
               ),
@@ -79,7 +87,7 @@ class AdminShellLayout extends StatelessWidget {
         leading: showBack
             ? IconButton(
                 icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-                onPressed: () => context.go(RouteNames.admin),
+                onPressed: () => context.go(dashboardRoute),
               )
             : null,
       ),
@@ -94,8 +102,13 @@ class AdminShellLayout extends StatelessWidget {
 class _TopBar extends StatelessWidget {
   final String title;
   final bool showBack;
+  final String dashboardRoute;
 
-  const _TopBar({required this.title, required this.showBack});
+  const _TopBar({
+    required this.title,
+    required this.showBack,
+    required this.dashboardRoute,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -108,7 +121,7 @@ class _TopBar extends StatelessWidget {
             if (showBack)
               IconButton(
                 icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-                onPressed: () => context.go(RouteNames.admin),
+                onPressed: () => context.go(dashboardRoute),
               ),
             Text(
               title,
@@ -121,21 +134,31 @@ class _TopBar extends StatelessWidget {
   }
 }
 
-class _Sidebar extends StatelessWidget {
+class _Sidebar extends ConsumerWidget {
   final String currentPath;
   final bool isAdminUser;
 
   const _Sidebar({required this.currentPath, required this.isAdminUser});
 
   @override
-  Widget build(BuildContext context) {
-    final items = adminNavItems.where((i) => !i.adminOnly || isAdminUser).toList();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final panel = SuperAdminScope.maybeOf(context);
+    final items = panel != null
+        ? panel.navItems
+            .map(
+              (i) => AdminNavItem(title: i.title, icon: i.icon, route: i.route),
+            )
+            .toList()
+        : adminNavItems.where((i) => !i.adminOnly || isAdminUser).toList();
+
+    final isPanel = panel != null;
+    final sidebarColor = isPanel ? const Color(0xFF0F172A) : (Theme.of(context).brightness == Brightness.dark ? AppTheme.gray900 : AppTheme.gray50);
+    final selectedColor = isPanel ? Colors.white : AppTheme.primaryColor;
+    final textColor = isPanel ? const Color(0xFFCBD5E1) : null;
 
     return Container(
       width: 260,
-      color: Theme.of(context).brightness == Brightness.dark
-          ? AppTheme.gray900
-          : AppTheme.gray50,
+      color: sidebarColor,
       child: ListView(
         padding: const EdgeInsets.symmetric(vertical: 16),
         children: [
@@ -145,41 +168,60 @@ class _Sidebar extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'College Reality',
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w700,
+                  panel?.brandTitle ?? 'College Reality',
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.w800,
                     fontSize: 16,
-                    color: AppTheme.primaryColor,
+                    color: isPanel ? Colors.white : AppTheme.primaryColor,
                   ),
                 ),
-                Text('Admin Console', style: GoogleFonts.poppins(fontSize: 12)),
+                Text(
+                  panel?.brandSubtitle ?? 'Admin Console',
+                  style: GoogleFonts.inter(fontSize: 12, color: isPanel ? textColor : null),
+                ),
               ],
             ),
           ),
           ...items.map((item) {
-            final selected = currentPath == item.route;
+            final selected = currentPath == item.route || currentPath.startsWith('${item.route}/');
             return ListTile(
-              leading: Icon(item.icon, color: selected ? AppTheme.primaryColor : null),
+              leading: Icon(
+                item.icon,
+                color: selected ? selectedColor : (isPanel ? textColor?.withValues(alpha: 0.7) : null),
+              ),
               title: Text(
                 item.title,
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.inter(
                   fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                   fontSize: 14,
+                  color: isPanel ? (selected ? Colors.white : textColor) : null,
                 ),
               ),
               selected: selected,
+              selectedTileColor: isPanel ? AppTheme.primaryColor.withValues(alpha: 0.2) : null,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               onTap: () {
                 Navigator.of(context).maybePop();
                 context.go(item.route);
               },
             );
           }),
-          const Divider(),
-          ListTile(
-            leading: const Icon(Icons.home_outlined),
-            title: Text('Back to App', style: GoogleFonts.poppins(fontSize: 14)),
-            onTap: () => context.go(RouteNames.home),
-          ),
+          const Divider(color: Color(0xFF334155)),
+          if (isPanel)
+            ListTile(
+              leading: Icon(Icons.logout, color: textColor),
+              title: Text('Sign Out', style: GoogleFonts.inter(fontSize: 14, color: textColor)),
+              onTap: () async {
+                await ref.read(authServiceProvider).signOut();
+                if (context.mounted) context.go(panel.loginRoute);
+              },
+            )
+          else
+            ListTile(
+              leading: const Icon(Icons.home_outlined),
+              title: Text('Back to App', style: GoogleFonts.poppins(fontSize: 14)),
+              onTap: () => context.go(RouteNames.home),
+            ),
         ],
       ),
     );

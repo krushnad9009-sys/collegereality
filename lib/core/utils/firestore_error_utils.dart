@@ -10,6 +10,9 @@ const String kFirestoreQuotaUserMessage =
 const String kFirestorePermissionUserMessage =
     'You do not have permission to save this change. Please sign in again and retry.';
 
+const String kGenericUserErrorMessage =
+    'Something went wrong. Please try again.';
+
 class FirestoreQuotaException implements Exception {
   final String message;
 
@@ -75,6 +78,41 @@ class FirestoreErrorUtils {
         message.contains('temporarily unavailable');
   }
 
+  static String? _extractMessageProperty(Object error) {
+    try {
+      final dynamic e = error;
+      final msg = e.message;
+      if (msg is String && msg.trim().isNotEmpty) {
+        return msg.trim();
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  static bool _containsTechnicalJargon(String text) {
+    final lower = text.toLowerCase();
+    return lower.contains('firebase') ||
+        lower.contains('firestore') ||
+        lower.contains('permission-denied') ||
+        lower.contains('resource-exhausted') ||
+        lower.contains('cloud_firestore') ||
+        lower.contains('dart exception') ||
+        lower.contains('converted future') ||
+        lower.contains('platformexception') ||
+        lower.contains('missing or insufficient permissions') ||
+        lower.contains('firebaseauth') ||
+        lower.contains('firebaseexception') ||
+        lower.contains('googleapis') ||
+        lower.contains('grpc');
+  }
+
+  static String _sanitize(String text) {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) return kGenericUserErrorMessage;
+    if (_containsTechnicalJargon(trimmed)) return kGenericUserErrorMessage;
+    return trimmed;
+  }
+
   static String userMessage(Object error) {
     if (error is FirestorePermissionException) return error.message;
     if (error is FirestoreAuthException) return error.message;
@@ -82,20 +120,23 @@ class FirestoreErrorUtils {
     if (error is FirebaseException) {
       if (isPermissionDenied(error)) return kFirestorePermissionUserMessage;
       if (isQuotaExceeded(error)) return kFirestoreQuotaUserMessage;
-      return error.message ?? 'Something went wrong. Please try again.';
+      return _sanitize(error.message ?? kGenericUserErrorMessage);
     }
 
-    final text = error.toString();
+    final extracted = _extractMessageProperty(error);
+    if (extracted != null) return _sanitize(extracted);
+
     if (isPermissionDeniedError(error)) {
       return kFirestorePermissionUserMessage;
     }
     if (isQuotaExceededError(error)) {
       return kFirestoreQuotaUserMessage;
     }
+    final text = error.toString();
     if (text.startsWith('Exception: ')) {
-      return text.substring('Exception: '.length);
+      return _sanitize(text.substring('Exception: '.length));
     }
-    return text;
+    return _sanitize(text);
   }
 
   static FirestorePermissionException permissionException({

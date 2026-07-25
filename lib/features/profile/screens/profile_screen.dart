@@ -9,6 +9,7 @@ import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/profile_constants.dart';
 import '../../../core/constants/verification_constants.dart';
+import '../../../core/utils/firestore_error_utils.dart';
 import '../../../core/widgets/index.dart';
 import '../../admin/providers/admin_provider.dart';
 import '../../auth/models/user_model.dart';
@@ -24,6 +25,7 @@ import '../../profile/widgets/premium_profile_edit_section.dart';
 import '../../profile/widgets/trust_score_card.dart';
 import '../../profile/models/student_trust_model.dart';
 import '../widgets/display_name_settings_section.dart';
+import '../widgets/profile_settings_section.dart';
 import '../widgets/phone_verification_section.dart';
 import '../widgets/email_verification_section.dart';
 
@@ -132,7 +134,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       if (mounted) {
         SnackBarHelper.showErrorSnackBar(
           context,
-          message: e.toString(),
+          message: FirestoreErrorUtils.userMessage(e),
         );
       }
     } finally {
@@ -190,12 +192,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
 
     return Scaffold(
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? AppTheme.gray900
+          : const Color(0xFFF3F5FA),
       appBar: AppBar(
-        title: const Text('My Profile'),
+        title: Text(
+          'My Profile',
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
       ),
       body: userDetailAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        loading: () => const Center(child: ProfileHeaderSkeleton()),
+        error: (e, _) => AsyncErrorView.fromError(
+          e,
+          onRetry: () => ref.invalidate(currentUserDetailProvider),
+        ),
         data: (userDetail) {
           if (userDetail != null &&
               _nameController.text.isEmpty &&
@@ -236,6 +247,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     TrustScoreCard(trust: StudentTrustModel.fromUser(userDetail)),
                   const SizedBox(height: 16),
                   const DisplayNameSettingsSection(),
+                  const SizedBox(height: 16),
+                  const ProfileSettingsSection(),
                   const SizedBox(height: 16),
                   PremiumProfileEditSection(
                     user: userDetail ??
@@ -339,39 +352,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         setState(() {
                           _communicationSettings =
                               settings.copyWith(isGuideAvailable: value);
-                        });
-                      },
-                    ),
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('Allow video calls'),
-                      value: settings.videoCallsEnabled,
-                      onChanged: (value) {
-                        setState(() {
-                          _communicationSettings =
-                              settings.copyWith(videoCallsEnabled: value);
-                        });
-                      },
-                    ),
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('Camera on by default'),
-                      value: settings.cameraDefaultOn,
-                      onChanged: (value) {
-                        setState(() {
-                          _communicationSettings =
-                              settings.copyWith(cameraDefaultOn: value);
-                        });
-                      },
-                    ),
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('Blur background on video'),
-                      value: settings.blurBackground,
-                      onChanged: (value) {
-                        setState(() {
-                          _communicationSettings =
-                              settings.copyWith(blurBackground: value);
                         });
                       },
                     ),

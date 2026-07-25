@@ -129,7 +129,7 @@ class _AdmissionPredictorScreenState extends ConsumerState<AdmissionPredictorScr
           ),
           const SizedBox(height: 4),
           Text(
-            'Predictions are based on previous year cutoff data in Firestore — not estimated.',
+            'Predictions are based on previous year cutoff data — not estimated.',
             style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.gray500),
           ),
           const SizedBox(height: 16),

@@ -11,7 +11,6 @@ import '../../../core/widgets/premium_components.dart';
 import '../../../core/widgets/skeleton_loader.dart';
 import '../../careers/models/careers_models.dart';
 import '../../colleges/models/college_model.dart';
-import '../../ranking/utils/cr_score_engine.dart';
 import '../../reviews/models/review_model.dart';
 import '../../reviews/widgets/star_rating_widget.dart';
 import '../providers/home_content_provider.dart';
@@ -27,25 +26,25 @@ class TrendingCollegesCarousel extends ConsumerWidget {
 
     return async.when(
       loading: () => SizedBox(
-        height: 220,
+        height: 318,
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
           itemCount: 3,
           separatorBuilder: (_, _) => const SizedBox(width: 14),
           itemBuilder: (_, _) => const SizedBox(
-            width: 268,
+            width: 300,
             child: CollegeCardSkeleton(),
           ),
         ),
       ),
       error: (_, _) => SizedBox(
-        height: 220,
+        height: 318,
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
           itemCount: 3,
           separatorBuilder: (_, _) => const SizedBox(width: 14),
           itemBuilder: (_, _) => const SizedBox(
-            width: 268,
+            width: 300,
             child: CollegeCardSkeleton(),
           ),
         ),
@@ -53,20 +52,20 @@ class TrendingCollegesCarousel extends ConsumerWidget {
       data: (colleges) {
         if (colleges.isEmpty) {
           return SizedBox(
-            height: 220,
+            height: 318,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: 3,
               separatorBuilder: (_, _) => const SizedBox(width: 14),
               itemBuilder: (_, _) => const SizedBox(
-                width: 268,
+                width: 300,
                 child: CollegeCardSkeleton(),
               ),
             ),
           );
         }
         return SizedBox(
-          height: 228,
+          height: 318,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             clipBehavior: Clip.none,
@@ -126,16 +125,8 @@ class TopRatedCollegesSection extends ConsumerWidget {
               .map(
                 (college) => Padding(
                   padding: const EdgeInsets.only(bottom: 14),
-                  child: CollegeCardWidget(
-                    collegeId: college.id,
-                    collegeName: college.name,
-                    location: college.state,
-                    city: college.city,
-                    rating: college.aggregatedRatings.overall,
-                    crScore: CrScoreEngine.effectiveScore(college),
-                    reviewCount: college.reviewCount,
-                    imageUrl: college.coverPhotoUrl,
-                    logoUrl: college.logoUrl,
+                  child: CollegeCardWidget.fromCollege(
+                    college,
                     onTap: () =>
                         context.go(RouteNames.collegeDetailsPath(college.id)),
                   ),
@@ -279,8 +270,8 @@ class StudentReviewsSection extends ConsumerWidget {
           ),
         ),
       ),
-      error: (e, _) => AsyncErrorView(
-        message: e.toString(),
+      error: (e, _) => AsyncErrorView.fromError(
+        e,
         onRetry: () => ref.invalidate(homeRecentReviewsProvider),
       ),
       data: (reviews) {
@@ -416,8 +407,8 @@ class AlumniStoriesSection extends ConsumerWidget {
           ),
         ),
       ),
-      error: (e, _) => AsyncErrorView(
-        message: e.toString(),
+      error: (e, _) => AsyncErrorView.fromError(
+        e,
         onRetry: () => ref.invalidate(homeAlumniStoriesProvider),
       ),
       data: (alumni) {
@@ -537,8 +528,8 @@ class PlacementHighlightsSection extends ConsumerWidget {
           ),
         ),
       ),
-      error: (e, _) => AsyncErrorView(
-        message: e.toString(),
+      error: (e, _) => AsyncErrorView.fromError(
+        e,
         onRetry: () => ref.invalidate(homePlacementHighlightsProvider),
       ),
       data: (colleges) {

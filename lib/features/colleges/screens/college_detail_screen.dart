@@ -6,7 +6,10 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/rating_parameters.dart';
 import '../../../core/utils/indian_currency_formatter.dart';
 import '../../../config/router/route_names.dart';
+import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_theme.dart';
+import '../../../core/widgets/async_state_widgets.dart';
 import '../../../core/widgets/college_image_widget.dart';
 import '../../../core/widgets/skeleton_loader.dart';
 import '../../auth/providers/auth_provider.dart';
@@ -145,7 +148,10 @@ class _CollegeDetailScreenState extends ConsumerState<CollegeDetailScreen>
       ),
       error: (e, _) => Scaffold(
         appBar: AppBar(),
-        body: Center(child: Text('Error loading college: $e')),
+        body: AsyncErrorView(
+          message: e.toString(),
+          onRetry: () => ref.invalidate(collegeByIdProvider(widget.collegeId)),
+        ),
       ),
       data: (college) {
         if (college == null) {
@@ -187,12 +193,18 @@ class _CollegeDetailScreenState extends ConsumerState<CollegeDetailScreen>
             body: NestedScrollView(
               headerSliverBuilder: (context, innerBoxIsScrolled) => [
                 SliverAppBar(
-                  expandedHeight: 280,
+                  expandedHeight: 320,
                   pinned: true,
                   stretch: true,
                   leading: IconButton(
                     icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-                    onPressed: () => context.go(RouteNames.home),
+                    onPressed: () {
+                      if (context.canPop()) {
+                        context.pop();
+                      } else {
+                        context.go(RouteNames.home);
+                      }
+                    },
                   ),
                   actions: [
                     CollegeEcosystemMenu(
@@ -257,13 +269,17 @@ class _CollegeDetailScreenState extends ConsumerState<CollegeDetailScreen>
                     ),
                   ],
                   flexibleSpace: FlexibleSpaceBar(
+                    stretchModes: const [
+                      StretchMode.zoomBackground,
+                      StretchMode.blurBackground,
+                    ],
                     title: Text(
                       college.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.poppins(
+                      style: GoogleFonts.plusJakartaSans(
                         fontSize: 16,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
                     background: Stack(
@@ -272,18 +288,17 @@ class _CollegeDetailScreenState extends ConsumerState<CollegeDetailScreen>
                         CollegeImageWidget(
                           collegeId: college.id,
                           imageUrl: college.coverPhotoUrl,
-                          height: 280,
+                          height: 320,
                           fit: BoxFit.cover,
-                          showComingSoonLabel: true,
                         ),
-                        Container(
+                        DecoratedBox(
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
                               colors: [
-                                Colors.transparent,
-                                Colors.black.withValues(alpha: 0.55),
+                                Colors.black.withValues(alpha: 0.12),
+                                Colors.black.withValues(alpha: 0.68),
                               ],
                             ),
                           ),
@@ -340,8 +355,10 @@ class _CollegeHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
+
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -350,11 +367,26 @@ class _CollegeHeader extends StatelessWidget {
             children: [
               if (college.logoUrl != null && college.logoUrl!.isNotEmpty)
                 Padding(
-                  padding: const EdgeInsets.only(right: 12),
-                  child: CircleAvatar(
-                    radius: 32,
-                    backgroundColor: AppTheme.gray100,
-                    backgroundImage: NetworkImage(college.logoUrl!),
+                  padding: const EdgeInsets.only(right: AppSpacing.md),
+                  child: Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      color: tokens.surfaceElevated,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: tokens.borderSubtle),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.black.withValues(alpha: 0.06),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: CircleAvatar(
+                      radius: 30,
+                      backgroundColor: AppTheme.gray100,
+                      backgroundImage: NetworkImage(college.logoUrl!),
+                    ),
                   ),
                 ),
               Expanded(
@@ -363,23 +395,30 @@ class _CollegeHeader extends StatelessWidget {
                   children: [
                     Text(
                       college.name,
-                      style: GoogleFonts.poppins(
-                        fontSize: 20,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 22,
                         fontWeight: FontWeight.w800,
+                        letterSpacing: -0.4,
+                        height: 1.2,
+                        color: tokens.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 6),
                     Row(
                       children: [
-                        const Icon(Icons.location_on_outlined,
-                            size: 16, color: AppTheme.gray500),
+                        Icon(
+                          Icons.location_on_outlined,
+                          size: 16,
+                          color: AppTheme.primaryColor.withValues(alpha: 0.85),
+                        ),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
                             college.locationLabel,
-                            style: GoogleFonts.poppins(
+                            style: GoogleFonts.plusJakartaSans(
                               fontSize: 13,
-                              color: AppTheme.gray600,
+                              fontWeight: FontWeight.w600,
+                              color: tokens.textSecondary,
                             ),
                           ),
                         ),
@@ -401,48 +440,59 @@ class _CollegeHeader extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              CrScoreBadgeWidget(
-                score: CrScoreEngine.effectiveScore(college),
-                showGrade: true,
-                fontSize: 13,
-              ),
-              const SizedBox(width: 12),
-              const Icon(Icons.star_rounded,
-                  color: AppTheme.warningColor, size: 20),
-              const SizedBox(width: 4),
-              Text(
-                college.aggregatedRatings.overall > 0
-                    ? college.aggregatedRatings.overall.toStringAsFixed(1)
-                    : '—',
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              Text(
-                ' (${college.reviewCount} reviews)',
-                style: GoogleFonts.poppins(
+          const SizedBox(height: AppSpacing.md),
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            decoration: BoxDecoration(
+              color: tokens.surfaceElevated,
+              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+              border: Border.all(color: tokens.borderSubtle),
+            ),
+            child: Row(
+              children: [
+                CrScoreBadgeWidget(
+                  score: CrScoreEngine.effectiveScore(college),
+                  showGrade: true,
                   fontSize: 13,
-                  color: AppTheme.gray500,
                 ),
-              ),
-              if (college.wouldChooseAgainPercent != null) ...[
-                const SizedBox(width: 12),
-                Icon(Icons.thumb_up_alt_outlined,
-                    size: 16, color: AppTheme.gray500),
+                const SizedBox(width: AppSpacing.md),
+                const Icon(Icons.star_rounded,
+                    color: AppTheme.warningColor, size: 20),
                 const SizedBox(width: 4),
                 Text(
-                  '${college.wouldChooseAgainPercent!.round()}% would choose again',
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    color: AppTheme.gray600,
+                  college.aggregatedRatings.overall > 0
+                      ? college.aggregatedRatings.overall.toStringAsFixed(1)
+                      : '—',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: tokens.textPrimary,
                   ),
                 ),
+                Text(
+                  ' (${college.reviewCount} reviews)',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: tokens.textSecondary,
+                  ),
+                ),
+                if (college.wouldChooseAgainPercent != null) ...[
+                  const SizedBox(width: AppSpacing.md),
+                  Icon(Icons.thumb_up_alt_outlined,
+                      size: 16, color: tokens.textTertiary),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${college.wouldChooseAgainPercent!.round()}% would choose again',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: tokens.textSecondary,
+                    ),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
           const SizedBox(height: 14),
           CollegeProfileStatsStrip(college: college),
@@ -1456,17 +1506,19 @@ class _TypeChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: AppTheme.secondaryColor.withValues(alpha: 0.15),
+        color: AppTheme.primaryColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.15)),
       ),
       child: Text(
         label.toUpperCase(),
-        style: GoogleFonts.poppins(
+        style: GoogleFonts.plusJakartaSans(
           fontSize: 10,
-          fontWeight: FontWeight.w700,
-          color: AppTheme.secondaryColor,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.4,
+          color: AppTheme.primaryColor,
         ),
       ),
     );

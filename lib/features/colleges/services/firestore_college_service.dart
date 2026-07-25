@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/constants/college_constants.dart';
 import '../../../core/constants/firestore_constants.dart';
 import '../models/college_model.dart';
+import '../utils/college_search_ranker.dart';
 import '../utils/college_search_utils.dart';
 
 class FirestoreCollegeService {
@@ -143,9 +144,15 @@ class FirestoreCollegeService {
         limit: limit,
       );
       if (tokenResults.isNotEmpty) {
-        return CollegeSearchPage(
-          colleges: tokenResults,
+        return _buildSearchPage(
+          tokenResults,
           hasMore: tokenResults.length >= limit,
+          query: trimmedQuery,
+          city: city,
+          state: state,
+          course: course,
+          category: category,
+          limit: limit,
         );
       }
     }
@@ -226,11 +233,15 @@ class FirestoreCollegeService {
         );
       }
 
-      final lastId = colleges.isEmpty ? null : colleges.last.id;
-      return CollegeSearchPage(
-        colleges: colleges,
-        lastDocumentId: lastId,
+      return _buildSearchPage(
+        colleges,
         hasMore: snapshot.docs.length >= limit,
+        query: hasQuery ? trimmedQuery : null,
+        city: city,
+        state: state,
+        course: course,
+        category: category,
+        limit: limit,
       );
     } on FirebaseException catch (e) {
       if (e.code != 'failed-precondition') rethrow;
@@ -268,9 +279,15 @@ class FirestoreCollegeService {
         limit: limit,
       );
       if (tokenResults.isNotEmpty) {
-        return CollegeSearchPage(
-          colleges: tokenResults,
+        return _buildSearchPage(
+          tokenResults,
           hasMore: tokenResults.length >= limit,
+          query: trimmedQuery,
+          city: city,
+          state: state,
+          course: course,
+          category: category,
+          limit: limit,
         );
       }
     }
@@ -308,11 +325,18 @@ class FirestoreCollegeService {
       colleges = colleges.where((c) => c.category == category).toList();
     }
 
-    colleges = colleges.take(limit).toList();
-    final lastId = colleges.isEmpty ? null : colleges.last.id;
+    colleges = _finalizeSearchResults(
+      colleges,
+      query: hasQuery ? trimmedQuery : null,
+      city: city,
+      state: state,
+      course: course,
+      category: category,
+      limit: limit,
+    );
     return CollegeSearchPage(
       colleges: colleges,
-      lastDocumentId: lastId,
+      lastDocumentId: colleges.isEmpty ? null : colleges.last.id,
       hasMore: snapshot.docs.length >= limit,
     );
   }
@@ -376,6 +400,14 @@ class FirestoreCollegeService {
     }
 
     ranked.sort((a, b) {
+      final effectiveCity =
+          city ?? CollegeSearchRanker.inferCityFromQuery(query);
+      final cityA = CollegeSearchRanker.cityMatchScore(a, effectiveCity);
+      final cityB = CollegeSearchRanker.cityMatchScore(b, effectiveCity);
+      if (cityA != cityB) return cityB.compareTo(cityA);
+      final queryA = CollegeSearchRanker.queryMatchScore(a, query);
+      final queryB = CollegeSearchRanker.queryMatchScore(b, query);
+      if (queryA != queryB) return queryB.compareTo(queryA);
       final aName = a.nameLower.startsWith(query.toLowerCase()) ? 0 : 1;
       final bName = b.nameLower.startsWith(query.toLowerCase()) ? 0 : 1;
       if (aName != bName) return aName.compareTo(bName);
@@ -428,7 +460,9 @@ class FirestoreCollegeService {
     await loadPrefix('universityLower');
     await loadPrefix('stateLower');
 
-    return results.values.take(CollegeConstants.autocompleteLimit).toList();
+    final resultsList = results.values.toList();
+    CollegeSearchRanker.rankResults(resultsList, query: trimmed);
+    return resultsList.take(CollegeConstants.autocompleteLimit).toList();
   }
 
   Future<List<CollegeModel>> _searchByCityFallback(String city) async {
@@ -533,6 +567,60 @@ class FirestoreCollegeService {
     return docs
         .map((doc) => CollegeModel.fromJson(doc.data(), docId: doc.id))
         .toList();
+  }
+
+  List<CollegeModel> _finalizeSearchResults(
+    List<CollegeModel> colleges, {
+    String? query,
+    String? city,
+    String? state,
+    String? course,
+    String? category,
+    int? limit,
+  }) {
+    final seen = <String>{};
+    final deduped = <CollegeModel>[];
+    for (final college in colleges) {
+      if (seen.add(college.id)) deduped.add(college);
+    }
+    CollegeSearchRanker.rankResults(
+      deduped,
+      query: query,
+      city: city,
+      state: state,
+      course: course,
+      category: category,
+    );
+    if (limit != null && deduped.length > limit) {
+      return deduped.sublist(0, limit);
+    }
+    return deduped;
+  }
+
+  CollegeSearchPage _buildSearchPage(
+    List<CollegeModel> colleges, {
+    required bool hasMore,
+    String? query,
+    String? city,
+    String? state,
+    String? course,
+    String? category,
+    int limit = CollegeConstants.searchPageSize,
+  }) {
+    final ranked = _finalizeSearchResults(
+      colleges,
+      query: query,
+      city: city,
+      state: state,
+      course: course,
+      category: category,
+      limit: limit,
+    );
+    return CollegeSearchPage(
+      colleges: ranked,
+      lastDocumentId: ranked.isEmpty ? null : ranked.last.id,
+      hasMore: hasMore,
+    );
   }
 
   Map<String, dynamic> _prepareForWrite(CollegeModel college) {

@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -6,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/verification_constants.dart';
+import '../../../core/utils/firestore_error_utils.dart';
 import '../../../core/widgets/index.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/providers/user_provider.dart';
@@ -32,12 +34,20 @@ class VerificationScreen extends ConsumerWidget {
         title: const Text('Verified Student & Alumni'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-          onPressed: () => context.go(RouteNames.profile),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go(RouteNames.profile);
+            }
+          },
         ),
       ),
       body: userAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => Center(
+          child: Text(FirestoreErrorUtils.userMessage(e)),
+        ),
         data: (user) {
           if (user == null) {
             return const Center(child: Text('User not found'));
@@ -156,16 +166,23 @@ class _EmailSection extends ConsumerWidget {
                     if (context.mounted) {
                       SnackBarHelper.showSuccessSnackBar(
                         context,
-                        message: 'Verification email sent.',
+                        message: 'Verification email sent. Check your inbox.',
                       );
                     }
-                  } catch (e) {
-                    if (context.mounted) {
-                      SnackBarHelper.showErrorSnackBar(
-                        context,
-                        message: e.toString(),
-                      );
+                  } on FirebaseAuthException catch (e) {
+                    if (!context.mounted) return;
+                    final message = AuthException.fromFirebaseException(e).message;
+                    if (e.code == 'email-already-verified') {
+                      SnackBarHelper.showInfoSnackBar(context, message: message);
+                    } else {
+                      SnackBarHelper.showErrorSnackBar(context, message: message);
                     }
+                  } catch (_) {
+                    if (!context.mounted) return;
+                    SnackBarHelper.showErrorSnackBar(
+                      context,
+                      message: 'Could not send verification email. Please try again.',
+                    );
                   }
                 },
                 child: const Text('Resend Email'),

@@ -7,6 +7,7 @@ import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/services/preferences_service.dart';
+import '../../../core/utils/firestore_error_utils.dart';
 import '../../../core/widgets/index.dart';
 import '../../../core/widgets/premium_auth_background.dart';
 import '../../colleges/providers/college_provider.dart';
@@ -87,7 +88,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (mounted) {
         SnackBarHelper.showErrorSnackBar(
           context,
-          message: e.toString(),
+          message: FirestoreErrorUtils.userMessage(e),
         );
       }
     }

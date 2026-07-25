@@ -7,6 +7,7 @@ import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_theme.dart';
+import '../../../core/utils/firestore_error_utils.dart';
 import '../../../core/widgets/index.dart';
 import '../../../core/widgets/premium_auth_background.dart';
 import '../models/user_model.dart';
@@ -80,7 +81,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
       final userRepository = ref.read(userRepositoryProvider);
       await userRepository.createUser(userModel);
-      await ref.read(authServiceProvider).sendEmailVerification();
       ref.invalidate(currentUserDetailProvider);
 
       if (mounted) {
@@ -95,7 +95,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       if (mounted) {
         SnackBarHelper.showErrorSnackBar(
           context,
-          message: e.toString(),
+          message: FirestoreErrorUtils.userMessage(e),
         );
       }
     }

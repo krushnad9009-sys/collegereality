@@ -9,6 +9,8 @@ import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/compare_constants.dart';
+import '../../../core/widgets/async_state_widgets.dart';
+import '../../../core/widgets/skeleton_loader.dart';
 import '../models/college_comparison_result.dart';
 import '../providers/compare_basket_provider.dart';
 import '../widgets/compare_saved_sheet.dart';
@@ -92,6 +94,9 @@ class _CollegeCompareScreenState extends ConsumerState<CollegeCompareScreen> {
     final isWide = MediaQuery.sizeOf(context).width >= 900;
 
     return Scaffold(
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? AppTheme.gray900
+          : const Color(0xFFF3F5FA),
       appBar: AppBar(
         titleSpacing: 0,
         title: Padding(
@@ -102,10 +107,10 @@ class _CollegeCompareScreenState extends ConsumerState<CollegeCompareScreen> {
             children: [
               Text(
                 'Compare Colleges',
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 17,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -0.3,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.35,
                   color: tokens.textPrimary,
                 ),
                 maxLines: 1,
@@ -127,7 +132,13 @@ class _CollegeCompareScreenState extends ConsumerState<CollegeCompareScreen> {
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-          onPressed: () => context.canPop() ? context.pop() : context.go(RouteNames.home),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go(RouteNames.home);
+            }
+          },
         ),
         actions: [
           IconButton(
@@ -155,40 +166,42 @@ class _CollegeCompareScreenState extends ConsumerState<CollegeCompareScreen> {
           if (cached != null) {
             return _buildCompareContent(cached, isWide);
           }
-          return const Center(child: CircularProgressIndicator());
+          return ListView(
+            padding: EdgeInsets.fromLTRB(
+              isWide ? AppSpacing.section : AppSpacing.lg,
+              AppSpacing.section,
+              isWide ? AppSpacing.section : AppSpacing.lg,
+              AppSpacing.section,
+            ),
+            children: const [
+              SkeletonBox(height: 120, borderRadius: BorderRadius.all(Radius.circular(16))),
+              SizedBox(height: AppSpacing.lg),
+              SkeletonBox(height: 80, borderRadius: BorderRadius.all(Radius.circular(16))),
+              SizedBox(height: AppSpacing.lg),
+              SkeletonBox(height: 280, borderRadius: BorderRadius.all(Radius.circular(16))),
+            ],
+          );
         },
         error: (e, _) {
           if (cached != null) {
             return _buildCompareContent(cached, isWide);
           }
-          return Center(child: Text('Failed to load: $e'));
+          return AsyncErrorView(
+            message: e.toString(),
+            onRetry: () => ref.invalidate(compareCollegesProvider(ids)),
+          );
         },
         data: (result) {
           if (result == null || result.colleges.isEmpty) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.compare_arrows_rounded,
-                        size: 64, color: AppTheme.gray400),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Select ${CompareConstants.minCollegesToCompare} to ${CompareConstants.maxColleges} colleges',
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 12),
-                    FilledButton(
-                      onPressed: () => context.go(RouteNames.collegeSearch),
-                      child: const Text('Search Colleges'),
-                    ),
-                  ],
-                ),
+            return AsyncEmptyView(
+              icon: Icons.compare_arrows_rounded,
+              title: 'Select colleges to compare',
+              subtitle:
+                  'Pick ${CompareConstants.minCollegesToCompare} to ${CompareConstants.maxColleges} colleges from search to see side-by-side insights.',
+              action: FilledButton.icon(
+                onPressed: () => context.go(RouteNames.collegeSearch),
+                icon: const Icon(Icons.search_rounded),
+                label: const Text('Search Colleges'),
               ),
             );
           }

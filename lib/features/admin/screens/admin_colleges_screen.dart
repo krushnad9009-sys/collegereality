@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../config/router/route_names.dart';
+import '../utils/admin_route_resolver.dart';
+import '../widgets/admin_shell_layout.dart';
 import '../../colleges/models/college_model.dart';
 import '../../colleges/providers/college_provider.dart';
 
@@ -61,22 +62,22 @@ class _AdminCollegesScreenState extends ConsumerState<AdminCollegesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Manage Colleges'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-          onPressed: () => context.go(RouteNames.admin),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => context.go(RouteNames.adminCollegeNew),
-          ),
-        ],
-      ),
-      body: Column(
+    return AdminShellLayout(
+      title: 'Manage Colleges',
+      isAdminUser: true,
+      child: Column(
         children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: FilledButton.icon(
+                onPressed: () => context.go(AdminRouteResolver.collegeNew(context)),
+                icon: const Icon(Icons.add),
+                label: const Text('Add College'),
+              ),
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
@@ -129,7 +130,7 @@ class _AdminCollegesScreenState extends ConsumerState<AdminCollegesScreen> {
                           ),
                           trailing: const Icon(Icons.edit_outlined),
                           onTap: () => context.go(
-                            RouteNames.adminCollegeEditPath(college.id),
+                            AdminRouteResolver.collegeEdit(context, college.id),
                           ),
                         ),
                       );
@@ -137,11 +138,6 @@ class _AdminCollegesScreenState extends ConsumerState<AdminCollegesScreen> {
                   ),
           ),
         ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.go(RouteNames.adminCollegeNew),
-        icon: const Icon(Icons.add),
-        label: const Text('Add College'),
       ),
     );
   }

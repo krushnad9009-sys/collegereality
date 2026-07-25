@@ -51,7 +51,9 @@ class AuthException implements Exception {
       case 'user-disabled':
         return 'This account has been disabled';
       case 'too-many-requests':
-        return 'Too many login attempts. Please try again later';
+        return 'Too many attempts. Please wait a few minutes and try again.';
+      case 'email-already-verified':
+        return 'Your email is already verified.';
       case 'operation-not-allowed':
         return 'Operation not allowed';
       case 'network-request-failed':

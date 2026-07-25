@@ -37,9 +37,20 @@ class _EmailVerificationSectionState
         context,
         message: 'Verification email sent to ${widget.email}',
       );
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      final message = AuthException.fromFirebaseException(e).message;
+      if (e.code == 'email-already-verified') {
+        SnackBarHelper.showInfoSnackBar(context, message: message);
+      } else {
+        SnackBarHelper.showErrorSnackBar(context, message: message);
+      }
     } catch (e) {
       if (!mounted) return;
-      SnackBarHelper.showErrorSnackBar(context, message: e.toString());
+      SnackBarHelper.showErrorSnackBar(
+        context,
+        message: 'Could not send verification email. Please try again.',
+      );
     } finally {
       if (mounted) setState(() => _isSending = false);
     }
@@ -67,7 +78,10 @@ class _EmailVerificationSectionState
       }
     } catch (e) {
       if (!mounted) return;
-      SnackBarHelper.showErrorSnackBar(context, message: e.toString());
+      final message = e is AuthException
+          ? e.message
+          : 'Could not check verification status. Please try again.';
+      SnackBarHelper.showErrorSnackBar(context, message: message);
     } finally {
       if (mounted) setState(() => _isChecking = false);
     }

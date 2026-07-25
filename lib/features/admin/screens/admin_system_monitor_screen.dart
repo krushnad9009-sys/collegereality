@@ -30,7 +30,9 @@ class AdminSystemMonitorScreen extends ConsumerWidget {
       ),
       body: healthAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Failed to load system health: $e')),
+        error: (e, _) => Center(
+          child: Text('Could not load system health. Please try again.'),
+        ),
         data: (health) => ListView(
           padding: const EdgeInsets.all(20),
           children: [
@@ -41,7 +43,7 @@ class AdminSystemMonitorScreen extends ConsumerWidget {
             const SizedBox(height: 16),
             _MonitorTile(
               icon: Icons.cloud_outlined,
-              label: 'Estimated Firestore Reads',
+              label: 'Estimated database reads',
               value: '${health.estimatedFirestoreReads}',
               color: AppTheme.primaryColor,
             ),
@@ -85,7 +87,7 @@ class AdminSystemMonitorScreen extends ConsumerWidget {
             ),
             const ListTile(
               leading: Icon(Icons.query_stats_outlined),
-              title: Text('Firestore count() aggregations for KPIs'),
+              title: Text('Database aggregations for KPIs'),
             ),
           ],
         ),

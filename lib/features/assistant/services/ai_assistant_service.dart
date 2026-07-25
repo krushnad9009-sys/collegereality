@@ -106,20 +106,39 @@ class AiAssistantService {
         )
         .toList();
 
+    // Final safety dedupe by college id.
+    final uniqueRecommendations = <String, AiCollegeRecommendation>{};
+    for (final rec in withReasons) {
+      uniqueRecommendations.putIfAbsent(rec.college.id, () => rec);
+    }
+    final dedupedRecommendations = uniqueRecommendations.values.toList()
+      ..sort((a, b) => a.rank.compareTo(b.rank));
+    for (var i = 0; i < dedupedRecommendations.length; i++) {
+      dedupedRecommendations[i] = AiCollegeRecommendation(
+        college: dedupedRecommendations[i].college,
+        score: dedupedRecommendations[i].score,
+        rank: i + 1,
+        reasons: dedupedRecommendations[i].reasons,
+      );
+    }
+
     final suggestions = _suggestionService.buildSuggestions(
-      topResults: withReasons,
+      topResults: dedupedRecommendations,
       allCandidates: filtered,
       intent: intent,
       anchorCollege: anchorCollege,
     );
 
-    final summary = _explanationBuilder.buildSearchSummary(intent, withReasons.length);
+    final summary = _explanationBuilder.buildSearchSummary(
+      intent,
+      dedupedRecommendations.length,
+    );
 
     return AiAssistantMessage(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       role: AiMessageRole.assistant,
       text: summary,
-      recommendations: withReasons,
+      recommendations: dedupedRecommendations,
       suggestions: suggestions,
       createdAt: DateTime.now(),
       dataGrounded: true,
@@ -377,9 +396,12 @@ class AiAssistantService {
     final hints = _parser.extractCollegeNameHints(rawQuery);
     if (hints.isNotEmpty) {
       final found = <CollegeModel>[];
+      final seen = <String>{};
       for (final hint in hints) {
         final results = await _collegeRepository.autocomplete(hint);
-        found.addAll(results);
+        for (final college in results) {
+          if (seen.add(college.id)) found.add(college);
+        }
       }
       if (found.isNotEmpty) return found;
     }

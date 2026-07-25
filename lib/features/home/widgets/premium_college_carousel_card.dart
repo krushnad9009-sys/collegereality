@@ -3,16 +3,16 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../config/router/route_names.dart';
-import '../../../config/theme/app_spacing.dart';
+import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_theme.dart';
+import '../../../core/constants/cr_score_constants.dart';
 import '../../../core/widgets/college_image_widget.dart';
-import '../../ranking/utils/cr_score_engine.dart';
-import '../../ranking/widgets/cr_score_badge_widget.dart';
-import '../../reviews/widgets/star_rating_widget.dart';
+import '../../../core/widgets/college_logo_widget.dart';
 import '../../colleges/models/college_model.dart';
+import '../../ranking/utils/cr_score_engine.dart';
 
-/// Compact horizontal college card for carousels.
-class PremiumCollegeCarouselCard extends StatelessWidget {
+/// Premium horizontal college card for home carousels.
+class PremiumCollegeCarouselCard extends StatefulWidget {
   final CollegeModel college;
   final VoidCallback? onTap;
 
@@ -23,106 +23,233 @@ class PremiumCollegeCarouselCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+  State<PremiumCollegeCarouselCard> createState() =>
+      _PremiumCollegeCarouselCardState();
+}
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap ??
-            () => context.go(RouteNames.collegeDetailsPath(college.id)),
-        borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-          child: Ink(
-            width: 268,
-            decoration: BoxDecoration(
-              color: isDark ? AppTheme.gray800 : AppTheme.white,
-              border: Border.all(
-                color: isDark ? AppTheme.gray700 : AppTheme.gray200,
-              ),
-              boxShadow: isDark
-                  ? null
-                  : [
-                      BoxShadow(
-                        color: AppTheme.black.withValues(alpha: 0.06),
-                        blurRadius: 16,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
+class _PremiumCollegeCarouselCardState
+    extends State<PremiumCollegeCarouselCard> {
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final crScore = CrScoreEngine.effectiveScore(widget.college);
+    const cardWidth = 300.0;
+
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _pressed = true),
+      onTapUp: (_) => setState(() => _pressed = false),
+      onTapCancel: () => setState(() => _pressed = false),
+      onTap: widget.onTap ??
+          () => context.go(RouteNames.collegeDetailsPath(widget.college.id)),
+      child: AnimatedScale(
+        scale: _pressed ? 0.97 : 1,
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOutCubic,
+        child: Container(
+          width: cardWidth,
+          decoration: BoxDecoration(
+            color: tokens.surfaceElevated,
+            borderRadius: BorderRadius.circular(tokens.cardRadius),
+            boxShadow: isDark
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.35),
+                      blurRadius: 24,
+                      offset: const Offset(0, 10),
+                    ),
+                  ]
+                : [
+                    BoxShadow(
+                      color: AppTheme.primaryDark.withValues(alpha: 0.1),
+                      blurRadius: 28,
+                      offset: const Offset(0, 14),
+                    ),
+                    BoxShadow(
+                      color: AppTheme.black.withValues(alpha: 0.04),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+            border: Border.all(
+              color: tokens.borderSubtle.withValues(alpha: isDark ? 0.45 : 0.8),
             ),
-            child: Column(
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Stack(
                 children: [
                   CollegeImageWidget(
-                    collegeId: college.id,
-                    imageUrl: college.coverPhotoUrl,
-                    height: 130,
-                    width: 268,
+                    collegeId: widget.college.id,
+                    imageUrl: widget.college.coverPhotoUrl,
+                    height: 168,
+                    width: cardWidth,
                   ),
-                  if (college.isFeatured)
+                  Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.black.withValues(alpha: 0.05),
+                            Colors.black.withValues(alpha: 0.5),
+                          ],
+                          stops: const [0.5, 1],
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (widget.college.isFeatured)
                     Positioned(
-                      top: 10,
-                      left: 10,
+                      top: 12,
+                      left: 12,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
+                          horizontal: 10,
+                          vertical: 5,
                         ),
                         decoration: BoxDecoration(
-                          color: AppTheme.accentColor,
-                          borderRadius: BorderRadius.circular(8),
+                          gradient: const LinearGradient(
+                            colors: [AppTheme.accentColor, Color(0xFF059669)],
+                          ),
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppTheme.accentColor.withValues(alpha: 0.4),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
                         ),
                         child: Text(
                           'Trending',
-                          style: GoogleFonts.poppins(
-                            fontSize: 10,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11,
                             fontWeight: FontWeight.w700,
-                            color: AppTheme.white,
+                            color: Colors.white,
                           ),
                         ),
                       ),
                     ),
+                  if (crScore > 0)
+                    Positioned(
+                      top: 12,
+                      right: 12,
+                      child: _CarouselCrBadge(score: crScore),
+                    ),
+                  Positioned(
+                    left: 14,
+                    bottom: 14,
+                    child: Container(
+                      padding: const EdgeInsets.all(2.5),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.15),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: CollegeLogoWidget(
+                        collegeId: widget.college.id,
+                        collegeName: widget.college.name,
+                        logoUrl: widget.college.logoUrl,
+                        radius: 20,
+                      ),
+                    ),
+                  ),
                 ],
               ),
               Padding(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      college.name,
+                      widget.college.name,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 15,
                         fontWeight: FontWeight.w700,
                         height: 1.25,
+                        letterSpacing: -0.3,
+                        color: tokens.textPrimary,
                       ),
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      '${college.city}, ${college.state}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.poppins(
-                        fontSize: 11,
-                        color: AppTheme.gray500,
-                      ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.location_on_outlined,
+                          size: 14,
+                          color: AppTheme.primaryColor.withValues(alpha: 0.85),
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            '${widget.college.city}, ${widget.college.state}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: tokens.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 8),
-                    CrScoreBadgeWidget(
-                      score: CrScoreEngine.effectiveScore(college),
-                      showGrade: true,
-                      fontSize: 11,
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        if (widget.college.ownershipLabel.isNotEmpty)
+                          _CarouselMetaPill(
+                            icon: Icons.account_balance_outlined,
+                            label: widget.college.ownershipLabel,
+                            color: AppTheme.primaryColor,
+                          ),
+                        if (widget.college.category != 'General')
+                          _CarouselMetaPill(
+                            icon: Icons.category_outlined,
+                            label: widget.college.category,
+                            color: AppTheme.secondaryColor,
+                          ),
+                      ],
                     ),
-                    const SizedBox(height: 8),
-                    StarRatingDisplay(
-                      rating: college.aggregatedRatings.overall,
-                      reviewCount: college.reviewCount,
-                      starSize: 12,
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        _MiniStat(
+                          icon: Icons.work_outline_rounded,
+                          value: widget.college.aggregatedRatings.placements > 0
+                              ? widget.college.aggregatedRatings.placements
+                                  .toStringAsFixed(1)
+                              : '—',
+                          label: 'Placement',
+                          color: AppTheme.accentColor,
+                        ),
+                        const SizedBox(width: 8),
+                        _MiniStat(
+                          icon: Icons.star_rounded,
+                          value: widget.college.aggregatedRatings.overall > 0
+                              ? widget.college.aggregatedRatings.overall
+                                  .toStringAsFixed(1)
+                              : '—',
+                          label: '${widget.college.reviewCount} reviews',
+                          color: AppTheme.warningColor,
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -130,6 +257,154 @@ class PremiumCollegeCarouselCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _CarouselCrBadge extends StatelessWidget {
+  final double score;
+
+  const _CarouselCrBadge({required this.score});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = CrScoreConstants.colorForScore(score);
+    final grade = CrScoreConstants.gradeForScore(score);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [color, Color.lerp(color, Colors.white, 0.12) ?? color],
+        ),
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.4),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'CR ${score.toStringAsFixed(0)}',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+              height: 1,
+            ),
+          ),
+          Text(
+            grade,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              color: Colors.white.withValues(alpha: 0.92),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CarouselMetaPill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  const _CarouselMetaPill({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: color),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MiniStat extends StatelessWidget {
+  final IconData icon;
+  final String value;
+  final String label;
+  final Color color;
+
+  const _MiniStat({
+    required this.icon,
+    required this.value,
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 14, color: color),
+            const SizedBox(width: 4),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    value,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: color,
+                      height: 1,
+                    ),
+                  ),
+                  Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                      color: AppTheme.gray500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );

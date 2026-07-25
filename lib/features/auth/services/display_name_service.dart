@@ -1,14 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../../core/constants/display_name_constants.dart';
 import '../../../core/constants/firestore_constants.dart';
 import '../../../core/constants/verification_constants.dart';
 import '../../../core/utils/firestore_auth_utils.dart';
-import '../../../core/utils/firestore_error_utils.dart';
 import '../../../core/utils/public_display_name_utils.dart';
 import '../models/user_model.dart';
 import '../utils/validation_util.dart';
+import 'display_name_diagnostics.dart';
 
 class DisplayNameService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -19,28 +19,36 @@ class DisplayNameService {
   CollectionReference<Map<String, dynamic>> get _users =>
       _firestore.collection(FirestoreConstants.usersCollection);
 
+  String _usersPath(String uid) =>
+      '${FirestoreConstants.usersCollection}/$uid';
+
+  String _displayNamePath(String key) =>
+      '${FirestoreConstants.displayNamesCollection}/$key';
+
   Future<bool> isCustomDisplayNameAvailable(
     String customName, {
     String? excludeUid,
   }) async {
-    await FirestoreAuthUtils.ensureAuthenticated(expectedUid: excludeUid);
+    final authUser = await FirestoreAuthUtils.ensureAuthenticated(
+      expectedUid: excludeUid,
+    );
 
     final key = normalizeCustomDisplayNameKey(customName);
     if (key.isEmpty) return false;
 
-    try {
-      final doc = await _displayNames.doc(key).get();
-      if (!doc.exists) return true;
+    final path = _displayNamePath(key);
+    DisplayNameDiagnostics.logStart(
+      operation: 'isCustomDisplayNameAvailable.get',
+      firestorePath: path,
+      userModelUid: excludeUid,
+    );
+    debugPrint('[DisplayName] authUid=${authUser.uid}');
 
-      final ownerUid = doc.data()?['uid'] as String?;
-      return ownerUid == excludeUid;
-    } on FirebaseException catch (e) {
-      throw FirestoreErrorUtils.rethrowAsUserFacing(
-        e,
-        collectionPath: FirestoreConstants.displayNamesCollection,
-        documentPath: key,
-      );
-    }
+    final doc = await _displayNames.doc(key).get();
+    if (!doc.exists) return true;
+
+    final ownerUid = doc.data()?['uid'] as String?;
+    return ownerUid == excludeUid;
   }
 
   Future<void> updateDisplayNameSettings({
@@ -49,7 +57,18 @@ class DisplayNameService {
     String? customDisplayName,
     bool isInitialSetup = false,
   }) async {
-    await FirestoreAuthUtils.ensureAuthenticated(expectedUid: user.uid);
+    final authUser = await FirestoreAuthUtils.ensureAuthenticated(
+      expectedUid: user.uid,
+    );
+    final usersPath = _usersPath(user.uid);
+
+    DisplayNameDiagnostics.logStart(
+      operation: 'updateDisplayNameSettings',
+      firestorePath: usersPath,
+      userModelUid: user.uid,
+    );
+    debugPrint('[DisplayName] mode=$displayNameMode isInitialSetup=$isInitialSetup');
+    debugPrint('[DisplayName] authUid=${authUser.uid}');
 
     if (!DisplayNameConstants.allModes.contains(displayNameMode)) {
       throw DisplayNameException(message: 'Invalid display name mode.');
@@ -104,7 +123,15 @@ class DisplayNameService {
       }
     }
 
-    final verifiedRealName = user.verifiedRealName ?? user.displayName;
+    var verifiedRealName = user.verifiedRealName ?? user.displayName;
+    if ((verifiedRealName == null || verifiedRealName.trim().isEmpty) &&
+        isInitialSetup) {
+      final emailLocal = user.email.split('@').first.trim();
+      if (emailLocal.isNotEmpty) {
+        verifiedRealName = emailLocal;
+      }
+    }
+
     if (displayNameMode == DisplayNameConstants.modeRealName &&
         (verifiedRealName == null || verifiedRealName.trim().isEmpty)) {
       throw DisplayNameException(
@@ -130,75 +157,116 @@ class DisplayNameService {
 
     await _ensureUserProfile(user);
 
-    try {
-      await _firestore.runTransaction((transaction) async {
-        final userRef = _users.doc(user.uid);
-        final userSnap = await transaction.get(userRef);
-        if (!userSnap.exists) {
-          throw DisplayNameException(message: 'User profile not found.');
-        }
-
-        if (previousCustomKey != null &&
-            previousCustomKey.isNotEmpty &&
-            previousCustomKey != nextCustomKey) {
-          final oldRef = _displayNames.doc(previousCustomKey);
-          final oldSnap = await transaction.get(oldRef);
-          if (oldSnap.exists && oldSnap.data()?['uid'] == user.uid) {
-            transaction.delete(oldRef);
-          }
-        }
-
-        if (nextCustomKey != null &&
-            nextCustomKey.isNotEmpty &&
-            nextCustomKey != previousCustomKey) {
-          final newRef = _displayNames.doc(nextCustomKey);
-          final newSnap = await transaction.get(newRef);
-          if (newSnap.exists && newSnap.data()?['uid'] != user.uid) {
-            throw DisplayNameException(
-              message:
-                  'This display name is already taken. Please choose another.',
-            );
-          }
-          if (!newSnap.exists) {
-            transaction.set(newRef, {
-              'uid': user.uid,
-              'displayName': trimmedCustom,
-              'updatedAt': now.toIso8601String(),
-            });
-          }
-        }
-
-        transaction.update(userRef, {
-          'publicDisplayName': publicName,
-          'displayNameMode': displayNameMode,
-          'customDisplayName': trimmedCustom,
-          'displayNameSetupComplete': true,
-          if (!isInitialSetup && modeChanged)
-            'displayNameChangedAt': now.toIso8601String(),
-          'updatedAt': now.toIso8601String(),
-        });
-      });
-    } on DisplayNameException {
-      rethrow;
-    } on FirebaseException catch (e) {
-      final failingPath = _resolveFailingPath(
-        error: e,
-        userId: user.uid,
-        nextCustomKey: nextCustomKey,
-      );
-      throw FirestoreErrorUtils.rethrowAsUserFacing(
-        e,
-        collectionPath: failingPath.collectionPath,
-        documentPath: failingPath.documentPath,
+    final userRef = _users.doc(user.uid);
+    final userSnap = await userRef.get();
+    if (!userSnap.exists) {
+      throw DisplayNameException(
+        message: 'User profile not found. Please try again.',
       );
     }
+
+    if (nextCustomKey != null && nextCustomKey.isNotEmpty) {
+      final displayPath = _displayNamePath(nextCustomKey);
+      DisplayNameDiagnostics.logStart(
+        operation: 'preWrite.displayNameCheck',
+        firestorePath: displayPath,
+        userModelUid: user.uid,
+      );
+      final existing = await _displayNames.doc(nextCustomKey).get();
+      if (existing.exists && existing.data()?['uid'] != user.uid) {
+        throw DisplayNameException(
+          message:
+              'This display name is already taken. Please choose another.',
+        );
+      }
+    }
+
+    DisplayNameDiagnostics.logStart(
+      operation: 'writeBatch',
+      firestorePath: usersPath +
+          (nextCustomKey != null ? ' + ${_displayNamePath(nextCustomKey)}' : ''),
+      userModelUid: user.uid,
+    );
+
+    final batch = _firestore.batch();
+
+    if (previousCustomKey != null &&
+        previousCustomKey.isNotEmpty &&
+        previousCustomKey != nextCustomKey) {
+      final oldRef = _displayNames.doc(previousCustomKey);
+      final oldSnap = await oldRef.get();
+      if (oldSnap.exists && oldSnap.data()?['uid'] == user.uid) {
+        batch.delete(oldRef);
+      }
+    }
+
+    if (nextCustomKey != null &&
+        nextCustomKey.isNotEmpty &&
+        nextCustomKey != previousCustomKey) {
+      final newRef = _displayNames.doc(nextCustomKey);
+      final newSnap = await newRef.get();
+      if (newSnap.exists && newSnap.data()?['uid'] != user.uid) {
+        throw DisplayNameException(
+          message:
+              'This display name is already taken. Please choose another.',
+        );
+      }
+      if (!newSnap.exists) {
+        batch.set(newRef, {
+          'uid': user.uid,
+          'displayName': trimmedCustom,
+          'updatedAt': now.toIso8601String(),
+        });
+      }
+    }
+
+    final updateData = <String, dynamic>{
+      'publicDisplayName': publicName,
+      'displayNameMode': displayNameMode,
+      'displayNameSetupComplete': true,
+      if (!isInitialSetup && modeChanged)
+        'displayNameChangedAt': now.toIso8601String(),
+      'updatedAt': now.toIso8601String(),
+    };
+
+    if (trimmedCustom != null) {
+      updateData['customDisplayName'] = trimmedCustom;
+    } else if (previousCustomKey != null) {
+      updateData['customDisplayName'] = FieldValue.delete();
+    }
+
+    if (isInitialSetup &&
+        displayNameMode == DisplayNameConstants.modeRealName &&
+        verifiedRealName != null &&
+        verifiedRealName.trim().isNotEmpty) {
+      final existingVerified = userSnap.data()?['verifiedRealName'] as String?;
+      if (existingVerified == null || existingVerified.trim().isEmpty) {
+        updateData['verifiedRealName'] = verifiedRealName.trim();
+        updateData['displayName'] = verifiedRealName.trim();
+      }
+    }
+
+    batch.update(userRef, updateData);
+    await batch.commit();
+
+    debugPrint('[DisplayName] updateDisplayNameSettings succeeded for $usersPath');
   }
 
   Future<void> setVerifiedRealName({
     required String uid,
     required String realName,
   }) async {
-    await FirestoreAuthUtils.ensureAuthenticated(expectedUid: uid);
+    final authUser = await FirestoreAuthUtils.ensureAuthenticated(
+      expectedUid: uid,
+    );
+    final path = _usersPath(uid);
+
+    DisplayNameDiagnostics.logStart(
+      operation: 'setVerifiedRealName',
+      firestorePath: path,
+      userModelUid: uid,
+    );
+    debugPrint('[DisplayName] authUid=${authUser.uid}');
 
     final validationError = ValidationUtil.validateDisplayName(realName);
     if (validationError != null) {
@@ -206,29 +274,29 @@ class DisplayNameService {
     }
 
     final trimmed = realName.trim();
-    try {
-      await _users.doc(uid).set(
-        {
-          'displayName': trimmed,
-          'verifiedRealName': trimmed,
-          'updatedAt': DateTime.now().toIso8601String(),
-        },
-        SetOptions(merge: true),
-      );
-    } on FirebaseException catch (e) {
-      throw FirestoreErrorUtils.rethrowAsUserFacing(
-        e,
-        collectionPath: FirestoreConstants.usersCollection,
-        documentPath: uid,
-      );
-    }
+    await _users.doc(uid).set(
+      {
+        'displayName': trimmed,
+        'verifiedRealName': trimmed,
+        'updatedAt': DateTime.now().toIso8601String(),
+      },
+      SetOptions(merge: true),
+    );
   }
 
   Future<void> _ensureUserProfile(UserModel user) async {
+    final path = _usersPath(user.uid);
+    DisplayNameDiagnostics.logStart(
+      operation: '_ensureUserProfile',
+      firestorePath: path,
+      userModelUid: user.uid,
+    );
+
     final userRef = _users.doc(user.uid);
     final snap = await userRef.get();
     if (snap.exists) return;
 
+    debugPrint('[DisplayName] creating missing user doc at $path');
     await userRef.set(
       {
         'uid': user.uid,
@@ -244,35 +312,6 @@ class DisplayNameService {
       SetOptions(merge: true),
     );
   }
-
-  _FailingFirestorePath _resolveFailingPath({
-    required FirebaseException error,
-    required String userId,
-    String? nextCustomKey,
-  }) {
-    if (nextCustomKey != null &&
-        error.message?.contains('display_names') == true) {
-      return _FailingFirestorePath(
-        collectionPath: FirestoreConstants.displayNamesCollection,
-        documentPath: nextCustomKey,
-      );
-    }
-
-    return _FailingFirestorePath(
-      collectionPath: FirestoreConstants.usersCollection,
-      documentPath: userId,
-    );
-  }
-}
-
-class _FailingFirestorePath {
-  final String collectionPath;
-  final String documentPath;
-
-  const _FailingFirestorePath({
-    required this.collectionPath,
-    required this.documentPath,
-  });
 }
 
 class DisplayNameException implements Exception {

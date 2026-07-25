@@ -3,8 +3,11 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../config/router/route_names.dart';
+import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/widgets/college_image_widget.dart';
+import '../../../core/widgets/premium_components.dart';
 import '../models/ai_college_recommendation.dart';
 
 class AiRecommendationCard extends StatelessWidget {
@@ -20,66 +23,73 @@ class AiRecommendationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final college = recommendation.college;
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: Theme.of(context).brightness == Brightness.dark
-              ? AppTheme.gray700
-              : AppTheme.gray200,
-        ),
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+    final tokens = context.tokens;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: PremiumCard(
+        radius: tokens.cardRadius,
+        padding: const EdgeInsets.all(AppSpacing.lg),
         onTap: () => context.go(RouteNames.collegeDetailsPath(college.id)),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: CollegeImageWidget(
-                      collegeId: college.id,
-                      imageUrl: college.coverPhotoUrl ?? college.logoUrl,
-                      width: 56,
-                      height: 56,
-                      fit: BoxFit.cover,
-                    ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: CollegeImageWidget(
+                    collegeId: college.id,
+                    imageUrl: college.coverPhotoUrl ?? college.logoUrl,
+                    width: 64,
+                    height: 64,
+                    fit: BoxFit.cover,
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  AppTheme.primaryColor.withValues(alpha: 0.18),
+                                  AppTheme.secondaryColor.withValues(alpha: 0.12),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              '#${recommendation.rank}',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                color: AppTheme.primaryColor,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                          if (college.aggregatedRatings.overall > 0)
                             Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 8,
-                                vertical: 2,
+                                vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: AppTheme.primaryColor.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(6),
+                                color: AppTheme.warningColor.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(8),
                               ),
-                              child: Text(
-                                '#${recommendation.rank}',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppTheme.primaryColor,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            if (college.aggregatedRatings.overall > 0)
-                              Row(
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
                                   const Icon(
                                     Icons.star_rounded,
@@ -89,82 +99,102 @@ class AiRecommendationCard extends StatelessWidget {
                                   Text(
                                     college.aggregatedRatings.overall
                                         .toStringAsFixed(1),
-                                    style: GoogleFonts.poppins(
+                                    style: GoogleFonts.plusJakartaSans(
                                       fontSize: 12,
-                                      fontWeight: FontWeight.w600,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppTheme.warningColor,
                                     ),
                                   ),
                                 ],
                               ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          college.name,
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        Text(
-                          college.locationLabel,
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            color: AppTheme.gray500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              if (recommendation.reasons.isNotEmpty) ...[
-                const SizedBox(height: 10),
-                Text(
-                  'Why recommended',
-                  style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.primaryColor,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                ...recommendation.reasons.take(3).map(
-                      (reason) => Padding(
-                        padding: const EdgeInsets.only(bottom: 2),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text('• ', style: TextStyle(fontSize: 12)),
-                            Expanded(
-                              child: Text(
-                                reason,
-                                style: GoogleFonts.poppins(fontSize: 11),
-                              ),
                             ),
-                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        college.name,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.25,
+                          height: 1.25,
+                          color: tokens.textPrimary,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        college.locationLabel,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: tokens.textSecondary,
                         ),
                       ),
-                    ),
-              ],
-              if (onAddToCompare != null) ...[
-                const SizedBox(height: 8),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton.icon(
-                    onPressed: onAddToCompare,
-                    icon: const Icon(Icons.compare_arrows, size: 16),
-                    label: Text(
-                      'Compare',
-                      style: GoogleFonts.poppins(fontSize: 12),
-                    ),
+                    ],
                   ),
                 ),
               ],
+            ),
+            if (recommendation.reasons.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.md),
+              Text(
+                'WHY RECOMMENDED',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1,
+                  color: AppTheme.primaryColor,
+                ),
+              ),
+              const SizedBox(height: 6),
+              ...recommendation.reasons.take(3).map(
+                    (reason) => Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.check_circle_rounded,
+                            size: 14,
+                            color: AppTheme.accentColor.withValues(alpha: 0.9),
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              reason,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                height: 1.35,
+                                color: tokens.textSecondary,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
             ],
-          ),
+            if (onAddToCompare != null) ...[
+              const SizedBox(height: AppSpacing.sm),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  onPressed: onAddToCompare,
+                  icon: const Icon(Icons.compare_arrows_rounded, size: 16),
+                  label: Text(
+                    'Add to Compare',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ],
         ),
       ),
     );

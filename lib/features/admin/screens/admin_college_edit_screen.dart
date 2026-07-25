@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:uuid/uuid.dart';
 
-import '../../../config/router/route_names.dart';
+import '../utils/admin_route_resolver.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/college_constants.dart';
 import '../../../core/widgets/index.dart';
@@ -241,7 +241,7 @@ class _AdminCollegeEditScreenState extends ConsumerState<AdminCollegeEditScreen>
               ? 'College created'
               : 'College updated',
         );
-        context.go(RouteNames.adminColleges);
+        context.go(AdminRouteResolver.colleges(context));
       }
     } catch (e) {
       if (mounted) {
@@ -261,7 +261,7 @@ class _AdminCollegeEditScreenState extends ConsumerState<AdminCollegeEditScreen>
         title: Text(isEdit ? 'Edit College' : 'Add College'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-          onPressed: () => context.go(RouteNames.adminColleges),
+          onPressed: () => context.go(AdminRouteResolver.colleges(context)),
         ),
       ),
       body: SingleChildScrollView(

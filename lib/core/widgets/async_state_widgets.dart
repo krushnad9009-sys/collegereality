@@ -81,11 +81,11 @@ class AsyncEmptyView extends StatelessWidget {
             const SizedBox(height: 24),
             Text(
               title,
-              style: GoogleFonts.poppins(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
                 color: tokens.textPrimary,
-                letterSpacing: -0.2,
+                letterSpacing: -0.35,
               ),
               textAlign: TextAlign.center,
             ),
@@ -93,8 +93,9 @@ class AsyncEmptyView extends StatelessWidget {
               const SizedBox(height: 10),
               Text(
                 subtitle!,
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 14,
+                  fontWeight: FontWeight.w500,
                   color: tokens.textSecondary,
                   height: 1.5,
                 ),
@@ -132,7 +133,9 @@ class AsyncErrorView extends StatelessWidget {
     final isQuota = FirestoreErrorUtils.isQuotaExceededError(error) ||
         FirestoreErrorUtils.isUserFacingQuotaMessage(error.toString());
     return AsyncErrorView(
-      message: isQuota ? kFirestoreQuotaUserMessage : error.toString(),
+      message: isQuota
+          ? kFirestoreQuotaUserMessage
+          : FirestoreErrorUtils.userMessage(error),
       onRetry: onRetry,
       compact: compact,
     );
@@ -166,7 +169,7 @@ class AsyncErrorView extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              isQuota ? 'Service temporarily busy' : 'Something went wrong',
+              isQuota ? 'Temporarily unavailable' : 'Unable to load',
               style: GoogleFonts.poppins(
                 fontSize: compact ? 15 : 17,
                 fontWeight: FontWeight.w700,

@@ -30,7 +30,7 @@ class FirestoreUserService {
     } catch (e) {
       if (e is FirestoreException) rethrow;
       throw FirestoreException(
-        message: 'Failed to create/update user: $e',
+        message: 'Could not save your profile. Please try again.',
       );
     }
   }
@@ -55,7 +55,7 @@ class FirestoreUserService {
     } catch (e) {
       if (e is FirestoreException) rethrow;
       throw FirestoreException(
-        message: 'Failed to fetch user: $e',
+        message: 'Could not load your profile. Please try again.',
       );
     }
   }
@@ -75,7 +75,7 @@ class FirestoreUserService {
       });
     } catch (e) {
       throw FirestoreException(
-        message: 'Failed to stream user: $e',
+        message: 'Could not load your profile. Please try again.',
       );
     }
   }
@@ -188,7 +188,7 @@ class FirestoreUserService {
     } catch (e) {
       if (e is FirestoreException) rethrow;
       throw FirestoreException(
-        message: 'Failed to update user profile: $e',
+        message: 'Could not update your profile. Please try again.',
       );
     }
   }
@@ -202,7 +202,7 @@ class FirestoreUserService {
       });
     } catch (e) {
       throw FirestoreException(
-        message: 'Failed to verify email: $e',
+        message: 'Could not verify email. Please try again.',
       );
     }
   }
@@ -220,7 +220,7 @@ class FirestoreUserService {
       await _firestore.collection(usersCollection).doc(uid).update(updateData);
     } catch (e) {
       throw FirestoreException(
-        message: 'Failed to verify phone: $e',
+        message: 'Could not verify phone. Please try again.',
       );
     }
   }
@@ -231,7 +231,7 @@ class FirestoreUserService {
       await _firestore.collection(usersCollection).doc(uid).delete();
     } catch (e) {
       throw FirestoreException(
-        message: 'Failed to delete user: $e',
+        message: 'Could not delete account. Please try again.',
       );
     }
   }
@@ -253,7 +253,7 @@ class FirestoreUserService {
     } catch (e) {
       if (e is FirestoreException) rethrow;
       throw FirestoreException(
-        message: 'Failed to check user existence: $e',
+        message: 'Could not load your profile. Please try again.',
       );
     }
   }
@@ -273,7 +273,7 @@ class FirestoreUserService {
       return null;
     } catch (e) {
       throw FirestoreException(
-        message: 'Failed to fetch user by email: $e',
+        message: 'Could not find account. Please try again.',
       );
     }
   }
@@ -306,6 +306,6 @@ FirestoreException _mapFirestoreError(
     return FirestoreException(message: kFirestoreQuotaUserMessage);
   }
   return FirestoreException(
-    message: 'Failed to $action: ${error.message ?? error.code}',
+    message: 'Could not complete this action. Please try again.',
   );
 }

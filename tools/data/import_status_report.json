@@ -1,0 +1,53 @@
+{
+  "timestamp": "2026-07-24T11:19:00+00:00",
+  "investigation": {
+    "blockingIssue": "Firestore daily quota exhausted (429 RESOURCE_EXHAUSTED)",
+    "quotaResetVerified": false,
+    "permissionsOk": true,
+    "indexesBlocking": false,
+    "codeBlocking": false,
+    "details": "Count queries, single-document reads, and batch lookups all return 429. Service account credentials load correctly; failure is quota not permissions. Prior import session performed ~18 states × 6 retry loops × full-state existence scans, exhausting the daily read/write budget."
+  },
+  "checkpoint": {
+    "exists": true,
+    "reason": "firebase_daily_quota",
+    "currentState": "West Bengal",
+    "pendingStatesCount": 17,
+    "pendingStates": [
+      "West Bengal", "Assam", "Bihar", "Delhi", "Goa", "Uttrakhand",
+      "Manipur", "Mizoram", "Tripura", "Sikkim", "Lakshadweep",
+      "Arunachal Pradesh", "Chandigarh", "Andaman & Nicobar Islands",
+      "Dadra & Nagar Haveli", "Daman & Diu", "Jammu And Kashmir"
+    ]
+  },
+  "summary": {
+    "importedThisSession": 0,
+    "totalFirestoreDocuments": 45020,
+    "totalExpected": 47139,
+    "remaining": 2119,
+    "failed": 0,
+    "skippedDuplicates": 0,
+    "databaseProductionReady": false
+  },
+  "underImportedStates": [
+    {"state": "West Bengal", "got": 1420, "expected": 1624, "gap": 204},
+    {"state": "Bihar", "got": 661, "expected": 806, "gap": 145},
+    {"state": "Assam", "got": 499, "expected": 569, "gap": 70},
+    {"state": "Uttrakhand", "got": 490, "expected": 578, "gap": 88},
+    {"state": "Jammu And Kashmir", "got": 348, "expected": 381, "gap": 33},
+    {"state": "Delhi", "got": 247, "expected": 303, "gap": 56},
+    {"state": "Manipur", "got": 26, "expected": 70, "gap": 44},
+    {"state": "Tripura", "got": 38, "expected": 68, "gap": 30},
+    {"state": "Mizoram", "got": 41, "expected": 54, "gap": 13},
+    {"state": "Goa", "got": 67, "expected": 75, "gap": 8},
+    {"state": "Chandigarh", "got": 34, "expected": 39, "gap": 5},
+    {"state": "Sikkim", "got": 31, "expected": 36, "gap": 5},
+    {"state": "Arunachal Pradesh", "got": 21, "expected": 24, "gap": 3},
+    {"state": "Dadra & Nagar Haveli", "got": 8, "expected": 9, "gap": 1},
+    {"state": "Daman & Diu", "got": 8, "expected": 9, "gap": 1},
+    {"state": "Andaman & Nicobar Islands", "got": 7, "expected": 8, "gap": 1},
+    {"state": "Lakshadweep", "got": 1, "expected": 3, "gap": 2}
+  ],
+  "resumeCommand": "python tools/run_checkpoint_import.py",
+  "quotaResetNote": "Firestore daily quotas reset at midnight Pacific Time. Re-run resume command after reset."
+}

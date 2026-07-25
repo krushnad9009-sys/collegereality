@@ -347,8 +347,13 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
               title: const Text('Write Review'),
               leading: IconButton(
                 icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-                onPressed: () =>
-                    context.go(RouteNames.collegeDetailsPath(widget.collegeId)),
+                onPressed: () {
+                  if (context.canPop()) {
+                    context.pop();
+                  } else {
+                    context.go(RouteNames.collegeDetailsPath(widget.collegeId));
+                  }
+                },
               ),
             ),
             body: Padding(
@@ -391,8 +396,13 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
             title: Text(_existingReview != null ? 'Edit Review' : 'Write Review'),
             leading: IconButton(
               icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-              onPressed: () =>
-                  context.go(RouteNames.collegeDetailsPath(widget.collegeId)),
+                onPressed: () {
+                  if (context.canPop()) {
+                    context.pop();
+                  } else {
+                    context.go(RouteNames.collegeDetailsPath(widget.collegeId));
+                  }
+                },
             ),
           ),
           body: Form(

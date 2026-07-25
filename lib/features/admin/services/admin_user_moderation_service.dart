@@ -93,6 +93,10 @@ class AdminUserModerationService {
     });
   }
 
+  Future<void> deleteUser(String uid) async {
+    await _users.doc(uid).delete();
+  }
+
   Future<void> verifyStudentManually(String uid, {bool alumni = false}) async {
     await _users.doc(uid).update({
       'verificationStatus': VerificationConstants.statusApproved,

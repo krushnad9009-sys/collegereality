@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/widgets/index.dart';
+import '../../../core/services/phone_auth_service.dart';
 import '../../auth/providers/phone_auth_provider.dart';
 import '../../auth/providers/user_provider.dart';
 import '../../auth/utils/validation_util.dart';
@@ -36,7 +37,9 @@ class _PhoneVerificationSectionState
   bool _isSending = false;
   bool _isVerifying = false;
   int _resendSeconds = 0;
+  int _rateLimitSeconds = 0;
   Timer? _resendTimer;
+  Timer? _rateLimitTimer;
 
   static const _resendCooldown = 60;
 
@@ -49,9 +52,37 @@ class _PhoneVerificationSectionState
   @override
   void dispose() {
     _resendTimer?.cancel();
+    _rateLimitTimer?.cancel();
     _phoneController.dispose();
     _otpController.dispose();
     super.dispose();
+  }
+
+  void _startRateLimitTimer(Duration retryAfter) {
+    _rateLimitTimer?.cancel();
+    _resendTimer?.cancel();
+    setState(() {
+      _rateLimitSeconds = retryAfter.inSeconds;
+      _resendSeconds = 0;
+    });
+    _rateLimitTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      if (_rateLimitSeconds <= 1) {
+        timer.cancel();
+        setState(() => _rateLimitSeconds = 0);
+      } else {
+        setState(() => _rateLimitSeconds -= 1);
+      }
+    });
+  }
+
+  String _formatRetryDuration(int totalSeconds) {
+    final minutes = (totalSeconds / 60).ceil();
+    if (minutes <= 1) return '1 minute';
+    return '$minutes minutes';
   }
 
   void _startResendTimer() {
@@ -85,7 +116,7 @@ class _PhoneVerificationSectionState
   }
 
   Future<void> _sendOtp() async {
-    if (_resendSeconds > 0) return;
+    if (_resendSeconds > 0 || _rateLimitSeconds > 0) return;
 
     final phoneError = ValidationUtil.validatePhone(_phoneController.text);
     if (phoneError != null) {
@@ -126,7 +157,22 @@ class _PhoneVerificationSectionState
       }
     } catch (e) {
       if (mounted) {
-        SnackBarHelper.showErrorSnackBar(context, message: e.toString());
+        if (e is PhoneAuthException &&
+            (e.code == 'too-many-requests' || e.code == 'quota-exceeded')) {
+          _startRateLimitTimer(e.retryAfter ?? const Duration(minutes: 30));
+          SnackBarHelper.showErrorSnackBar(
+            context,
+            message:
+                'Too many OTP attempts. Try again in ${_formatRetryDuration(_rateLimitSeconds)}.',
+          );
+        } else {
+          SnackBarHelper.showErrorSnackBar(
+            context,
+            message: e is PhoneAuthException
+                ? e.message
+                : 'Could not send OTP. Please try again.',
+          );
+        }
       }
     } finally {
       if (mounted) setState(() => _isSending = false);
@@ -166,7 +212,12 @@ class _PhoneVerificationSectionState
       }
     } catch (e) {
       if (mounted) {
-        SnackBarHelper.showErrorSnackBar(context, message: e.toString());
+        SnackBarHelper.showErrorSnackBar(
+          context,
+          message: e is PhoneAuthException
+              ? e.message
+              : 'Could not verify OTP. Please try again.',
+        );
       }
     } finally {
       if (mounted) setState(() => _isVerifying = false);
@@ -223,7 +274,7 @@ class _PhoneVerificationSectionState
           ),
           const SizedBox(height: 8),
           Text(
-            'Verify your Indian mobile number with Firebase SMS OTP.',
+            'Verify your mobile number using a one-time password (OTP).',
             style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.gray600),
           ),
           const SizedBox(height: 12),
@@ -233,6 +284,18 @@ class _PhoneVerificationSectionState
             controller: _phoneController,
             validator: ValidationUtil.validatePhone,
           ),
+          if (_rateLimitSeconds > 0)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                'Too many attempts. Try again in ${_formatRetryDuration(_rateLimitSeconds)}.',
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.warningColor,
+                ),
+              ),
+            ),
           if (_otpSent) ...[
             const SizedBox(height: 12),
             CustomTextField(
@@ -267,7 +330,9 @@ class _PhoneVerificationSectionState
             children: [
               Expanded(
                 child: OutlinedButton(
-                  onPressed: (_isSending || _resendSeconds > 0) ? null : _sendOtp,
+                  onPressed: (_isSending || _resendSeconds > 0 || _rateLimitSeconds > 0)
+                      ? null
+                      : _sendOtp,
                   child: _isSending
                       ? const SizedBox(
                           width: 18,

@@ -150,7 +150,7 @@ class AiExplanationBuilder {
           'Try broadening location or filters.';
     }
     return 'Found $resultCount verified colleges$filterText, ranked using '
-        'Firestore ratings, placements, fees, hostel, NAAC & NIRF data.';
+        'verified ratings, placements, fees, hostel, NAAC & NIRF data.';
   }
 
   static String? _feeRangeLabel(CollegeFees fees) {

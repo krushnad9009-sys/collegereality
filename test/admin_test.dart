@@ -121,6 +121,8 @@ void main() {
 
   group('AdminPermissions', () {
     test('role checks gate admin-only actions', () {
+      expect(AdminPermissions.isSuperAdmin('super_admin'), isTrue);
+      expect(AdminPermissions.isSuperAdmin('admin'), isFalse);
       expect(AdminPermissions.canMergeColleges('super_admin'), isTrue);
       expect(AdminPermissions.canMergeColleges('admin'), isFalse);
       expect(AdminPermissions.canModerateContent('moderator'), isTrue);

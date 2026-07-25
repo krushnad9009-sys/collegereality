@@ -83,20 +83,20 @@ class CollegeCardSkeleton extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SkeletonBox(
-            height: 160,
+            height: 196,
             width: double.infinity,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
           ),
           Padding(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: const [
-                SkeletonBox(height: 16, width: double.infinity),
-                SizedBox(height: 8),
-                SkeletonBox(height: 14, width: 140),
-                SizedBox(height: 12),
-                SkeletonBox(height: 14, width: 100),
+                SkeletonBox(height: 18, width: double.infinity),
+                SizedBox(height: 10),
+                SkeletonBox(height: 14, width: 160),
+                SizedBox(height: 10),
+                SkeletonBox(height: 32, width: double.infinity),
               ],
             ),
           ),

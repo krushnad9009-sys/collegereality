@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../config/router/route_names.dart';
+import '../../admin/utils/admin_route_resolver.dart';
 import '../../../core/constants/ecosystem_constants.dart';
 import '../../auth/providers/user_provider.dart';
 import '../providers/ecosystem_provider.dart';
@@ -20,7 +20,7 @@ class AdminEcosystemHubScreen extends ConsumerWidget {
           title: const Text('Ecosystem Approvals'),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-            onPressed: () => context.go(RouteNames.admin),
+            onPressed: () => context.go(AdminRouteResolver.home(context)),
           ),
           bottom: const TabBar(
             isScrollable: true,

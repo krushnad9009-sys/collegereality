@@ -70,8 +70,27 @@ class AuthService {
 
   Future<void> sendEmailVerification() async {
     final user = currentUser;
-    if (user != null && !user.emailVerified) {
+    if (user == null) {
+      throw FirebaseAuthException(
+        code: 'user-not-found',
+        message: 'You must be logged in to verify your email.',
+      );
+    }
+    if (user.emailVerified) {
+      throw FirebaseAuthException(
+        code: 'email-already-verified',
+        message: 'Your email is already verified.',
+      );
+    }
+    try {
       await user.sendEmailVerification();
+    } on FirebaseAuthException {
+      rethrow;
+    } catch (e) {
+      throw FirebaseAuthException(
+        code: 'network-request-failed',
+        message: 'Could not send verification email. Check your connection.',
+      );
     }
   }
 

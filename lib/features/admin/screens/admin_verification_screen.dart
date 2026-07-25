@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../config/router/route_names.dart';
+import '../utils/admin_route_resolver.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/verification_constants.dart';
 import '../../../core/widgets/index.dart';
@@ -32,7 +32,7 @@ class AdminVerificationScreen extends ConsumerWidget {
         title: const Text('Verification Review'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-          onPressed: () => context.go(RouteNames.admin),
+          onPressed: () => context.go(AdminRouteResolver.home(context)),
         ),
       ),
       body: queueAsync.when(
@@ -222,7 +222,7 @@ class _VerificationReviewCard extends ConsumerWidget {
             child: isPdf
                 ? Text(
                     'PDF document uploaded (${bytes.length ~/ 1024} KB). '
-                    'Open in Firebase Storage console to review.',
+                    'Download the file to review it.',
                     style: GoogleFonts.poppins(fontSize: 13),
                   )
                 : InteractiveViewer(

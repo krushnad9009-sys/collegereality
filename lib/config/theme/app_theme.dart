@@ -109,11 +109,11 @@ class AppTheme {
             ? SystemUiOverlayStyle.light
             : SystemUiOverlayStyle.dark,
         iconTheme: IconThemeData(color: appBarFg),
-        titleTextStyle: GoogleFonts.poppins(
+        titleTextStyle: GoogleFonts.plusJakartaSans(
           fontSize: 18,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w700,
           color: appBarFg,
-          letterSpacing: -0.2,
+          letterSpacing: -0.3,
         ),
       ),
       textTheme: textTheme,
@@ -294,93 +294,36 @@ class AppTheme {
   }
 
   static TextTheme _buildTextTheme(Color textColor) {
+    TextStyle base({
+      required double size,
+      required FontWeight weight,
+      double? height,
+      double? letterSpacing,
+    }) =>
+        GoogleFonts.plusJakartaSans(
+          fontSize: size,
+          fontWeight: weight,
+          color: textColor,
+          height: height,
+          letterSpacing: letterSpacing,
+        );
+
     return TextTheme(
-      displayLarge: GoogleFonts.poppins(
-        fontSize: 32,
-        fontWeight: FontWeight.w700,
-        color: textColor,
-        letterSpacing: -0.5,
-        height: 1.15,
-      ),
-      displayMedium: GoogleFonts.poppins(
-        fontSize: 28,
-        fontWeight: FontWeight.w700,
-        color: textColor,
-        letterSpacing: -0.4,
-        height: 1.2,
-      ),
-      displaySmall: GoogleFonts.poppins(
-        fontSize: 24,
-        fontWeight: FontWeight.w700,
-        color: textColor,
-        letterSpacing: -0.3,
-        height: 1.25,
-      ),
-      headlineLarge: GoogleFonts.poppins(
-        fontSize: 20,
-        fontWeight: FontWeight.w600,
-        color: textColor,
-        letterSpacing: -0.2,
-      ),
-      headlineMedium: GoogleFonts.poppins(
-        fontSize: 18,
-        fontWeight: FontWeight.w600,
-        color: textColor,
-        letterSpacing: -0.15,
-      ),
-      headlineSmall: GoogleFonts.poppins(
-        fontSize: 16,
-        fontWeight: FontWeight.w600,
-        color: textColor,
-      ),
-      titleLarge: GoogleFonts.poppins(
-        fontSize: 16,
-        fontWeight: FontWeight.w600,
-        color: textColor,
-      ),
-      titleMedium: GoogleFonts.poppins(
-        fontSize: 14,
-        fontWeight: FontWeight.w600,
-        color: textColor,
-      ),
-      titleSmall: GoogleFonts.poppins(
-        fontSize: 12,
-        fontWeight: FontWeight.w600,
-        color: textColor,
-      ),
-      bodyLarge: GoogleFonts.poppins(
-        fontSize: 16,
-        fontWeight: FontWeight.w400,
-        color: textColor,
-        height: 1.5,
-      ),
-      bodyMedium: GoogleFonts.poppins(
-        fontSize: 14,
-        fontWeight: FontWeight.w400,
-        color: textColor,
-        height: 1.45,
-      ),
-      bodySmall: GoogleFonts.poppins(
-        fontSize: 12,
-        fontWeight: FontWeight.w400,
-        color: textColor,
-        height: 1.4,
-      ),
-      labelLarge: GoogleFonts.poppins(
-        fontSize: 14,
-        fontWeight: FontWeight.w600,
-        color: textColor,
-      ),
-      labelMedium: GoogleFonts.poppins(
-        fontSize: 12,
-        fontWeight: FontWeight.w600,
-        color: textColor,
-      ),
-      labelSmall: GoogleFonts.poppins(
-        fontSize: 10,
-        fontWeight: FontWeight.w600,
-        color: textColor,
-      ),
+      displayLarge: base(size: 32, weight: FontWeight.w800, letterSpacing: -0.6, height: 1.12),
+      displayMedium: base(size: 28, weight: FontWeight.w800, letterSpacing: -0.5, height: 1.15),
+      displaySmall: base(size: 24, weight: FontWeight.w700, letterSpacing: -0.4, height: 1.2),
+      headlineLarge: base(size: 20, weight: FontWeight.w700, letterSpacing: -0.35),
+      headlineMedium: base(size: 18, weight: FontWeight.w700, letterSpacing: -0.3),
+      headlineSmall: base(size: 16, weight: FontWeight.w700),
+      titleLarge: base(size: 16, weight: FontWeight.w700),
+      titleMedium: base(size: 14, weight: FontWeight.w600),
+      titleSmall: base(size: 12, weight: FontWeight.w600),
+      bodyLarge: base(size: 16, weight: FontWeight.w500, height: 1.5),
+      bodyMedium: base(size: 14, weight: FontWeight.w500, height: 1.45),
+      bodySmall: base(size: 12, weight: FontWeight.w500, height: 1.4),
+      labelLarge: base(size: 14, weight: FontWeight.w700),
+      labelMedium: base(size: 12, weight: FontWeight.w700),
+      labelSmall: base(size: 10, weight: FontWeight.w700),
     );
   }
 }

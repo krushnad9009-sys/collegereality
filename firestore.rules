@@ -11,6 +11,11 @@ service cloud.firestore {
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType in ['admin', 'super_admin'];
     }
 
+    function isSuperAdmin() {
+      return isAuthenticated() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'super_admin';
+    }
+
     function isModerator() {
       return isAuthenticated() &&
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'moderator';
@@ -783,6 +788,15 @@ service cloud.firestore {
       allow read: if isStaff();
       allow create: if isAuthenticated() &&
         request.resource.data.actorId == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    match /admin_settings/{docId} {
+      allow read, write: if isSuperAdmin();
+    }
+
+    match /super_admin_audit/{logId} {
+      allow read, create: if isSuperAdmin();
       allow update, delete: if false;
     }
 

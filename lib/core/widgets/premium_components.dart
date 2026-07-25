@@ -95,21 +95,22 @@ class SectionHeader extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: GoogleFonts.poppins(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.3,
-                    height: 1.2,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.45,
+                    height: 1.15,
                   ),
                 ),
                 if (subtitle != null) ...[
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 6),
                   Text(
                     subtitle!,
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 14,
                       fontWeight: FontWeight.w500,
                       color: AppTheme.gray500,
+                      height: 1.35,
                     ),
                   ),
                 ],

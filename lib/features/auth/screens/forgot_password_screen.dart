@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
+import '../../../core/utils/firestore_error_utils.dart';
 import '../../../core/widgets/index.dart';
 import '../providers/auth_provider.dart';
 import '../utils/validation_util.dart';
@@ -45,7 +46,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       if (mounted) {
         SnackBarHelper.showErrorSnackBar(
           context,
-          message: e.toString(),
+          message: FirestoreErrorUtils.userMessage(e),
         );
       }
     }

@@ -58,6 +58,7 @@ class FirestoreConstants {
       'student_community_comment_reports';
   static const String studentCommunityPollVotesCollection = 'student_community_poll_votes';
   static const String userNotificationsCollection = 'user_notifications';
+  static const String adminSettingsCollection = 'admin_settings';
   static const String notificationPreferencesCollection = 'notification_preferences';
   static const String admissionCalendarEventsCollection = 'admission_calendar_events';
   static const String savedEntranceExamsCollection = 'saved_entrance_exams';

@@ -12,7 +12,7 @@ class PlacementInsightsService {
 
     final insights = <String>[
       'Based on ${stats.approvedCount} admin-approved, verified student '
-      'placement record${stats.approvedCount == 1 ? '' : 's'} in Firestore.',
+      'placement record${stats.approvedCount == 1 ? '' : 's'}.',
     ];
 
     if (stats.averagePackageLpa > 0) {
@@ -65,7 +65,7 @@ class PlacementInsightsService {
     }
 
     insights.add(
-      'All figures are computed from approved Firestore submissions — '
+      'All figures are computed from approved student submissions — '
       'nothing is estimated or generated.',
     );
 

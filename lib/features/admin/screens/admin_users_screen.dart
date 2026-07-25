@@ -98,6 +98,29 @@ class _UserCard extends ConsumerWidget {
   final VoidCallback onChanged;
   const _UserCard({required this.user, required this.onChanged});
 
+  Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete user permanently?'),
+        content: Text(
+          'This will permanently delete ${user.email}. This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await ref.read(adminUserModerationServiceProvider).deleteUser(user.uid);
+    onChanged();
+  }
+
   Future<void> _warnUser(BuildContext context, WidgetRef ref) async {
     final controller = TextEditingController();
     final message = await showDialog<String>(
@@ -213,6 +236,11 @@ class _UserCard extends ConsumerWidget {
                       onChanged();
                     },
                   ),
+                ActionChip(
+                  avatar: const Icon(Icons.delete_forever, size: 16),
+                  label: const Text('Delete'),
+                  onPressed: () => _confirmDelete(context, ref),
+                ),
               ],
             ),
           ],

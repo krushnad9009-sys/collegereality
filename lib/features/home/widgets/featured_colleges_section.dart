@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../config/router/route_names.dart';
-import '../../../config/theme/app_theme.dart';
-import '../../../core/widgets/index.dart';
+import '../../../core/widgets/async_state_widgets.dart';
+import '../../../core/widgets/premium_components.dart';
+import '../../../core/widgets/skeleton_loader.dart';
 import '../../colleges/providers/college_provider.dart';
-import '../../ranking/utils/cr_score_engine.dart';
 import 'college_card_widget.dart';
 
 class FeaturedCollegesSection extends ConsumerWidget {
@@ -20,30 +19,12 @@ class FeaturedCollegesSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Featured Colleges',
-              style: GoogleFonts.poppins(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            TextButton(
-              onPressed: () => context.go(RouteNames.collegeSearch),
-              child: Text(
-                'View All',
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.primaryColor,
-                ),
-              ),
-            ),
-          ],
+        SectionHeader(
+          title: 'Featured Colleges',
+          subtitle: 'Hand-picked campuses with verified ratings',
+          actionLabel: 'View all',
+          onAction: () => context.go(RouteNames.collegeSearch),
         ),
-        const SizedBox(height: 12),
         collegesAsync.when(
           loading: () => Column(
             children: List.generate(
@@ -54,8 +35,8 @@ class FeaturedCollegesSection extends ConsumerWidget {
               ),
             ),
           ),
-          error: (e, _) => AsyncErrorView(
-            message: e.toString().replaceFirst('Exception: ', ''),
+          error: (e, _) => AsyncErrorView.fromError(
+            e,
             onRetry: () {
               ref.invalidate(homeFeaturedCollegesProvider);
               ref.invalidate(collegeSeedProvider);
@@ -74,16 +55,8 @@ class FeaturedCollegesSection extends ConsumerWidget {
                   .map(
                     (college) => Padding(
                       padding: const EdgeInsets.only(bottom: 12),
-                      child: CollegeCardWidget(
-                        collegeId: college.id,
-                        collegeName: college.name,
-                        location: college.state,
-                        city: college.city,
-                        rating: college.aggregatedRatings.overall,
-                        crScore: CrScoreEngine.effectiveScore(college),
-                        reviewCount: college.reviewCount,
-                        imageUrl: college.coverPhotoUrl,
-                        logoUrl: college.logoUrl,
+                      child: CollegeCardWidget.fromCollege(
+                        college,
                         onTap: () => context.go(
                           RouteNames.collegeDetailsPath(college.id),
                         ),

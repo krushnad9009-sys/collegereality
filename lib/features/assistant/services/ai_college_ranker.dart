@@ -89,21 +89,46 @@ class AiCollegeRanker {
     AiQueryIntent intent, {
     int limit = 10,
   }) {
-    final scored = colleges.map((c) {
+    final seenIds = <String>{};
+    final seenNames = <String>{};
+    final deduped = <CollegeModel>[];
+    for (final college in colleges) {
+      if (!seenIds.add(college.id)) continue;
+      final normalizedName =
+          college.name.toLowerCase().replaceAll(RegExp(r'\s+'), ' ').trim();
+      if (!seenNames.add(normalizedName)) continue;
+      deduped.add(college);
+    }
+
+    final scored = deduped.map((c) {
       return MapEntry(c, score(c, intent));
     }).toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 
-    return scored.take(limit).toList().asMap().entries.map((entry) {
-      final college = entry.value.key;
-      final s = entry.value.value;
-      return AiCollegeRecommendation(
-        college: college,
-        score: s,
-        reasons: const [],
-        rank: entry.key + 1,
+    final results = <AiCollegeRecommendation>[];
+    final usedCities = <String>{};
+
+    for (final entry in scored) {
+      if (results.length >= limit) break;
+      final college = entry.key;
+      final cityKey = college.cityLower;
+      // Prefer diverse cities when scores are close.
+      if (results.length >= 3 && usedCities.contains(cityKey)) {
+        final minScore = results.last.score;
+        if (entry.value < minScore * 0.85) continue;
+      }
+      usedCities.add(cityKey);
+      results.add(
+        AiCollegeRecommendation(
+          college: college,
+          score: entry.value,
+          reasons: const [],
+          rank: results.length + 1,
+        ),
       );
-    }).toList();
+    }
+
+    return results;
   }
 
   static int _averageAnnualFee(CollegeModel college) {

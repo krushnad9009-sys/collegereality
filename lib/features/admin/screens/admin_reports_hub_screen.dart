@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../config/router/route_names.dart';
+import '../utils/admin_route_resolver.dart';
 import '../../../core/constants/admin_constants.dart';
 import '../providers/admin_dashboard_provider.dart';
 import '../utils/admin_moderation_utils.dart';
@@ -22,7 +22,7 @@ class AdminReportsHubScreen extends ConsumerWidget {
           title: const Text('Reports & Moderation'),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-            onPressed: () => context.go(RouteNames.admin),
+            onPressed: () => context.go(AdminRouteResolver.home(context)),
           ),
           bottom: const TabBar(
             tabs: [

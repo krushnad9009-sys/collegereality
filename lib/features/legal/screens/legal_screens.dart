@@ -91,7 +91,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
         LegalSection(
           heading: 'Data Storage',
           body:
-              'Your data is stored securely using Google Firebase services. You may request account deletion from your profile settings.',
+              'Your data is stored securely on our servers. You may request account deletion from your profile settings.',
         ),
         LegalSection(
           heading: 'Updates',
