@@ -14,6 +14,12 @@ import '../../../core/bootstrap/firebase_bootstrap.dart';
 /// Maximum time to wait for Firebase/auth/prefs before forcing navigation.
 const _kSplashTimeout = Duration(seconds: 8);
 
+/// Minimum time the splash stays visible before exit fade.
+const _kMinimumSplashDuration = Duration(milliseconds: 1600);
+
+/// Exit fade duration before route navigation.
+const _kExitFadeDuration = Duration(milliseconds: 380);
+
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
@@ -24,14 +30,17 @@ class SplashScreen extends ConsumerStatefulWidget {
 class _SplashScreenState extends ConsumerState<SplashScreen>
     with TickerProviderStateMixin {
   late AnimationController _entryController;
-  late AnimationController _pulseController;
+  late AnimationController _exitController;
   late AnimationController _glowController;
-  late Animation<double> _fadeAnimation;
+  late AnimationController _driftController;
+  late AnimationController _loadingController;
+  late Animation<double> _fadeInAnimation;
   late Animation<double> _scaleAnimation;
   late Animation<double> _slideAnimation;
-  late Animation<double> _pulseAnimation;
   late Animation<double> _glowAnimation;
+  late Animation<double> _driftAnimation;
   bool _navigated = false;
+  bool _navigating = false;
 
   @override
   void initState() {
@@ -42,45 +51,55 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
   void _setupAnimations() {
     _entryController = AnimationController(
-      duration: const Duration(milliseconds: 1400),
+      duration: const Duration(milliseconds: 820),
       vsync: this,
     );
 
-    _pulseController = AnimationController(
-      duration: const Duration(milliseconds: 2200),
+    _exitController = AnimationController(
+      duration: _kExitFadeDuration,
       vsync: this,
-    )..repeat(reverse: true);
+    );
 
     _glowController = AnimationController(
-      duration: const Duration(milliseconds: 4000),
+      duration: const Duration(milliseconds: 4200),
       vsync: this,
     )..repeat(reverse: true);
 
-    _fadeAnimation = CurvedAnimation(
+    _driftController = AnimationController(
+      duration: const Duration(milliseconds: 6200),
+      vsync: this,
+    )..repeat(reverse: true);
+
+    _loadingController = AnimationController(
+      duration: const Duration(milliseconds: 1200),
+      vsync: this,
+    )..repeat();
+
+    _fadeInAnimation = CurvedAnimation(
       parent: _entryController,
-      curve: const Interval(0.0, 0.72, curve: Curves.easeOutCubic),
+      curve: Curves.easeOutCubic,
     );
 
-    _scaleAnimation = Tween<double>(begin: 0.78, end: 1.0).animate(
+    _scaleAnimation = Tween<double>(begin: 0.95, end: 1.0).animate(
       CurvedAnimation(
         parent: _entryController,
-        curve: const Interval(0.0, 0.78, curve: Curves.easeOutBack),
+        curve: Curves.easeOutCubic,
       ),
     );
 
-    _slideAnimation = Tween<double>(begin: 28, end: 0).animate(
+    _slideAnimation = Tween<double>(begin: 18, end: 0).animate(
       CurvedAnimation(
         parent: _entryController,
-        curve: const Interval(0.18, 0.88, curve: Curves.easeOutCubic),
+        curve: const Interval(0.12, 0.92, curve: Curves.easeOutCubic),
       ),
-    );
-
-    _pulseAnimation = Tween<double>(begin: 0.97, end: 1.03).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
 
     _glowAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _glowController, curve: Curves.easeInOut),
+    );
+
+    _driftAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _driftController, curve: Curves.easeInOut),
     );
 
     _entryController.forward();
@@ -93,13 +112,13 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       await _resolveAndNavigate().timeout(_kSplashTimeout);
     } catch (e, st) {
       debugPrint('Splash navigation error: $e\n$st');
-      _goTo(RouteNames.login);
+      await _goTo(RouteNames.login);
     }
   }
 
   Future<void> _resolveAndNavigate() async {
     await Future.wait([
-      Future.delayed(const Duration(milliseconds: 400)),
+      Future.delayed(_kMinimumSplashDuration),
       FirebaseBootstrap.ensureInitialized(),
     ]);
 
@@ -116,124 +135,142 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       user = auth.currentUser;
     }
 
-    if (!mounted || _navigated) return;
+    if (!mounted || _navigated || _navigating) return;
 
     final hasSeenOnboarding = prefs.getBool('hasSeenOnboarding') ?? false;
     final isLoggedIn = user != null;
 
     if (isLoggedIn) {
-      _goTo(RouteNames.home);
+      await _goTo(RouteNames.home);
     } else if (hasSeenOnboarding) {
-      _goTo(RouteNames.login);
+      await _goTo(RouteNames.login);
     } else {
-      _goTo(RouteNames.onboarding);
+      await _goTo(RouteNames.onboarding);
     }
   }
 
-  void _goTo(String route) {
-    if (_navigated || !mounted) return;
+  Future<void> _goTo(String route) async {
+    if (_navigating || _navigated || !mounted) return;
+    _navigating = true;
+
+    await _exitController.forward();
+    if (!mounted) return;
+
     _navigated = true;
     context.go(route);
+  }
+
+  double _combinedOpacity() {
+    return _fadeInAnimation.value * (1.0 - _exitController.value);
   }
 
   @override
   void dispose() {
     _entryController.dispose();
-    _pulseController.dispose();
+    _exitController.dispose();
     _glowController.dispose();
+    _driftController.dispose();
+    _loadingController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final logoSize = _logoSizeForWidth(MediaQuery.sizeOf(context).width);
+
     return Scaffold(
       body: Stack(
         fit: StackFit.expand,
         children: [
-          _AnimatedSplashBackground(glowValue: _glowAnimation),
+          _SplashBackground(
+            glowValue: _glowAnimation,
+            driftValue: _driftAnimation,
+          ),
           SafeArea(
             child: LayoutBuilder(
               builder: (context, constraints) {
-                return SingleChildScrollView(
-                  physics: const ClampingScrollPhysics(),
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                    child: Center(
-                      child: FadeTransition(
-                        opacity: _fadeAnimation,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 32),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              ScaleTransition(
-                                scale: _scaleAnimation,
-                                child: ScaleTransition(
-                                  scale: _pulseAnimation,
-                                  child: const CollegeRealityLogo(size: 120),
-                                ),
-                              ),
-                              AnimatedBuilder(
-                                animation: _slideAnimation,
-                                builder: (context, child) {
-                                  return Transform.translate(
-                                    offset: Offset(0, _slideAnimation.value),
-                                    child: child,
-                                  );
-                                },
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const SizedBox(height: 36),
-                                    FittedBox(
-                                      fit: BoxFit.scaleDown,
-                                      child: Text(
-                                        'College Reality',
-                                        style: AppTypography.display('College Reality').copyWith(
-                                              fontSize: 32,
-                                              color: AppTheme.gray900,
-                                              letterSpacing: -0.8,
-                                            ),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 12),
-                                    Text(
-                                      'Know the Reality Before You Take Admission',
-                                      style: AppTypography.body('').copyWith(
-                                            fontSize: 15,
-                                            color: AppTheme.gray500,
-                                            height: 1.45,
+                return AnimatedBuilder(
+                  animation: Listenable.merge([_entryController, _exitController]),
+                  builder: (context, child) {
+                    return Opacity(
+                      opacity: _combinedOpacity(),
+                      child: child,
+                    );
+                  },
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 32),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          ScaleTransition(
+                            scale: _scaleAnimation,
+                            child: _CollegeRealityLogo(size: logoSize),
+                          ),
+                          AnimatedBuilder(
+                            animation: _slideAnimation,
+                            builder: (context, child) {
+                              return Transform.translate(
+                                offset: Offset(0, _slideAnimation.value),
+                                child: child,
+                              );
+                            },
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                SizedBox(height: logoSize * 0.36),
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: ShaderMask(
+                                    shaderCallback: (bounds) => const LinearGradient(
+                                      colors: [
+                                        Color(0xFF111827),
+                                        Color(0xFF374151),
+                                        Color(0xFF111827),
+                                      ],
+                                      stops: [0.0, 0.5, 1.0],
+                                    ).createShader(bounds),
+                                    blendMode: BlendMode.srcIn,
+                                    child: Text(
+                                      'College Reality',
+                                      style: AppTypography.display('College Reality').copyWith(
+                                            fontSize: 34,
+                                            color: AppTheme.gray900,
+                                            letterSpacing: -1.0,
+                                            height: 1.1,
                                           ),
                                       textAlign: TextAlign.center,
-                                      maxLines: 2,
-                                      softWrap: true,
                                     ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(height: 56),
-                              SizedBox(
-                                width: 28,
-                                height: 28,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2.5,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    AppTheme.primaryColor.withValues(alpha: 0.85),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                'Loading your experience…',
-                                style: AppTypography.caption('').copyWith(
-                                      color: AppTheme.gray400,
-                                    ),
-                              ),
-                            ],
+                                const SizedBox(height: 14),
+                                Text(
+                                  'Know the Reality Before You Take Admission',
+                                  style: AppTypography.body('').copyWith(
+                                        fontSize: 15,
+                                        color: AppTheme.gray500,
+                                        height: 1.5,
+                                        letterSpacing: 0.1,
+                                      ),
+                                  textAlign: TextAlign.center,
+                                  maxLines: 2,
+                                  softWrap: true,
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
+                          SizedBox(height: logoSize * 0.5),
+                          _SplashLoadingIndicator(controller: _loadingController),
+                          const SizedBox(height: 18),
+                          Text(
+                            'Loading your experience…',
+                            style: AppTypography.caption('').copyWith(
+                                  color: AppTheme.gray400,
+                                  letterSpacing: 0.2,
+                                ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -245,65 +282,101 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       ),
     );
   }
+
+  double _logoSizeForWidth(double width) {
+    if (width < 360) return 114;
+    if (width < 600) return 132;
+    return 152;
+  }
 }
 
-class _AnimatedSplashBackground extends StatelessWidget {
-  const _AnimatedSplashBackground({required this.glowValue});
+class _SplashBackground extends StatelessWidget {
+  const _SplashBackground({
+    required this.glowValue,
+    required this.driftValue,
+  });
 
   final Animation<double> glowValue;
+  final Animation<double> driftValue;
 
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
-      animation: glowValue,
+      animation: Listenable.merge([glowValue, driftValue]),
       builder: (context, _) {
-        final t = glowValue.value;
+        final glow = glowValue.value;
+        final drift = driftValue.value;
+        final height = MediaQuery.sizeOf(context).height;
+        final width = MediaQuery.sizeOf(context).width;
+        final minSide = math.min(width, height);
+
         return DecoratedBox(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                const Color(0xFFF8FAFF),
-                Color.lerp(const Color(0xFFEEF2FF), const Color(0xFFF0F9FF), t)!,
-                const Color(0xFFFAFBFE),
+                Color.lerp(const Color(0xFFFFFBF7), const Color(0xFFFDF8FF), glow)!,
+                Color.lerp(const Color(0xFFF5F0FF), const Color(0xFFEEF4FF), glow)!,
+                Color.lerp(const Color(0xFFF0F7FF), const Color(0xFFF8FAFF), glow)!,
               ],
-              stops: const [0.0, 0.55, 1.0],
+              stops: const [0.0, 0.52, 1.0],
             ),
           ),
           child: Stack(
+            fit: StackFit.expand,
             children: [
               Positioned(
-                top: -140 + t * 12,
-                right: -90,
-                child: _GlowOrb(
-                  size: 320,
-                  color: AppTheme.primaryColor.withValues(alpha: 0.10 + t * 0.04),
+                top: height * (0.18 + drift * 0.04),
+                left: -40,
+                right: -40,
+                child: Transform.rotate(
+                  angle: -0.08 + drift * 0.04,
+                  child: Container(
+                    height: height * 0.42,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.white.withValues(alpha: 0.38),
+                          Colors.white.withValues(alpha: 0.08),
+                          Colors.white.withValues(alpha: 0),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ),
-              Positioned(
-                bottom: -120 - t * 8,
-                left: -70,
-                child: _GlowOrb(
-                  size: 280,
-                  color: AppTheme.secondaryColor.withValues(alpha: 0.08 + t * 0.03),
-                ),
+              _GlowOrb(
+                top: -height * 0.08 + math.sin(drift * math.pi * 2) * 10,
+                left: width * 0.55 + glow * 14,
+                size: minSide * 0.72,
+                color: AppTheme.primaryColor.withValues(alpha: 0.11 + glow * 0.04),
               ),
-              Positioned(
-                top: MediaQuery.sizeOf(context).height * 0.32,
-                left: -50 + t * 20,
-                child: _GlowOrb(
-                  size: 180,
-                  color: AppTheme.primaryLight.withValues(alpha: 0.06 + t * 0.02),
-                ),
+              _GlowOrb(
+                bottom: -height * 0.06 - glow * 10,
+                left: -width * 0.18 + drift * 18,
+                size: minSide * 0.58,
+                color: AppTheme.secondaryColor.withValues(alpha: 0.09 + glow * 0.03),
               ),
-              Positioned(
-                top: MediaQuery.sizeOf(context).height * 0.12,
-                right: 40 - t * 16,
-                child: _GlowOrb(
-                  size: 100,
-                  color: AppTheme.accentColor.withValues(alpha: 0.05 + t * 0.02),
-                ),
+              _GlowOrb(
+                top: height * 0.28 + math.cos(drift * math.pi * 2) * 8,
+                left: -width * 0.06,
+                size: minSide * 0.34,
+                color: AppTheme.primaryLight.withValues(alpha: 0.07 + glow * 0.02),
+              ),
+              _GlowOrb(
+                top: height * 0.08 - glow * 8,
+                right: width * 0.04 - drift * 12,
+                size: minSide * 0.22,
+                color: const Color(0xFFF472B6).withValues(alpha: 0.06 + glow * 0.02),
+              ),
+              _GlowOrb(
+                bottom: height * 0.22 + drift * 10,
+                right: -width * 0.08,
+                size: minSide * 0.40,
+                color: AppTheme.accentColor.withValues(alpha: 0.05 + glow * 0.02),
               ),
             ],
           ),
@@ -314,180 +387,199 @@ class _AnimatedSplashBackground extends StatelessWidget {
 }
 
 class _GlowOrb extends StatelessWidget {
-  const _GlowOrb({required this.size, required this.color});
+  const _GlowOrb({
+    required this.size,
+    required this.color,
+    this.top,
+    this.bottom,
+    this.left,
+    this.right,
+  });
 
   final double size;
   final Color color;
+  final double? top;
+  final double? bottom;
+  final double? left;
+  final double? right;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: RadialGradient(
-          colors: [color, color.withValues(alpha: 0)],
+    return Positioned(
+      top: top,
+      bottom: bottom,
+      left: left,
+      right: right,
+      child: IgnorePointer(
+        child: Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: RadialGradient(
+              colors: [color, color.withValues(alpha: 0)],
+            ),
+          ),
         ),
       ),
     );
   }
 }
 
-class CollegeRealityLogo extends StatelessWidget {
+class _CollegeRealityLogo extends StatelessWidget {
+  const _CollegeRealityLogo({required this.size});
+
   final double size;
 
-  const CollegeRealityLogo({this.size = 96, super.key});
+  static const _assetPath = 'assets/icons/splash_logo.png';
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: size,
       height: size,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.primaryColor.withValues(alpha: 0.28),
-              blurRadius: size * 0.32,
-              spreadRadius: size * 0.02,
-              offset: Offset(0, size * 0.1),
+      child: Stack(
+        alignment: Alignment.center,
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            width: size * 0.82,
+            height: size * 0.82,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.primaryColor.withValues(alpha: 0.28),
+                  blurRadius: size * 0.38,
+                  spreadRadius: size * 0.04,
+                ),
+                BoxShadow(
+                  color: AppTheme.secondaryColor.withValues(alpha: 0.14),
+                  blurRadius: size * 0.26,
+                  spreadRadius: size * 0.01,
+                ),
+                BoxShadow(
+                  color: AppTheme.primaryLight.withValues(alpha: 0.10),
+                  blurRadius: size * 0.18,
+                  spreadRadius: 0,
+                ),
+              ],
             ),
-            BoxShadow(
-              color: AppTheme.secondaryColor.withValues(alpha: 0.12),
-              blurRadius: size * 0.2,
-              offset: Offset(0, size * 0.04),
-            ),
-          ],
-        ),
-        child: CustomPaint(
-          painter: _CollegeRealityLogoPainter(),
-          size: Size(size, size),
-        ),
+          ),
+          Image.asset(
+            _assetPath,
+            width: size,
+            height: size,
+            fit: BoxFit.contain,
+            filterQuality: FilterQuality.high,
+            gaplessPlayback: true,
+          ),
+        ],
       ),
     );
   }
 }
 
-class _CollegeRealityLogoPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final w = size.width;
-    final h = size.height;
-    final cx = w / 2;
-    final cy = h / 2;
+class _SplashLoadingIndicator extends StatelessWidget {
+  const _SplashLoadingIndicator({required this.controller});
 
-    // Outer soft ring
-    canvas.drawCircle(
-      Offset(cx, cy),
-      w * 0.48,
-      Paint()
-        ..shader = RadialGradient(
-          colors: [
-            AppTheme.primaryLight.withValues(alpha: 0.18),
-            AppTheme.primaryColor.withValues(alpha: 0),
-          ],
-        ).createShader(Rect.fromCircle(center: Offset(cx, cy), radius: w * 0.48)),
-    );
-
-    // Main rounded-square badge
-    final bgRect = RRect.fromRectAndRadius(
-      Rect.fromCenter(center: Offset(cx, cy), width: w * 0.82, height: w * 0.82),
-      Radius.circular(w * 0.22),
-    );
-    canvas.drawRRect(
-      bgRect,
-      Paint()
-        ..shader = const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF6366F1),
-            Color(0xFF4F46E5),
-            Color(0xFF4338CA),
-          ],
-          stops: [0.0, 0.55, 1.0],
-        ).createShader(bgRect.outerRect),
-    );
-
-    // Inner highlight sheen
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(w * 0.12, h * 0.1, w * 0.76, h * 0.38),
-        Radius.circular(w * 0.18),
-      ),
-      Paint()..color = Colors.white.withValues(alpha: 0.12),
-    );
-
-    // Graduation cap
-    final capTop = Path()
-      ..moveTo(cx - w * 0.26, h * 0.4)
-      ..lineTo(cx, h * 0.3)
-      ..lineTo(cx + w * 0.26, h * 0.4)
-      ..lineTo(cx, h * 0.5)
-      ..close();
-    canvas.drawPath(capTop, Paint()..color = Colors.white.withValues(alpha: 0.96));
-
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromCenter(center: Offset(cx, h * 0.54), width: w * 0.42, height: h * 0.09),
-        Radius.circular(w * 0.035),
-      ),
-      Paint()..color = Colors.white.withValues(alpha: 0.9),
-    );
-
-    // Tassel
-    canvas.drawLine(
-      Offset(cx + w * 0.17, h * 0.36),
-      Offset(cx + w * 0.23, h * 0.58),
-      Paint()
-        ..color = AppTheme.secondaryColor
-        ..strokeWidth = w * 0.022
-        ..strokeCap = StrokeCap.round,
-    );
-    canvas.drawCircle(
-      Offset(cx + w * 0.23, h * 0.62),
-      w * 0.042,
-      Paint()..color = AppTheme.secondaryColor,
-    );
-
-    // Star accent — "reality" insight
-    _drawStar(canvas, Offset(cx - w * 0.13, h * 0.66), w * 0.085, AppTheme.warningColor);
-
-    // Subtle "CR" monogram hint at bottom
-    final textPainter = TextPainter(
-      text: TextSpan(
-        text: 'CR',
-        style: TextStyle(
-          fontSize: w * 0.11,
-          fontWeight: FontWeight.w800,
-          color: Colors.white.withValues(alpha: 0.22),
-          letterSpacing: -0.5,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    textPainter.paint(canvas, Offset(cx - textPainter.width / 2, h * 0.72));
-  }
-
-  void _drawStar(Canvas canvas, Offset center, double radius, Color color) {
-    const points = 5;
-    final path = Path();
-    for (var i = 0; i < points * 2; i++) {
-      final r = i.isEven ? radius : radius * 0.42;
-      final angle = (i * math.pi / points) - math.pi / 2;
-      if (i == 0) {
-        path.moveTo(center.dx + r * math.cos(angle), center.dy + r * math.sin(angle));
-      } else {
-        path.lineTo(center.dx + r * math.cos(angle), center.dy + r * math.sin(angle));
-      }
-    }
-    path.close();
-    canvas.drawPath(path, Paint()..color = color);
-  }
+  final AnimationController controller;
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 32,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: List.generate(3, (index) {
+              return AnimatedBuilder(
+                animation: controller,
+                builder: (context, _) {
+                  final phase = (controller.value + index * 0.22) % 1.0;
+                  final scale = 0.55 + 0.45 * _pulse(phase);
+                  final opacity = 0.35 + 0.65 * _pulse(phase);
+
+                  return Padding(
+                    padding: EdgeInsets.only(left: index == 0 ? 0 : 10),
+                    child: Transform.scale(
+                      scale: scale,
+                      child: Container(
+                        width: 7,
+                        height: 7,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: RadialGradient(
+                            colors: [
+                              AppTheme.primaryColor.withValues(alpha: opacity),
+                              AppTheme.primaryDark.withValues(alpha: opacity * 0.7),
+                            ],
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppTheme.primaryColor.withValues(alpha: opacity * 0.35),
+                              blurRadius: 8,
+                              spreadRadius: 0.5,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              );
+            }),
+          ),
+          const SizedBox(height: 14),
+          AnimatedBuilder(
+            animation: controller,
+            builder: (context, _) {
+              return ClipRRect(
+                borderRadius: BorderRadius.circular(999),
+                child: SizedBox(
+                  width: 96,
+                  height: 3,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: AppTheme.gray200.withValues(alpha: 0.55),
+                        ),
+                      ),
+                      FractionallySizedBox(
+                        alignment: Alignment(-1 + controller.value * 2, 0),
+                        widthFactor: 0.42,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                AppTheme.primaryColor.withValues(alpha: 0),
+                                AppTheme.primaryColor.withValues(alpha: 0.85),
+                                AppTheme.secondaryColor.withValues(alpha: 0.75),
+                                AppTheme.primaryColor.withValues(alpha: 0),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  double _pulse(double t) {
+    if (t < 0.5) return Curves.easeOut.transform(t * 2);
+    return Curves.easeIn.transform(2 - t * 2);
+  }
 }
 
 /// Resolves the post-splash route without requiring a BuildContext (testable).

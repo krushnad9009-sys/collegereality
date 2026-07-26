@@ -192,23 +192,32 @@ class _EmailSection extends ConsumerWidget {
             Expanded(
               child: ElevatedButton(
                 onPressed: () async {
-                  final verified = await ref
-                      .read(authProvider.notifier)
-                      .refreshEmailVerificationStatus();
-                  if (!context.mounted) return;
-                  if (verified) {
-                    await ref.read(userRepositoryProvider).verifyEmail(userId);
-                    ref.invalidate(currentUserDetailProvider);
+                  try {
+                    final verified = await ref
+                        .read(authProvider.notifier)
+                        .refreshEmailVerificationStatus();
                     if (!context.mounted) return;
-                    SnackBarHelper.showSuccessSnackBar(
-                      context,
-                      message: 'Email verified!',
-                    );
-                  } else {
-                    SnackBarHelper.showInfoSnackBar(
-                      context,
-                      message: 'Email not verified yet. Check your inbox.',
-                    );
+                    if (verified) {
+                      await ref.read(userRepositoryProvider).verifyEmail(userId);
+                      ref.invalidate(currentUserDetailProvider);
+                      if (!context.mounted) return;
+                      SnackBarHelper.showSuccessSnackBar(
+                        context,
+                        message: 'Email verified!',
+                      );
+                    } else {
+                      SnackBarHelper.showInfoSnackBar(
+                        context,
+                        message:
+                            'Not verified yet. Open the link in your inbox, then tap I Verified again.',
+                      );
+                    }
+                  } catch (e) {
+                    if (!context.mounted) return;
+                    final message = e is AuthException
+                        ? e.message
+                        : FirestoreErrorUtils.userMessage(e);
+                    SnackBarHelper.showErrorSnackBar(context, message: message);
                   }
                 },
                 child: const Text('I Verified'),

@@ -89,8 +89,11 @@ class _EmailVerificationSectionState
 
   @override
   Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user?.emailVerified == true) {
+    final emailVerified =
+        ref.watch(authProvider.select((state) => state.user?.emailVerified)) ==
+            true;
+
+    if (emailVerified) {
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.all(12),

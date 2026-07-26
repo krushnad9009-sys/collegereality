@@ -16,6 +16,10 @@ final authStateProvider = StreamProvider<User?>((ref) {
 });
 
 final currentUserProvider = Provider<User?>((ref) {
+  // Prefer auth notifier user so reload() after email verification triggers UI updates.
+  final notifierUser = ref.watch(authProvider.select((state) => state.user));
+  if (notifierUser != null) return notifierUser;
+
   final authState = ref.watch(authStateProvider);
   return authState.maybeWhen(
     data: (user) => user,

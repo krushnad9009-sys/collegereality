@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -90,6 +91,13 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
               'Account created! Please verify your email from your inbox.',
         );
         context.go(RouteNames.displayNameSetup);
+      }
+    } on FirebaseAuthException catch (e) {
+      if (mounted) {
+        SnackBarHelper.showErrorSnackBar(
+          context,
+          message: AuthException.fromFirebaseException(e).message,
+        );
       }
     } catch (e) {
       if (mounted) {
