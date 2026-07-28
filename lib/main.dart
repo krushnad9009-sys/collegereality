@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
+
 import 'config/router/app_router.dart';
 import 'config/theme/app_theme.dart';
 import 'config/theme/theme_provider.dart';
@@ -10,11 +12,12 @@ import 'core/services/crashlytics_service.dart';
 import 'features/engagement/services/firebase_messaging_service.dart';
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  AppErrorHandler.install();
   await FirebaseBootstrap.ensureInitialized();
   await CrashlyticsService.initialize();
-  AppErrorHandler.install();
   runApp(
     const ProviderScope(
       child: CollegeRealityApp(),
