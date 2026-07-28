@@ -5,10 +5,12 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../config/theme/app_theme.dart';
-import '../../../core/constants/college_constants.dart';
+import '../../../core/widgets/searchable_text_form_field.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/providers/user_provider.dart';
+import '../../auth/repositories/user_repository.dart';
 import '../../colleges/services/college_storage_service.dart';
+import '../../colleges/utils/college_suggestion_utils.dart';
 import '../providers/ecosystem_provider.dart';
 
 final collegeStorageServiceProvider = Provider<CollegeStorageService>((ref) {
@@ -27,9 +29,9 @@ class _RequestCollegeScreenState extends ConsumerState<RequestCollegeScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _cityController = TextEditingController();
+  final _stateController = TextEditingController();
   final _websiteController = TextEditingController();
   final _universityController = TextEditingController();
-  String? _selectedState;
   String? _photoUrl;
   bool _isSubmitting = false;
   bool _isUploadingPhoto = false;
@@ -38,6 +40,7 @@ class _RequestCollegeScreenState extends ConsumerState<RequestCollegeScreen> {
   void dispose() {
     _nameController.dispose();
     _cityController.dispose();
+    _stateController.dispose();
     _websiteController.dispose();
     _universityController.dispose();
     super.dispose();
@@ -64,15 +67,17 @@ class _RequestCollegeScreenState extends ConsumerState<RequestCollegeScreen> {
             extension: file.extension ?? 'jpg',
           );
       if (mounted) setState(() => _photoUrl = url);
+    } catch (e, st) {
+      debugPrint('[RequestCollegeScreen] photo upload failed (optional): $e\n$st');
     } finally {
       if (mounted) setState(() => _isUploadingPhoto = false);
     }
   }
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate() || _selectedState == null) return;
-    final user = ref.read(currentUserDetailProvider).valueOrNull;
-    if (user == null) {
+    if (!_formKey.currentState!.validate()) return;
+    final authUser = ref.read(currentUserProvider);
+    if (authUser == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Please log in to add a college.')),
@@ -81,14 +86,19 @@ class _RequestCollegeScreenState extends ConsumerState<RequestCollegeScreen> {
       return;
     }
 
+    final user =
+        ref.read(currentUserDetailProvider).valueOrNull ??
+            createUserModelFromFirebaseUser(authUser);
+
     setState(() => _isSubmitting = true);
     try {
+      final website = _websiteController.text.trim();
       await ref.read(ecosystemServiceProvider).submitCollegeRequest(
             user: user,
             name: _nameController.text.trim(),
             city: _cityController.text.trim(),
-            state: _selectedState!,
-            website: _websiteController.text.trim(),
+            state: _stateController.text.trim(),
+            website: website.isEmpty ? null : website,
             universityName: _universityController.text.trim(),
             photoUrl: _photoUrl,
           );
@@ -102,7 +112,8 @@ class _RequestCollegeScreenState extends ConsumerState<RequestCollegeScreen> {
         );
         context.pop();
       }
-    } catch (e) {
+    } catch (e, st) {
+      debugPrint('[RequestCollegeScreen] submit failed: $e\n$st');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(e.toString())),
@@ -164,26 +175,32 @@ class _RequestCollegeScreenState extends ConsumerState<RequestCollegeScreen> {
                     v == null || v.trim().isEmpty ? 'Required' : null,
               ),
               const SizedBox(height: 12),
-              TextFormField(
+              SearchableTextFormField(
                 controller: _cityController,
                 decoration: const InputDecoration(labelText: 'City *'),
+                optionsBuilder: CollegeSuggestionUtils.citySuggestions,
+                autovalidateMode: AutovalidateMode.onUserInteraction,
+                onSuggestionSelected: (_) => _formKey.currentState?.validate(),
                 validator: (v) =>
                     v == null || v.trim().isEmpty ? 'Required' : null,
               ),
               const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                initialValue: _selectedState,
+              SearchableTextFormField(
+                controller: _stateController,
                 decoration: const InputDecoration(labelText: 'State *'),
-                items: CollegeConstants.indianStates
-                    .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-                    .toList(),
-                onChanged: (v) => setState(() => _selectedState = v),
-                validator: (v) => v == null ? 'Required' : null,
+                optionsBuilder: CollegeSuggestionUtils.stateSuggestions,
+                autovalidateMode: AutovalidateMode.onUserInteraction,
+                onSuggestionSelected: (_) => _formKey.currentState?.validate(),
+                validator: (v) =>
+                    v == null || v.trim().isEmpty ? 'Required' : null,
               ),
               const SizedBox(height: 12),
-              TextFormField(
+              SearchableTextFormField(
                 controller: _universityController,
                 decoration: const InputDecoration(labelText: 'University *'),
+                optionsBuilder: CollegeSuggestionUtils.universitySuggestions,
+                autovalidateMode: AutovalidateMode.onUserInteraction,
+                onSuggestionSelected: (_) => _formKey.currentState?.validate(),
                 validator: (v) =>
                     v == null || v.trim().isEmpty ? 'Required' : null,
               ),

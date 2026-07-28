@@ -8,16 +8,19 @@ import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_theme.dart';
+import '../../../core/constants/college_constants.dart';
 import '../../../core/utils/firestore_error_utils.dart';
 import '../../../core/services/search_history_service.dart';
 import '../../../core/widgets/async_state_widgets.dart';
 import '../../../core/widgets/premium_components.dart';
+import '../../../core/widgets/searchable_text_form_field.dart';
 import '../../../core/widgets/skeleton_loader.dart';
 import '../../home/widgets/college_card_widget.dart';
 import '../../compare/providers/compare_basket_provider.dart';
 import '../../compare/widgets/compare_basket_bar.dart';
 import '../models/college_model.dart';
 import '../providers/college_provider.dart';
+import '../utils/college_suggestion_utils.dart';
 import '../widgets/premium_search_discovery_panel.dart';
 
 class CollegeSearchScreen extends ConsumerStatefulWidget {
@@ -46,9 +49,11 @@ class CollegeSearchScreen extends ConsumerStatefulWidget {
 class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
   late final TextEditingController _searchController;
   late final TextEditingController _cityController;
+  late final TextEditingController _universityController;
   String? _selectedState;
   String? _selectedCourse;
   String? _selectedCategory;
+  String? _selectedType;
   bool _showFilters = false;
   String? _cursor;
   List<CollegeModel> _results = [];
@@ -65,6 +70,7 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
     super.initState();
     _searchController = TextEditingController(text: widget.initialQuery ?? '');
     _cityController = TextEditingController(text: widget.initialCity ?? '');
+    _universityController = TextEditingController();
     _selectedState = widget.initialState;
     _selectedCourse = widget.initialCourse;
     _selectedCategory = widget.initialCategory;
@@ -93,6 +99,7 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
     _debounce?.cancel();
     _searchController.dispose();
     _cityController.dispose();
+    _universityController.dispose();
     super.dispose();
   }
 
@@ -105,8 +112,12 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
           ? null
           : _cityController.text.trim(),
       state: _selectedState,
+      university: _universityController.text.trim().isEmpty
+          ? null
+          : _universityController.text.trim(),
       course: _selectedCourse,
       category: _selectedCategory,
+      type: _selectedType,
       startAfterDocumentId: startAfter,
     );
   }
@@ -169,7 +180,9 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
       _selectedState = null;
       _selectedCourse = null;
       _selectedCategory = null;
+      _selectedType = null;
       _cityController.clear();
+      _universityController.clear();
       _searchController.clear();
       _liveQuery = '';
       _results = [];
@@ -184,6 +197,8 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
       _selectedState != null ||
       _selectedCourse != null ||
       _selectedCategory != null ||
+      _selectedType != null ||
+      _universityController.text.trim().isNotEmpty ||
       _cityController.text.trim().isNotEmpty;
 
   InputDecoration _filterDecoration(BuildContext context, String label) {
@@ -227,9 +242,9 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
     final coursesAsync = ref.watch(indianCoursesProvider);
     final metaAsync = ref.watch(collegeDirectoryMetaProvider);
     final basket = ref.watch(compareBasketProvider);
-    final suggestionsAsync = _liveQuery.trim().isNotEmpty
-        ? ref.watch(collegeInstantSuggestProvider(_liveQuery.trim()))
-        : const AsyncValue<List<CollegeModel>>.data([]);
+    final searchSuggestions = _liveQuery.trim().isEmpty
+        ? const <String>[]
+        : CollegeSuggestionUtils.searchSuggestions(_liveQuery.trim());
 
     return Scaffold(
       backgroundColor: Theme.of(context).brightness == Brightness.dark
@@ -489,82 +504,83 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
                         },
                       ),
                     ),
+                  if (_selectedType != null)
+                    Padding(
+                      padding: const EdgeInsets.only(right: AppSpacing.sm),
+                      child: PremiumChip(
+                        label: _selectedType!,
+                        icon: Icons.account_balance_outlined,
+                        selected: true,
+                        onTap: () {
+                          setState(() => _selectedType = null);
+                          _runSearch();
+                        },
+                      ),
+                    ),
+                  if (_universityController.text.trim().isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(right: AppSpacing.sm),
+                      child: PremiumChip(
+                        label: _universityController.text.trim(),
+                        icon: Icons.apartment_outlined,
+                        selected: true,
+                        onTap: () {
+                          _universityController.clear();
+                          _runSearch();
+                        },
+                      ),
+                    ),
                 ],
               ),
             ),
-          suggestionsAsync.when(
-            loading: () => Padding(
+          if (searchSuggestions.isNotEmpty)
+            Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              child: LinearProgressIndicator(
-                minHeight: 2,
-                borderRadius: BorderRadius.circular(2),
-                color: AppTheme.primaryColor,
-                backgroundColor: tokens.shimmerBase,
-              ),
-            ),
-            error: (_, _) => const SizedBox.shrink(),
-            data: (suggestions) {
-              if (suggestions.isEmpty || _liveQuery.trim().isEmpty) {
-                return const SizedBox.shrink();
-              }
-              return Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                child: PremiumCard(
-                  radius: tokens.buttonRadius,
-                  padding: EdgeInsets.zero,
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxHeight: 220),
-                    child: ListView.separated(
-                      shrinkWrap: true,
-                      itemCount: suggestions.length,
-                      separatorBuilder: (_, _) => Divider(
-                        height: 1,
-                        color: tokens.borderSubtle,
-                      ),
-                      itemBuilder: (context, index) {
-                        final college = suggestions[index];
-                        return ListTile(
-                          dense: true,
-                          leading: Icon(
-                            Icons.school_outlined,
-                            size: 20,
-                            color: AppTheme.primaryColor.withValues(alpha: 0.8),
-                          ),
-                          title: Text(
-                            college.name,
-                            style: GoogleFonts.poppins(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: tokens.textPrimary,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          subtitle: Text(
-                            [
-                              college.locationLabel,
-                              if (college.universityName != null &&
-                                  college.universityName!.isNotEmpty)
-                                college.universityName!,
-                            ].join(' · '),
-                            style: GoogleFonts.poppins(
-                              fontSize: 11,
-                              color: tokens.textSecondary,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          onTap: () => context.go(
-                            RouteNames.collegeDetailsPath(college.id),
-                          ),
-                        );
-                      },
+              child: PremiumCard(
+                radius: tokens.buttonRadius,
+                padding: EdgeInsets.zero,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 220),
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: searchSuggestions.length,
+                    separatorBuilder: (_, _) => Divider(
+                      height: 1,
+                      color: tokens.borderSubtle,
                     ),
+                    itemBuilder: (context, index) {
+                      final suggestion = searchSuggestions[index];
+                      return ListTile(
+                        dense: true,
+                        leading: Icon(
+                          Icons.search_rounded,
+                          size: 20,
+                          color: AppTheme.primaryColor.withValues(alpha: 0.8),
+                        ),
+                        title: Text(
+                          suggestion,
+                          style: GoogleFonts.poppins(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: tokens.textPrimary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        onTap: () {
+                          _searchController.text = suggestion;
+                          _searchController.selection = TextSelection.fromPosition(
+                            TextPosition(offset: suggestion.length),
+                          );
+                          setState(() => _liveQuery = suggestion);
+                          _runSearch();
+                        },
+                      );
+                    },
                   ),
                 ),
-              );
-            },
-          ),
+              ),
+            ),
           if (_showFilters)
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
@@ -595,11 +611,28 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
                       ),
                     ),
                     const SizedBox(height: AppSpacing.md),
-                    TextField(
+                    SearchableTextFormField(
                       controller: _cityController,
                       decoration: _filterDecoration(context, 'City').copyWith(
                         hintText: 'e.g. Mumbai, Pune, Delhi',
                       ),
+                      optionsBuilder: CollegeSuggestionUtils.citySuggestions,
+                      onChanged: (_) {
+                        _debounce?.cancel();
+                        _debounce =
+                            Timer(const Duration(milliseconds: 350), _runSearch);
+                        setState(() {});
+                      },
+                      onSubmitted: (_) => _runSearch(),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    SearchableTextFormField(
+                      controller: _universityController,
+                      decoration: _filterDecoration(context, 'University').copyWith(
+                        hintText:
+                            'e.g. Vasantrao Naik Marathwada Krishi Vidyapeeth',
+                      ),
+                      optionsBuilder: CollegeSuggestionUtils.universitySuggestions,
                       onChanged: (_) {
                         _debounce?.cancel();
                         _debounce =
@@ -629,6 +662,29 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
                           _runSearch();
                         },
                       ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    DropdownButtonFormField<String>(
+                      initialValue: _selectedType,
+                      decoration: _filterDecoration(context, 'College Type'),
+                      items: [
+                        const DropdownMenuItem(
+                          value: null,
+                          child: Text('All College Types'),
+                        ),
+                        ...CollegeConstants.collegeTypes.map(
+                          (type) => DropdownMenuItem(
+                            value: type,
+                            child: Text(
+                              '${type[0].toUpperCase()}${type.substring(1)}',
+                            ),
+                          ),
+                        ),
+                      ],
+                      onChanged: (v) {
+                        setState(() => _selectedType = v);
+                        _runSearch();
+                      },
                     ),
                     const SizedBox(height: AppSpacing.md),
                     DropdownButtonFormField<String>(
@@ -692,13 +748,25 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
                         : _results.isEmpty && _hasSearched
                             ? AsyncEmptyView(
                                 icon: Icons.search_off_rounded,
-                                title: 'No Results Found',
+                                title: 'Can\'t find your college?',
                                 subtitle:
-                                    'Try a different college name, city, state, or filter combination.',
-                                action: OutlinedButton.icon(
-                                  onPressed: _resetFilters,
-                                  icon: const Icon(Icons.restart_alt_rounded),
-                                  label: const Text('Reset Filters'),
+                                    'No matching colleges found.',
+                                action: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    FilledButton.icon(
+                                      onPressed: () =>
+                                          context.go(RouteNames.requestCollege),
+                                      icon: const Icon(Icons.add_rounded),
+                                      label: const Text('+ Add My College'),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    OutlinedButton.icon(
+                                      onPressed: _resetFilters,
+                                      icon: const Icon(Icons.restart_alt_rounded),
+                                      label: const Text('Reset Filters'),
+                                    ),
+                                  ],
                                 ),
                               )
                             : ListView.builder(

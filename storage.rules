@@ -45,6 +45,14 @@ service firebase.storage {
         request.resource.size < 8 * 1024 * 1024;
     }
 
+    match /college_requests/{userId}/{fileName} {
+      allow read: if isAuthenticated() &&
+        (request.auth.uid == userId || isAdmin());
+      allow write: if isAuthenticated() &&
+        request.auth.uid == userId &&
+        request.resource.size < 8 * 1024 * 1024;
+    }
+
     match /review_media/{userId}/{reviewId}/{fileName} {
       allow read: if isAuthenticated();
       allow write: if isAuthenticated() &&

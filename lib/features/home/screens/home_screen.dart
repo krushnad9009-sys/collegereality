@@ -132,6 +132,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           child: const PremiumHomeSearchBar(),
                         ),
                       ),
+                      Transform.translate(
+                        offset: const Offset(0, -10),
+                        child: FadeInSection(
+                          delayMs: 70,
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: FilledButton.icon(
+                              onPressed: () =>
+                                  context.go(RouteNames.requestCollege),
+                              icon: const Icon(Icons.add_rounded),
+                              label: const Text('+ Add My College'),
+                            ),
+                          ),
+                        ),
+                      ),
                       const DeferredIncomingCallBanner(),
                       if (quotaBlocked) ...[
                         const SizedBox(height: AppSpacing.sm),

@@ -37,7 +37,18 @@ class CollegeSearchRanker {
         college.courses.any(
           (c) => c.toLowerCase().contains(parsed.course!.toLowerCase()),
         )) {
-      score += 220;
+      score += 320;
+    } else if (parsed.course != null) {
+      score -= 500;
+    }
+
+    if (parsed.city != null) {
+      final cityScore = cityMatchScore(college, parsed.city);
+      if (cityScore == 0) {
+        score -= 700;
+      } else {
+        score += cityScore;
+      }
     }
 
     for (final token in parsed.remainingTokens) {
@@ -66,14 +77,20 @@ class CollegeSearchRanker {
 
   static int _tokenMatchScore(CollegeModel college, String token) {
     if (token.isEmpty) return 0;
-    if (college.nameLower == token) return 500;
-    if (college.nameLower.startsWith(token)) return 450;
-    if (college.nameLower.contains(token)) return 400;
-    if (college.cityLower.contains(token)) return 300;
-    if (college.stateLower.contains(token)) return 250;
+    if (college.nameLower == token) return 700;
+    if (college.nameLower.startsWith(token)) return 550;
+    if (college.nameLower.contains(token)) return 450;
+    if (college.universityLower.startsWith(token)) return 430;
+    if (college.universityLower.contains(token)) return 380;
+    if (college.cityLower == token) return 360;
+    if (college.cityLower.startsWith(token)) return 320;
+    if (college.cityLower.contains(token)) return 260;
+    if (college.stateLower == token) return 240;
+    if (college.stateLower.contains(token)) return 200;
     if (college.courses.any((c) => c.toLowerCase().contains(token))) {
-      return 200;
+      return 260;
     }
+    if (college.type.toLowerCase().contains(token)) return 200;
     if (college.category.toLowerCase().contains(token)) return 180;
     if (college.searchKeywords.any((k) => k.toLowerCase().contains(token))) {
       return 150;
@@ -84,10 +101,16 @@ class CollegeSearchRanker {
   static int filterMatchScore(
     CollegeModel college, {
     String? state,
+    String? city,
+    String? university,
     String? course,
     String? category,
+    String? type,
   }) {
     var score = 0;
+    if (city != null && city.isNotEmpty) {
+      score += cityMatchScore(college, city);
+    }
     if (state != null &&
         state.isNotEmpty &&
         college.state.toLowerCase() == state.toLowerCase()) {
@@ -98,10 +121,22 @@ class CollegeSearchRanker {
         college.courses.contains(course)) {
       score += 80;
     }
+    if (university != null &&
+        university.isNotEmpty &&
+        college.universityLower.contains(
+          CollegeSearchUtils.normalizeUniversity(university),
+        )) {
+      score += 75;
+    }
     if (category != null &&
         category.isNotEmpty &&
         college.category.toLowerCase() == category.toLowerCase()) {
       score += 60;
+    }
+    if (type != null &&
+        type.isNotEmpty &&
+        college.type.toLowerCase() == type.toLowerCase()) {
+      score += 55;
     }
     return score;
   }
@@ -111,8 +146,10 @@ class CollegeSearchRanker {
     String? query,
     String? city,
     String? state,
+    String? university,
     String? course,
     String? category,
+    String? type,
   }) {
     final parsed = CollegeSearchUtils.parseCompoundQuery(query);
     final effectiveCity = city?.trim().isNotEmpty == true
@@ -133,15 +170,21 @@ class CollegeSearchRanker {
 
       final filterA = filterMatchScore(
         a,
+        city: effectiveCity,
         state: state,
+        university: university,
         course: effectiveCourse,
         category: category,
+        type: type,
       );
       final filterB = filterMatchScore(
         b,
+        city: effectiveCity,
         state: state,
+        university: university,
         course: effectiveCourse,
         category: category,
+        type: type,
       );
       if (filterA != filterB) return filterB.compareTo(filterA);
 

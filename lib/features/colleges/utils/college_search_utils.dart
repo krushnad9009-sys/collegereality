@@ -16,6 +16,7 @@ class CollegeSearchUtils {
   CollegeSearchUtils._();
 
   static const List<String> knownSearchCities = [
+    'beed',
     'pune',
     'mumbai',
     'delhi',
@@ -39,13 +40,17 @@ class CollegeSearchUtils {
     'visakhapatnam',
   ];
 
-  static String normalizeName(String name) => name.trim().toLowerCase();
+  /// Trim, lowercase, and collapse internal whitespace for exact duplicate keys.
+  static String normalizeName(String name) => _normalizeExact(name);
 
-  static String normalizeCity(String city) => city.trim().toLowerCase();
+  static String normalizeCity(String city) => _normalizeExact(city);
 
-  static String normalizeDistrict(String district) => district.trim().toLowerCase();
+  static String normalizeDistrict(String district) => _normalizeExact(district);
 
-  static String normalizeState(String state) => state.trim().toLowerCase();
+  static String normalizeState(String state) => _normalizeExact(state);
+
+  static String _normalizeExact(String value) =>
+      value.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
 
   static String titleCaseCity(String city) {
     if (city.trim().isEmpty) return city;
@@ -204,6 +209,7 @@ class CollegeSearchUtils {
     final query = rawQuery.trim().toLowerCase();
     if (query.isEmpty) return true;
 
+    final parsed = parseCompoundQuery(query);
     final haystack = [
       college.name,
       college.city,
@@ -220,27 +226,48 @@ class CollegeSearchUtils {
     final acronym = _buildAcronym(college.name);
     if (query.length >= 2 && acronym.contains(query)) return true;
 
-    final words = query
-        .split(RegExp(r'\s+'))
-        .where((w) => w.isNotEmpty)
-        .toList();
-    if (words.isEmpty) return true;
+    if (!_matchesParsedCourse(college, parsed.course)) return false;
+    if (!_matchesParsedCity(college, parsed.city)) return false;
 
-    if (words.every(haystack.contains)) return true;
-
-    final significant = words.where((w) => w.length >= 2).toList();
-    if (significant.isNotEmpty && significant.any(haystack.contains)) {
-      return true;
+    final significant = parsed.remainingTokens.where((w) => w.length >= 2).toList();
+    if (significant.isEmpty) {
+      return parsed.city != null || parsed.course != null;
     }
+
+    if (significant.every((word) => _containsToken(haystack, word))) return true;
 
     final tokens = college.searchTokens;
     if (tokens.isNotEmpty) {
-      for (final word in significant) {
-        if (tokens.contains(word)) return true;
+      if (significant.every((word) => tokens.any((token) => token.startsWith(word)))) {
+        return true;
       }
     }
 
     return false;
+  }
+
+  static bool _matchesParsedCourse(CollegeModelLike college, String? course) {
+    if (course == null || course.isEmpty) return true;
+    final normalizedCourse = course.replaceAll('.', '').toLowerCase();
+    return college.courses.any(
+          (c) => c.replaceAll('.', '').toLowerCase().contains(normalizedCourse),
+        ) ||
+        college.category.toLowerCase().contains(normalizedCourse);
+  }
+
+  static bool _matchesParsedCity(CollegeModelLike college, String? city) {
+    if (city == null || city.isEmpty) return true;
+    final normalizedCity = normalizeCity(city);
+    return normalizeCity(college.city).contains(normalizedCity) ||
+        normalizeDistrict(college.district).contains(normalizedCity);
+  }
+
+  static bool _containsToken(String haystack, String token) {
+    if (haystack.contains(token)) return true;
+    return haystack
+        .split(RegExp(r'[\s,()/-]+'))
+        .where((part) => part.isNotEmpty)
+        .any((part) => part.startsWith(token));
   }
 
   static String _buildAcronym(String name) {

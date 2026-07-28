@@ -1,7 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/constants/ecosystem_constants.dart';
+import '../../../core/utils/firestore_auth_utils.dart';
 import '../../../core/constants/firestore_constants.dart';
 import '../../../core/constants/verification_constants.dart';
 import '../../auth/models/user_model.dart';
@@ -33,22 +35,58 @@ class EcosystemFirestoreService {
     final nameLower = CollegeSearchUtils.normalizeName(name);
     final cityLower = CollegeSearchUtils.normalizeCity(city);
 
-    final collegeSnap = await _firestore
-        .collection(FirestoreConstants.collegesCollection)
-        .where('nameLower', isEqualTo: nameLower)
-        .where('cityLower', isEqualTo: cityLower)
-        .limit(1)
-        .get();
-    if (collegeSnap.docs.isNotEmpty) return true;
+    // Exact equality only — never prefix/partial matches.
+    if (nameLower.isEmpty || cityLower.isEmpty) return false;
 
-    final pendingSnap = await _firestore
-        .collection(FirestoreConstants.collegeRequestsCollection)
-        .where('nameLower', isEqualTo: nameLower)
-        .where('cityLower', isEqualTo: cityLower)
-        .where('status', isEqualTo: EcosystemConstants.statusPending)
-        .limit(1)
-        .get();
-    return pendingSnap.docs.isNotEmpty;
+    try {
+      final collegeSnap = await _firestore
+          .collection(FirestoreConstants.collegesCollection)
+          .where('nameLower', isEqualTo: nameLower)
+          .where('cityLower', isEqualTo: cityLower)
+          .limit(1)
+          .get();
+      if (collegeSnap.docs.isNotEmpty) {
+        final data = collegeSnap.docs.first.data();
+        debugPrint(
+          '[submitCollegeRequest] duplicate found in colleges/'
+          '${collegeSnap.docs.first.id}: nameLower=${data['nameLower']} '
+          'cityLower=${data['cityLower']}',
+        );
+        return true;
+      }
+    } on FirebaseException catch (e, st) {
+      debugPrint(
+        '[submitCollegeRequest] duplicate check failed on colleges: '
+        '${e.code} ${e.message}\n$st',
+      );
+      rethrow;
+    }
+
+    try {
+      final pendingSnap = await _firestore
+          .collection(FirestoreConstants.collegeRequestsCollection)
+          .where('nameLower', isEqualTo: nameLower)
+          .where('cityLower', isEqualTo: cityLower)
+          .where('status', isEqualTo: EcosystemConstants.statusPending)
+          .limit(1)
+          .get();
+      if (pendingSnap.docs.isNotEmpty) {
+        final data = pendingSnap.docs.first.data();
+        debugPrint(
+          '[submitCollegeRequest] duplicate found in college_requests/'
+          '${pendingSnap.docs.first.id}: nameLower=${data['nameLower']} '
+          'cityLower=${data['cityLower']} status=${data['status']}',
+        );
+        return true;
+      }
+      return false;
+    } on FirebaseException catch (e, st) {
+      debugPrint(
+        '[submitCollegeRequest] duplicate check failed on college_requests: '
+        '${e.code} ${e.message}\n$st',
+      );
+      rethrow;
+    }
   }
 
   // ── A. Request new college ────────────────────────────────────────
@@ -64,6 +102,9 @@ class EcosystemFirestoreService {
     String? photoUrl,
     String notes = '',
   }) async {
+    final authUser =
+        await FirestoreAuthUtils.ensureAuthenticated(expectedUid: user.uid);
+
     if (await isDuplicateCollege(name: name, city: city)) {
       throw EcosystemException(
         'This college already exists or has a pending request.',
@@ -74,7 +115,7 @@ class EcosystemFirestoreService {
     final now = DateTime.now();
     final request = CollegeRequestModel(
       id: id,
-      userId: user.uid,
+      userId: authUser.uid,
       userName: user.displayName ?? 'User',
       name: name.trim(),
       nameLower: CollegeSearchUtils.normalizeName(name),
@@ -90,19 +131,41 @@ class EcosystemFirestoreService {
       updatedAt: now,
     );
 
-    await _firestore
-        .collection(FirestoreConstants.collegeRequestsCollection)
-        .doc(id)
-        .set(request.toJson());
-
-    await _audit.log(
-      action: EcosystemConstants.auditCollegeRequest,
-      actorId: user.uid,
-      actorName: user.displayName ?? '',
-      targetId: id,
-      targetType: 'college_request',
-      metadata: {'name': name, 'city': city},
+    final payload = request.toJson();
+    debugPrint(
+      '[submitCollegeRequest] writing college_requests/$id '
+      'userId=${payload['userId']} status=${payload['status']}',
     );
+
+    try {
+      await _firestore
+          .collection(FirestoreConstants.collegeRequestsCollection)
+          .doc(id)
+          .set(payload);
+    } on FirebaseException catch (e, st) {
+      debugPrint(
+        '[submitCollegeRequest] college_requests write failed: '
+        '${e.code} ${e.message}\n$st',
+      );
+      rethrow;
+    }
+
+    try {
+      await _audit.log(
+        action: EcosystemConstants.auditCollegeRequest,
+        actorId: authUser.uid,
+        actorName: user.displayName ?? '',
+        targetId: id,
+        targetType: 'college_request',
+        metadata: {'name': name, 'city': city},
+      );
+    } on FirebaseException catch (e, st) {
+      // Audit logging must not block the user's submission.
+      debugPrint(
+        '[submitCollegeRequest] audit_logs write failed (non-fatal): '
+        '${e.code} ${e.message}\n$st',
+      );
+    }
 
     return request;
   }

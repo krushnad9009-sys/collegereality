@@ -124,8 +124,10 @@ class FirestoreCollegeService {
     String? query,
     String? state,
     String? city,
+    String? university,
     String? course,
     String? category,
+    String? type,
     String? startAfterDocumentId,
     int limit = CollegeConstants.searchPageSize,
     bool includeInactive = false,
@@ -138,8 +140,10 @@ class FirestoreCollegeService {
         trimmedQuery,
         state: state,
         city: city,
+        university: university,
         course: course,
         category: category,
+        type: type,
         includeInactive: includeInactive,
         limit: limit,
       );
@@ -150,8 +154,10 @@ class FirestoreCollegeService {
           query: trimmedQuery,
           city: city,
           state: state,
+          university: university,
           course: course,
           category: category,
+          type: type,
           limit: limit,
         );
       }
@@ -177,8 +183,12 @@ class FirestoreCollegeService {
     if (category != null && category.isNotEmpty) {
       q = q.where('category', isEqualTo: category);
     }
+    if (type != null && type.isNotEmpty) {
+      q = q.where('type', isEqualTo: type.toLowerCase());
+    }
 
     final hasCity = city != null && city.isNotEmpty;
+    final hasUniversity = university != null && university.isNotEmpty;
 
     if (hasQuery) {
       final normalized = trimmedQuery.toLowerCase();
@@ -188,6 +198,13 @@ class FirestoreCollegeService {
       q = q.orderBy('nameLower');
     } else if (hasCity) {
       q = q.orderBy('cityLower').orderBy('nameLower');
+    } else if (hasUniversity) {
+      final normalizedUniversity =
+          CollegeSearchUtils.normalizeUniversity(university);
+      q = q
+          .where('universityLower', isGreaterThanOrEqualTo: normalizedUniversity)
+          .where('universityLower', isLessThan: '$normalizedUniversity\uf8ff')
+          .orderBy('universityLower');
     } else {
       q = q.orderBy('nameLower');
     }
@@ -204,6 +221,19 @@ class FirestoreCollegeService {
     try {
       final snapshot = await q.get();
       var colleges = _mapDocs(snapshot.docs);
+      if (state != null && state.isNotEmpty) {
+        final normalizedState = CollegeSearchUtils.normalizeState(state);
+        colleges = colleges
+            .where((c) => c.stateLower == normalizedState)
+            .toList();
+      }
+      if (hasUniversity) {
+        final normalizedUniversity =
+            CollegeSearchUtils.normalizeUniversity(university);
+        colleges = colleges
+            .where((c) => c.universityLower.contains(normalizedUniversity))
+            .toList();
+      }
       if (hasQuery) {
         colleges = colleges
             .where((c) => CollegeSearchUtils.matchesQuery(c, trimmedQuery))
@@ -220,6 +250,13 @@ class FirestoreCollegeService {
               .where((c) => CollegeSearchUtils.matchesQuery(c, trimmedQuery))
               .toList();
         }
+        if (hasUniversity) {
+          final normalizedUniversity =
+              CollegeSearchUtils.normalizeUniversity(university);
+          colleges = colleges
+              .where((c) => c.universityLower.contains(normalizedUniversity))
+              .toList();
+        }
       }
 
       if (colleges.isEmpty && hasQuery) {
@@ -227,7 +264,10 @@ class FirestoreCollegeService {
           trimmedQuery,
           state: state,
           city: city,
+          university: university,
           course: course,
+          category: category,
+          type: type,
           includeInactive: includeInactive,
           limit: limit,
         );
@@ -239,8 +279,10 @@ class FirestoreCollegeService {
         query: hasQuery ? trimmedQuery : null,
         city: city,
         state: state,
+        university: university,
         course: course,
         category: category,
+        type: type,
         limit: limit,
       );
     } on FirebaseException catch (e) {
@@ -263,8 +305,10 @@ class FirestoreCollegeService {
     required bool hasQuery,
     String? state,
     String? city,
+    String? university,
     String? course,
     String? category,
+    String? type,
     bool includeInactive = false,
     int limit = CollegeConstants.searchPageSize,
   }) async {
@@ -273,8 +317,10 @@ class FirestoreCollegeService {
         trimmedQuery,
         state: state,
         city: city,
+        university: university,
         course: course,
         category: category,
+        type: type,
         includeInactive: includeInactive,
         limit: limit,
       );
@@ -285,8 +331,10 @@ class FirestoreCollegeService {
           query: trimmedQuery,
           city: city,
           state: state,
+          university: university,
           course: course,
           category: category,
+          type: type,
           limit: limit,
         );
       }
@@ -318,11 +366,21 @@ class FirestoreCollegeService {
           )
           .toList();
     }
+    if (university != null && university.isNotEmpty) {
+      final universityLower = CollegeSearchUtils.normalizeUniversity(university);
+      colleges = colleges
+          .where((c) => c.universityLower.contains(universityLower))
+          .toList();
+    }
     if (course != null && course.isNotEmpty) {
       colleges = colleges.where((c) => c.courses.contains(course)).toList();
     }
     if (category != null && category.isNotEmpty) {
       colleges = colleges.where((c) => c.category == category).toList();
+    }
+    if (type != null && type.isNotEmpty) {
+      colleges =
+          colleges.where((c) => c.type.toLowerCase() == type.toLowerCase()).toList();
     }
 
     colleges = _finalizeSearchResults(
@@ -330,8 +388,10 @@ class FirestoreCollegeService {
       query: hasQuery ? trimmedQuery : null,
       city: city,
       state: state,
+      university: university,
       course: course,
       category: category,
+      type: type,
       limit: limit,
     );
     return CollegeSearchPage(
@@ -345,8 +405,10 @@ class FirestoreCollegeService {
     String query, {
     String? state,
     String? city,
+    String? university,
     String? course,
     String? category,
+    String? type,
     bool includeInactive = false,
     int limit = CollegeConstants.searchPageSize,
   }) async {
@@ -356,9 +418,6 @@ class FirestoreCollegeService {
     Query<Map<String, dynamic>> q = _colleges;
     if (!includeInactive) {
       q = q.where('isActive', isEqualTo: true);
-    }
-    if (state != null && state.isNotEmpty) {
-      q = q.where('state', isEqualTo: state);
     }
 
     q = q.where('searchTokens', arrayContainsAny: tokens).limit(limit * 3);
@@ -386,14 +445,32 @@ class FirestoreCollegeService {
               .contains(CollegeSearchUtils.normalizeDistrict(city))) {
         continue;
       }
+      if (state != null &&
+          state.isNotEmpty &&
+          college.stateLower !=
+              CollegeSearchUtils.normalizeState(state)) {
+        continue;
+      }
       if (course != null &&
           course.isNotEmpty &&
           !college.courses.contains(course)) {
         continue;
       }
+      if (university != null &&
+          university.isNotEmpty &&
+          !college.universityLower.contains(
+            CollegeSearchUtils.normalizeUniversity(university),
+          )) {
+        continue;
+      }
       if (category != null &&
           category.isNotEmpty &&
           college.category != category) {
+        continue;
+      }
+      if (type != null &&
+          type.isNotEmpty &&
+          college.type.toLowerCase() != type.toLowerCase()) {
         continue;
       }
       ranked.add(college);
@@ -574,8 +651,10 @@ class FirestoreCollegeService {
     String? query,
     String? city,
     String? state,
+    String? university,
     String? course,
     String? category,
+    String? type,
     int? limit,
   }) {
     final seen = <String>{};
@@ -588,8 +667,10 @@ class FirestoreCollegeService {
       query: query,
       city: city,
       state: state,
+      university: university,
       course: course,
       category: category,
+      type: type,
     );
     if (limit != null && deduped.length > limit) {
       return deduped.sublist(0, limit);
@@ -603,8 +684,10 @@ class FirestoreCollegeService {
     String? query,
     String? city,
     String? state,
+    String? university,
     String? course,
     String? category,
+    String? type,
     int limit = CollegeConstants.searchPageSize,
   }) {
     final ranked = _finalizeSearchResults(
@@ -612,8 +695,10 @@ class FirestoreCollegeService {
       query: query,
       city: city,
       state: state,
+      university: university,
       course: course,
       category: category,
+      type: type,
       limit: limit,
     );
     return CollegeSearchPage(

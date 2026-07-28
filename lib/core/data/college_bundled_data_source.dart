@@ -64,8 +64,10 @@ class CollegeBundledDataSource {
     String? query,
     String? state,
     String? city,
+    String? university,
     String? course,
     String? category,
+    String? type,
     int limit = 24,
     bool includeInactive = false,
   }) async {
@@ -85,11 +87,20 @@ class CollegeBundledDataSource {
           )
           .toList();
     }
+    if (university != null && university.isNotEmpty) {
+      final universityLower = CollegeSearchUtils.normalizeUniversity(university);
+      results = results
+          .where((c) => c.universityLower.contains(universityLower))
+          .toList();
+    }
     if (course != null && course.isNotEmpty) {
       results = results.where((c) => c.courses.contains(course)).toList();
     }
     if (category != null && category.isNotEmpty) {
       results = results.where((c) => c.category == category).toList();
+    }
+    if (type != null && type.isNotEmpty) {
+      results = results.where((c) => c.type.toLowerCase() == type.toLowerCase()).toList();
     }
     if (query != null && query.trim().isNotEmpty) {
       results = results

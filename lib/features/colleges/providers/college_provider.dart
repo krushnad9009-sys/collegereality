@@ -110,16 +110,20 @@ class CollegeSearchParams {
   final String? query;
   final String? city;
   final String? state;
+  final String? university;
   final String? course;
   final String? category;
+  final String? type;
   final String? startAfterDocumentId;
 
   const CollegeSearchParams({
     this.query,
     this.city,
     this.state,
+    this.university,
     this.course,
     this.category,
+    this.type,
     this.startAfterDocumentId,
   });
 
@@ -128,8 +132,10 @@ class CollegeSearchParams {
       query: query,
       city: city,
       state: state,
+      university: university,
       course: course,
       category: category,
+      type: type,
       startAfterDocumentId: lastDocumentId,
     );
   }
@@ -141,13 +147,24 @@ class CollegeSearchParams {
           query == other.query &&
           city == other.city &&
           state == other.state &&
+          university == other.university &&
           course == other.course &&
           category == other.category &&
+          type == other.type &&
           startAfterDocumentId == other.startAfterDocumentId;
 
   @override
   int get hashCode =>
-      Object.hash(query, city, state, course, category, startAfterDocumentId);
+      Object.hash(
+        query,
+        city,
+        state,
+        university,
+        course,
+        category,
+        type,
+        startAfterDocumentId,
+      );
 }
 
 final collegeSearchPageProvider =
@@ -159,8 +176,10 @@ final collegeSearchPageProvider =
     query: params.query,
     city: params.city,
     state: params.state,
+    university: params.university,
     course: params.course,
     category: params.category,
+    type: params.type,
     startAfterDocumentId: params.startAfterDocumentId,
   );
 });

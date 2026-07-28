@@ -701,14 +701,20 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    function canReadCollegeRequestForDuplicateCheck() {
+      return isAuthenticated() &&
+        resource.data.status == 'pending_review';
+    }
+
     match /college_requests/{requestId} {
       allow read: if isStaff() ||
-        (isAuthenticated() && resource.data.userId == request.auth.uid);
+        (isAuthenticated() && resource.data.userId == request.auth.uid) ||
+        canReadCollegeRequestForDuplicateCheck();
       allow create: if isAuthenticated() &&
-        isVerifiedStudent() &&
         request.resource.data.userId == request.auth.uid &&
         request.resource.data.status == 'pending_review';
       allow update: if isAdmin();
+      allow delete: if false;
     }
 
     match /college_edit_suggestions/{suggestionId} {
