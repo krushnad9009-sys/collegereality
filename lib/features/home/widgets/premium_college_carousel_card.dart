@@ -15,10 +15,12 @@ import '../../ranking/utils/cr_score_engine.dart';
 class PremiumCollegeCarouselCard extends StatefulWidget {
   final CollegeModel college;
   final VoidCallback? onTap;
+  final double? height;
 
   const PremiumCollegeCarouselCard({
     required this.college,
     this.onTap,
+    this.height,
     super.key,
   });
 
@@ -37,6 +39,7 @@ class _PremiumCollegeCarouselCardState
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final crScore = CrScoreEngine.effectiveScore(widget.college);
     const cardWidth = 300.0;
+    const imageHeight = 168.0;
 
     return GestureDetector(
       onTapDown: (_) => setState(() => _pressed = true),
@@ -50,6 +53,7 @@ class _PremiumCollegeCarouselCardState
         curve: Curves.easeOutCubic,
         child: Container(
           width: cardWidth,
+          height: widget.height,
           decoration: BoxDecoration(
             color: tokens.surfaceElevated,
             borderRadius: BorderRadius.circular(tokens.cardRadius),
@@ -81,14 +85,17 @@ class _PremiumCollegeCarouselCardState
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Stack(
-                children: [
-                  CollegeImageWidget(
-                    collegeId: widget.college.id,
-                    imageUrl: widget.college.coverPhotoUrl,
-                    height: 168,
-                    width: cardWidth,
-                  ),
+              SizedBox(
+                height: imageHeight,
+                width: cardWidth,
+                child: Stack(
+                  children: [
+                    CollegeImageWidget(
+                      collegeId: widget.college.id,
+                      imageUrl: widget.college.coverPhotoUrl,
+                      height: imageHeight,
+                      width: cardWidth,
+                    ),
                   Positioned.fill(
                     child: DecoratedBox(
                       decoration: BoxDecoration(
@@ -168,11 +175,14 @@ class _PremiumCollegeCarouselCardState
                   ),
                 ],
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+              ),
+              Expanded(
+                child: ClipRect(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                     Text(
                       widget.college.name,
                       maxLines: 2,
@@ -251,8 +261,10 @@ class _PremiumCollegeCarouselCardState
                         ),
                       ],
                     ),
-                  ],
+                    ],
+                  ),
                 ),
+              ),
               ),
             ],
           ),

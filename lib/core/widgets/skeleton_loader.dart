@@ -67,41 +67,78 @@ class _SkeletonBoxState extends State<SkeletonBox>
 }
 
 class CollegeCardSkeleton extends StatelessWidget {
-  const CollegeCardSkeleton({super.key});
+  final double? height;
+
+  const CollegeCardSkeleton({this.height, super.key});
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    return Container(
-      decoration: BoxDecoration(
-        color: tokens.surfaceElevated,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: tokens.borderSubtle),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SkeletonBox(
-            height: 196,
-            width: double.infinity,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                SkeletonBox(height: 18, width: double.infinity),
-                SizedBox(height: 10),
-                SkeletonBox(height: 14, width: 160),
-                SizedBox(height: 10),
-                SkeletonBox(height: 32, width: double.infinity),
-              ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxHeight = height ??
+            (constraints.hasBoundedHeight && constraints.maxHeight.isFinite
+                ? constraints.maxHeight
+                : null);
+        final imageHeight = maxHeight != null
+            ? (maxHeight * 0.47).clamp(120.0, 196.0)
+            : 168.0;
+        final bodyPadding = maxHeight != null ? 12.0 : 16.0;
+
+        final content = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SkeletonBox(
+              height: imageHeight,
+              width: double.infinity,
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(20)),
             ),
+            if (maxHeight != null)
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.all(bodyPadding),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      SkeletonBox(height: 18, width: double.infinity),
+                      SizedBox(height: 8),
+                      SkeletonBox(height: 14, width: 160),
+                      Spacer(),
+                      SkeletonBox(height: 28, width: double.infinity),
+                    ],
+                  ),
+                ),
+              )
+            else
+              Padding(
+                padding: EdgeInsets.all(bodyPadding),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    SkeletonBox(height: 18, width: double.infinity),
+                    SizedBox(height: 10),
+                    SkeletonBox(height: 14, width: 160),
+                    SizedBox(height: 10),
+                    SkeletonBox(height: 32, width: double.infinity),
+                  ],
+                ),
+              ),
+          ],
+        );
+
+        return Container(
+          height: maxHeight,
+          decoration: BoxDecoration(
+            color: tokens.surfaceElevated,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: tokens.borderSubtle),
           ),
-        ],
-      ),
+          clipBehavior: Clip.antiAlias,
+          child: content,
+        );
+      },
     );
   }
 }

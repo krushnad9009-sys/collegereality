@@ -116,14 +116,6 @@ class _PhoneVerificationSectionState
   }
 
   Future<void> _sendOtp() async {
-    if (isLocalWebHost) {
-      SnackBarHelper.showInfoSnackBar(
-        context,
-        message: kPhoneVerificationLocalhostMessage,
-      );
-      return;
-    }
-
     if (_resendSeconds > 0 || _rateLimitSeconds > 0) return;
 
     final phoneError = ValidationUtil.validatePhone(_phoneController.text);
@@ -285,17 +277,6 @@ class _PhoneVerificationSectionState
             'Verify your mobile number using a one-time password (OTP).',
             style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.gray600),
           ),
-          if (isLocalWebHost) ...[
-            const SizedBox(height: 8),
-            Text(
-              kPhoneVerificationLocalhostMessage,
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: AppTheme.warningColor,
-              ),
-            ),
-          ],
           const SizedBox(height: 12),
           PhoneTextField(
             label: 'Mobile Number',

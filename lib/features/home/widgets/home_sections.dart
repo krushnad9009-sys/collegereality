@@ -20,59 +20,70 @@ import 'premium_college_carousel_card.dart';
 class TrendingCollegesCarousel extends ConsumerWidget {
   const TrendingCollegesCarousel({super.key});
 
+  static const double carouselHeight = 360;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(trendingCollegesProvider);
 
     return async.when(
       loading: () => SizedBox(
-        height: 318,
+        height: carouselHeight,
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
           itemCount: 3,
           separatorBuilder: (_, _) => const SizedBox(width: 14),
-          itemBuilder: (_, _) => const SizedBox(
+          itemBuilder: (_, _) => SizedBox(
             width: 300,
-            child: CollegeCardSkeleton(),
+            child: CollegeCardSkeleton(
+              height: TrendingCollegesCarousel.carouselHeight,
+            ),
           ),
         ),
       ),
       error: (_, _) => SizedBox(
-        height: 318,
+        height: carouselHeight,
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
           itemCount: 3,
           separatorBuilder: (_, _) => const SizedBox(width: 14),
-          itemBuilder: (_, _) => const SizedBox(
+          itemBuilder: (_, _) => SizedBox(
             width: 300,
-            child: CollegeCardSkeleton(),
+            child: CollegeCardSkeleton(
+              height: TrendingCollegesCarousel.carouselHeight,
+            ),
           ),
         ),
       ),
       data: (colleges) {
         if (colleges.isEmpty) {
           return SizedBox(
-            height: 318,
+            height: carouselHeight,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: 3,
               separatorBuilder: (_, _) => const SizedBox(width: 14),
-              itemBuilder: (_, _) => const SizedBox(
+              itemBuilder: (_, _) => SizedBox(
                 width: 300,
-                child: CollegeCardSkeleton(),
+                child: CollegeCardSkeleton(
+                  height: TrendingCollegesCarousel.carouselHeight,
+                ),
               ),
             ),
           );
         }
         return SizedBox(
-          height: 318,
+          height: carouselHeight,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             clipBehavior: Clip.none,
             itemCount: colleges.length,
             separatorBuilder: (_, _) => const SizedBox(width: 14),
             itemBuilder: (context, index) {
-              return PremiumCollegeCarouselCard(college: colleges[index]);
+              return PremiumCollegeCarouselCard(
+                college: colleges[index],
+                height: carouselHeight,
+              );
             },
           ),
         );

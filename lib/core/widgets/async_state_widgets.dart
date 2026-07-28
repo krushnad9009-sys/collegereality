@@ -148,11 +148,11 @@ class AsyncErrorView extends StatelessWidget {
     final iconColor = isQuota ? tokens.textTertiary : AppTheme.errorColor;
 
     return Center(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: EdgeInsets.all(compact ? 16 : 32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: compact ? MainAxisSize.min : MainAxisSize.max,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
               width: compact ? 56 : 72,
