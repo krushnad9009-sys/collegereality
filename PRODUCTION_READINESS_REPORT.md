@@ -2,7 +2,7 @@
 
 **Audit date:** July 30, 2026  
 **App version:** 1.0.0+1  
-**Branch / commit reviewed:** `main` (post Critical/High Firebase security hardening)  
+**Branch / commit reviewed:** `main` (Firebase security + production readiness hardening)  
 **Scope:** Full Flutter project security, Firebase/Firestore/Storage rules, auth, privacy, stability, performance, and test readiness  
 
 ---
@@ -17,6 +17,20 @@
 | **Stability** | **82 / 100** | Strong automated coverage; FCM listener lifecycle fixed |
 
 Feature completeness, automated testing, release builds, and Firebase least-privilege rules are now aligned for a **public beta**. Deploy the updated `firestore.rules` / `storage.rules` to production before widening traffic. Remaining Medium items (MIME polish already largely addressed on Storage, bundle IDs, App Check) should be tracked but no longer block a careful launch.
+
+---
+
+## Final verification snapshot
+
+| Check | Result |
+|-------|--------|
+| Flutter analyze | Pass (`--no-fatal-infos`) |
+| Flutter tests | **449** passed |
+| Domain coverage (CI gate) | **82.31%** (≥80% required) |
+| Firebase rules tests | **38** passed (Firestore + Storage emulators) |
+| Android release build | Pass |
+| Web release build | Pass |
+| GitHub Actions | GREEN on hardened `main` |
 
 ---
 
@@ -103,7 +117,8 @@ Unchanged material posture: catalog size and index-miss fallbacks remain the mai
 
 ## Stability (82)
 
-- Domain automated coverage gate ≥80% still enforced in CI
+- Domain automated coverage gate ≥80% still enforced in CI (**82.31%** measured)
+- **449** Flutter tests passing; **38** Firebase security rules tests in CI
 - FCM re-init duplicate-handler risk addressed
 - Seed bootstrap failures remain soft-fail for non-admins (expected after C6)
 
