@@ -1,6 +1,5 @@
 import 'package:college_reality_india/features/home/widgets/home_hero_banner.dart';
 import 'package:college_reality_india/features/home/widgets/premium_home_search_bar.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers/test_harness.dart';
