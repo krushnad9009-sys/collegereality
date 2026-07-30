@@ -1,8 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../core/services/auth_service.dart';
 
-final authServiceProvider = Provider<AuthService>((ref) {
+final authServiceProvider = Provider<AuthServiceApi>((ref) {
   return AuthService();
 });
 
@@ -11,8 +13,8 @@ final firebaseAuthProvider = Provider<FirebaseAuth>((ref) {
 });
 
 final authStateProvider = StreamProvider<User?>((ref) {
-  final firebaseAuth = ref.watch(firebaseAuthProvider);
-  return firebaseAuth.authStateChanges();
+  final authService = ref.watch(authServiceProvider);
+  return authService.authStateChanges;
 });
 
 final currentUserProvider = Provider<User?>((ref) {
@@ -62,6 +64,13 @@ class AuthException implements Exception {
         return 'Operation not allowed';
       case 'network-request-failed':
         return 'Network error. Please check your connection';
+      case 'invalid-credential':
+      case 'invalid-login-credentials':
+        return 'Invalid email or password';
+      case 'requires-recent-login':
+        return 'Please sign in again to continue this action';
+      case 'account-exists-with-different-credential':
+        return 'An account already exists with a different sign-in method';
       default:
         return 'An error occurred. Please try again';
     }
@@ -100,8 +109,9 @@ class AuthState {
 }
 
 class AuthNotifier extends StateNotifier<AuthState> {
-  final AuthService _authService;
+  final AuthServiceApi _authService;
   final Ref ref;
+  StreamSubscription<User?>? _authSubscription;
 
   AuthNotifier(this._authService, this.ref) : super(AuthState()) {
     _initAuthState();
@@ -115,6 +125,24 @@ class AuthNotifier extends StateNotifier<AuthState> {
         isAuthenticated: true,
       );
     }
+    _authSubscription = _authService.authStateChanges.listen((user) {
+      if (user == null) {
+        state = AuthState();
+      } else {
+        state = state.copyWith(
+          user: user,
+          isAuthenticated: true,
+          isLoading: false,
+          error: null,
+        );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _authSubscription?.cancel();
+    super.dispose();
   }
 
   Future<void> signUpWithEmail(String email, String password) async {

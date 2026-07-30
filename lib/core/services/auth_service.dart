@@ -2,20 +2,45 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
-class AuthService {
-  final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
-  late final GoogleSignIn _googleSignIn = GoogleSignIn(
-    scopes: const ['email', 'profile'],
-    clientId: kIsWeb ? _webClientId : null,
-  );
+/// Auth operations used by [AuthNotifier] and screens.
+abstract class AuthServiceApi {
+  User? get currentUser;
+  Stream<User?> get authStateChanges;
+
+  Future<UserCredential> signUpWithEmail(String email, String password);
+  Future<UserCredential> signInWithEmail(String email, String password);
+  Future<UserCredential?> signInWithGoogle();
+  Future<void> signOut();
+  Future<void> updateUserProfile({String? displayName, String? photoURL});
+  Future<void> sendPasswordResetEmail(String email);
+  Future<void> sendEmailVerification();
+  Future<bool> reloadUser();
+}
+
+class AuthService implements AuthServiceApi {
+  AuthService({
+    FirebaseAuth? firebaseAuth,
+    GoogleSignIn? googleSignIn,
+  })  : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance,
+        _googleSignIn = googleSignIn ??
+            GoogleSignIn(
+              scopes: const ['email', 'profile'],
+              clientId: kIsWeb ? _webClientId : null,
+            );
+
+  final FirebaseAuth _firebaseAuth;
+  final GoogleSignIn _googleSignIn;
 
   static const String _webClientId =
       '244446156099-bb6c7e0dabe7a5efbf0bf6.apps.googleusercontent.com';
 
+  @override
   User? get currentUser => _firebaseAuth.currentUser;
 
+  @override
   Stream<User?> get authStateChanges => _firebaseAuth.authStateChanges();
 
+  @override
   Future<UserCredential> signUpWithEmail(String email, String password) async {
     return _firebaseAuth.createUserWithEmailAndPassword(
       email: email,
@@ -23,6 +48,7 @@ class AuthService {
     );
   }
 
+  @override
   Future<UserCredential> signInWithEmail(String email, String password) async {
     return _firebaseAuth.signInWithEmailAndPassword(
       email: email,
@@ -30,6 +56,7 @@ class AuthService {
     );
   }
 
+  @override
   Future<UserCredential?> signInWithGoogle() async {
     if (kIsWeb) {
       final provider = GoogleAuthProvider();
@@ -48,6 +75,7 @@ class AuthService {
     return _firebaseAuth.signInWithCredential(credential);
   }
 
+  @override
   Future<void> signOut() async {
     await Future.wait([
       _firebaseAuth.signOut(),
@@ -55,6 +83,7 @@ class AuthService {
     ]);
   }
 
+  @override
   Future<void> updateUserProfile({
     String? displayName,
     String? photoURL,
@@ -64,10 +93,12 @@ class AuthService {
     await currentUser?.reload();
   }
 
+  @override
   Future<void> sendPasswordResetEmail(String email) async {
     await _firebaseAuth.sendPasswordResetEmail(email: email);
   }
 
+  @override
   Future<void> sendEmailVerification() async {
     final user = currentUser;
     if (user == null) {
@@ -94,6 +125,7 @@ class AuthService {
     }
   }
 
+  @override
   Future<bool> reloadUser() async {
     await currentUser?.reload();
     return currentUser?.emailVerified ?? false;

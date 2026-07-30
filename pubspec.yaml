@@ -45,10 +45,14 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  integration_test:
+    sdk: flutter
   flutter_lints: ^6.0.0
   build_runner: ^2.4.9
   json_serializable: ^6.8.0
   flutter_launcher_icons: ^0.14.3
+  mocktail: ^1.0.4
+  firebase_auth_mocks: ^0.14.1
 flutter_launcher_icons:
   android: true
   ios: true

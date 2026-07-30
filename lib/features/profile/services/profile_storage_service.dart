@@ -5,7 +5,14 @@ import 'package:firebase_storage/firebase_storage.dart';
 import '../../../core/utils/image_optimization_utils.dart';
 
 class ProfileStorageService {
-  final FirebaseStorage _storage = FirebaseStorage.instance;
+  ProfileStorageService({FirebaseStorage? storage}) : _storageOverride = storage;
+
+  final FirebaseStorage? _storageOverride;
+
+  /// Lazily resolves storage so profile screens can build in widget tests
+  /// without initializing Firebase.
+  FirebaseStorage get _storage =>
+      _storageOverride ?? FirebaseStorage.instance;
 
   Future<String> uploadProfilePhoto({
     required String userId,
