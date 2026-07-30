@@ -212,7 +212,7 @@ class _Sidebar extends ConsumerWidget {
               leading: Icon(Icons.logout, color: textColor),
               title: Text('Sign Out', style: GoogleFonts.inter(fontSize: 14, color: textColor)),
               onTap: () async {
-                await ref.read(authServiceProvider).signOut();
+                await ref.read(authProvider.notifier).signOut();
                 if (context.mounted) context.go(panel.loginRoute);
               },
             )

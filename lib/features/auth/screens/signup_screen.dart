@@ -131,6 +131,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           message: 'Signed up with Google!',
         );
         final userDetail = await ref.read(currentUserDetailProvider.future);
+        if (!mounted) return;
         if (userDetail != null && !userDetail.displayNameSetupComplete) {
           context.go(RouteNames.displayNameSetup);
         } else {
@@ -171,7 +172,13 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                     child: Material(
                       color: Colors.transparent,
                       child: InkWell(
-                        onTap: () => context.pop(),
+                        onTap: () {
+                          if (context.canPop()) {
+                            context.pop();
+                          } else {
+                            context.go(RouteNames.login);
+                          }
+                        },
                         borderRadius:
                             BorderRadius.circular(tokens.buttonRadius),
                         child: Container(

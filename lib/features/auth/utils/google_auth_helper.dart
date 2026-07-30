@@ -27,5 +27,9 @@ Future<void> syncGoogleUserToFirestore(WidgetRef ref, User firebaseUser) async {
     verifiedRealName: firebaseUser.displayName?.trim(),
     photoURL: firebaseUser.photoURL,
   );
+  // Keep Firestore email-verified flag in sync with Firebase Auth (Google).
+  if (firebaseUser.emailVerified) {
+    await userRepository.verifyEmail(firebaseUser.uid);
+  }
   ref.invalidate(currentUserDetailProvider);
 }

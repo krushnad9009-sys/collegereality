@@ -21,15 +21,13 @@ class FirestoreAuthUtils {
     final auth = FirebaseAuth.instance;
     User? user = auth.currentUser;
 
-    if (user == null) {
-      user = await auth.authStateChanges().firstWhere(
-            (candidate) => candidate != null,
-            orElse: () => null,
-          ).timeout(
-            const Duration(seconds: 8),
-            onTimeout: () => null,
-          );
-    }
+    user ??= await auth.authStateChanges().firstWhere(
+          (candidate) => candidate != null,
+          orElse: () => null,
+        ).timeout(
+          const Duration(seconds: 8),
+          onTimeout: () => null,
+        );
 
     if (user == null) {
       throw const FirestoreAuthException(notSignedInMessage);

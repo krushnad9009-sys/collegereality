@@ -200,43 +200,48 @@ class _DisplayNameSetupScreenState extends ConsumerState<DisplayNameSetupScreen>
                   ),
                 ),
                 const SizedBox(height: 24),
-                ...modes.map((mode) {
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      side: BorderSide(
-                        color: _selectedMode == mode
-                            ? AppTheme.primaryColor
-                            : Colors.grey.shade200,
-                        width: _selectedMode == mode ? 2 : 1,
-                      ),
-                    ),
-                    child: RadioListTile<String>(
-                      value: mode,
-                      groupValue: _selectedMode,
-                      activeColor: AppTheme.primaryColor,
-                      onChanged: (value) {
-                        if (value == null) return;
-                        setState(() {
-                          _selectedMode = value;
-                          _customNameError = null;
-                        });
-                      },
-                      title: Text(
-                        displayNameModeLabel(mode),
-                        style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-                      ),
-                      subtitle: Text(
-                        _modeDescription(mode, user),
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: AppTheme.gray500,
+                RadioGroup<String>(
+                  groupValue: _selectedMode,
+                  onChanged: (value) {
+                    if (value == null) return;
+                    setState(() {
+                      _selectedMode = value;
+                      _customNameError = null;
+                    });
+                  },
+                  child: Column(
+                    children: modes.map((mode) {
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: BorderSide(
+                            color: _selectedMode == mode
+                                ? AppTheme.primaryColor
+                                : Colors.grey.shade200,
+                            width: _selectedMode == mode ? 2 : 1,
+                          ),
                         ),
-                      ),
-                    ),
-                  );
-                }),
+                        child: RadioListTile<String>(
+                          value: mode,
+                          activeColor: AppTheme.primaryColor,
+                          title: Text(
+                            displayNameModeLabel(mode),
+                            style:
+                                GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                          ),
+                          subtitle: Text(
+                            _modeDescription(mode, user),
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              color: AppTheme.gray500,
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
                 if (_selectedMode == DisplayNameConstants.modeCustom) ...[
                   const SizedBox(height: 8),
                   TextField(

@@ -50,7 +50,7 @@ class _SuperAdminLoginScreenState extends ConsumerState<SuperAdminLoginScreen> {
       if (isSuperAdmin) {
         context.go(SuperAdminRouteNames.dashboard);
       } else {
-        await ref.read(authServiceProvider).signOut();
+        await ref.read(authProvider.notifier).signOut();
         if (!mounted) return;
         context.go(SuperAdminRouteNames.accessDenied);
       }

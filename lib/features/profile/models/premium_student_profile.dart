@@ -54,11 +54,10 @@ class PremiumStudentProfile {
   }
 
   factory PremiumStudentProfile.fromUser(UserModel user) {
+    final publicName = user.effectivePublicDisplayName.trim();
     return PremiumStudentProfile(
       uid: user.uid,
-      displayName: user.displayName?.trim().isNotEmpty == true
-          ? user.displayName!.trim()
-          : 'Student',
+      displayName: publicName.isNotEmpty ? publicName : 'Student',
       photoURL: user.photoURL,
       coverPhotoURL: user.coverPhotoURL,
       collegeName: user.collegeName,

@@ -131,7 +131,7 @@ class QuestionDetailScreen extends ConsumerWidget {
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     itemCount: question.imageUrls.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 8),
+                    separatorBuilder: (_, _) => const SizedBox(width: 8),
                     itemBuilder: (_, i) => ClipRRect(
                       borderRadius: BorderRadius.circular(12),
                       child: Image.network(

@@ -54,6 +54,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   bool _isPhoneVerified = false;
   String? _verifiedPhone;
   bool _isSaving = false;
+  String? _hydratedUid;
 
   @override
   void dispose() {
@@ -208,13 +209,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           onRetry: () => ref.invalidate(currentUserDetailProvider),
         ),
         data: (userDetail) {
-          if (userDetail != null &&
-              _nameController.text.isEmpty &&
-              userDetail.displayName != null) {
+          if (userDetail != null && _hydratedUid != userDetail.uid) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted) {
-                setState(() => _populateFromUser(userDetail));
-              }
+              if (!mounted) return;
+              setState(() {
+                _populateFromUser(userDetail);
+                _hydratedUid = userDetail.uid;
+              });
             });
           }
 
@@ -286,7 +287,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   PhoneVerificationSection(
                     userId: authUser.uid,
                     currentPhone: _verifiedPhone ?? userDetail?.phone,
-                    isPhoneVerified: _isPhoneVerified,
+                    isPhoneVerified:
+                        _isPhoneVerified || (userDetail?.isPhoneVerified ?? false),
                     onVerified: (phone) {
                       setState(() {
                         _isPhoneVerified = true;

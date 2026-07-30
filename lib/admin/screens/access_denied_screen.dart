@@ -44,7 +44,7 @@ class AccessDeniedScreen extends ConsumerWidget {
                 const SizedBox(height: 32),
                 FilledButton.icon(
                   onPressed: () async {
-                    await ref.read(authServiceProvider).signOut();
+                    await ref.read(authProvider.notifier).signOut();
                     if (context.mounted) context.go(SuperAdminRouteNames.login);
                   },
                   icon: const Icon(Icons.logout),

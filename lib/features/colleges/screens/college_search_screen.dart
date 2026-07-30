@@ -126,16 +126,24 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
     if (loadMore) {
       if (!_hasMore || _isLoadingMore || _cursor == null) return;
       setState(() => _isLoadingMore = true);
-      final page = await ref.read(
-        collegeSearchPageProvider(_buildParams(startAfter: _cursor)).future,
-      );
-      if (!mounted) return;
-      setState(() {
-        _results = [..._results, ...page.colleges];
-        _cursor = page.lastDocumentId;
-        _hasMore = page.hasMore;
-        _isLoadingMore = false;
-      });
+      try {
+        final page = await ref.read(
+          collegeSearchPageProvider(_buildParams(startAfter: _cursor)).future,
+        );
+        if (!mounted) return;
+        setState(() {
+          _results = [..._results, ...page.colleges];
+          _cursor = page.lastDocumentId;
+          _hasMore = page.hasMore;
+          _isLoadingMore = false;
+        });
+      } catch (e) {
+        if (!mounted) return;
+        setState(() {
+          _isLoadingMore = false;
+          _searchError = FirestoreErrorUtils.userMessage(e);
+        });
+      }
       return;
     }
 
@@ -147,6 +155,7 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
       _isSearching = true;
       _searchError = null;
       _hasSearched = true;
+      _liveQuery = '';
     });
 
     try {
@@ -572,7 +581,7 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
                           _searchController.selection = TextSelection.fromPosition(
                             TextPosition(offset: suggestion.length),
                           );
-                          setState(() => _liveQuery = suggestion);
+                          setState(() => _liveQuery = '');
                           _runSearch();
                         },
                       );
@@ -582,17 +591,19 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
               ),
             ),
           if (_showFilters)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-              child: PremiumCard(
-                radius: tokens.cardRadius,
-                padding: const EdgeInsets.all(AppSpacing.lg),
-                child: Column(
+            Flexible(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                child: PremiumCard(
+                  radius: tokens.cardRadius,
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  child: Column(
                   children: [
                     statesAsync.when(
                       loading: () => const SizedBox.shrink(),
                       error: (_, _) => const SizedBox.shrink(),
                       data: (states) => DropdownButtonFormField<String>(
+                        key: ValueKey('state-$_selectedState'),
                         initialValue: _selectedState,
                         decoration: _filterDecoration(context, 'State'),
                         items: [
@@ -646,6 +657,7 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
                       loading: () => const SizedBox.shrink(),
                       error: (_, _) => const SizedBox.shrink(),
                       data: (courses) => DropdownButtonFormField<String>(
+                        key: ValueKey('course-$_selectedCourse'),
                         initialValue: _selectedCourse,
                         decoration: _filterDecoration(context, 'Course'),
                         items: [
@@ -665,6 +677,7 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
                     ),
                     const SizedBox(height: AppSpacing.md),
                     DropdownButtonFormField<String>(
+                      key: ValueKey('type-$_selectedType'),
                       initialValue: _selectedType,
                       decoration: _filterDecoration(context, 'College Type'),
                       items: [
@@ -688,6 +701,7 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
                     ),
                     const SizedBox(height: AppSpacing.md),
                     DropdownButtonFormField<String>(
+                      key: ValueKey('category-$_selectedCategory'),
                       initialValue: _selectedCategory,
                       decoration: _filterDecoration(context, 'Category'),
                       items: const [
@@ -724,6 +738,7 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
                     ),
                   ],
                 ),
+                ),
               ),
             ),
           Expanded(
@@ -745,6 +760,21 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
                               _runSearch();
                             },
                           )
+                        : _results.isEmpty &&
+                                !_isSearching &&
+                                !_hasSearched &&
+                                _searchController.text.trim().isNotEmpty
+                            ? AsyncEmptyView(
+                                icon: Icons.keyboard_return_rounded,
+                                title: 'Press Search',
+                                subtitle:
+                                    'Tap Search to find colleges matching "${_searchController.text.trim()}"',
+                                action: FilledButton.icon(
+                                  onPressed: _runSearch,
+                                  icon: const Icon(Icons.search_rounded),
+                                  label: const Text('Search'),
+                                ),
+                              )
                         : _results.isEmpty && _hasSearched
                             ? AsyncEmptyView(
                                 icon: Icons.search_off_rounded,

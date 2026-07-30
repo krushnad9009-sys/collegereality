@@ -150,7 +150,7 @@ class FirestoreCollegeService {
       if (tokenResults.isNotEmpty) {
         return _buildSearchPage(
           tokenResults,
-          hasMore: tokenResults.length >= limit,
+          hasMore: false,
           query: trimmedQuery,
           city: city,
           state: state,
@@ -292,8 +292,10 @@ class FirestoreCollegeService {
         hasQuery: hasQuery,
         state: state,
         city: city,
+        university: university,
         course: course,
         category: category,
+        type: type,
         includeInactive: includeInactive,
         limit: limit,
       );
@@ -327,7 +329,7 @@ class FirestoreCollegeService {
       if (tokenResults.isNotEmpty) {
         return _buildSearchPage(
           tokenResults,
-          hasMore: tokenResults.length >= limit,
+          hasMore: false,
           query: trimmedQuery,
           city: city,
           state: state,

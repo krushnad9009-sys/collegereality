@@ -41,34 +41,22 @@ class TrendingCollegesCarousel extends ConsumerWidget {
           ),
         ),
       ),
-      error: (_, _) => SizedBox(
+      error: (e, _) => SizedBox(
         height: carouselHeight,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          itemCount: 3,
-          separatorBuilder: (_, _) => const SizedBox(width: 14),
-          itemBuilder: (_, _) => SizedBox(
-            width: 300,
-            child: CollegeCardSkeleton(
-              height: TrendingCollegesCarousel.carouselHeight,
-            ),
-          ),
+        child: AsyncErrorView.fromError(
+          e,
+          compact: true,
+          onRetry: () => ref.invalidate(trendingCollegesProvider),
         ),
       ),
       data: (colleges) {
         if (colleges.isEmpty) {
           return SizedBox(
             height: carouselHeight,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: 3,
-              separatorBuilder: (_, _) => const SizedBox(width: 14),
-              itemBuilder: (_, _) => SizedBox(
-                width: 300,
-                child: CollegeCardSkeleton(
-                  height: TrendingCollegesCarousel.carouselHeight,
-                ),
-              ),
+            child: const AsyncEmptyView(
+              icon: Icons.school_outlined,
+              title: 'No trending colleges yet',
+              subtitle: 'Featured campuses will appear here soon.',
             ),
           );
         }
@@ -109,25 +97,17 @@ class TopRatedCollegesSection extends ConsumerWidget {
           ),
         ),
       ),
-      error: (_, _) => Column(
-        children: List.generate(
-          2,
-          (_) => const Padding(
-            padding: EdgeInsets.only(bottom: 12),
-            child: CollegeCardSkeleton(),
-          ),
-        ),
+      error: (e, _) => AsyncErrorView.fromError(
+        e,
+        compact: true,
+        onRetry: () => ref.invalidate(topRatedCollegesProvider),
       ),
       data: (colleges) {
         if (colleges.isEmpty) {
-          return Column(
-            children: List.generate(
-              2,
-              (_) => const Padding(
-                padding: EdgeInsets.only(bottom: 12),
-                child: CollegeCardSkeleton(),
-              ),
-            ),
+          return const AsyncEmptyView(
+            icon: Icons.star_outline_rounded,
+            title: 'No top-rated colleges yet',
+            subtitle: 'Ratings will appear here as reviews come in.',
           );
         }
         return Column(

@@ -23,7 +23,7 @@ class UnansweredQuestionsBanner extends ConsumerWidget {
 
     return unansweredAsync.when(
       loading: () => const SizedBox.shrink(),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
       data: (questions) {
         if (questions.isEmpty) return const SizedBox.shrink();
 

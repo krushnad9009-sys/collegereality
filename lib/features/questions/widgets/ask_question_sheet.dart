@@ -84,7 +84,7 @@ Future<QuestionModel?> showAskQuestionSheet({
                   ),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
-                    value: selectedCategory,
+                    initialValue: selectedCategory,
                     decoration: InputDecoration(
                       labelText: 'Topic',
                       border: OutlineInputBorder(

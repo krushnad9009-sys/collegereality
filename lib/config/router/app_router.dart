@@ -121,6 +121,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       if (path == RouteNames.splash) return null;
 
       final isLoggedIn = firebaseAuth.currentUser != null;
+      final isCollegeDetailPublic = RegExp(r'^/college-details/[^/]+/?$')
+          .hasMatch(path);
       final isPublicRoute = path == RouteNames.onboarding ||
           path == RouteNames.login ||
           path == RouteNames.adminLogin ||
@@ -131,7 +133,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           path == RouteNames.collegeBrowse ||
           path == RouteNames.privacyPolicy ||
           path == RouteNames.termsOfService ||
-          path.startsWith('/college-details');
+          isCollegeDetailPublic;
 
       if (!isLoggedIn && !isPublicRoute) {
         if (path.startsWith('/admin') && path != RouteNames.adminLogin) {
@@ -162,9 +164,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return RouteNames.home;
       }
 
-      if (isLoggedIn &&
-          path != RouteNames.displayNameSetup &&
-          path != RouteNames.profile) {
+      if (isLoggedIn && path != RouteNames.displayNameSetup) {
         final user = await userDetail();
         if (user != null && !user.displayNameSetupComplete) {
           return RouteNames.displayNameSetup;

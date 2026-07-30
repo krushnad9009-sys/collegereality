@@ -115,7 +115,7 @@ class _AnswerReplySectionState extends ConsumerState<AnswerReplySection> {
                 child: CircularProgressIndicator(strokeWidth: 2),
               ),
             ),
-            error: (_, __) => const SizedBox.shrink(),
+            error: (_, _) => const SizedBox.shrink(),
             data: (replies) {
               return Column(
                 children: replies.map((reply) {

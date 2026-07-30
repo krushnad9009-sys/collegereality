@@ -148,8 +148,8 @@ class _CollegeDetailScreenState extends ConsumerState<CollegeDetailScreen>
       ),
       error: (e, _) => Scaffold(
         appBar: AppBar(),
-        body: AsyncErrorView(
-          message: e.toString(),
+        body: AsyncErrorView.fromError(
+          e,
           onRetry: () => ref.invalidate(collegeByIdProvider(widget.collegeId)),
         ),
       ),

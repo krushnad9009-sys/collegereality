@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -26,6 +28,8 @@ class _CollegeAutocompleteFieldState
     extends ConsumerState<CollegeAutocompleteField> {
   late final TextEditingController _controller;
   String _lastQuery = '';
+  String _debouncedQuery = '';
+  Timer? _debounce;
 
   @override
   void initState() {
@@ -39,19 +43,23 @@ class _CollegeAutocompleteFieldState
     if (widget.selectedCollegeName != oldWidget.selectedCollegeName &&
         widget.selectedCollegeName != _controller.text) {
       _controller.text = widget.selectedCollegeName ?? '';
+      _debouncedQuery = widget.selectedCollegeName?.trim() ?? '';
     }
   }
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final query = _controller.text.trim();
-    final suggestionsAsync = query.isNotEmpty && query != widget.selectedCollegeName
+    final typedQuery = _controller.text.trim();
+    final query = _debouncedQuery;
+    final suggestionsAsync = query.isNotEmpty &&
+            query != (widget.selectedCollegeName ?? '').trim()
         ? ref.watch(collegeInstantSuggestProvider(query))
         : const AsyncValue<List<CollegeModel>>.data([]);
 
@@ -70,18 +78,28 @@ class _CollegeAutocompleteFieldState
                 ? IconButton(
                     icon: const Icon(Icons.clear, size: 20),
                     onPressed: () {
+                      _debounce?.cancel();
                       _controller.clear();
                       widget.onChanged(null);
-                      setState(() {});
+                      setState(() {
+                        _debouncedQuery = '';
+                        _lastQuery = '';
+                      });
                     },
                   )
                 : const Icon(Icons.search),
           ),
-          onChanged: (_) => setState(() {
+          onChanged: (_) {
             if (_controller.text.trim() != _lastQuery) {
               widget.onChanged(null);
             }
-          }),
+            _debounce?.cancel();
+            _debounce = Timer(const Duration(milliseconds: 300), () {
+              if (!mounted) return;
+              setState(() => _debouncedQuery = _controller.text.trim());
+            });
+            setState(() {});
+          },
         ),
         suggestionsAsync.when(
           loading: () => const Padding(
@@ -134,8 +152,10 @@ class _CollegeAutocompleteFieldState
                       style: GoogleFonts.poppins(fontSize: 11),
                     ),
                     onTap: () {
+                      _debounce?.cancel();
                       _lastQuery = college.name;
                       _controller.text = college.name;
+                      _debouncedQuery = college.name;
                       widget.onChanged(college);
                       setState(() {});
                     },
@@ -145,7 +165,7 @@ class _CollegeAutocompleteFieldState
             );
           },
         ),
-        if (widget.selectedCollegeId == null && query.isNotEmpty)
+        if (widget.selectedCollegeId == null && typedQuery.isNotEmpty)
           Padding(
             padding: const EdgeInsets.only(top: 6),
             child: Text(

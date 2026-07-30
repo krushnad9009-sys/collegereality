@@ -46,7 +46,7 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
       if (isStaff) {
         context.go(RouteNames.admin);
       } else {
-        await ref.read(authServiceProvider).signOut();
+        await ref.read(authProvider.notifier).signOut();
         if (!mounted) return;
         SnackBarHelper.showErrorSnackBar(
           context,

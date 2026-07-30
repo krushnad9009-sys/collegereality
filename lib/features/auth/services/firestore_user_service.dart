@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_core/firebase_core.dart';
 
 import '../../../core/constants/display_name_constants.dart';
 import '../../../core/utils/firestore_auth_utils.dart';
@@ -35,10 +34,10 @@ class FirestoreUserService {
     }
   }
 
-  // Get user by UID
+  // Get user by UID (any authenticated user may read public profile docs)
   Future<UserModel?> getUserByUID(String uid) async {
     try {
-      await FirestoreAuthUtils.ensureAuthenticated(expectedUid: uid);
+      await FirestoreAuthUtils.ensureAuthenticated();
       final doc =
           await _firestore.collection(usersCollection).doc(uid).get();
       if (doc.exists) {
@@ -239,7 +238,7 @@ class FirestoreUserService {
   // Check if user exists
   Future<bool> userExists(String uid) async {
     try {
-      await FirestoreAuthUtils.ensureAuthenticated(expectedUid: uid);
+      await FirestoreAuthUtils.ensureAuthenticated();
       final doc =
           await _firestore.collection(usersCollection).doc(uid).get();
       return doc.exists;

@@ -14,11 +14,6 @@ class AppErrorHandler {
     if (_initialized) return;
     _initialized = true;
 
-    if (!kDebugMode) {
-      // Crashlytics owns FlutterError.onError in release via CrashlyticsService.
-      return;
-    }
-
     FlutterError.onError = (details) {
       FlutterError.presentError(details);
       developer.log(
@@ -27,6 +22,14 @@ class AppErrorHandler {
         stackTrace: details.stack,
         name: 'CollegeReality',
       );
+      if (!kDebugMode) {
+        CrashlyticsService.recordError(
+          details.exception,
+          details.stack,
+          fatal: true,
+          reason: details.library,
+        );
+      }
     };
 
     PlatformDispatcher.instance.onError = (error, stack) {
@@ -36,6 +39,9 @@ class AppErrorHandler {
         stackTrace: stack,
         name: 'CollegeReality',
       );
+      if (!kDebugMode) {
+        CrashlyticsService.recordError(error, stack, fatal: true);
+      }
       return true;
     };
   }

@@ -114,7 +114,7 @@ class _DisplayNameSettingsSectionState
 
     return userAsync.when(
       loading: () => const SizedBox.shrink(),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
       data: (user) {
         if (user == null) return const SizedBox.shrink();
         _syncFromUser(user);
@@ -154,27 +154,32 @@ class _DisplayNameSettingsSectionState
                   ),
                 ),
                 const SizedBox(height: 16),
-                ..._availableModes(user).map((mode) {
-                  return RadioListTile<String>(
-                    dense: true,
-                    contentPadding: EdgeInsets.zero,
-                    value: mode,
-                    groupValue: _selectedMode,
-                    onChanged: canChange
-                        ? (value) {
-                            if (value == null) return;
-                            setState(() {
-                              _selectedMode = value;
-                              _customNameError = null;
-                            });
-                          }
-                        : null,
-                    title: Text(
-                      displayNameModeLabel(mode),
-                      style: GoogleFonts.poppins(fontSize: 14),
-                    ),
-                  );
-                }),
+                RadioGroup<String>(
+                  groupValue: _selectedMode,
+                  onChanged: canChange
+                      ? (value) {
+                          if (value == null) return;
+                          setState(() {
+                            _selectedMode = value;
+                            _customNameError = null;
+                          });
+                        }
+                      : (_) {},
+                  child: Column(
+                    children: _availableModes(user).map((mode) {
+                      return RadioListTile<String>(
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                        value: mode,
+                        enabled: canChange,
+                        title: Text(
+                          displayNameModeLabel(mode),
+                          style: GoogleFonts.poppins(fontSize: 14),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
                 if ((_selectedMode ?? user.displayNameMode) ==
                     DisplayNameConstants.modeCustom) ...[
                   const SizedBox(height: 8),

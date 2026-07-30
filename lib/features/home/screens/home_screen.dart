@@ -320,7 +320,8 @@ class _QuotaNoticeBanner extends StatelessWidget {
             child: Text(
               'Offline data • Live sync resumes automatically.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppTheme.gray700,
+                    color: Theme.of(context).colorScheme.onSurface
+                        .withValues(alpha: 0.75),
                     height: 1.35,
                   ),
             ),

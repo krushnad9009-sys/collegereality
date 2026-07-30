@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_theme.dart';
@@ -94,7 +96,15 @@ class _CollegeCardWidgetState extends ConsumerState<CollegeCardWidget> {
 
   Future<void> _toggleSave() async {
     final user = ref.read(currentUserProvider);
-    if (user == null) return;
+    if (user == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Sign in to save colleges')),
+        );
+        context.go(RouteNames.login);
+      }
+      return;
+    }
     await ref
         .read(engagementRepositoryProvider)
         .toggleFavoriteCollege(user.uid, widget.collegeId);
