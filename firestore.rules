@@ -8,16 +8,19 @@ service cloud.firestore {
 
     function isAdmin() {
       return isAuthenticated() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType in ['admin', 'super_admin'];
     }
 
     function isSuperAdmin() {
       return isAuthenticated() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'super_admin';
     }
 
     function isModerator() {
       return isAuthenticated() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'moderator';
     }
 
@@ -41,14 +44,85 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
+    function affectedKeys() {
+      return request.resource.data.diff(resource.data).affectedKeys();
+    }
+
     function isAggregateOnlyUpdate() {
-      return request.resource.data.diff(resource.data).affectedKeys()
-        .hasOnly(['aggregatedRatings', 'reviewCount', 'ratingDistribution', 'reviewAggregation', 'crScore', 'crScoreCategories', 'crScoreUpdatedAt', 'updatedAt']);
+      return affectedKeys().hasOnly([
+        'aggregatedRatings', 'reviewCount', 'ratingDistribution',
+        'reviewAggregation', 'crScore', 'crScoreCategories', 'crScoreUpdatedAt',
+        'wouldChooseAgainYes', 'wouldChooseAgainTotal', 'updatedAt'
+      ]);
+    }
+
+    // Verified students may bump college aggregates by exactly one review (±1).
+    function isBoundedCollegeAggregateUpdate() {
+      let oldCount = resource.data.get('reviewCount', 0);
+      let newCount = request.resource.data.get('reviewCount', 0);
+      return isVerifiedStudent() &&
+        isAggregateOnlyUpdate() &&
+        oldCount is number &&
+        newCount is number &&
+        newCount >= 0 &&
+        newCount < 1000000 &&
+        (newCount == oldCount + 1 || newCount == oldCount - 1);
     }
 
     function isGuideStatsOnlyUpdate() {
-      return request.resource.data.diff(resource.data).affectedKeys()
-        .hasOnly(['guideStats', 'updatedAt']);
+      return affectedKeys().hasOnly(['guideStats', 'updatedAt']);
+    }
+
+    function guideStatsMap(data) {
+      return data.get('guideStats', {});
+    }
+
+    function isGuideStatsLastActiveUpdate() {
+      let oldStats = guideStatsMap(resource.data);
+      let newStats = guideStatsMap(request.resource.data);
+      return isGuideStatsOnlyUpdate() &&
+        newStats.get('totalRatings', 0) == oldStats.get('totalRatings', 0) &&
+        newStats.get('totalCalls', 0) == oldStats.get('totalCalls', 0) &&
+        newStats.get('totalChats', 0) == oldStats.get('totalChats', 0) &&
+        newStats.get('overallRating', 0) == oldStats.get('overallRating', 0) &&
+        newStats.get('badgeTier', 'none') == oldStats.get('badgeTier', 'none') &&
+        newStats.get('helpfulPercent', 0) == oldStats.get('helpfulPercent', 0) &&
+        newStats.get('respectfulPercent', 0) == oldStats.get('respectfulPercent', 0) &&
+        newStats.get('recommendPercent', 0) == oldStats.get('recommendPercent', 0);
+    }
+
+    function isGuideStatsRatingUpdate() {
+      let oldStats = guideStatsMap(resource.data);
+      let newStats = guideStatsMap(request.resource.data);
+      return isGuideStatsOnlyUpdate() &&
+        newStats.get('totalRatings', 0) == oldStats.get('totalRatings', 0) + 1 &&
+        newStats.get('overallRating', 0) >= 0 &&
+        newStats.get('overallRating', 0) <= 5 &&
+        newStats.get('totalCalls', 0) >= oldStats.get('totalCalls', 0) &&
+        newStats.get('totalCalls', 0) <= oldStats.get('totalCalls', 0) + 1 &&
+        newStats.get('totalChats', 0) >= oldStats.get('totalChats', 0) &&
+        newStats.get('totalChats', 0) <= oldStats.get('totalChats', 0) + 1 &&
+        newStats.get('badgeTier', 'none') in ['none', 'bronze', 'silver', 'gold'] &&
+        newStats.get('helpfulPercent', 0) >= 0 &&
+        newStats.get('helpfulPercent', 0) <= 100 &&
+        newStats.get('respectfulPercent', 0) >= 0 &&
+        newStats.get('respectfulPercent', 0) <= 100 &&
+        newStats.get('recommendPercent', 0) >= 0 &&
+        newStats.get('recommendPercent', 0) <= 100;
+    }
+
+    function ownerAllowedVerificationStatusChange() {
+      let oldStatus = resource.data.get('verificationStatus', 'incomplete');
+      let newStatus = request.resource.data.get('verificationStatus', 'incomplete');
+      return oldStatus == newStatus ||
+        (
+          newStatus in ['incomplete', 'pending_review', 'flagged'] &&
+          oldStatus in [
+            'incomplete', 'rejected', 'resubmission_requested',
+            'pending_review', 'flagged'
+          ] &&
+          newStatus != 'approved'
+        );
     }
 
     // Owners may update profile fields but cannot self-elevate roles/verification.
@@ -56,10 +130,45 @@ service cloud.firestore {
       return request.resource.data.userType == resource.data.userType &&
         request.resource.data.get('verificationBadge', 'none') ==
           resource.data.get('verificationBadge', 'none') &&
-        request.resource.data.get('verificationStatus', 'none') ==
-          resource.data.get('verificationStatus', 'none') &&
-        !request.resource.data.diff(resource.data).affectedKeys()
-          .hasAny(['userType', 'verificationBadge', 'verificationStatus']);
+        request.resource.data.get('isVerified', false) ==
+          resource.data.get('isVerified', false) &&
+        ownerAllowedVerificationStatusChange() &&
+        (
+          resource.data.get('verificationStatus', '') != 'approved' ||
+          request.resource.data.get('collegeId', null) ==
+            resource.data.get('collegeId', null)
+        ) &&
+        // Guide reputation must use dedicated lastActive / rating helpers.
+        request.resource.data.get('guideStats', {}) ==
+          resource.data.get('guideStats', {});
+    }
+
+    function isSafeUserCreate(userId) {
+      let stats = request.resource.data.get('guideStats', {});
+      return isOwner(userId) &&
+        request.resource.data.get('uid', request.auth.uid) == request.auth.uid &&
+        request.resource.data.userType == 'student' &&
+        request.resource.data.get('verificationBadge', 'none') == 'none' &&
+        request.resource.data.get('verificationStatus', 'incomplete') in
+          ['incomplete', 'none'] &&
+        request.resource.data.get('isVerified', false) == false &&
+        stats.get('totalRatings', 0) == 0 &&
+        stats.get('overallRating', 0) == 0 &&
+        stats.get('badgeTier', 'none') == 'none';
+    }
+
+    function canReadUserProfile(userId) {
+      let data = resource.data;
+      let viewer = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      return isOwner(userId) ||
+        isStaff() ||
+        data.get('communicationSettings', {}).get('isGuideAvailable', false) == true ||
+        data.get('communicationSettings', {}).get('allowPublicProfile', false) == true ||
+        (
+          data.get('collegeId', '') is string &&
+          data.get('collegeId', '') != '' &&
+          data.get('collegeId', '') == viewer.get('collegeId', '')
+        );
     }
 
     function isVerifiedStudent() {
@@ -70,9 +179,21 @@ service cloud.firestore {
          user.verificationBadge == 'verified_alumni');
     }
 
-    function isHelpfulCountOnlyUpdate() {
-      return request.resource.data.diff(resource.data).affectedKeys()
-        .hasOnly(['helpfulCount', 'updatedAt']);
+    function isHelpfulCountOnlyUpdate(reviewId) {
+      return affectedKeys().hasOnly(['helpfulCount', 'updatedAt']) &&
+        request.resource.data.helpfulCount ==
+          resource.data.get('helpfulCount', 0) + 1 &&
+        !exists(/databases/$(database)/documents/reviews/$(reviewId)/helpful/$(request.auth.uid)) &&
+        existsAfter(/databases/$(database)/documents/reviews/$(reviewId)/helpful/$(request.auth.uid));
+    }
+
+    function isOwnerReviewContentUpdate() {
+      return resource.data.userId == request.auth.uid &&
+        request.resource.data.userId == resource.data.userId &&
+        request.resource.data.get('helpfulCount', 0) ==
+          resource.data.get('helpfulCount', 0) &&
+        request.resource.data.get('isVerifiedStudent', false) ==
+          resource.data.get('isVerifiedStudent', false);
     }
 
     function isVerifiedStudentOfCollege(collegeId) {
@@ -80,44 +201,136 @@ service cloud.firestore {
       return isVerifiedStudent() && user.collegeId == collegeId;
     }
 
-    function isQuestionAggregateUpdate() {
-      return request.resource.data.diff(resource.data).affectedKeys()
-        .hasOnly(['answerCount', 'mostHelpfulAnswerId', 'mostHelpfulScore', 'topAnswerScore', 'acceptedAnswerId', 'updatedAt']);
+    function isQuestionAuthor(questionId) {
+      return isAuthenticated() &&
+        get(/databases/$(database)/documents/college_questions/$(questionId)).data.authorId
+          == request.auth.uid;
+    }
+
+    function isAnswerCountUpdate() {
+      let oldCount = resource.data.get('answerCount', 0);
+      let newCount = request.resource.data.get('answerCount', 0);
+      return affectedKeys().hasOnly(['answerCount', 'updatedAt']) &&
+        oldCount is number &&
+        newCount is number &&
+        (newCount == oldCount + 1 || newCount == oldCount - 1) &&
+        newCount >= 0;
+    }
+
+    function isTopAnswerScoreUpdate() {
+      return affectedKeys().hasOnly(['topAnswerScore', 'updatedAt']);
+    }
+
+    function isMostHelpfulQuestionUpdate() {
+      return affectedKeys().hasOnly([
+        'mostHelpfulAnswerId', 'mostHelpfulScore', 'updatedAt'
+      ]);
+    }
+
+    function isAcceptedAnswerQuestionUpdate() {
+      return affectedKeys().hasOnly(['acceptedAnswerId', 'updatedAt']);
+    }
+
+    function isQuestionAuthorContentUpdate() {
+      return resource.data.authorId == request.auth.uid &&
+        !affectedKeys().hasAny([
+          'authorId', 'reportCount', 'mostHelpfulAnswerId', 'mostHelpfulScore',
+          'acceptedAnswerId', 'answerCount', 'topAnswerScore', 'status',
+          'moderationFlag'
+        ]);
     }
 
     function isAnswerReplyCountUpdate() {
-      return request.resource.data.diff(resource.data).affectedKeys()
-        .hasOnly(['replyCount', 'updatedAt']);
+      let oldCount = resource.data.get('replyCount', 0);
+      let newCount = request.resource.data.get('replyCount', 0);
+      return affectedKeys().hasOnly(['replyCount', 'updatedAt']) &&
+        oldCount is number &&
+        newCount is number &&
+        newCount == oldCount + 1;
     }
 
     function isAcceptedAnswerUpdate() {
-      return request.resource.data.diff(resource.data).affectedKeys()
-        .hasOnly(['isAccepted', 'updatedAt']);
+      return affectedKeys().hasOnly(['isAccepted', 'updatedAt']);
     }
 
-    function isAnswerVoteCountUpdate() {
-      return request.resource.data.diff(resource.data).affectedKeys()
-        .hasOnly(['upvoteCount', 'downvoteCount', 'score', 'updatedAt']);
+    function isAnswerVoteCountUpdate(questionId, answerId) {
+      let oldUp = resource.data.get('upvoteCount', 0);
+      let newUp = request.resource.data.get('upvoteCount', 0);
+      let oldDown = resource.data.get('downvoteCount', 0);
+      let newDown = request.resource.data.get('downvoteCount', 0);
+      let votePath = /databases/$(database)/documents/college_questions/$(questionId)/answers/$(answerId)/votes/$(request.auth.uid);
+      return affectedKeys().hasOnly([
+          'upvoteCount', 'downvoteCount', 'score', 'updatedAt'
+        ]) &&
+        oldUp is number && newUp is number &&
+        oldDown is number && newDown is number &&
+        newUp >= 0 && newDown >= 0 &&
+        newUp < 1000000 && newDown < 1000000 &&
+        newUp - oldUp >= -1 && newUp - oldUp <= 1 &&
+        newDown - oldDown >= -1 && newDown - oldDown <= 1 &&
+        (
+          exists(votePath) != existsAfter(votePath) ||
+          (
+            exists(votePath) &&
+            existsAfter(votePath) &&
+            get(votePath).data.vote != getAfter(votePath).data.vote
+          )
+        );
     }
 
     function isMostHelpfulAnswerUpdate() {
-      return request.resource.data.diff(resource.data).affectedKeys()
-        .hasOnly(['isMostHelpful', 'updatedAt']);
+      return affectedKeys().hasOnly(['isMostHelpful', 'updatedAt']);
     }
 
-    function isCommunityMessageAggregateUpdate() {
-      return request.resource.data.diff(resource.data).affectedKeys()
-        .hasOnly(['readBy', 'likeCount', 'likedBy', 'reportCount', 'status', 'moderationFlag', 'updatedAt']);
+    function isMessageReadByUpdate() {
+      return affectedKeys().hasOnly(['readBy']) ||
+        affectedKeys().hasOnly(['readBy', 'updatedAt']);
     }
 
-    function isStudentPostAggregateUpdate() {
-      return request.resource.data.diff(resource.data).affectedKeys()
-        .hasOnly(['commentCount', 'pollOptions', 'likeCount', 'likedBy', 'reportCount', 'status', 'moderationFlag', 'updatedAt']);
+    function isMessageLikeUpdate() {
+      return affectedKeys().hasOnly(['likedBy', 'likeCount', 'updatedAt']) &&
+        request.resource.data.get('likeCount', 0) ==
+          resource.data.get('likeCount', 0) + 1 &&
+        request.auth.uid in request.resource.data.get('likedBy', []);
     }
 
-    function isQuestionModerationUpdate() {
-      return request.resource.data.diff(resource.data).affectedKeys()
-        .hasOnly(['reportCount', 'status', 'moderationFlag', 'updatedAt']);
+    function isContentReportIncrementUpdate() {
+      let oldCount = resource.data.get('reportCount', 0);
+      let newCount = request.resource.data.get('reportCount', 0);
+      return oldCount is number &&
+        newCount is number &&
+        newCount == oldCount + 1 &&
+        (
+          (
+            affectedKeys().hasOnly(['reportCount', 'updatedAt']) &&
+            request.resource.data.get('status', resource.data.get('status', '')) ==
+              resource.data.get('status', '') &&
+            request.resource.data.get('moderationFlag', null) ==
+              resource.data.get('moderationFlag', null)
+          ) ||
+          (
+            newCount >= 3 &&
+            affectedKeys().hasOnly([
+              'reportCount', 'status', 'moderationFlag', 'updatedAt'
+            ]) &&
+            request.resource.data.status == 'hidden' &&
+            request.resource.data.moderationFlag == 'reported'
+          )
+        );
+    }
+
+    function isStudentPostSocialUpdate() {
+      return affectedKeys().hasOnly([
+        'commentCount', 'pollOptions', 'likeCount', 'likedBy', 'updatedAt'
+      ]);
+    }
+
+    function isConversationParticipantUpdate() {
+      return canAccessConversation(resource.data) &&
+        affectedKeys().hasOnly([
+          'typingUsers', 'lastMessageText', 'lastMessageSenderId',
+          'lastMessageAt', 'updatedAt', 'replyCount', 'readReceipts'
+        ]);
     }
 
     function isVerifiedCompanyUser() {
@@ -136,30 +349,6 @@ service cloud.firestore {
         (session.callerId == request.auth.uid || session.calleeId == request.auth.uid);
     }
 
-    function collegeDirectoryEmpty() {
-      return !exists(/databases/$(database)/documents/_meta/collegeDirectory);
-    }
-
-    function canBootstrapMeta(metaId) {
-      return isAuthenticated() &&
-        !exists(/databases/$(database)/documents/_meta/$(metaId));
-    }
-
-    function isCollegeDirectoryMetaWrite() {
-      return request.resource.data.keys().hasAll(['totalColleges', 'updatedAt']) &&
-        request.resource.data.totalColleges is number;
-    }
-
-    function isCollegeBootstrapCreate(collegeId) {
-      return isAuthenticated() &&
-        collegeDirectoryEmpty() &&
-        !exists(/databases/$(database)/documents/colleges/$(collegeId));
-    }
-
-    function isCollegeBootstrapUpdate() {
-      return isAuthenticated() && collegeDirectoryEmpty();
-    }
-
     function canAccessConversation(data) {
       return isAuthenticated() && (
         data.type != 'private' ||
@@ -175,12 +364,16 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow read: if isAuthenticated();
-      allow create: if isOwner(userId) &&
-        request.resource.data.userType == 'student';
-      allow update: if isAdmin() ||
-        (isAuthenticated() && isGuideStatsOnlyUpdate()) ||
-        (isOwner(userId) && ownerCannotElevatePrivileges());
+      allow read: if isAuthenticated() && canReadUserProfile(userId);
+      allow create: if isSafeUserCreate(userId);
+      allow update: if exists(/databases/$(database)/documents/users/$(userId)) && (
+        isAdmin() ||
+        (isOwner(userId) && isGuideStatsLastActiveUpdate()) ||
+        (isAuthenticated() &&
+          request.auth.uid != userId &&
+          isGuideStatsRatingUpdate()) ||
+        (isOwner(userId) && ownerCannotElevatePrivileges())
+      );
       allow delete: if isOwner(userId) || isAdmin();
     }
 
@@ -198,21 +391,14 @@ service cloud.firestore {
     match /colleges/{collegeId} {
       // Public college directory (home/search/browse are guest-accessible).
       allow read: if true;
-      allow create: if isAdmin() || isCollegeBootstrapCreate(collegeId);
-      allow update: if isAdmin() ||
-        (isAuthenticated() && isAggregateOnlyUpdate()) ||
-        isCollegeBootstrapUpdate();
+      allow create: if isAdmin();
+      allow update: if isAdmin() || isBoundedCollegeAggregateUpdate();
       allow delete: if isAdmin();
     }
 
     match /_meta/{docId} {
       allow read: if true;
-      allow create: if isAdmin() ||
-        (isAuthenticated() && canBootstrapMeta(docId)) ||
-        (isAuthenticated() && docId == 'collegeDirectory' && isCollegeDirectoryMetaWrite());
-      allow update: if isAdmin() ||
-        (isAuthenticated() && docId == 'collegeDirectory' && isCollegeDirectoryMetaWrite());
-      allow delete: if isAdmin();
+      allow create, update, delete: if isAdmin();
     }
 
     match /reviews/{reviewId} {
@@ -222,8 +408,8 @@ service cloud.firestore {
         request.resource.data.userId == request.auth.uid &&
         request.resource.data.isVerifiedStudent == true;
       allow update: if isAdmin() ||
-        (isAuthenticated() && resource.data.userId == request.auth.uid) ||
-        (isAuthenticated() && isHelpfulCountOnlyUpdate());
+        (isAuthenticated() && isOwnerReviewContentUpdate()) ||
+        (isAuthenticated() && isHelpfulCountOnlyUpdate(reviewId));
       allow delete: if isAdmin() ||
         (isAuthenticated() && resource.data.userId == request.auth.uid);
 
@@ -284,8 +470,10 @@ service cloud.firestore {
     }
 
     match /verification_document_hashes/{hashId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
+      allow read: if isStaff() ||
+        (isAuthenticated() && resource.data.userId == request.auth.uid);
+      allow create: if isAuthenticated() &&
+        request.resource.data.userId == request.auth.uid;
     }
 
     match /placement_submissions/{submissionId} {
@@ -316,7 +504,7 @@ service cloud.firestore {
         request.resource.data.type != 'private' ||
         request.auth.uid in request.resource.data.get('participantIds', [])
       );
-      allow update: if canAccessConversation(resource.data);
+      allow update: if isAdmin() || isConversationParticipantUpdate();
       allow delete: if isAdmin();
     }
 
@@ -326,9 +514,23 @@ service cloud.firestore {
       allow create: if isAuthenticated() &&
         request.resource.data.senderId == request.auth.uid &&
         canAccessConversationById(request.resource.data.conversationId);
-      allow update: if isAuthenticated() &&
-        canAccessConversationById(resource.data.conversationId) &&
-        (resource.data.senderId == request.auth.uid || isCommunityMessageAggregateUpdate());
+      allow update: if isAdmin() ||
+        (
+          isAuthenticated() &&
+          canAccessConversationById(resource.data.conversationId) &&
+          (
+            (
+              resource.data.senderId == request.auth.uid &&
+              !affectedKeys().hasAny([
+                'senderId', 'likeCount', 'likedBy', 'reportCount',
+                'status', 'moderationFlag'
+              ])
+            ) ||
+            isMessageReadByUpdate() ||
+            isMessageLikeUpdate() ||
+            isContentReportIncrementUpdate()
+          )
+        );
       allow delete: if isAdmin();
     }
 
@@ -345,9 +547,12 @@ service cloud.firestore {
       allow create: if isAuthenticated() &&
         request.resource.data.authorId == request.auth.uid;
       allow update: if isAdmin() ||
-        (isAuthenticated() && resource.data.authorId == request.auth.uid) ||
-        (isAuthenticated() && isQuestionAggregateUpdate()) ||
-        (isAuthenticated() && isQuestionModerationUpdate());
+        (isAuthenticated() && isQuestionAuthorContentUpdate()) ||
+        (isAuthenticated() && isAnswerCountUpdate()) ||
+        (isAuthenticated() && isTopAnswerScoreUpdate()) ||
+        (isQuestionAuthor(questionId) && isMostHelpfulQuestionUpdate()) ||
+        (isQuestionAuthor(questionId) && isAcceptedAnswerQuestionUpdate()) ||
+        (isAuthenticated() && isContentReportIncrementUpdate());
       allow delete: if isAdmin();
 
       match /answers/{answerId} {
@@ -359,11 +564,20 @@ service cloud.firestore {
           request.resource.data.authorId == request.auth.uid &&
           request.resource.data.isVerifiedStudent == true;
         allow update: if isAdmin() ||
-          (isAuthenticated() && resource.data.authorId == request.auth.uid) ||
-          (isAuthenticated() && isAnswerVoteCountUpdate()) ||
-          (isAuthenticated() && isMostHelpfulAnswerUpdate()) ||
-          (isAuthenticated() && isAcceptedAnswerUpdate()) ||
-          (isAuthenticated() && isAnswerReplyCountUpdate());
+          (
+            isAuthenticated() &&
+            resource.data.authorId == request.auth.uid &&
+            !affectedKeys().hasAny([
+              'authorId', 'upvoteCount', 'downvoteCount', 'score',
+              'isMostHelpful', 'isAccepted', 'replyCount', 'reportCount',
+              'status', 'moderationFlag'
+            ])
+          ) ||
+          (isAuthenticated() && isAnswerVoteCountUpdate(questionId, answerId)) ||
+          (isQuestionAuthor(questionId) && isMostHelpfulAnswerUpdate()) ||
+          (isQuestionAuthor(questionId) && isAcceptedAnswerUpdate()) ||
+          (isAuthenticated() && isAnswerReplyCountUpdate()) ||
+          (isAuthenticated() && isContentReportIncrementUpdate());
         allow delete: if isAdmin();
 
         match /votes/{voterId} {
@@ -401,23 +615,17 @@ service cloud.firestore {
 
     match /scholarships/{scholarshipId} {
       allow read: if isAuthenticated();
-      allow create: if isAdmin() ||
-        (isAuthenticated() && canBootstrapMeta('admissionSeeded'));
-      allow update, delete: if isAdmin();
+      allow create, update, delete: if isAdmin();
     }
 
     match /entrance_exams/{examId} {
       allow read: if isAuthenticated();
-      allow create: if isAdmin() ||
-        (isAuthenticated() && canBootstrapMeta('admissionSeeded'));
-      allow update, delete: if isAdmin();
+      allow create, update, delete: if isAdmin();
     }
 
     match /cutoff_records/{cutoffId} {
       allow read: if isAuthenticated();
-      allow create: if isAdmin() ||
-        (isAuthenticated() && canBootstrapMeta('admissionSeeded'));
-      allow update, delete: if isAdmin();
+      allow create, update, delete: if isAdmin();
     }
 
     match /admission_predictions/{predictionId} {
@@ -441,7 +649,6 @@ service cloud.firestore {
     match /internships/{internshipId} {
       allow read: if isAuthenticated();
       allow create: if isAdmin() ||
-        (isAuthenticated() && canBootstrapMeta('careersSeeded')) ||
         (isVerifiedCompanyUser() &&
           request.resource.data.companyId == companyAccountCompanyId());
       allow update, delete: if isAdmin() ||
@@ -452,7 +659,6 @@ service cloud.firestore {
     match /jobs/{jobId} {
       allow read: if isAuthenticated();
       allow create: if isAdmin() ||
-        (isAuthenticated() && canBootstrapMeta('careersSeeded')) ||
         (isVerifiedCompanyUser() &&
           request.resource.data.companyId == companyAccountCompanyId());
       allow update, delete: if isAdmin() ||
@@ -462,27 +668,20 @@ service cloud.firestore {
 
     match /companies/{companyId} {
       allow read: if isAuthenticated();
-      allow create: if isAdmin() ||
-        (isAuthenticated() && canBootstrapMeta('careersSeeded'));
-      allow update, delete: if isAdmin();
+      allow create, update, delete: if isAdmin();
     }
 
     match /company_reviews/{reviewId} {
       allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && (
-        (isVerifiedStudent() &&
-          request.resource.data.userId == request.auth.uid &&
-          request.resource.data.isVerifiedStudent == true) ||
-        (isAuthenticated() && canBootstrapMeta('careersSeeded'))
-      );
+      allow create: if isVerifiedStudent() &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.isVerifiedStudent == true;
       allow update, delete: if isAdmin();
     }
 
     match /alumni_profiles/{alumniId} {
       allow read: if isAuthenticated();
-      allow create: if isAdmin() ||
-        (isAuthenticated() && canBootstrapMeta('careersSeeded'));
-      allow update, delete: if isAdmin();
+      allow create, update, delete: if isAdmin();
     }
 
     match /saved_internships/{docId} {
@@ -557,43 +756,33 @@ service cloud.firestore {
 
     match /campus_events/{eventId} {
       allow read: if isAuthenticated();
-      allow create: if isAdmin() ||
-        (isAuthenticated() && canBootstrapMeta('studentLifeSeeded'));
-      allow update, delete: if isAdmin();
+      allow create, update, delete: if isAdmin();
     }
 
     match /student_clubs/{clubId} {
       allow read: if isAuthenticated();
-      allow create: if isAdmin() ||
-        (isAuthenticated() && canBootstrapMeta('studentLifeSeeded'));
-      allow update, delete: if isAdmin();
+      allow create, update, delete: if isAdmin();
     }
 
     match /competitions/{competitionId} {
       allow read: if isAuthenticated();
-      allow create: if isAdmin() ||
-        (isAuthenticated() && canBootstrapMeta('studentLifeSeeded'));
-      allow update, delete: if isAdmin();
+      allow create, update, delete: if isAdmin();
     }
 
     match /student_communities/{communityId} {
       allow read: if isAuthenticated();
-      allow create: if isAdmin() ||
-        (isAuthenticated() && canBootstrapMeta('studentLifeSeeded'));
-      allow update, delete: if isAdmin();
+      allow create, update, delete: if isAdmin();
     }
 
     match /student_community_posts/{postId} {
       allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && (
-        (isVerifiedStudent() &&
-          request.resource.data.authorId == request.auth.uid &&
-          request.resource.data.isVerifiedStudent == true) ||
-        (canBootstrapMeta('studentLifeSeeded'))
-      );
+      allow create: if isVerifiedStudent() &&
+        request.resource.data.authorId == request.auth.uid &&
+        request.resource.data.isVerifiedStudent == true;
       allow update: if isAdmin() ||
         (isAuthenticated() && resource.data.authorId == request.auth.uid) ||
-        (isAuthenticated() && isStudentPostAggregateUpdate());
+        (isAuthenticated() && isStudentPostSocialUpdate()) ||
+        (isAuthenticated() && isContentReportIncrementUpdate());
       allow delete: if isAdmin();
 
       match /comments/{commentId} {
@@ -686,9 +875,7 @@ service cloud.firestore {
 
     match /admission_calendar_events/{eventId} {
       allow read: if isAuthenticated();
-      allow create: if isAdmin() ||
-        (isAuthenticated() && canBootstrapMeta('engagementSeeded'));
-      allow update, delete: if isAdmin();
+      allow create, update, delete: if isAdmin();
     }
 
     match /saved_entrance_exams/{docId} {
@@ -716,20 +903,36 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    function canReadCollegeRequestForDuplicateCheck() {
-      return isAuthenticated() &&
-        resource.data.status == 'pending_review';
-    }
-
     match /college_requests/{requestId} {
       allow read: if isStaff() ||
-        (isAuthenticated() && resource.data.userId == request.auth.uid) ||
-        canReadCollegeRequestForDuplicateCheck();
+        (isAuthenticated() && resource.data.userId == request.auth.uid);
       allow create: if isAuthenticated() &&
         request.resource.data.userId == request.auth.uid &&
         request.resource.data.status == 'pending_review';
       allow update: if isAdmin();
       allow delete: if false;
+    }
+
+    // Public duplicate index — only name/city keys, no submitter PII.
+    match /college_request_duplicates/{duplicateId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() &&
+        request.resource.data.keys().hasOnly([
+          'nameLower', 'cityLower', 'requestId', 'createdAt'
+        ]) &&
+        request.resource.data.nameLower is string &&
+        request.resource.data.cityLower is string &&
+        request.resource.data.requestId is string &&
+        request.resource.data.nameLower.size() > 0 &&
+        request.resource.data.cityLower.size() > 0;
+      allow update: if false;
+      allow delete: if isAdmin() ||
+        (
+          isAuthenticated() &&
+          exists(/databases/$(database)/documents/college_requests/$(resource.data.requestId)) &&
+          get(/databases/$(database)/documents/college_requests/$(resource.data.requestId)).data.userId
+            == request.auth.uid
+        );
     }
 
     match /college_edit_suggestions/{suggestionId} {

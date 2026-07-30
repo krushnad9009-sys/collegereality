@@ -11,92 +11,123 @@ service firebase.storage {
         firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.userType in ['admin', 'super_admin'];
     }
 
+    function isCollegeOfficial(collegeId) {
+      return isAuthenticated() &&
+        firestore.exists(/databases/(default)/documents/college_accounts/$(request.auth.uid)) &&
+        firestore.get(/databases/(default)/documents/college_accounts/$(request.auth.uid)).data.collegeId == collegeId &&
+        firestore.get(/databases/(default)/documents/college_accounts/$(request.auth.uid)).data.isVerified == true;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isImageContent() {
+      return request.resource.contentType.matches('image/.*');
+    }
+
+    function isPdfContent() {
+      return request.resource.contentType == 'application/pdf';
+    }
+
+    function isImageOrPdf() {
+      return isImageContent() || isPdfContent();
+    }
+
+    function isImageOrVideo() {
+      return isImageContent() || request.resource.contentType.matches('video/.*');
+    }
+
     match /verification_documents/{userId}/{fileName} {
       allow read: if isAuthenticated() &&
-        (request.auth.uid == userId || isAdmin());
-      allow write: if isAuthenticated() &&
-        request.auth.uid == userId &&
-        request.resource.size < 10 * 1024 * 1024;
+        (isOwner(userId) || isAdmin());
+      allow write: if isOwner(userId) &&
+        request.resource.size < 10 * 1024 * 1024 &&
+        isImageOrPdf();
     }
 
     match /community_media/{conversationId}/{userId}/{fileName} {
       allow read: if isAuthenticated();
-      allow write: if isAuthenticated() &&
-        request.auth.uid == userId &&
-        request.resource.size < 8 * 1024 * 1024;
+      allow write: if isOwner(userId) &&
+        request.resource.size < 8 * 1024 * 1024 &&
+        isImageOrPdf();
     }
 
     match /profile_images/{userId}/{fileName} {
       allow read: if isAuthenticated();
-      allow write: if isAuthenticated() &&
-        request.auth.uid == userId &&
-        request.resource.size < 5 * 1024 * 1024;
+      allow write: if isOwner(userId) &&
+        request.resource.size < 5 * 1024 * 1024 &&
+        isImageContent();
     }
 
+    // Official college media only — no arbitrary authenticated uploads.
     match /college_media/{collegeId}/{fileName} {
       allow read: if isAuthenticated();
-      allow write: if (isAdmin() || isAuthenticated()) &&
-        request.resource.size < 8 * 1024 * 1024;
+      allow write: if (isAdmin() || isCollegeOfficial(collegeId)) &&
+        request.resource.size < 8 * 1024 * 1024 &&
+        isImageOrVideo();
     }
 
     match /college_media/{collegeId}/gallery/{fileName} {
       allow read: if isAuthenticated();
-      allow write: if (isAdmin() || isAuthenticated()) &&
-        request.resource.size < 8 * 1024 * 1024;
+      allow write: if (isAdmin() || isCollegeOfficial(collegeId)) &&
+        request.resource.size < 8 * 1024 * 1024 &&
+        isImageOrVideo();
     }
 
     match /college_requests/{userId}/{fileName} {
       allow read: if isAuthenticated() &&
-        (request.auth.uid == userId || isAdmin());
-      allow write: if isAuthenticated() &&
-        request.auth.uid == userId &&
-        request.resource.size < 8 * 1024 * 1024;
+        (isOwner(userId) || isAdmin());
+      allow write: if isOwner(userId) &&
+        request.resource.size < 8 * 1024 * 1024 &&
+        isImageOrPdf();
     }
 
     match /review_media/{userId}/{reviewId}/{fileName} {
       allow read: if isAuthenticated();
-      allow write: if isAuthenticated() &&
-        request.auth.uid == userId &&
-        request.resource.size < 25 * 1024 * 1024;
+      allow write: if isOwner(userId) &&
+        request.resource.size < 25 * 1024 * 1024 &&
+        isImageOrVideo();
     }
 
     match /placement_documents/{userId}/{fileName} {
       allow read: if isAuthenticated() &&
-        (request.auth.uid == userId || isAdmin());
-      allow write: if isAuthenticated() &&
-        request.auth.uid == userId &&
-        request.resource.size < 10 * 1024 * 1024;
+        (isOwner(userId) || isAdmin());
+      allow write: if isOwner(userId) &&
+        request.resource.size < 10 * 1024 * 1024 &&
+        isImageOrPdf();
     }
 
     match /resumes/{userId}/{fileName} {
       allow read: if isAuthenticated() &&
-        (request.auth.uid == userId || isAdmin());
-      allow write: if isAuthenticated() &&
-        request.auth.uid == userId &&
-        request.resource.size < 5 * 1024 * 1024;
+        (isOwner(userId) || isAdmin());
+      allow write: if isOwner(userId) &&
+        request.resource.size < 5 * 1024 * 1024 &&
+        isImageOrPdf();
     }
 
     match /college_claim_documents/{collegeId}/{userId}/{folder}/{fileName} {
       allow read: if isAuthenticated() &&
-        (request.auth.uid == userId || isAdmin());
-      allow write: if isAuthenticated() &&
-        request.auth.uid == userId &&
-        request.resource.size < 10 * 1024 * 1024;
+        (isOwner(userId) || isAdmin());
+      allow write: if isOwner(userId) &&
+        request.resource.size < 10 * 1024 * 1024 &&
+        isImageOrPdf();
     }
 
     match /faculty_documents/{userId}/{fileName} {
       allow read: if isAuthenticated() &&
-        (request.auth.uid == userId || isAdmin());
-      allow write: if isAuthenticated() &&
-        request.auth.uid == userId &&
-        request.resource.size < 10 * 1024 * 1024;
+        (isOwner(userId) || isAdmin());
+      allow write: if isOwner(userId) &&
+        request.resource.size < 10 * 1024 * 1024 &&
+        isImageOrPdf();
     }
 
     match /college_official_media/{collegeId}/{userId}/{fileName} {
       allow read: if isAuthenticated();
-      allow write: if isAuthenticated() &&
-        request.auth.uid == userId &&
-        request.resource.size < 8 * 1024 * 1024;
+      allow write: if isOwner(userId) &&
+        (isAdmin() || isCollegeOfficial(collegeId)) &&
+        request.resource.size < 8 * 1024 * 1024 &&
+        isImageOrVideo();
     }
 
     match /{allPaths=**} {

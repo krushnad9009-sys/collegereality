@@ -10,6 +10,7 @@ import 'package:go_router/go_router.dart';
 import '../../../config/router/route_names.dart';
 import '../../../core/bootstrap/firebase_bootstrap.dart';
 import '../../../core/constants/firestore_constants.dart';
+import '../utils/fcm_action_route_utils.dart';
 import 'firestore_engagement_service.dart';
 import 'local_notification_service.dart';
 
@@ -27,7 +28,9 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   final category = data['category'] as String? ?? '';
   final entityType = data['entityType'] as String? ?? '';
   final entityId = data['entityId'] as String? ?? '';
-  final actionRoute = data['actionRoute'] as String? ?? '';
+  final rawRoute = data['actionRoute'] as String? ?? '';
+  final actionRoute =
+      isAllowedFcmActionRoute(rawRoute) ? rawRoute : RouteNames.notifications;
 
   final firestore = FirebaseFirestore.instance;
   final dedupeId = '${userId}_${type}_$entityId';
@@ -71,12 +74,16 @@ class FirebaseMessagingService {
   bool _initialized = false;
   String? _currentUserId;
   GoRouter? _router;
+  StreamSubscription<String>? _tokenRefreshSub;
+  StreamSubscription<RemoteMessage>? _onMessageSub;
+  StreamSubscription<RemoteMessage>? _onMessageOpenedSub;
 
   Future<void> initialize({
     required String userId,
     GoRouter? router,
   }) async {
     if (_initialized && _currentUserId == userId) return;
+    await dispose();
     await FirebaseBootstrap.ensureInitialized();
     await LocalNotificationService.instance.initialize();
 
@@ -97,14 +104,16 @@ class FirebaseMessagingService {
       await _engagementService.saveFcmToken(userId, token);
     }
 
-    _messaging.onTokenRefresh.listen((newToken) async {
+    _tokenRefreshSub = _messaging.onTokenRefresh.listen((newToken) async {
       if (_currentUserId != null) {
         await _engagementService.saveFcmToken(_currentUserId!, newToken);
       }
     });
 
-    FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
-    FirebaseMessaging.onMessageOpenedApp.listen(_handleMessageOpened);
+    _onMessageSub =
+        FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
+    _onMessageOpenedSub =
+        FirebaseMessaging.onMessageOpenedApp.listen(_handleMessageOpened);
     final initial = await _messaging.getInitialMessage();
     if (initial != null) {
       _navigateFromMessage(initial);
@@ -125,7 +134,9 @@ class FirebaseMessagingService {
     final body = message.notification?.body ?? data['body'] as String? ?? '';
     final entityType = data['entityType'] as String? ?? '';
     final entityId = data['entityId'] as String? ?? '';
-    final actionRoute = data['actionRoute'] as String? ?? '';
+    final rawRoute = data['actionRoute'] as String? ?? '';
+    final actionRoute =
+        isAllowedFcmActionRoute(rawRoute) ? rawRoute : RouteNames.notifications;
 
     unawaited(
       _engagementService.notifyUser(
@@ -155,16 +166,24 @@ class FirebaseMessagingService {
   }
 
   void _navigateFromMessage(RemoteMessage message) {
-    final route = message.data['actionRoute'] as String? ?? '';
-    if (route.isEmpty) return;
+    final rawRoute = message.data['actionRoute'] as String? ?? '';
+    final route = isAllowedFcmActionRoute(rawRoute)
+        ? rawRoute
+        : RouteNames.notifications;
     final router = _router;
     if (router == null) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      router.go(route.isNotEmpty ? route : RouteNames.notifications);
+      router.go(route);
     });
   }
 
   Future<void> dispose() async {
+    await _tokenRefreshSub?.cancel();
+    await _onMessageSub?.cancel();
+    await _onMessageOpenedSub?.cancel();
+    _tokenRefreshSub = null;
+    _onMessageSub = null;
+    _onMessageOpenedSub = null;
     _initialized = false;
     _currentUserId = null;
     _router = null;

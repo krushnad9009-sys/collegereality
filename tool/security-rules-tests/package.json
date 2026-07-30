@@ -1,0 +1,16 @@
+{
+  "name": "college-reality-security-rules-tests",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "mocha --timeout 60000 firestore.test.js && mocha --timeout 60000 storage.test.js",
+    "test:emulators": "firebase emulators:exec --project demo-college-reality --only firestore,storage \"npm test\""
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^4.0.1",
+    "firebase": "^11.6.0",
+    "firebase-admin": "^13.2.0",
+    "firebase-tools": "13.35.1",
+    "mocha": "^11.1.0"
+  }
+}

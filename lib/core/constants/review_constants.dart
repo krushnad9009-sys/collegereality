@@ -2,6 +2,7 @@ class ReviewConstants {
   ReviewConstants._();
 
   static const int minTextLength = 20;
+  static const int maxTextLength = 2000;
   static const int maxPhotos = 5;
   static const int maxVideos = 2;
   static const int maxPhotoBytes = 5 * 1024 * 1024;

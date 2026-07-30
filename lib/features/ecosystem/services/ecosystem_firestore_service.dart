@@ -28,6 +28,10 @@ class EcosystemFirestoreService {
 
   // ── Duplicate detection ─────────────────────────────────────────────
 
+  String _duplicateRequestDocId(String nameLower, String cityLower) {
+    return '${nameLower}_$cityLower'.replaceAll('/', '_');
+  }
+
   Future<bool> isDuplicateCollege({
     required String name,
     required String city,
@@ -63,27 +67,22 @@ class EcosystemFirestoreService {
     }
 
     try {
-      final pendingSnap = await _firestore
-          .collection(FirestoreConstants.collegeRequestsCollection)
-          .where('nameLower', isEqualTo: nameLower)
-          .where('cityLower', isEqualTo: cityLower)
-          .where('status', isEqualTo: EcosystemConstants.statusPending)
-          .limit(1)
+      final duplicateDoc = await _firestore
+          .collection(FirestoreConstants.collegeRequestDuplicatesCollection)
+          .doc(_duplicateRequestDocId(nameLower, cityLower))
           .get();
-      if (pendingSnap.docs.isNotEmpty) {
-        final data = pendingSnap.docs.first.data();
+      if (duplicateDoc.exists) {
         debugPrint(
-          '[submitCollegeRequest] duplicate found in college_requests/'
-          '${pendingSnap.docs.first.id}: nameLower=${data['nameLower']} '
-          'cityLower=${data['cityLower']} status=${data['status']}',
+          '[submitCollegeRequest] duplicate found in '
+          'college_request_duplicates/${duplicateDoc.id}',
         );
         return true;
       }
       return false;
     } on FirebaseException catch (e, st) {
       debugPrint(
-        '[submitCollegeRequest] duplicate check failed on college_requests: '
-        '${e.code} ${e.message}\n$st',
+        '[submitCollegeRequest] duplicate check failed on '
+        'college_request_duplicates: ${e.code} ${e.message}\n$st',
       );
       rethrow;
     }
@@ -142,6 +141,15 @@ class EcosystemFirestoreService {
           .collection(FirestoreConstants.collegeRequestsCollection)
           .doc(id)
           .set(payload);
+      await _firestore
+          .collection(FirestoreConstants.collegeRequestDuplicatesCollection)
+          .doc(_duplicateRequestDocId(request.nameLower, request.cityLower))
+          .set({
+        'nameLower': request.nameLower,
+        'cityLower': request.cityLower,
+        'requestId': id,
+        'createdAt': now.toIso8601String(),
+      });
     } on FirebaseException catch (e, st) {
       debugPrint(
         '[submitCollegeRequest] college_requests write failed: '
@@ -210,6 +218,18 @@ class EcosystemFirestoreService {
       'approvedCollegeId': approvedCollegeId,
       'updatedAt': DateTime.now().toIso8601String(),
     });
+
+    try {
+      await _firestore
+          .collection(FirestoreConstants.collegeRequestDuplicatesCollection)
+          .doc(_duplicateRequestDocId(request.nameLower, request.cityLower))
+          .delete();
+    } on FirebaseException catch (e, st) {
+      debugPrint(
+        '[reviewCollegeRequest] duplicate index cleanup failed: '
+        '${e.code} ${e.message}\n$st',
+      );
+    }
 
     await _engagement.notifyUser(
       userId: request.userId,

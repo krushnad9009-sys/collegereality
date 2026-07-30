@@ -13,6 +13,7 @@ import '../../../core/widgets/index.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/providers/user_provider.dart';
 import '../../colleges/providers/college_provider.dart';
+import '../../social/utils/content_filter_utils.dart';
 import '../models/review_model.dart';
 import '../providers/review_provider.dart';
 import '../services/review_storage_service.dart';
@@ -245,6 +246,18 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
       return;
     }
 
+    final sanitizedText = sanitizeUserContent(
+      _textController.text,
+      maxLength: ReviewConstants.maxTextLength,
+    );
+    if (sanitizedText.length < ReviewConstants.minTextLength) {
+      SnackBarHelper.showErrorSnackBar(
+        context,
+        message: 'Review must be at least ${ReviewConstants.minTextLength} characters.',
+      );
+      return;
+    }
+
     setState(() => _isSubmitting = true);
 
     try {
@@ -266,15 +279,15 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
             : _courseController.text.trim(),
         batchYear: _batchYear ?? userDetail.batchYear,
         ratings: Map.from(_ratings),
-        textReview: _textController.text.trim(),
+        textReview: sanitizedText,
         pros: _prosController.text
             .split(',')
-            .map((e) => e.trim())
+            .map((e) => sanitizeUserContent(e, maxLength: 120))
             .where((e) => e.isNotEmpty)
             .toList(),
         cons: _consController.text
             .split(',')
-            .map((e) => e.trim())
+            .map((e) => sanitizeUserContent(e, maxLength: 120))
             .where((e) => e.isNotEmpty)
             .toList(),
         photoUrls: _photoUrls,

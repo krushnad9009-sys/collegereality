@@ -68,6 +68,8 @@ class FirestoreConstants {
 
   // Ecosystem collections (Phase 22)
   static const String collegeRequestsCollection = 'college_requests';
+  static const String collegeRequestDuplicatesCollection =
+      'college_request_duplicates';
   static const String collegeEditSuggestionsCollection = 'college_edit_suggestions';
   static const String collegeDataReportsCollection = 'college_data_reports';
   static const String collegeClaimsCollection = 'college_claims';

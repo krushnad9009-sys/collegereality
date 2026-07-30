@@ -61,3 +61,10 @@ flutter_test_*.txt
 *_ci_check.txt
 admin_analyze_output.txt
 analyze_output*.txt
+
+# Security rules test tooling
+tool/security-rules-tests/node_modules/
+tool/security-rules-tests/firestore-debug.log
+tool/security-rules-tests/ui-debug.log
+tool/security-rules-tests/debug_*.mjs
+
