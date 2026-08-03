@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/rating_parameters.dart';
 import '../models/review_model.dart';
@@ -89,7 +89,7 @@ class _ReviewCardWidgetState extends ConsumerState<ReviewCardWidget> {
                           Expanded(
                             child: Text(
                               review.anonymousAlias,
-                              style: GoogleFonts.poppins(
+                              style: AppFonts.plusJakarta(
                                 fontWeight: FontWeight.w700,
                                 fontSize: 15,
                               ),
@@ -108,7 +108,7 @@ class _ReviewCardWidgetState extends ConsumerState<ReviewCardWidget> {
                               if (review.batchYear != null)
                                 'Batch ${review.batchYear}',
                             ].join(' · '),
-                            style: GoogleFonts.poppins(
+                            style: AppFonts.plusJakarta(
                               fontSize: 12,
                               color: AppTheme.gray500,
                             ),
@@ -133,7 +133,7 @@ class _ReviewCardWidgetState extends ConsumerState<ReviewCardWidget> {
                 ),
                 child: Text(
                   review.collegeName,
-                  style: GoogleFonts.poppins(
+                  style: AppFonts.plusJakarta(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: AppTheme.primaryColor,
@@ -189,7 +189,7 @@ class _ReviewCardWidgetState extends ConsumerState<ReviewCardWidget> {
                 children: [
                   Text(
                     _showBreakdown ? 'Hide ratings' : 'View all ratings',
-                    style: GoogleFonts.poppins(
+                    style: AppFonts.plusJakarta(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: AppTheme.primaryColor,
@@ -218,7 +218,7 @@ class _ReviewCardWidgetState extends ConsumerState<ReviewCardWidget> {
                         flex: 2,
                         child: Text(
                           RatingParameters.labelFor(key),
-                          style: GoogleFonts.poppins(fontSize: 11),
+                          style: AppFonts.plusJakarta(fontSize: 11),
                         ),
                       ),
                       Expanded(
@@ -234,7 +234,7 @@ class _ReviewCardWidgetState extends ConsumerState<ReviewCardWidget> {
                       const SizedBox(width: 8),
                       Text(
                         value.toStringAsFixed(1),
-                        style: GoogleFonts.poppins(
+                        style: AppFonts.plusJakarta(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                         ),
@@ -249,7 +249,7 @@ class _ReviewCardWidgetState extends ConsumerState<ReviewCardWidget> {
               children: [
                 Text(
                   _formatDate(review.createdAt),
-                  style: GoogleFonts.poppins(
+                  style: AppFonts.plusJakarta(
                     fontSize: 11,
                     color: AppTheme.gray400,
                   ),
@@ -331,7 +331,7 @@ class _VerifiedChip extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             label,
-            style: GoogleFonts.poppins(
+            style: AppFonts.plusJakarta(
               fontSize: 10,
               fontWeight: FontWeight.w600,
               color: AppTheme.accentColor,
@@ -363,7 +363,7 @@ class _StatusChip extends StatelessWidget {
       ),
       child: Text(
         normalized.toUpperCase(),
-        style: GoogleFonts.poppins(
+        style: AppFonts.plusJakarta(
           fontSize: 10,
           fontWeight: FontWeight.w700,
           color: color,
@@ -391,7 +391,7 @@ class _TagSection extends StatelessWidget {
       children: [
         Text(
           label,
-          style: GoogleFonts.poppins(
+          style: AppFonts.plusJakarta(
             fontSize: 12,
             fontWeight: FontWeight.w700,
             color: color,
@@ -410,7 +410,7 @@ class _TagSection extends StatelessWidget {
                     color: color.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Text(item, style: GoogleFonts.poppins(fontSize: 11)),
+                  child: Text(item, style: AppFonts.plusJakarta(fontSize: 11)),
                 ),
               )
               .toList(),

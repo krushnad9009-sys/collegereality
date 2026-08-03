@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../config/theme/app_fonts.dart';
 
 import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/review_yes_no_questions.dart';
@@ -24,7 +24,7 @@ class ReviewYesNoPanel extends StatelessWidget {
       children: [
         Text(
           'Quick answers',
-          style: GoogleFonts.poppins(
+          style: AppFonts.plusJakarta(
             fontSize: compact ? 12 : 13,
             fontWeight: FontWeight.w700,
             color: AppTheme.gray700,
@@ -40,7 +40,7 @@ class ReviewYesNoPanel extends StatelessWidget {
                 Expanded(
                   child: Text(
                     ReviewYesNoQuestions.labelFor(entry.key),
-                    style: GoogleFonts.poppins(
+                    style: AppFonts.plusJakarta(
                       fontSize: compact ? 11 : 12,
                       color: AppTheme.gray600,
                     ),
@@ -73,7 +73,7 @@ class _AnswerChip extends StatelessWidget {
       ),
       child: Text(
         value ? 'Yes' : 'No',
-        style: GoogleFonts.poppins(
+        style: AppFonts.plusJakarta(
           fontSize: 10,
           fontWeight: FontWeight.w700,
           color: color,

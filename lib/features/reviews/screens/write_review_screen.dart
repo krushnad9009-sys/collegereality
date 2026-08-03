@@ -2,7 +2,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../config/theme/app_fonts.dart';
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/rating_parameters.dart';
@@ -379,7 +379,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
                   const SizedBox(height: 16),
                   Text(
                     'Verified Students & Alumni Only',
-                    style: GoogleFonts.poppins(
+                    style: AppFonts.plusJakarta(
                       fontSize: 20,
                       fontWeight: FontWeight.w700,
                     ),
@@ -388,7 +388,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
                   Text(
                     'Complete student or alumni verification to share honest, trusted reviews.',
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.poppins(color: AppTheme.gray600),
+                    style: AppFonts.plusJakarta(color: AppTheme.gray600),
                   ),
                   const SizedBox(height: 24),
                   PrimaryButton(
@@ -425,7 +425,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
               children: [
                 Text(
                   widget.collegeName,
-                  style: GoogleFonts.poppins(
+                  style: AppFonts.plusJakarta(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                   ),
@@ -438,7 +438,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
                     Expanded(
                       child: Text(
                         'Verified students & alumni only — India\'s most trusted reviews',
-                        style: GoogleFonts.poppins(
+                        style: AppFonts.plusJakarta(
                           fontSize: 13,
                           color: AppTheme.gray600,
                         ),
@@ -458,7 +458,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
                     child: Text(
                       'You can edit again in ${_existingReview!.daysUntilEditAllowed} day(s). '
                       'Reviews can be updated once every ${ReviewConstants.editCooldownDays} days.',
-                      style: GoogleFonts.poppins(
+                      style: AppFonts.plusJakarta(
                         fontSize: 12,
                         color: AppTheme.gray700,
                       ),
@@ -476,7 +476,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
                   child: Text(
                     'Posting as your public display name from profile settings. '
                     'Verification badge remains visible.',
-                    style: GoogleFonts.poppins(
+                    style: AppFonts.plusJakarta(
                       fontSize: 12,
                       color: AppTheme.gray700,
                     ),
@@ -487,7 +487,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
                   return [
                     Text(
                       category.label,
-                      style: GoogleFonts.poppins(
+                      style: AppFonts.plusJakarta(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
                         color: AppTheme.primaryColor,
@@ -508,7 +508,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
                 }),
                 Text(
                   'Yes / No Questions',
-                  style: GoogleFonts.poppins(
+                  style: AppFonts.plusJakarta(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
                     color: AppTheme.primaryColor,
@@ -523,7 +523,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
                       children: [
                         Text(
                           question.label,
-                          style: GoogleFonts.poppins(
+                          style: AppFonts.plusJakarta(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                           ),
@@ -591,7 +591,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
                 const SizedBox(height: 20),
                 Text(
                   'Photos & Videos',
-                  style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+                  style: AppFonts.plusJakarta(fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 8),
                 Row(

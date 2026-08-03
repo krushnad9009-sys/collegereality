@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/rating_parameters.dart';
 import '../../colleges/models/college_model.dart';
@@ -38,7 +38,7 @@ class ReviewSummaryPanel extends StatelessWidget {
                 children: [
                   Text(
                     'Overall Rating',
-                    style: GoogleFonts.poppins(
+                    style: AppFonts.plusJakarta(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: AppTheme.gray600,
@@ -47,7 +47,7 @@ class ReviewSummaryPanel extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     ratings.overall > 0 ? ratings.overall.toStringAsFixed(1) : '—',
-                    style: GoogleFonts.poppins(
+                    style: AppFonts.plusJakarta(
                       fontSize: 36,
                       fontWeight: FontWeight.w800,
                       color: AppTheme.primaryColor,
@@ -57,7 +57,7 @@ class ReviewSummaryPanel extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     '${college.reviewCount} verified review${college.reviewCount == 1 ? '' : 's'}',
-                    style: GoogleFonts.poppins(
+                    style: AppFonts.plusJakarta(
                       fontSize: 11,
                       color: AppTheme.gray600,
                     ),
@@ -71,7 +71,7 @@ class ReviewSummaryPanel extends StatelessWidget {
                   children: [
                     Text(
                       'Star distribution',
-                      style: GoogleFonts.poppins(
+                      style: AppFonts.plusJakarta(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: AppTheme.gray600,
@@ -90,7 +90,7 @@ class ReviewSummaryPanel extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               'Rating breakdown',
-              style: GoogleFonts.poppins(
+              style: AppFonts.plusJakarta(
                 fontWeight: FontWeight.w700,
                 fontSize: 13,
               ),
@@ -107,14 +107,14 @@ class ReviewSummaryPanel extends StatelessWidget {
                       children: [
                         Text(
                           item.$1,
-                          style: GoogleFonts.poppins(
+                          style: AppFonts.plusJakarta(
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
                         Text(
                           '${item.$2.toStringAsFixed(1)}/5',
-                          style: GoogleFonts.poppins(
+                          style: AppFonts.plusJakarta(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
                             color: AppTheme.primaryColor,
@@ -151,7 +151,7 @@ class ReviewSummaryPanel extends StatelessWidget {
                   Expanded(
                     child: Text(
                       '${college.wouldChooseAgainPercent!.round()}% would choose this college again',
-                      style: GoogleFonts.poppins(
+                      style: AppFonts.plusJakarta(
                         fontWeight: FontWeight.w600,
                         fontSize: 13,
                       ),
@@ -219,7 +219,7 @@ class _TrustChip extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             label,
-            style: GoogleFonts.poppins(
+            style: AppFonts.plusJakarta(
               fontSize: 10,
               fontWeight: FontWeight.w600,
               color: AppTheme.accentColor,

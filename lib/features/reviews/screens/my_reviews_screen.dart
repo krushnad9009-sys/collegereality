@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../config/theme/app_fonts.dart';
 
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_design_tokens.dart';
@@ -22,11 +22,11 @@ class MyReviewsScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: Theme.of(context).brightness == Brightness.dark
           ? AppTheme.gray900
-          : const Color(0xFFF3F5FA),
+          : AppTheme.surfaceMuted,
       appBar: AppBar(
         title: Text(
           'My Reviews',
-          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800),
+          style: AppFonts.plusJakarta(fontWeight: FontWeight.w800),
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_theme.dart';
 import '../models/review_page_model.dart';
 
@@ -16,7 +16,7 @@ class RatingDistributionChart extends StatelessWidget {
     if (total == 0) {
       return Text(
         'No ratings yet',
-        style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.gray500),
+        style: AppFonts.plusJakarta(fontSize: 12, color: AppTheme.gray500),
       );
     }
 
@@ -34,7 +34,7 @@ class RatingDistributionChart extends StatelessWidget {
                 width: 28,
                 child: Text(
                   '$stars★',
-                  style: GoogleFonts.poppins(
+                  style: AppFonts.plusJakarta(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                   ),
@@ -56,7 +56,7 @@ class RatingDistributionChart extends StatelessWidget {
                 width: 32,
                 child: Text(
                   '$count',
-                  style: GoogleFonts.poppins(fontSize: 11, color: AppTheme.gray600),
+                  style: AppFonts.plusJakarta(fontSize: 11, color: AppTheme.gray600),
                   textAlign: TextAlign.right,
                 ),
               ),

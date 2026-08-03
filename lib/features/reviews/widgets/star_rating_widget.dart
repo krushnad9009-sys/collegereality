@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_theme.dart';
 
 class StarRatingWidget extends StatelessWidget {
@@ -68,7 +68,7 @@ class StarRatingDisplay extends StatelessWidget {
         const SizedBox(width: 6),
         Text(
           rating.toStringAsFixed(1),
-          style: GoogleFonts.poppins(
+          style: AppFonts.plusJakarta(
             fontWeight: FontWeight.w700,
             fontSize: starSize * 0.85,
           ),
@@ -77,7 +77,7 @@ class StarRatingDisplay extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             '($reviewCount)',
-            style: GoogleFonts.poppins(
+            style: AppFonts.plusJakarta(
               fontSize: starSize * 0.75,
               color: AppTheme.gray500,
             ),
@@ -117,7 +117,7 @@ class RatingInputRow extends StatelessWidget {
               Expanded(
                 child: Text(
                   label,
-                  style: GoogleFonts.poppins(
+                  style: AppFonts.plusJakarta(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),
@@ -131,7 +131,7 @@ class RatingInputRow extends StatelessWidget {
                 ),
                 child: Text(
                   hasValue ? '${value.toStringAsFixed(0)}/5' : 'Tap slider',
-                  style: GoogleFonts.poppins(
+                  style: AppFonts.plusJakarta(
                     fontWeight: FontWeight.w700,
                     fontSize: 12,
                     color: AppTheme.primaryColor,

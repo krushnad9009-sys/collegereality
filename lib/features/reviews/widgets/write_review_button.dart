@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../config/theme/app_fonts.dart';
 
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
@@ -51,7 +51,7 @@ class WriteReviewButton extends ConsumerWidget {
         icon: const Icon(Icons.rate_review_outlined, size: 18),
         label: Text(
           'Write Review',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+          style: AppFonts.plusJakarta(fontWeight: FontWeight.w600),
         ),
       );
     }
@@ -61,7 +61,7 @@ class WriteReviewButton extends ConsumerWidget {
       icon: const Icon(Icons.rate_review_outlined, size: 18),
       label: Text(
         'Write Review',
-        style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+        style: AppFonts.plusJakarta(fontWeight: FontWeight.w600),
       ),
       style: FilledButton.styleFrom(
         backgroundColor: AppTheme.primaryColor,
