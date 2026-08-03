@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../config/theme/app_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/rating_parameters.dart';
 import '../../../core/utils/indian_currency_formatter.dart';
@@ -245,7 +245,7 @@ class _CollegeDetailScreenState extends ConsumerState<CollegeDetailScreen>
                       ),
                       label: Text(
                         isInCompare ? 'Added' : 'Compare',
-                        style: GoogleFonts.poppins(
+                        style: AppFonts.plusJakarta(
                           fontWeight: FontWeight.w600,
                           fontSize: 13,
                         ),
@@ -261,7 +261,7 @@ class _CollegeDetailScreenState extends ConsumerState<CollegeDetailScreen>
                       icon: const Icon(Icons.auto_awesome_rounded, size: 18),
                       label: Text(
                         'AI Assistant',
-                        style: GoogleFonts.poppins(
+                        style: AppFonts.plusJakarta(
                           fontWeight: FontWeight.w600,
                           fontSize: 13,
                         ),
@@ -277,7 +277,7 @@ class _CollegeDetailScreenState extends ConsumerState<CollegeDetailScreen>
                       college.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.plusJakartaSans(
+                      style: AppFonts.plusJakarta(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
                       ),
@@ -395,7 +395,7 @@ class _CollegeHeader extends StatelessWidget {
                   children: [
                     Text(
                       college.name,
-                      style: GoogleFonts.plusJakartaSans(
+                      style: AppFonts.plusJakarta(
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
                         letterSpacing: -0.4,
@@ -415,7 +415,7 @@ class _CollegeHeader extends StatelessWidget {
                         Expanded(
                           child: Text(
                             college.locationLabel,
-                            style: GoogleFonts.plusJakartaSans(
+                            style: AppFonts.plusJakarta(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
                               color: tokens.textSecondary,
@@ -463,7 +463,7 @@ class _CollegeHeader extends StatelessWidget {
                   college.aggregatedRatings.overall > 0
                       ? college.aggregatedRatings.overall.toStringAsFixed(1)
                       : '—',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: AppFonts.plusJakarta(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
                     color: tokens.textPrimary,
@@ -471,7 +471,7 @@ class _CollegeHeader extends StatelessWidget {
                 ),
                 Text(
                   ' (${college.reviewCount} reviews)',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: AppFonts.plusJakarta(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
                     color: tokens.textSecondary,
@@ -484,7 +484,7 @@ class _CollegeHeader extends StatelessWidget {
                   const SizedBox(width: 4),
                   Text(
                     '${college.wouldChooseAgainPercent!.round()}% would choose again',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: AppFonts.plusJakarta(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                       color: tokens.textSecondary,
@@ -525,7 +525,7 @@ class _CollegeHeader extends StatelessWidget {
             children: college.displayCourses.take(8)
                 .map(
                   (c) => Chip(
-                    label: Text(c, style: GoogleFonts.poppins(fontSize: 12)),
+                    label: Text(c, style: AppFonts.plusJakarta(fontSize: 12)),
                     backgroundColor:
                         AppTheme.primaryColor.withValues(alpha: 0.1),
                   ),
@@ -597,7 +597,7 @@ class _OverviewTab extends ConsumerWidget {
           const SizedBox(height: 20),
           Text(
             'About',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 15),
+            style: AppFonts.plusJakarta(fontWeight: FontWeight.w700, fontSize: 15),
           ),
           const SizedBox(height: 10),
           CollegeProfileFactsGrid(college: college),
@@ -618,14 +618,14 @@ class _OverviewTab extends ConsumerWidget {
         final rightColumn = <Widget>[
           Text(
             'Gallery',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 15),
+            style: AppFonts.plusJakarta(fontWeight: FontWeight.w700, fontSize: 15),
           ),
           const SizedBox(height: 10),
           CollegeGalleryWidget(photoUrls: college.photoUrls),
           const SizedBox(height: 20),
           Text(
             'Accreditation & Affiliation',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 15),
+            style: AppFonts.plusJakarta(fontWeight: FontWeight.w700, fontSize: 15),
           ),
           const SizedBox(height: 10),
           AccreditationBadges(
@@ -651,7 +651,7 @@ class _OverviewTab extends ConsumerWidget {
               child: ListTile(
                 leading: const Icon(Icons.language, color: AppTheme.primaryColor),
                 title: Text('Website',
-                    style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                    style: AppFonts.plusJakarta(fontWeight: FontWeight.w600)),
                 subtitle: Text(college.website!),
                 trailing: const Icon(Icons.open_in_new, size: 18),
                 onTap: () => _openUrl(context, college.website!),
@@ -664,7 +664,7 @@ class _OverviewTab extends ConsumerWidget {
                 leading:
                     const Icon(Icons.phone_outlined, color: AppTheme.primaryColor),
                 title: Text('Phone',
-                    style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                    style: AppFonts.plusJakarta(fontWeight: FontWeight.w600)),
                 subtitle: Text(college.phone!),
                 onTap: () => _openPhone(context, college.phone!),
               ),
@@ -676,7 +676,7 @@ class _OverviewTab extends ConsumerWidget {
                 leading:
                     const Icon(Icons.email_outlined, color: AppTheme.primaryColor),
                 title: Text('Email',
-                    style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                    style: AppFonts.plusJakarta(fontWeight: FontWeight.w600)),
                 subtitle: Text(college.email!),
                 onTap: () => _openEmail(context, college.email!),
               ),
@@ -685,7 +685,7 @@ class _OverviewTab extends ConsumerWidget {
             Text(
               'Official Links',
               style:
-                  GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 15),
+                  AppFonts.plusJakarta(fontWeight: FontWeight.w700, fontSize: 15),
             ),
             const SizedBox(height: 8),
             ...college.officialLinks.map(
@@ -693,7 +693,7 @@ class _OverviewTab extends ConsumerWidget {
                 margin: const EdgeInsets.only(bottom: 8),
                 child: ListTile(
                   leading: const Icon(Icons.link, color: AppTheme.secondaryColor),
-                  title: Text(link, style: GoogleFonts.poppins(fontSize: 13)),
+                  title: Text(link, style: AppFonts.plusJakarta(fontSize: 13)),
                   trailing: const Icon(Icons.open_in_new, size: 18),
                   onTap: () => _openUrl(context, link),
                 ),
@@ -707,7 +707,7 @@ class _OverviewTab extends ConsumerWidget {
             Text(
               'Courses',
               style:
-                  GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 15),
+                  AppFonts.plusJakarta(fontWeight: FontWeight.w700, fontSize: 15),
             ),
             const SizedBox(height: 8),
             ...college.coursesDetailed.map(
@@ -715,7 +715,7 @@ class _OverviewTab extends ConsumerWidget {
                 margin: const EdgeInsets.only(bottom: 8),
                 child: ListTile(
                   title: Text(c.name,
-                      style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                      style: AppFonts.plusJakarta(fontWeight: FontWeight.w600)),
                   subtitle: Text(
                     [
                       if (c.degree.isNotEmpty) c.degree,
@@ -951,7 +951,7 @@ class _ReviewsTabState extends ConsumerState<_ReviewsTab> {
               const SizedBox(height: 12),
               Text(
                 'Failed to load reviews',
-                style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                style: AppFonts.plusJakarta(fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 8),
               Text('$e', textAlign: TextAlign.center),
@@ -990,7 +990,7 @@ class _ReviewsTabState extends ConsumerState<_ReviewsTab> {
                       const SizedBox(height: 16),
                       Text(
                         'No reviews yet',
-                        style: GoogleFonts.poppins(
+                        style: AppFonts.plusJakarta(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
                         ),
@@ -998,7 +998,7 @@ class _ReviewsTabState extends ConsumerState<_ReviewsTab> {
                       const SizedBox(height: 8),
                       Text(
                         'Only verified students and alumni can write reviews.',
-                        style: GoogleFonts.poppins(color: AppTheme.gray500),
+                        style: AppFonts.plusJakarta(color: AppTheme.gray500),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 20),
@@ -1046,7 +1046,7 @@ class _ReviewsTabState extends ConsumerState<_ReviewsTab> {
                 padding: const EdgeInsets.only(bottom: 12, top: 4),
                 child: Text(
                   'Recent Reviews',
-                  style: GoogleFonts.poppins(
+                  style: AppFonts.plusJakarta(
                     fontWeight: FontWeight.w700,
                     fontSize: 16,
                   ),
@@ -1144,7 +1144,7 @@ class _SectionRatingHeader extends StatelessWidget {
           Expanded(
             child: Text(
               title,
-              style: GoogleFonts.poppins(
+              style: AppFonts.plusJakarta(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
               ),
@@ -1173,10 +1173,10 @@ class _RatingBar extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(label, style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+              Text(label, style: AppFonts.plusJakarta(fontWeight: FontWeight.w600)),
               Text(
                 value > 0 ? '${value.toStringAsFixed(1)}/5' : 'N/A',
-                style: GoogleFonts.poppins(
+                style: AppFonts.plusJakarta(
                   fontWeight: FontWeight.w700,
                   color: AppTheme.primaryColor,
                 ),
@@ -1271,7 +1271,7 @@ class _RatingsTab extends StatelessWidget {
           Center(
             child: Text(
               'No verified ratings yet',
-              style: GoogleFonts.poppins(color: AppTheme.gray500),
+              style: AppFonts.plusJakarta(color: AppTheme.gray500),
             ),
           ),
         ],
@@ -1293,7 +1293,7 @@ class _RatingsTab extends StatelessWidget {
         const SizedBox(height: 16),
         Text(
           'Category-wise ratings',
-          style: GoogleFonts.poppins(
+          style: AppFonts.plusJakarta(
             fontWeight: FontWeight.w700,
             fontSize: 16,
           ),
@@ -1310,11 +1310,11 @@ class _RatingsTab extends StatelessWidget {
                   children: [
                     Text(
                       item.$1,
-                      style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                      style: AppFonts.plusJakarta(fontWeight: FontWeight.w600),
                     ),
                     Text(
                       '${item.$2}/5',
-                      style: GoogleFonts.poppins(
+                      style: AppFonts.plusJakarta(
                         fontWeight: FontWeight.w700,
                         color: AppTheme.primaryColor,
                       ),
@@ -1373,7 +1373,7 @@ class _FeesTab extends StatelessWidget {
         if (college.scholarships.isNotEmpty) ...[
           Text(
             'Available Scholarships',
-            style: GoogleFonts.poppins(
+            style: AppFonts.plusJakarta(
               fontSize: 16,
               fontWeight: FontWeight.w700,
             ),
@@ -1384,7 +1384,7 @@ class _FeesTab extends StatelessWidget {
               margin: const EdgeInsets.only(bottom: 8),
               child: ListTile(
                 leading: const Icon(Icons.school_outlined),
-                title: Text(s.name, style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                title: Text(s.name, style: AppFonts.plusJakarta(fontWeight: FontWeight.w600)),
                 subtitle: Text('${s.eligibility}\n${s.amount}'),
                 isThreeLine: true,
               ),
@@ -1424,12 +1424,12 @@ class _InfoCard extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+                    style: AppFonts.plusJakarta(fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     content,
-                    style: GoogleFonts.poppins(
+                    style: AppFonts.plusJakarta(
                       fontSize: 13,
                       color: AppTheme.gray600,
                     ),
@@ -1476,14 +1476,14 @@ class _StatCard extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: GoogleFonts.poppins(
+                  style: AppFonts.plusJakarta(
                     fontSize: 12,
                     color: AppTheme.gray600,
                   ),
                 ),
                 Text(
                   value,
-                  style: GoogleFonts.poppins(
+                  style: AppFonts.plusJakarta(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                     color: color,
@@ -1514,7 +1514,7 @@ class _TypeChip extends StatelessWidget {
       ),
       child: Text(
         label.toUpperCase(),
-        style: GoogleFonts.plusJakartaSans(
+        style: AppFonts.plusJakarta(
           fontSize: 10,
           fontWeight: FontWeight.w800,
           letterSpacing: 0.4,

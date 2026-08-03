@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../config/theme/app_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../config/router/route_names.dart';
@@ -101,7 +101,7 @@ class CollegeProfileStatsStrip extends StatelessWidget {
                       children: [
                         Text(
                           stat.value,
-                          style: GoogleFonts.poppins(
+                          style: AppFonts.plusJakarta(
                             fontWeight: FontWeight.w700,
                             fontSize: 14,
                             color: stat.color,
@@ -109,7 +109,7 @@ class CollegeProfileStatsStrip extends StatelessWidget {
                         ),
                         Text(
                           stat.label,
-                          style: GoogleFonts.poppins(
+                          style: AppFonts.plusJakarta(
                             fontSize: 10,
                             color: AppTheme.gray600,
                           ),
@@ -213,14 +213,14 @@ class _FactTile extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: GoogleFonts.poppins(
+                  style: AppFonts.plusJakarta(
                     fontSize: 11,
                     color: AppTheme.gray500,
                   ),
                 ),
                 Text(
                   value,
-                  style: GoogleFonts.poppins(
+                  style: AppFonts.plusJakarta(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                   ),
@@ -250,7 +250,7 @@ class CollegeFacilitiesSection extends StatelessWidget {
       children: [
         Text(
           'Facilities',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 15),
+          style: AppFonts.plusJakarta(fontWeight: FontWeight.w700, fontSize: 15),
         ),
         const SizedBox(height: 10),
         Wrap(
@@ -322,7 +322,7 @@ class _FacilityChip extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             label,
-            style: GoogleFonts.poppins(
+            style: AppFonts.plusJakarta(
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: color,
@@ -468,7 +468,7 @@ class _QuickCard extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: GoogleFonts.poppins(
+                      style: AppFonts.plusJakarta(
                         fontWeight: FontWeight.w700,
                         fontSize: 14,
                       ),
@@ -476,7 +476,7 @@ class _QuickCard extends StatelessWidget {
                     ...lines.map(
                       (line) => Text(
                         line,
-                        style: GoogleFonts.poppins(
+                        style: AppFonts.plusJakarta(
                           fontSize: 12,
                           color: AppTheme.gray600,
                         ),
@@ -521,7 +521,7 @@ class CollegeAdmissionLinksSection extends StatelessWidget {
       children: [
         Text(
           'Admission Links',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 15),
+          style: AppFonts.plusJakarta(fontWeight: FontWeight.w700, fontSize: 15),
         ),
         const SizedBox(height: 8),
         ...links.map(
@@ -529,7 +529,7 @@ class CollegeAdmissionLinksSection extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 8),
             child: ListTile(
               leading: const Icon(Icons.link, color: AppTheme.secondaryColor),
-              title: Text(link, style: GoogleFonts.poppins(fontSize: 13)),
+              title: Text(link, style: AppFonts.plusJakarta(fontSize: 13)),
               trailing: const Icon(Icons.open_in_new, size: 18),
               onTap: () => _openUrl(context, link),
             ),
@@ -572,7 +572,7 @@ class CollegeCommunitySection extends ConsumerWidget {
               Expanded(
                 child: Text(
                   'Community',
-                  style: GoogleFonts.poppins(
+                  style: AppFonts.plusJakarta(
                     fontWeight: FontWeight.w700,
                     fontSize: 15,
                   ),
@@ -597,13 +597,13 @@ class CollegeCommunitySection extends ConsumerWidget {
             ),
             error: (_, _) => Text(
               'Join discussions with verified students at this college.',
-              style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.gray600),
+              style: AppFonts.plusJakarta(fontSize: 12, color: AppTheme.gray600),
             ),
             data: (posts) {
               if (posts.isEmpty) {
                 return Text(
                   'No community posts yet. Be the first to start a discussion!',
-                  style: GoogleFonts.poppins(
+                  style: AppFonts.plusJakarta(
                     fontSize: 12,
                     color: AppTheme.gray600,
                   ),
@@ -624,14 +624,14 @@ class CollegeCommunitySection extends ConsumerWidget {
                           post.isPoll ? post.pollQuestion : post.content,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.poppins(
+                          style: AppFonts.plusJakarta(
                             fontWeight: FontWeight.w600,
                             fontSize: 13,
                           ),
                         ),
                         subtitle: Text(
                           '${post.authorDisplayName} · ${post.likeCount} likes',
-                          style: GoogleFonts.poppins(
+                          style: AppFonts.plusJakarta(
                             fontSize: 11,
                             color: AppTheme.gray600,
                           ),
