@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../config/theme/app_fonts.dart';
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_spacing.dart';
@@ -216,7 +216,7 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
       labelText: label,
       filled: true,
       fillColor: tokens.surfaceMuted,
-      labelStyle: GoogleFonts.poppins(
+      labelStyle: AppFonts.plusJakarta(
         fontSize: 13,
         color: tokens.textSecondary,
       ),
@@ -258,7 +258,7 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).brightness == Brightness.dark
           ? AppTheme.gray900
-          : const Color(0xFFF3F5FA),
+          : AppTheme.surfaceMuted,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
@@ -272,7 +272,7 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
         ),
         title: Text(
           'Search Colleges',
-          style: GoogleFonts.plusJakartaSans(
+          style: AppFonts.plusJakarta(
             fontWeight: FontWeight.w800,
             letterSpacing: -0.3,
           ),
@@ -305,7 +305,7 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
                 meta.totalColleges > 0
                     ? '${meta.totalColleges.toString()} colleges indexed'
                     : 'Search 47,000+ colleges by name',
-                style: GoogleFonts.poppins(
+                style: AppFonts.plusJakarta(
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                   color: tokens.textTertiary,
@@ -325,14 +325,14 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
               padding: EdgeInsets.zero,
               child: TextField(
                 controller: _searchController,
-                style: GoogleFonts.poppins(
+                style: AppFonts.plusJakarta(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                   color: tokens.textPrimary,
                 ),
                 decoration: InputDecoration(
                   hintText: 'Search college, city, state, university...',
-                  hintStyle: GoogleFonts.poppins(
+                  hintStyle: AppFonts.plusJakarta(
                     fontSize: 14,
                     color: tokens.textTertiary,
                   ),
@@ -401,7 +401,7 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
                         : const Icon(Icons.search_rounded, size: 20),
                     label: Text(
                       _isSearching ? 'Searching…' : 'Search Colleges',
-                      style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                      style: AppFonts.plusJakarta(fontWeight: FontWeight.w600),
                     ),
                     style: FilledButton.styleFrom(
                       backgroundColor: AppTheme.primaryColor,
@@ -419,7 +419,7 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
                   icon: const Icon(Icons.restart_alt_rounded, size: 18),
                   label: Text(
                     'Reset Filters',
-                    style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                    style: AppFonts.plusJakarta(fontWeight: FontWeight.w600),
                   ),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(
@@ -446,7 +446,7 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
                 alignment: Alignment.centerLeft,
                 child: Text(
                   '${_results.length} result${_results.length == 1 ? '' : 's'} found',
-                  style: GoogleFonts.poppins(
+                  style: AppFonts.plusJakarta(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: tokens.textSecondary,
@@ -568,7 +568,7 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
                         ),
                         title: Text(
                           suggestion,
-                          style: GoogleFonts.poppins(
+                          style: AppFonts.plusJakarta(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
                             color: tokens.textPrimary,

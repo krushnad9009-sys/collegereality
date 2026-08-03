@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../config/theme/app_fonts.dart';
 
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_design_tokens.dart';
@@ -74,7 +74,7 @@ class PremiumSearchDiscoveryPanel extends ConsumerWidget {
                       },
                       child: Text(
                         'Clear',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: AppFonts.plusJakarta(
                           fontWeight: FontWeight.w600,
                           color: AppTheme.primaryColor,
                         ),
@@ -112,7 +112,7 @@ class PremiumSearchDiscoveryPanel extends ConsumerWidget {
                               Expanded(
                                 child: Text(
                                   query,
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: AppFonts.plusJakarta(
                                     fontWeight: FontWeight.w600,
                                     color: tokens.textPrimary,
                                   ),
@@ -175,7 +175,7 @@ class PremiumSearchDiscoveryPanel extends ConsumerWidget {
                   children: [
                     Text(
                       'Try AI-powered search',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: AppFonts.plusJakarta(
                         fontWeight: FontWeight.w800,
                         fontSize: 15,
                         color: tokens.textPrimary,
@@ -184,7 +184,7 @@ class PremiumSearchDiscoveryPanel extends ConsumerWidget {
                     const SizedBox(height: 4),
                     Text(
                       'Ask natural questions like "Best CSE colleges in Pune under 5L"',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: AppFonts.plusJakarta(
                         fontSize: 12,
                         color: tokens.textSecondary,
                         height: 1.35,
@@ -235,7 +235,7 @@ class _SectionTitle extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: GoogleFonts.plusJakartaSans(
+                style: AppFonts.plusJakarta(
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
                   letterSpacing: -0.3,
@@ -244,7 +244,7 @@ class _SectionTitle extends StatelessWidget {
               ),
               Text(
                 subtitle,
-                style: GoogleFonts.plusJakartaSans(
+                style: AppFonts.plusJakarta(
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                   color: tokens.textSecondary,
@@ -313,7 +313,7 @@ class _QueryChipState extends State<_QueryChip> {
               const SizedBox(width: 6),
               Text(
                 widget.label,
-                style: GoogleFonts.plusJakartaSans(
+                style: AppFonts.plusJakarta(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                   color: isDark ? AppTheme.gray100 : AppTheme.gray800,
