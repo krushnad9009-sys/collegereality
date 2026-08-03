@@ -71,7 +71,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         : 'Find your dream college';
 
     return Scaffold(
-      backgroundColor: isDark ? AppTheme.gray900 : const Color(0xFFF3F5FA),
+      backgroundColor: isDark ? AppTheme.gray900 : AppTheme.surfaceMuted,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _onRefresh,

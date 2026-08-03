@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../config/theme/app_fonts.dart';
 
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_design_tokens.dart';
@@ -135,7 +135,7 @@ class _PremiumCollegeCarouselCardState
                         ),
                         child: Text(
                           'Trending',
-                          style: GoogleFonts.plusJakartaSans(
+                          style: AppFonts.plusJakarta(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
                             color: Colors.white,
@@ -187,7 +187,7 @@ class _PremiumCollegeCarouselCardState
                       widget.college.name,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.plusJakartaSans(
+                      style: AppFonts.plusJakarta(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
                         height: 1.25,
@@ -209,7 +209,7 @@ class _PremiumCollegeCarouselCardState
                             '${widget.college.city}, ${widget.college.state}',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.plusJakartaSans(
+                            style: AppFonts.plusJakarta(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
                               color: tokens.textSecondary,
@@ -304,7 +304,7 @@ class _CarouselCrBadge extends StatelessWidget {
         children: [
           Text(
             'CR ${score.toStringAsFixed(0)}',
-            style: GoogleFonts.plusJakartaSans(
+            style: AppFonts.plusJakarta(
               fontSize: 16,
               fontWeight: FontWeight.w800,
               color: Colors.white,
@@ -313,7 +313,7 @@ class _CarouselCrBadge extends StatelessWidget {
           ),
           Text(
             grade,
-            style: GoogleFonts.plusJakartaSans(
+            style: AppFonts.plusJakarta(
               fontSize: 10,
               fontWeight: FontWeight.w600,
               color: Colors.white.withValues(alpha: 0.92),
@@ -352,7 +352,7 @@ class _CarouselMetaPill extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             label,
-            style: GoogleFonts.plusJakartaSans(
+            style: AppFonts.plusJakarta(
               fontSize: 10,
               fontWeight: FontWeight.w600,
               color: color,
@@ -396,7 +396,7 @@ class _MiniStat extends StatelessWidget {
                 children: [
                   Text(
                     value,
-                    style: GoogleFonts.plusJakartaSans(
+                    style: AppFonts.plusJakarta(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
                       color: color,
@@ -407,7 +407,7 @@ class _MiniStat extends StatelessWidget {
                     label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.plusJakartaSans(
+                    style: AppFonts.plusJakarta(
                       fontSize: 10,
                       fontWeight: FontWeight.w500,
                       color: AppTheme.gray500,

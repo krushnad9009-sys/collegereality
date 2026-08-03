@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
+import '../../../config/theme/app_elevation.dart';
+import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_theme.dart';
 
@@ -30,24 +31,18 @@ class HomeHeroBanner extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: isDark
               ? [
-                  const Color(0xFF312E81),
-                  const Color(0xFF1E3A5F),
+                  AppTheme.primaryDark,
                   AppTheme.gray900,
+                  AppTheme.secondaryDark,
                 ]
               : [
                   AppTheme.primaryColor,
-                  const Color(0xFF6366F1),
+                  AppTheme.primaryLight,
                   AppTheme.secondaryColor,
                 ],
         ),
         borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.primaryColor.withValues(alpha: isDark ? 0.2 : 0.35),
-            blurRadius: 32,
-            offset: const Offset(0, 14),
-          ),
-        ],
+        boxShadow: AppElevation.medium(AppTheme.primaryDark),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -61,7 +56,7 @@ class HomeHeroBanner extends StatelessWidget {
                   children: [
                     Text(
                       greeting ?? 'Discover your perfect college',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: AppFonts.plusJakarta(
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
                         height: 1.2,
@@ -73,7 +68,7 @@ class HomeHeroBanner extends StatelessWidget {
                       const SizedBox(height: 8),
                       Text(
                         subtitle!,
-                        style: GoogleFonts.plusJakartaSans(
+                        style: AppFonts.plusJakarta(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
                           height: 1.4,
@@ -100,8 +95,8 @@ class _HeroStatsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: const [
+    return const Row(
+      children: [
         _HeroStat(value: '47K+', label: 'Colleges'),
         SizedBox(width: 10),
         _HeroStat(value: 'Verified', label: 'Reviews'),
@@ -133,7 +128,7 @@ class _HeroStat extends StatelessWidget {
           children: [
             Text(
               value,
-              style: GoogleFonts.plusJakartaSans(
+              style: AppFonts.plusJakarta(
                 fontSize: 16,
                 fontWeight: FontWeight.w800,
                 color: Colors.white,
@@ -143,7 +138,7 @@ class _HeroStat extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               label,
-              style: GoogleFonts.plusJakartaSans(
+              style: AppFonts.plusJakarta(
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
                 color: Colors.white.withValues(alpha: 0.82),

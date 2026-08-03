@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../config/theme/app_fonts.dart';
 
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_spacing.dart';
@@ -110,7 +110,7 @@ class _PremiumHomeSearchBarState extends State<PremiumHomeSearchBar> {
                     children: [
                       Text(
                         'Where do you want to study?',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: AppFonts.plusJakarta(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
                           letterSpacing: -0.2,
@@ -120,7 +120,7 @@ class _PremiumHomeSearchBarState extends State<PremiumHomeSearchBar> {
                       const SizedBox(height: 2),
                       Text(
                         'Search colleges, cities, courses & more',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: AppFonts.plusJakarta(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                           color: AppTheme.gray500,

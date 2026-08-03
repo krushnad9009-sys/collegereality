@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_theme.dart';
 
 class SearchBarWidget extends StatelessWidget {
@@ -45,7 +45,7 @@ class SearchBarWidget extends StatelessWidget {
               Expanded(
                 child: Text(
                   'Search colleges...',
-                  style: GoogleFonts.poppins(
+                  style: AppFonts.plusJakarta(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                     color: AppTheme.gray500,

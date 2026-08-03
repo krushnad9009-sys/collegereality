@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../config/router/route_names.dart';
 import '../../config/theme/app_design_tokens.dart';
+import '../../config/theme/app_elevation.dart';
 import '../../config/theme/app_theme.dart';
 
 /// Premium bottom navigation shell for primary app destinations.
@@ -60,13 +61,7 @@ class AppShell extends StatelessWidget {
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(tokens.navBarRadius),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppTheme.black.withValues(alpha: isDark ? 0.4 : 0.1),
-                      blurRadius: 28,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
+                  boxShadow: isDark ? AppElevation.none : AppElevation.floating(AppTheme.primaryDark),
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(tokens.navBarRadius),

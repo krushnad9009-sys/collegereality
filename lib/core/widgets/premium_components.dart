@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../config/theme/app_fonts.dart';
 
 import '../../config/theme/app_design_tokens.dart';
 import '../../config/theme/app_elevation.dart';
@@ -85,7 +85,7 @@ class SectionHeader extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: AppFonts.plusJakarta(
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
                     letterSpacing: -0.45,
@@ -96,7 +96,7 @@ class SectionHeader extends StatelessWidget {
                   const SizedBox(height: 6),
                   Text(
                     subtitle!,
-                    style: GoogleFonts.plusJakartaSans(
+                    style: AppFonts.plusJakarta(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                       color: AppTheme.gray500,
@@ -117,7 +117,7 @@ class SectionHeader extends StatelessWidget {
               ),
               child: Text(
                 actionLabel!,
-                style: GoogleFonts.poppins(
+                style: AppFonts.plusJakarta(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                   color: AppTheme.primaryColor,
@@ -188,7 +188,7 @@ class PremiumChip extends StatelessWidget {
               ],
               Text(
                 label,
-                style: GoogleFonts.poppins(
+                style: AppFonts.plusJakarta(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                   color: selected

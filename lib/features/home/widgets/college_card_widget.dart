@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../config/theme/app_fonts.dart';
 
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_design_tokens.dart';
@@ -253,7 +253,7 @@ class _CollegeCardWidgetState extends ConsumerState<CollegeCardWidget> {
                   children: [
                     Text(
                       widget.collegeName,
-                      style: GoogleFonts.plusJakartaSans(
+                      style: AppFonts.plusJakarta(
                         fontSize: widget.compact ? 15 : 17,
                         fontWeight: FontWeight.w800,
                         height: 1.22,
@@ -275,7 +275,7 @@ class _CollegeCardWidgetState extends ConsumerState<CollegeCardWidget> {
                         Expanded(
                           child: Text(
                             '${widget.city}, ${widget.location}',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: AppFonts.plusJakarta(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
                               color: tokens.textSecondary,
@@ -355,7 +355,7 @@ class _VerifiedChip extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             'Verified',
-            style: GoogleFonts.plusJakartaSans(
+            style: AppFonts.plusJakarta(
               fontSize: 11,
               fontWeight: FontWeight.w700,
               color: Colors.white,
@@ -396,7 +396,7 @@ class _CrScoreBadge extends StatelessWidget {
         children: [
           Text(
             'CR SCORE',
-            style: GoogleFonts.plusJakartaSans(
+            style: AppFonts.plusJakarta(
               fontSize: 9,
               fontWeight: FontWeight.w800,
               letterSpacing: 1.1,
@@ -405,7 +405,7 @@ class _CrScoreBadge extends StatelessWidget {
           ),
           Text(
             score.toStringAsFixed(0),
-            style: GoogleFonts.plusJakartaSans(
+            style: AppFonts.plusJakarta(
               fontSize: 24,
               fontWeight: FontWeight.w800,
               height: 1,
@@ -414,7 +414,7 @@ class _CrScoreBadge extends StatelessWidget {
           ),
           Text(
             grade,
-            style: GoogleFonts.plusJakartaSans(
+            style: AppFonts.plusJakarta(
               fontSize: 11,
               fontWeight: FontWeight.w700,
               color: Colors.white.withValues(alpha: 0.95),
@@ -539,7 +539,7 @@ class _MetricPill extends StatelessWidget {
           const SizedBox(width: 5),
           Text(
             label,
-            style: GoogleFonts.plusJakartaSans(
+            style: AppFonts.plusJakarta(
               fontSize: 12,
               fontWeight: FontWeight.w700,
               color: color.withValues(alpha: 0.95),

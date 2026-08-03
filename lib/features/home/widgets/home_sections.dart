@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../config/theme/app_fonts.dart';
 
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
@@ -276,7 +276,7 @@ class StudentReviewsSection extends ConsumerWidget {
                 const SizedBox(height: 8),
                 Text(
                   'Be the first to share an honest review',
-                  style: GoogleFonts.poppins(
+                  style: AppFonts.plusJakarta(
                     fontWeight: FontWeight.w600,
                     color: AppTheme.gray600,
                   ),
@@ -325,7 +325,7 @@ class _ReviewCard extends StatelessWidget {
                   review.anonymousAlias.isNotEmpty
                       ? review.anonymousAlias[0].toUpperCase()
                       : 'S',
-                  style: GoogleFonts.poppins(
+                  style: AppFonts.plusJakarta(
                     fontWeight: FontWeight.w700,
                     color: AppTheme.primaryColor,
                   ),
@@ -338,7 +338,7 @@ class _ReviewCard extends StatelessWidget {
                   children: [
                     Text(
                       review.anonymousAlias,
-                      style: GoogleFonts.poppins(
+                      style: AppFonts.plusJakarta(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                       ),
@@ -347,7 +347,7 @@ class _ReviewCard extends StatelessWidget {
                       review.collegeName,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.poppins(
+                      style: AppFonts.plusJakarta(
                         fontSize: 11,
                         color: AppTheme.gray500,
                       ),
@@ -366,7 +366,7 @@ class _ReviewCard extends StatelessWidget {
             review.textReview,
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.poppins(
+            style: AppFonts.plusJakarta(
               fontSize: 13,
               height: 1.45,
               color: AppTheme.gray700,
@@ -444,7 +444,7 @@ class _AlumniStoryCard extends StatelessWidget {
                     alumni.displayName.isNotEmpty
                         ? alumni.displayName[0].toUpperCase()
                         : 'A',
-                    style: GoogleFonts.poppins(
+                    style: AppFonts.plusJakarta(
                       fontWeight: FontWeight.w700,
                       color: AppTheme.secondaryColor,
                     ),
@@ -459,7 +459,7 @@ class _AlumniStoryCard extends StatelessWidget {
                         alumni.displayName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.poppins(
+                        style: AppFonts.plusJakarta(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
                         ),
@@ -468,7 +468,7 @@ class _AlumniStoryCard extends StatelessWidget {
                         '${alumni.jobTitle} · ${alumni.company}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.poppins(
+                        style: AppFonts.plusJakarta(
                           fontSize: 11,
                           color: AppTheme.gray500,
                         ),
@@ -483,14 +483,14 @@ class _AlumniStoryCard extends StatelessWidget {
               alumni.successStory,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.poppins(fontSize: 12, height: 1.4),
+              style: AppFonts.plusJakarta(fontSize: 12, height: 1.4),
             ),
             const Spacer(),
             Text(
               'Batch ${alumni.batchYear} · ${alumni.collegeName}',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.poppins(
+              style: AppFonts.plusJakarta(
                 fontSize: 10,
                 color: AppTheme.gray500,
               ),
@@ -574,14 +574,14 @@ class _PlacementTile extends StatelessWidget {
                   college.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.poppins(
+                  style: AppFonts.plusJakarta(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 Text(
                   '${college.city} · ${pct > 0 ? '$pct% placed' : 'Placements tracked'}',
-                  style: GoogleFonts.poppins(
+                  style: AppFonts.plusJakarta(
                     fontSize: 11,
                     color: AppTheme.gray500,
                   ),
@@ -592,7 +592,7 @@ class _PlacementTile extends StatelessWidget {
           if (avg > 0)
             Text(
               '₹${avg.toStringAsFixed(1)}L',
-              style: GoogleFonts.poppins(
+              style: AppFonts.plusJakarta(
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
                 color: AppTheme.accentColor,
