@@ -9,7 +9,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
   });
 
-  CrScoreSnapshot _snapshot({double score = 82.5, int reviews = 120}) {
+  CrScoreSnapshot buildSnapshot({double score = 82.5, int reviews = 120}) {
     return CrScoreSnapshot(
       score: score,
       categories: const CrScoreCategories(
@@ -28,7 +28,7 @@ void main() {
     test('cacheSnapshot and readSnapshot round-trip', () async {
       final prefs = await SharedPreferences.getInstance();
       final service = CrScoreCacheService(prefs);
-      final snapshot = _snapshot();
+      final snapshot = buildSnapshot();
 
       await service.cacheSnapshot('col-1', snapshot);
       final loaded = service.readSnapshot('col-1');
@@ -70,7 +70,7 @@ void main() {
     test('clearCollege removes cached entry', () async {
       final prefs = await SharedPreferences.getInstance();
       final service = CrScoreCacheService(prefs);
-      await service.cacheSnapshot('col-clear', _snapshot());
+      await service.cacheSnapshot('col-clear', buildSnapshot());
       expect(service.readSnapshot('col-clear'), isNotNull);
 
       await service.clearCollege('col-clear');

@@ -107,7 +107,7 @@ void main() {
   });
 
   group('PublicStudentProfile.fromUser', () {
-    UserModel _user({bool allowPublic = true, String badge = VerificationConstants.badgeVerifiedStudent}) {
+    UserModel buildUser({bool allowPublic = true, String badge = VerificationConstants.badgeVerifiedStudent}) {
       return UserModel(
         uid: 'pub-uid',
         email: 'pub@test.com',
@@ -124,7 +124,7 @@ void main() {
     }
 
     test('maps public fields without contact info', () {
-      final profile = PublicStudentProfile.fromUser(_user());
+      final profile = PublicStudentProfile.fromUser(buildUser());
       expect(profile.uid, 'pub-uid');
       expect(profile.displayName, 'Ananya Shah');
       expect(profile.course, 'B.Tech');
@@ -146,13 +146,13 @@ void main() {
 
     test('throws when public profile disabled', () {
       expect(
-        () => PublicStudentProfile.fromUser(_user(allowPublic: false)),
+        () => PublicStudentProfile.fromUser(buildUser(allowPublic: false)),
         throwsA(isA<StateError>()),
       );
     });
 
     test('hasVerificationBadge false for none badge', () {
-      final profile = PublicStudentProfile.fromUser(_user(badge: VerificationConstants.badgeNone));
+      final profile = PublicStudentProfile.fromUser(buildUser(badge: VerificationConstants.badgeNone));
       expect(profile.hasVerificationBadge, isFalse);
     });
   });
