@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../config/theme/app_fonts.dart';
 
 import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/display_name_constants.dart';
@@ -139,7 +139,7 @@ class _DisplayNameSettingsSectionState
               children: [
                 Text(
                   'Public Display Name',
-                  style: GoogleFonts.poppins(
+                  style: AppFonts.plusJakarta(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                   ),
@@ -147,7 +147,7 @@ class _DisplayNameSettingsSectionState
                 const SizedBox(height: 4),
                 Text(
                   'Your verified identity (${user.verifiedRealName ?? user.displayName ?? 'not set'}) is stored securely and never shown publicly unless you choose Real Name.',
-                  style: GoogleFonts.poppins(
+                  style: AppFonts.plusJakarta(
                     fontSize: 12,
                     color: AppTheme.gray500,
                     height: 1.4,
@@ -174,7 +174,7 @@ class _DisplayNameSettingsSectionState
                         enabled: canChange,
                         title: Text(
                           displayNameModeLabel(mode),
-                          style: GoogleFonts.poppins(fontSize: 14),
+                          style: AppFonts.plusJakarta(fontSize: 14),
                         ),
                       );
                     }).toList(),
@@ -201,14 +201,14 @@ class _DisplayNameSettingsSectionState
                   children: [
                     Text(
                       'Currently shown as: ',
-                      style: GoogleFonts.poppins(
+                      style: AppFonts.plusJakarta(
                         fontSize: 13,
                         color: AppTheme.gray500,
                       ),
                     ),
                     Text(
                       preview,
-                      style: GoogleFonts.poppins(
+                      style: AppFonts.plusJakarta(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                       ),
@@ -227,7 +227,7 @@ class _DisplayNameSettingsSectionState
                   const SizedBox(height: 8),
                   Text(
                     'You can change your display name again in $daysLeft day(s).',
-                    style: GoogleFonts.poppins(
+                    style: AppFonts.plusJakarta(
                       fontSize: 12,
                       color: Colors.orange.shade800,
                     ),

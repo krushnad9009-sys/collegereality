@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../config/theme/app_fonts.dart';
 
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_design_tokens.dart';
@@ -26,7 +26,7 @@ class ProfileSettingsSection extends ConsumerWidget {
         children: [
           Text(
             'Settings',
-            style: GoogleFonts.plusJakartaSans(
+            style: AppFonts.plusJakarta(
               fontSize: 17,
               fontWeight: FontWeight.w800,
               letterSpacing: -0.3,
@@ -36,7 +36,7 @@ class ProfileSettingsSection extends ConsumerWidget {
           const SizedBox(height: 4),
           Text(
             'Appearance, notifications, and legal',
-            style: GoogleFonts.plusJakartaSans(
+            style: AppFonts.plusJakarta(
               fontSize: 12,
               fontWeight: FontWeight.w500,
               color: tokens.textSecondary,
@@ -45,7 +45,7 @@ class ProfileSettingsSection extends ConsumerWidget {
           const SizedBox(height: 16),
           Text(
             'Theme',
-            style: GoogleFonts.plusJakartaSans(
+            style: AppFonts.plusJakarta(
               fontSize: 13,
               fontWeight: FontWeight.w600,
               color: tokens.textPrimary,
@@ -77,7 +77,7 @@ class ProfileSettingsSection extends ConsumerWidget {
             style: ButtonStyle(
               visualDensity: VisualDensity.compact,
               textStyle: WidgetStatePropertyAll(
-                GoogleFonts.plusJakartaSans(
+                AppFonts.plusJakarta(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
@@ -137,7 +137,7 @@ class _SettingsLink extends StatelessWidget {
                 Expanded(
                   child: Text(
                     label,
-                    style: GoogleFonts.plusJakartaSans(
+                    style: AppFonts.plusJakarta(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: tokens.textPrimary,

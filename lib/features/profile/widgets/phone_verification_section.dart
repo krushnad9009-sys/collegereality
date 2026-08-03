@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/widgets/index.dart';
 import '../../../core/services/phone_auth_service.dart';
@@ -242,7 +242,7 @@ class _PhoneVerificationSectionState
             Expanded(
               child: Text(
                 'Phone verified: +91 ${widget.currentPhone ?? ''}',
-                style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                style: AppFonts.plusJakarta(fontWeight: FontWeight.w600),
               ),
             ),
             const Icon(Icons.verified, color: AppTheme.accentColor, size: 18),
@@ -267,7 +267,7 @@ class _PhoneVerificationSectionState
         children: [
           Text(
             'Phone Verification',
-            style: GoogleFonts.poppins(
+            style: AppFonts.plusJakarta(
               fontWeight: FontWeight.w700,
               color: AppTheme.secondaryColor,
             ),
@@ -275,7 +275,7 @@ class _PhoneVerificationSectionState
           const SizedBox(height: 8),
           Text(
             'Verify your mobile number using a one-time password (OTP).',
-            style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.gray600),
+            style: AppFonts.plusJakarta(fontSize: 12, color: AppTheme.gray600),
           ),
           const SizedBox(height: 12),
           PhoneTextField(
@@ -289,7 +289,7 @@ class _PhoneVerificationSectionState
               padding: const EdgeInsets.only(top: 8),
               child: Text(
                 'Too many attempts. Try again in ${_formatRetryDuration(_rateLimitSeconds)}.',
-                style: GoogleFonts.poppins(
+                style: AppFonts.plusJakarta(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   color: AppTheme.warningColor,
@@ -311,7 +311,7 @@ class _PhoneVerificationSectionState
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
                   'Resend available in $_resendSeconds s',
-                  style: GoogleFonts.poppins(
+                  style: AppFonts.plusJakarta(
                     fontSize: 12,
                     color: AppTheme.gray500,
                   ),

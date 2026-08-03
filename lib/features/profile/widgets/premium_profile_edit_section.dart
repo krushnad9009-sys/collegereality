@@ -1,7 +1,7 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../config/theme/app_fonts.dart';
 
 import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/profile_constants.dart';
@@ -93,7 +93,7 @@ class _PremiumProfileEditSectionState
       children: [
         Text(
           'Premium Profile',
-          style: GoogleFonts.poppins(
+          style: AppFonts.plusJakarta(
             fontSize: 16,
             fontWeight: FontWeight.w700,
           ),
@@ -144,7 +144,7 @@ class _PremiumProfileEditSectionState
         const SizedBox(height: 16),
         Text(
           'Availability',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+          style: AppFonts.plusJakarta(fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 8),
         Wrap(
@@ -161,7 +161,7 @@ class _PremiumProfileEditSectionState
         const SizedBox(height: 16),
         Text(
           'Interests (up to 8)',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+          style: AppFonts.plusJakarta(fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 8),
         Wrap(

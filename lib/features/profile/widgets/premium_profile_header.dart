@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_theme.dart';
 import '../models/premium_student_profile.dart';
 import '../../verification/widgets/verification_badge_widget.dart';
@@ -50,7 +50,7 @@ class PremiumProfileHeader extends StatelessWidget {
                           profile.displayName.isNotEmpty
                               ? profile.displayName[0].toUpperCase()
                               : 'S',
-                          style: GoogleFonts.poppins(
+                          style: AppFonts.plusJakarta(
                             fontSize: 28,
                             fontWeight: FontWeight.w700,
                             color: AppTheme.primaryColor,
@@ -65,7 +65,7 @@ class PremiumProfileHeader extends StatelessWidget {
         const SizedBox(height: 48),
         Text(
           profile.displayName,
-          style: GoogleFonts.poppins(
+          style: AppFonts.plusJakarta(
             fontSize: 22,
             fontWeight: FontWeight.w700,
           ),

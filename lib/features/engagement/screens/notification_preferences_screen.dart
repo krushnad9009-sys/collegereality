@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../config/theme/app_fonts.dart';
 
 import '../../../config/theme/app_theme.dart';
 import '../models/engagement_models.dart';
@@ -30,7 +30,7 @@ class NotificationPreferencesScreen extends ConsumerWidget {
           children: [
             Text(
               'Choose which alerts you receive',
-              style: GoogleFonts.poppins(color: AppTheme.gray600),
+              style: AppFonts.plusJakarta(color: AppTheme.gray600),
             ),
             const SizedBox(height: 16),
             SwitchListTile(
@@ -105,7 +105,7 @@ class NotificationPreferencesScreen extends ConsumerWidget {
       padding: const EdgeInsets.only(bottom: 8, top: 8),
       child: Text(
         title,
-        style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 14),
+        style: AppFonts.plusJakarta(fontWeight: FontWeight.w700, fontSize: 14),
       ),
     );
   }

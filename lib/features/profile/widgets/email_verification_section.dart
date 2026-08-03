@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../config/theme/app_fonts.dart';
 
 import '../../../config/theme/app_theme.dart';
 import '../../../core/widgets/index.dart';
@@ -109,7 +109,7 @@ class _EmailVerificationSectionState
             Expanded(
               child: Text(
                 'Email verified: ${widget.email}',
-                style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                style: AppFonts.plusJakarta(fontWeight: FontWeight.w600),
               ),
             ),
             const Icon(Icons.verified, color: AppTheme.accentColor, size: 18),
@@ -132,7 +132,7 @@ class _EmailVerificationSectionState
         children: [
           Text(
             'Verify Your Email',
-            style: GoogleFonts.poppins(
+            style: AppFonts.plusJakarta(
               fontWeight: FontWeight.w700,
               color: AppTheme.warningColor,
             ),
@@ -140,7 +140,7 @@ class _EmailVerificationSectionState
           const SizedBox(height: 6),
           Text(
             'We sent a link to ${widget.email}. Verify to unlock reviews, bookmarks, and community.',
-            style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.gray600),
+            style: AppFonts.plusJakarta(fontSize: 12, color: AppTheme.gray600),
           ),
           const SizedBox(height: 12),
           Row(

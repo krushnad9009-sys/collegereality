@@ -195,7 +195,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).brightness == Brightness.dark
           ? AppTheme.gray900
-          : const Color(0xFFF3F5FA),
+          : AppTheme.surfaceMuted,
       appBar: AppBar(
         title: Text(
           'My Profile',

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_theme.dart';
 import '../models/student_trust_model.dart';
 
@@ -28,7 +28,7 @@ class TrustScoreCard extends StatelessWidget {
         children: [
           Text(
             'Trust Score',
-            style: GoogleFonts.poppins(
+            style: AppFonts.plusJakarta(
               fontWeight: FontWeight.w700,
               fontSize: 14,
             ),
@@ -38,13 +38,13 @@ class TrustScoreCard extends StatelessWidget {
             children: [
               Text(
                 '${trust.trustScore}',
-                style: GoogleFonts.poppins(
+                style: AppFonts.plusJakarta(
                   fontSize: 36,
                   fontWeight: FontWeight.w800,
                   color: AppTheme.primaryColor,
                 ),
               ),
-              Text('/100', style: GoogleFonts.poppins(color: AppTheme.gray600)),
+              Text('/100', style: AppFonts.plusJakarta(color: AppTheme.gray600)),
               const Spacer(),
               _MiniStat(
                 label: 'Rating',
@@ -90,14 +90,14 @@ class _MiniStat extends StatelessWidget {
       children: [
         Text(
           value,
-          style: GoogleFonts.poppins(
+          style: AppFonts.plusJakarta(
             fontWeight: FontWeight.w700,
             fontSize: 18,
           ),
         ),
         Text(
           label,
-          style: GoogleFonts.poppins(fontSize: 11, color: AppTheme.gray600),
+          style: AppFonts.plusJakarta(fontSize: 11, color: AppTheme.gray600),
         ),
       ],
     );
