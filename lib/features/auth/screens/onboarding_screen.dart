@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../config/router/route_names.dart';
+import '../../../config/theme/app_elevation.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_typography.dart';
 import '../../../core/widgets/premium_auth_background.dart';
@@ -94,27 +95,27 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     super.dispose();
   }
 
+  Future<void> _completeOnboarding({required String route}) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('hasSeenOnboarding', true);
+    if (mounted) context.go(route);
+  }
+
   Future<void> _nextPage() async {
     if (_currentPage < _pages.length - 1) {
       await _pageController.nextPage(
-        duration: const Duration(milliseconds: 520),
-        curve: Curves.easeOutCubic,
+        duration: AppMotion.slow,
+        curve: AppMotion.easeOut,
       );
       return;
     }
-
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('hasSeenOnboarding', true);
-
-    if (mounted) {
-      context.go(RouteNames.login);
-    }
+    await _completeOnboarding(route: RouteNames.login);
   }
 
   void _previousPage() {
     _pageController.previousPage(
-      duration: const Duration(milliseconds: 520),
-      curve: Curves.easeOutCubic,
+      duration: AppMotion.slow,
+      curve: AppMotion.easeOut,
     );
   }
 
@@ -193,6 +194,48 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                       },
                     );
                   },
+                ),
+                Positioned(
+                  top: MediaQuery.of(context).padding.top + AppSpacing.sm,
+                  left: horizontalPadding,
+                  right: horizontalPadding,
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: maxContentWidth),
+                      child: Row(
+                        children: [
+                          Text(
+                            'College Reality',
+                            style: AppTypography.label('College Reality').copyWith(
+                                  color: OnboardingPalette.ink,
+                                  fontSize: 12,
+                                  letterSpacing: 0.4,
+                                ),
+                          ),
+                          const Spacer(),
+                          TextButton(
+                            onPressed: () => _completeOnboarding(
+                              route: RouteNames.login,
+                            ),
+                            style: TextButton.styleFrom(
+                              foregroundColor: OnboardingPalette.inkMuted,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSpacing.md,
+                                vertical: AppSpacing.xs,
+                              ),
+                            ),
+                            child: Text(
+                              'Skip',
+                              style: AppTypography.button('Skip').copyWith(
+                                    color: OnboardingPalette.inkMuted,
+                                    fontSize: 13,
+                                  ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
                 Positioned(
                   bottom: 0,

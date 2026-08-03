@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../config/theme/app_fonts.dart';
+import '../../config/theme/app_spacing.dart';
 import '../../config/theme/app_theme.dart';
 
 class CustomTextField extends StatefulWidget {
@@ -57,7 +58,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
             children: [
               TextSpan(
                 text: widget.label,
-                style: GoogleFonts.poppins(
+                style: AppFonts.plusJakarta(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: Theme.of(context).brightness == Brightness.dark
@@ -83,7 +84,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
           onChanged: widget.onChanged,
           maxLines: widget.obscureText ? 1 : widget.maxLines,
           minLines: widget.minLines,
-          style: GoogleFonts.poppins(
+          style: AppFonts.plusJakarta(
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
@@ -118,32 +119,32 @@ class _CustomTextFieldState extends State<CustomTextField> {
                 ? AppTheme.gray800
                 : AppTheme.gray100,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
               borderSide: const BorderSide(
                 color: AppTheme.gray200,
               ),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
               borderSide: const BorderSide(
                 color: AppTheme.gray200,
               ),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
               borderSide: const BorderSide(
                 color: AppTheme.primaryColor,
                 width: 2,
               ),
             ),
             errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
               borderSide: const BorderSide(
                 color: AppTheme.errorColor,
               ),
             ),
             focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
               borderSide: const BorderSide(
                 color: AppTheme.errorColor,
                 width: 2,
@@ -186,7 +187,7 @@ class PhoneTextField extends StatelessWidget {
             children: [
               TextSpan(
                 text: label,
-                style: GoogleFonts.poppins(
+                style: AppFonts.plusJakarta(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: Theme.of(context).brightness == Brightness.dark
@@ -209,7 +210,7 @@ class PhoneTextField extends StatelessWidget {
           keyboardType: TextInputType.phone,
           textInputAction: TextInputAction.next,
           onChanged: onChanged,
-          style: GoogleFonts.poppins(
+          style: AppFonts.plusJakarta(
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
@@ -222,12 +223,12 @@ class PhoneTextField extends StatelessWidget {
                 children: [
                   Text(
                     '🇮🇳',
-                    style: GoogleFonts.poppins(fontSize: 20),
+                    style: AppFonts.plusJakarta(fontSize: 20),
                   ),
                   const SizedBox(width: 4),
                   Text(
                     '+91',
-                    style: GoogleFonts.poppins(
+                    style: AppFonts.plusJakarta(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: AppTheme.gray700,
@@ -246,32 +247,32 @@ class PhoneTextField extends StatelessWidget {
                 ? AppTheme.gray800
                 : AppTheme.gray100,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
               borderSide: const BorderSide(
                 color: AppTheme.gray200,
               ),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
               borderSide: const BorderSide(
                 color: AppTheme.gray200,
               ),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
               borderSide: const BorderSide(
                 color: AppTheme.primaryColor,
                 width: 2,
               ),
             ),
             errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
               borderSide: const BorderSide(
                 color: AppTheme.errorColor,
               ),
             ),
             focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
               borderSide: const BorderSide(
                 color: AppTheme.errorColor,
                 width: 2,

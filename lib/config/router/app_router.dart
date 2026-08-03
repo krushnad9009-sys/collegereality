@@ -194,19 +194,35 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: RouteNames.onboarding,
-        builder: (context, state) => const OnboardingScreen(),
+        pageBuilder: (context, state) => fadeUpPage(
+          key: state.pageKey,
+          name: state.name,
+          child: const OnboardingScreen(),
+        ),
       ),
       GoRoute(
         path: RouteNames.login,
-        builder: (context, state) => const LoginScreen(),
+        pageBuilder: (context, state) => fadeUpPage(
+          key: state.pageKey,
+          name: state.name,
+          child: const LoginScreen(),
+        ),
       ),
       GoRoute(
         path: RouteNames.signup,
-        builder: (context, state) => const SignupScreen(),
+        pageBuilder: (context, state) => fadeUpPage(
+          key: state.pageKey,
+          name: state.name,
+          child: const SignupScreen(),
+        ),
       ),
       GoRoute(
         path: RouteNames.forgotPassword,
-        builder: (context, state) => const ForgotPasswordScreen(),
+        pageBuilder: (context, state) => fadeUpPage(
+          key: state.pageKey,
+          name: state.name,
+          child: const ForgotPasswordScreen(),
+        ),
       ),
       GoRoute(
         path: RouteNames.privacyPolicy,

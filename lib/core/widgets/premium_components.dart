@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../config/theme/app_design_tokens.dart';
+import '../../config/theme/app_elevation.dart';
 import '../../config/theme/app_spacing.dart';
 import '../../config/theme/app_theme.dart';
 
-/// Premium card with soft elevation — Airbnb / CRED style.
+/// Premium card with soft elevation — calm, layered product feel.
 class PremiumCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;
@@ -28,28 +29,17 @@ class PremiumCard extends StatelessWidget {
     final tokens = context.tokens;
     final bg = color ?? tokens.surfaceElevated;
 
-    final card = Container(
+    final card = AnimatedContainer(
+      duration: AppMotion.fast,
+      curve: AppMotion.easeOut,
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(radius),
-        boxShadow: isDark
-            ? null
-            : [
-                BoxShadow(
-                  color: AppTheme.primaryDark.withValues(alpha: 0.06),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
-                ),
-                BoxShadow(
-                  color: AppTheme.black.withValues(alpha: 0.03),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+        boxShadow: isDark ? AppElevation.none : AppElevation.soft(AppTheme.primaryDark),
         border: Border.all(
           color: isDark
               ? tokens.borderSubtle.withValues(alpha: 0.6)
-              : tokens.borderSubtle.withValues(alpha: 0.7),
+              : tokens.borderSubtle.withValues(alpha: 0.85),
         ),
       ),
       padding: padding,

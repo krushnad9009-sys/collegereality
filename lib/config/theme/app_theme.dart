@@ -1,37 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'app_fonts.dart';
 
 import 'app_design_tokens.dart';
 
 class AppTheme {
-  // Brand Colors
-  static const Color primaryColor = Color(0xFF6366F1);
-  static const Color primaryLight = Color(0xFF818CF8);
-  static const Color primaryDark = Color(0xFF4F46E5);
+  // Brand — deep teal (trust / academic), not generic indigo/purple.
+  static const Color primaryColor = Color(0xFF0F766E);
+  static const Color primaryLight = Color(0xFF14B8A6);
+  static const Color primaryDark = Color(0xFF115E59);
 
-  static const Color secondaryColor = Color(0xFF0EA5E9);
-  static const Color secondaryLight = Color(0xFF38BDF8);
-  static const Color secondaryDark = Color(0xFF0284C7);
+  static const Color secondaryColor = Color(0xFF0369A1);
+  static const Color secondaryLight = Color(0xFF0EA5E9);
+  static const Color secondaryDark = Color(0xFF075985);
 
-  static const Color accentColor = Color(0xFF10B981);
-  static const Color warningColor = Color(0xFFF59E0B);
-  static const Color errorColor = Color(0xFFEF4444);
+  static const Color accentColor = Color(0xFF059669);
+  static const Color warningColor = Color(0xFFD97706);
+  static const Color errorColor = Color(0xFFDC2626);
 
   static const Color white = Color(0xFFFFFFFF);
   static const Color black = Color(0xFF000000);
-  static const Color gray50 = Color(0xFFFAFAFA);
-  static const Color gray100 = Color(0xFFF3F4F6);
-  static const Color gray200 = Color(0xFFE5E7EB);
-  static const Color gray300 = Color(0xFFD1D5DB);
-  static const Color gray400 = Color(0xFF9CA3AF);
-  static const Color gray500 = Color(0xFF6B7280);
-  static const Color gray600 = Color(0xFF4B5563);
-  static const Color gray700 = Color(0xFF374151);
-  static const Color gray800 = Color(0xFF1F2937);
-  static const Color gray900 = Color(0xFF111827);
+  static const Color gray50 = Color(0xFFF8FAFC);
+  static const Color gray100 = Color(0xFFF1F5F9);
+  static const Color gray200 = Color(0xFFE2E8F0);
+  static const Color gray300 = Color(0xFFCBD5E1);
+  static const Color gray400 = Color(0xFF94A3B8);
+  static const Color gray500 = Color(0xFF64748B);
+  static const Color gray600 = Color(0xFF475569);
+  static const Color gray700 = Color(0xFF334155);
+  static const Color gray800 = Color(0xFF1E293B);
+  static const Color gray900 = Color(0xFF0F172A);
 
-  static const Color surfaceMuted = Color(0xFFF5F7FB);
+  static const Color surfaceMuted = Color(0xFFF4F7F8);
 
   static ThemeData get lightTheme => _buildTheme(
         brightness: Brightness.light,
@@ -109,7 +109,7 @@ class AppTheme {
             ? SystemUiOverlayStyle.light
             : SystemUiOverlayStyle.dark,
         iconTheme: IconThemeData(color: appBarFg),
-        titleTextStyle: GoogleFonts.plusJakartaSans(
+        titleTextStyle: AppFonts.plusJakarta(
           fontSize: 18,
           fontWeight: FontWeight.w700,
           color: appBarFg,
@@ -127,15 +127,17 @@ class AppTheme {
         ),
       ),
       navigationBarTheme: NavigationBarThemeData(
-        height: 68,
+        height: 72,
         elevation: 0,
         backgroundColor: Colors.transparent,
         indicatorColor: primaryColor.withValues(alpha: 0.14),
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           final selected = states.contains(WidgetState.selected);
-          return GoogleFonts.poppins(
+          return AppFonts.plusJakarta(
             fontSize: 11,
-            fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+            letterSpacing: -0.1,
           );
         }),
       ),
@@ -143,14 +145,16 @@ class AppTheme {
         style: FilledButton.styleFrom(
           backgroundColor: isDark ? primaryLight : primaryColor,
           foregroundColor: isDark ? gray900 : white,
-          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
-          minimumSize: const Size(64, 48),
+          padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 24),
+          minimumSize: const Size(64, 52),
+          elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(tokens.buttonRadius),
           ),
-          textStyle: GoogleFonts.poppins(
+          textStyle: AppFonts.plusJakarta(
             fontSize: 15,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.1,
           ),
         ),
       ),
@@ -158,24 +162,25 @@ class AppTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: isDark ? primaryLight : primaryColor,
           foregroundColor: isDark ? gray900 : white,
-          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
-          minimumSize: const Size(64, 48),
+          padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 24),
+          minimumSize: const Size(64, 52),
           elevation: 0,
-          shadowColor: primaryDark.withValues(alpha: 0.25),
+          shadowColor: primaryDark.withValues(alpha: 0.28),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(tokens.buttonRadius),
           ),
-          textStyle: GoogleFonts.poppins(
+          textStyle: AppFonts.plusJakarta(
             fontSize: 15,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.1,
           ),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: isDark ? primaryLight : primaryColor,
-          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
-          minimumSize: const Size(64, 48),
+          padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 24),
+          minimumSize: const Size(64, 52),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(tokens.buttonRadius),
           ),
@@ -183,9 +188,10 @@ class AppTheme {
             color: isDark ? primaryLight : primaryColor,
             width: 1.5,
           ),
-          textStyle: GoogleFonts.poppins(
+          textStyle: AppFonts.plusJakarta(
             fontSize: 15,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.1,
           ),
         ),
       ),
@@ -193,9 +199,9 @@ class AppTheme {
         style: TextButton.styleFrom(
           foregroundColor: isDark ? primaryLight : primaryColor,
           minimumSize: const Size(48, 44),
-          textStyle: GoogleFonts.poppins(
+          textStyle: AppFonts.plusJakarta(
             fontSize: 14,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w700,
           ),
         ),
       ),
@@ -222,22 +228,22 @@ class AppTheme {
           borderRadius: BorderRadius.circular(tokens.buttonRadius),
           borderSide: const BorderSide(color: errorColor),
         ),
-        labelStyle: GoogleFonts.poppins(
+        labelStyle: AppFonts.plusJakarta(
           color: tokens.textSecondary,
           fontWeight: FontWeight.w500,
         ),
-        hintStyle: GoogleFonts.poppins(color: tokens.textTertiary),
+        hintStyle: AppFonts.plusJakarta(color: tokens.textTertiary),
       ),
       chipTheme: ChipThemeData(
         backgroundColor: inputFill,
         selectedColor: isDark ? primaryLight : primaryColor,
         disabledColor: inputFill.withValues(alpha: 0.5),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(tokens.chipRadius),
         ),
-        labelStyle: GoogleFonts.poppins(
+        labelStyle: AppFonts.plusJakarta(
           color: tokens.textSecondary,
-          fontWeight: FontWeight.w500,
+          fontWeight: FontWeight.w600,
         ),
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
       ),
@@ -247,7 +253,7 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(tokens.cardRadius),
         ),
-        titleTextStyle: GoogleFonts.poppins(
+        titleTextStyle: AppFonts.plusJakarta(
           fontSize: 18,
           fontWeight: FontWeight.w700,
           color: textColor,
@@ -269,7 +275,7 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
-        contentTextStyle: GoogleFonts.poppins(
+        contentTextStyle: AppFonts.plusJakarta(
           fontSize: 14,
           fontWeight: FontWeight.w500,
         ),
@@ -300,7 +306,7 @@ class AppTheme {
       double? height,
       double? letterSpacing,
     }) =>
-        GoogleFonts.plusJakartaSans(
+        AppFonts.plusJakarta(
           fontSize: size,
           fontWeight: weight,
           color: textColor,

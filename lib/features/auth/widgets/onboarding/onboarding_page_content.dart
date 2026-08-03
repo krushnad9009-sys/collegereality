@@ -198,20 +198,20 @@ class _IllustrationFrame extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(compact ? 24 : 32),
+        borderRadius: BorderRadius.circular(compact ? 28 : 36),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            OnboardingPalette.warmWhite,
-            accent.withValues(alpha: 0.06),
-            OnboardingPalette.warmWhiteDeep,
+            accent.withValues(alpha: 0.10),
+            Colors.white.withValues(alpha: 0.72),
+            accent.withValues(alpha: 0.04),
           ],
         ),
-        border: Border.all(color: accent.withValues(alpha: 0.12)),
+        border: Border.all(color: accent.withValues(alpha: 0.14)),
         boxShadow: [
           BoxShadow(
-            color: accent.withValues(alpha: 0.12),
+            color: accent.withValues(alpha: 0.16),
             blurRadius: compact ? 28 : 40,
             offset: Offset(0, compact ? 12 : 18),
           ),

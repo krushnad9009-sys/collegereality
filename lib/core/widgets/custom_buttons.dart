@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../config/theme/app_fonts.dart';
+import '../../config/theme/app_spacing.dart';
 import '../../config/theme/app_theme.dart';
 import 'google_logo_icon.dart';
 
@@ -17,7 +18,7 @@ class PrimaryButton extends StatelessWidget {
     this.isLoading = false,
     this.width,
     this.height = 52,
-    this.borderRadius = 12,
+    this.borderRadius = AppSpacing.radiusMd,
     super.key,
   });
 
@@ -49,7 +50,7 @@ class PrimaryButton extends StatelessWidget {
               )
             : Text(
                 label,
-                style: GoogleFonts.poppins(
+                style: AppFonts.plusJakarta(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                 ),
@@ -73,7 +74,7 @@ class SecondaryButton extends StatelessWidget {
     this.isLoading = false,
     this.width,
     this.height = 52,
-    this.borderRadius = 12,
+    this.borderRadius = AppSpacing.radiusMd,
     super.key,
   });
 
@@ -105,7 +106,7 @@ class SecondaryButton extends StatelessWidget {
               )
             : Text(
                 label,
-                style: GoogleFonts.poppins(
+                style: AppFonts.plusJakarta(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                 ),
@@ -141,7 +142,7 @@ class GoogleSignInButton extends StatelessWidget {
         style: OutlinedButton.styleFrom(
           foregroundColor: isDark ? AppTheme.white : AppTheme.gray900,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
           ),
           side: BorderSide(
             color: isDark ? AppTheme.gray700 : AppTheme.gray300,
@@ -162,7 +163,7 @@ class GoogleSignInButton extends StatelessWidget {
             : const GoogleLogoIcon(size: 20),
         label: Text(
           'Continue with Google',
-          style: GoogleFonts.poppins(
+          style: AppFonts.plusJakarta(
             fontSize: 14,
             fontWeight: FontWeight.w600,
             color: isDark ? AppTheme.white : AppTheme.gray900,
@@ -198,7 +199,7 @@ class TextLink extends StatelessWidget {
       ),
       child: Text(
         text,
-        style: GoogleFonts.poppins(
+        style: AppFonts.plusJakarta(
           fontSize: fontSize,
           fontWeight: FontWeight.w600,
           color: color ?? AppTheme.primaryColor,
@@ -237,7 +238,7 @@ class SocialButton extends StatelessWidget {
         style: OutlinedButton.styleFrom(
           foregroundColor: isDark ? AppTheme.white : AppTheme.gray900,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
           ),
           side: BorderSide(
             color: isDark ? AppTheme.gray700 : AppTheme.gray300,
@@ -258,7 +259,7 @@ class SocialButton extends StatelessWidget {
             : Icon(icon),
         label: Text(
           label,
-          style: GoogleFonts.poppins(
+          style: AppFonts.plusJakarta(
             fontSize: 14,
             fontWeight: FontWeight.w600,
           ),

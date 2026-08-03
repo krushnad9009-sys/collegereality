@@ -8,6 +8,7 @@ import 'package:college_reality_india/features/communication/models/guide_stats_
 import 'package:college_reality_india/features/community/models/user_presence_model.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
+import 'package:college_reality_india/config/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -256,7 +257,7 @@ Future<void> pumpRouterApp(
   await tester.pumpWidget(
     ProviderScope(
       overrides: overrides,
-      child: MaterialApp.router(routerConfig: router),
+      child: MaterialApp.router(theme: AppTheme.lightTheme, routerConfig: router),
     ),
   );
   await tester.pump();
@@ -272,7 +273,7 @@ Future<void> pumpScreen(
   await tester.pumpWidget(
     ProviderScope(
       overrides: overrides,
-      child: MaterialApp(home: child),
+      child: MaterialApp(theme: AppTheme.lightTheme, home: child),
     ),
   );
   await tester.pump();

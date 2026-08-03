@@ -34,27 +34,35 @@ class AppDesignTokens extends ThemeExtension<AppDesignTokens> {
   });
 
   static const light = AppDesignTokens(
-    surfaceMuted: Color(0xFFF5F7FB),
+    surfaceMuted: Color(0xFFF4F7F8),
     surfaceElevated: Color(0xFFFFFFFF),
-    borderSubtle: Color(0xFFE5E7EB),
-    borderStrong: Color(0xFFD1D5DB),
-    textPrimary: Color(0xFF111827),
-    textSecondary: Color(0xFF4B5563),
-    textTertiary: Color(0xFF9CA3AF),
-    shimmerBase: Color(0xFFF3F4F6),
-    shimmerHighlight: Color(0xFFE5E7EB),
+    borderSubtle: Color(0xFFE2E8F0),
+    borderStrong: Color(0xFFCBD5E1),
+    textPrimary: Color(0xFF0F172A),
+    textSecondary: Color(0xFF475569),
+    textTertiary: Color(0xFF94A3B8),
+    shimmerBase: Color(0xFFF1F5F9),
+    shimmerHighlight: Color(0xFFE2E8F0),
+    cardRadius: 22,
+    buttonRadius: 16,
+    chipRadius: 24,
+    navBarRadius: 28,
   );
 
   static const dark = AppDesignTokens(
-    surfaceMuted: Color(0xFF111827),
-    surfaceElevated: Color(0xFF1F2937),
-    borderSubtle: Color(0xFF374151),
-    borderStrong: Color(0xFF4B5563),
-    textPrimary: Color(0xFFF9FAFB),
-    textSecondary: Color(0xFFD1D5DB),
-    textTertiary: Color(0xFF9CA3AF),
-    shimmerBase: Color(0xFF1F2937),
-    shimmerHighlight: Color(0xFF374151),
+    surfaceMuted: Color(0xFF0F172A),
+    surfaceElevated: Color(0xFF1E293B),
+    borderSubtle: Color(0xFF334155),
+    borderStrong: Color(0xFF475569),
+    textPrimary: Color(0xFFF8FAFC),
+    textSecondary: Color(0xFFCBD5E1),
+    textTertiary: Color(0xFF94A3B8),
+    shimmerBase: Color(0xFF1E293B),
+    shimmerHighlight: Color(0xFF334155),
+    cardRadius: 22,
+    buttonRadius: 16,
+    chipRadius: 24,
+    navBarRadius: 28,
   );
 
   @override
