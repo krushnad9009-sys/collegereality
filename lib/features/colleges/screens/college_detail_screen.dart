@@ -157,7 +157,15 @@ class _CollegeDetailScreenState extends ConsumerState<CollegeDetailScreen>
         if (college == null) {
           return Scaffold(
             appBar: AppBar(),
-            body: const Center(child: Text('College not found')),
+            body: AsyncEmptyView(
+              icon: Icons.school_outlined,
+              title: 'College not found',
+              subtitle: 'This college may have been removed or is unavailable.',
+              action: FilledButton(
+                onPressed: () => context.go(RouteNames.collegeSearch),
+                child: const Text('Back to search'),
+              ),
+            ),
           );
         }
 
@@ -941,23 +949,9 @@ class _ReviewsTabState extends ConsumerState<_ReviewsTab> {
 
     return reviewsAsync.when(
       loading: () => const ReviewListSkeleton(),
-      error: (e, _) => Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 48, color: AppTheme.errorColor),
-              const SizedBox(height: 12),
-              Text(
-                'Failed to load reviews',
-                style: AppFonts.plusJakarta(fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 8),
-              Text('$e', textAlign: TextAlign.center),
-            ],
-          ),
-        ),
+      error: (e, _) => AsyncErrorView.fromError(
+        e,
+        onRetry: () => ref.invalidate(collegeReviewsProvider(_collegeId)),
       ),
       data: (firstPage) {
         final reviews = _mergeLists(firstPage);

@@ -35,13 +35,12 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       await ref.read(authProvider.notifier).sendPasswordResetEmail(
             _emailController.text.trim(),
           );
+      if (!mounted) return;
       setState(() => _emailSent = true);
-      if (mounted) {
-        SnackBarHelper.showSuccessSnackBar(
-          context,
-          message: 'Password reset email sent! Check your inbox.',
-        );
-      }
+      SnackBarHelper.showSuccessSnackBar(
+        context,
+        message: 'Password reset email sent! Check your inbox.',
+      );
     } catch (e) {
       if (mounted) {
         SnackBarHelper.showErrorSnackBar(

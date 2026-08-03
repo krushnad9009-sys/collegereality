@@ -58,6 +58,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.dispose();
   }
 
+  void _goAfterLogin() {
+    final from = GoRouterState.of(context).uri.queryParameters['from'];
+    context.go(RouteNames.safeReturnPath(from) ?? RouteNames.home);
+  }
+
   Future<void> _handleEmailLogin() async {
     if (!_formKey.currentState!.validate()) {
       return;
@@ -84,7 +89,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           context,
           message: 'Logged in successfully!',
         );
-        context.go(RouteNames.home);
+        _goAfterLogin();
       }
     } catch (e) {
       if (mounted) {
@@ -119,7 +124,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           context,
           message: 'Logged in with Google!',
         );
-        context.go(RouteNames.home);
+        _goAfterLogin();
       }
     } catch (e) {
       if (mounted) {

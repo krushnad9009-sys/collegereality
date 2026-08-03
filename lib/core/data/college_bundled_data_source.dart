@@ -75,7 +75,10 @@ class CollegeBundledDataSource {
     var results = all.where((c) => includeInactive || c.isActive).toList();
 
     if (state != null && state.isNotEmpty) {
-      results = results.where((c) => c.state == state).toList();
+      final normalizedState = CollegeSearchUtils.normalizeState(state);
+      results = results
+          .where((c) => CollegeSearchUtils.normalizeState(c.state) == normalizedState)
+          .toList();
     }
     if (city != null && city.isNotEmpty) {
       final cityLower = CollegeSearchUtils.normalizeCity(city);

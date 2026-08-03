@@ -139,7 +139,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         if (path.startsWith('/admin') && path != RouteNames.adminLogin) {
           return RouteNames.adminLogin;
         }
-        return RouteNames.login;
+        final intended = state.uri.toString();
+        return RouteNames.loginWithReturn(intended);
       }
 
       Future<UserModel?> userDetail() async {
@@ -161,6 +162,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         if (user != null && !user.displayNameSetupComplete) {
           return RouteNames.displayNameSetup;
         }
+        if (path == RouteNames.login) {
+          final returnTo = RouteNames.safeReturnPath(
+            state.uri.queryParameters['from'],
+          );
+          if (returnTo != null) return returnTo;
+        }
         return RouteNames.home;
       }
 
@@ -173,16 +180,24 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       if (path == RouteNames.adminLogin) {
         if (isLoggedIn) {
-          final isStaff = await ref.read(isStaffProvider.future);
-          if (isStaff) return RouteNames.admin;
+          try {
+            final isStaff = await ref.read(isStaffProvider.future);
+            if (isStaff) return RouteNames.admin;
+          } catch (_) {
+            return RouteNames.home;
+          }
         }
         return null;
       }
 
       final isAdminRoute = path.startsWith('/admin');
       if (isAdminRoute && isLoggedIn) {
-        final isStaff = await ref.read(isStaffProvider.future);
-        if (!isStaff) return RouteNames.home;
+        try {
+          final isStaff = await ref.read(isStaffProvider.future);
+          if (!isStaff) return RouteNames.home;
+        } catch (_) {
+          return RouteNames.home;
+        }
       }
 
       return null;

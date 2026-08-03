@@ -144,7 +144,21 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
 
     setState(() => _isUploadingMedia = true);
     try {
-      final user = ref.read(currentUserProvider)!;
+      final user = ref.read(currentUserProvider);
+      if (user == null) {
+        if (mounted) {
+          SnackBarHelper.showErrorSnackBar(
+            context,
+            message: 'Please log in again to upload media.',
+          );
+          context.go(
+            RouteNames.loginWithReturn(
+              '${RouteNames.writeReviewPath(widget.collegeId)}?name=${Uri.encodeComponent(widget.collegeName)}',
+            ),
+          );
+        }
+        return;
+      }
       final storage = ref.read(reviewStorageServiceProvider);
       final reviewId = _existingReview?.id ?? 'draft_${user.uid}';
 
@@ -161,6 +175,13 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
         _photoUrls.add(url);
       }
       if (mounted) setState(() {});
+    } catch (e) {
+      if (mounted) {
+        SnackBarHelper.showErrorSnackBar(
+          context,
+          message: 'Failed to upload photo. Please try again.',
+        );
+      }
     } finally {
       if (mounted) setState(() => _isUploadingMedia = false);
     }
@@ -179,7 +200,21 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
 
     setState(() => _isUploadingMedia = true);
     try {
-      final user = ref.read(currentUserProvider)!;
+      final user = ref.read(currentUserProvider);
+      if (user == null) {
+        if (mounted) {
+          SnackBarHelper.showErrorSnackBar(
+            context,
+            message: 'Please log in again to upload media.',
+          );
+          context.go(
+            RouteNames.loginWithReturn(
+              '${RouteNames.writeReviewPath(widget.collegeId)}?name=${Uri.encodeComponent(widget.collegeName)}',
+            ),
+          );
+        }
+        return;
+      }
       final storage = ref.read(reviewStorageServiceProvider);
       final reviewId = _existingReview?.id ?? 'draft_${user.uid}';
       final url = await storage.uploadVideo(
@@ -190,6 +225,13 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
       );
       _videoUrls.add(url);
       if (mounted) setState(() {});
+    } catch (e) {
+      if (mounted) {
+        SnackBarHelper.showErrorSnackBar(
+          context,
+          message: 'Failed to upload video. Please try again.',
+        );
+      }
     } finally {
       if (mounted) setState(() => _isUploadingMedia = false);
     }
@@ -344,13 +386,39 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
         body: Center(child: CircularProgressIndicator()),
       ),
       error: (e, _) => Scaffold(
-        appBar: AppBar(),
-        body: Center(child: Text('Error: $e')),
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new, size: 18),
+            onPressed: () {
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                context.go(RouteNames.collegeDetailsPath(widget.collegeId));
+              }
+            },
+          ),
+        ),
+        body: AsyncErrorView.fromError(
+          e,
+          onRetry: () => ref.invalidate(currentUserDetailProvider),
+        ),
       ),
       data: (userDetail) {
         if (userDetail == null) {
-          return const Scaffold(
-            body: Center(child: Text('Please log in to write a review')),
+          final returnPath =
+              '${RouteNames.writeReviewPath(widget.collegeId)}?name=${Uri.encodeComponent(widget.collegeName)}';
+          return Scaffold(
+            appBar: AppBar(title: const Text('Write Review')),
+            body: AsyncEmptyView(
+              icon: Icons.lock_outline,
+              title: 'Please log in to write a review',
+              subtitle: 'Sign in to share your college experience.',
+              action: FilledButton(
+                onPressed: () =>
+                    context.go(RouteNames.loginWithReturn(returnPath)),
+                child: const Text('Log in'),
+              ),
+            ),
           );
         }
 

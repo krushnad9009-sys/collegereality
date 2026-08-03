@@ -192,19 +192,29 @@ class CollegeRepositoryImpl implements CollegeRepository {
     bool includeInactive = false,
   }) async {
     if (FirestoreQuotaGuard.instance.shouldBlockRequest()) {
-      final session = CollegeSessionCache.getSearchStale(limit);
-      if (session != null && session.isNotEmpty) {
-        return CollegeSearchPage(
-          colleges: session,
-          hasMore: false,
-        );
-      }
-      final local = await CollegeLocalCache.loadSearch();
-      if (local != null && local.isNotEmpty) {
-        return CollegeSearchPage(
-          colleges: local.take(limit).toList(),
-          hasMore: false,
-        );
+      // Never return unfiltered cache when the user applied filters.
+      final hasFilters = (query?.trim().isNotEmpty ?? false) ||
+          (state?.trim().isNotEmpty ?? false) ||
+          (city?.trim().isNotEmpty ?? false) ||
+          (university?.trim().isNotEmpty ?? false) ||
+          (course?.trim().isNotEmpty ?? false) ||
+          (category?.trim().isNotEmpty ?? false) ||
+          (type?.trim().isNotEmpty ?? false);
+      if (!hasFilters) {
+        final session = CollegeSessionCache.getSearchStale(limit);
+        if (session != null && session.isNotEmpty) {
+          return CollegeSearchPage(
+            colleges: session,
+            hasMore: false,
+          );
+        }
+        final local = await CollegeLocalCache.loadSearch();
+        if (local != null && local.isNotEmpty) {
+          return CollegeSearchPage(
+            colleges: local.take(limit).toList(),
+            hasMore: false,
+          );
+        }
       }
       return CollegeBundledDataSource.search(
         query: query,
@@ -243,15 +253,24 @@ class CollegeRepositoryImpl implements CollegeRepository {
       FirestoreQuotaGuard.instance.markQuotaExceeded();
 
       final session = CollegeSessionCache.getSearchStale(limit);
-      if (session != null && session.isNotEmpty) {
+      final hasFilters = (query?.trim().isNotEmpty ?? false) ||
+          (state?.trim().isNotEmpty ?? false) ||
+          (city?.trim().isNotEmpty ?? false) ||
+          (university?.trim().isNotEmpty ?? false) ||
+          (course?.trim().isNotEmpty ?? false) ||
+          (category?.trim().isNotEmpty ?? false) ||
+          (type?.trim().isNotEmpty ?? false);
+      if (!hasFilters && session != null && session.isNotEmpty) {
         return CollegeSearchPage(colleges: session, hasMore: false);
       }
-      final local = await CollegeLocalCache.loadSearch();
-      if (local != null && local.isNotEmpty) {
-        return CollegeSearchPage(
-          colleges: local.take(limit).toList(),
-          hasMore: false,
-        );
+      if (!hasFilters) {
+        final local = await CollegeLocalCache.loadSearch();
+        if (local != null && local.isNotEmpty) {
+          return CollegeSearchPage(
+            colleges: local.take(limit).toList(),
+            hasMore: false,
+          );
+        }
       }
       return CollegeBundledDataSource.search(
         query: query,

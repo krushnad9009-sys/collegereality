@@ -169,7 +169,10 @@ class FirestoreCollegeService {
     }
 
     if (state != null && state.isNotEmpty) {
-      q = q.where('state', isEqualTo: state);
+      q = q.where(
+        'stateLower',
+        isEqualTo: CollegeSearchUtils.normalizeState(state),
+      );
     }
     if (city != null && city.isNotEmpty) {
       final normalizedCity = CollegeSearchUtils.normalizeCity(city);
@@ -356,7 +359,12 @@ class FirestoreCollegeService {
           .toList();
     }
     if (state != null && state.isNotEmpty) {
-      colleges = colleges.where((c) => c.state == state).toList();
+      final normalizedState = CollegeSearchUtils.normalizeState(state);
+      colleges = colleges
+          .where(
+            (c) => CollegeSearchUtils.normalizeState(c.state) == normalizedState,
+          )
+          .toList();
     }
     if (city != null && city.isNotEmpty) {
       final cityLower = CollegeSearchUtils.normalizeCity(city);

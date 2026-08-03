@@ -73,7 +73,10 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
     _universityController = TextEditingController();
     _selectedState = widget.initialState;
     _selectedCourse = widget.initialCourse;
-    _selectedCategory = widget.initialCategory;
+    _selectedCategory = CollegeConstants.clampToAllowed(
+      widget.initialCategory,
+      CollegeConstants.collegeCategories,
+    );
     if (widget.initialFilter == 'city' || widget.initialFilter == 'state') {
       _showFilters = true;
     }
@@ -602,24 +605,33 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
                     statesAsync.when(
                       loading: () => const SizedBox.shrink(),
                       error: (_, _) => const SizedBox.shrink(),
-                      data: (states) => DropdownButtonFormField<String>(
-                        key: ValueKey('state-$_selectedState'),
-                        initialValue: _selectedState,
-                        decoration: _filterDecoration(context, 'State'),
-                        items: [
-                          const DropdownMenuItem(
-                            value: null,
-                            child: Text('All States'),
-                          ),
-                          ...states.map(
-                            (s) => DropdownMenuItem(value: s, child: Text(s)),
-                          ),
-                        ],
-                        onChanged: (v) {
-                          setState(() => _selectedState = v);
-                          _runSearch();
-                        },
-                      ),
+                      data: (states) {
+                        final uniqueStates =
+                            CollegeConstants.dedupePreserveOrder(states);
+                        final stateValue = CollegeConstants.clampToAllowed(
+                          _selectedState,
+                          uniqueStates,
+                        );
+                        return DropdownButtonFormField<String>(
+                          key: ValueKey('state-$stateValue'),
+                          initialValue: stateValue,
+                          decoration: _filterDecoration(context, 'State'),
+                          items: [
+                            const DropdownMenuItem(
+                              value: null,
+                              child: Text('All States'),
+                            ),
+                            ...uniqueStates.map(
+                              (st) =>
+                                  DropdownMenuItem(value: st, child: Text(st)),
+                            ),
+                          ],
+                          onChanged: (v) {
+                            setState(() => _selectedState = v);
+                            _runSearch();
+                          },
+                        );
+                      },
                     ),
                     const SizedBox(height: AppSpacing.md),
                     SearchableTextFormField(
@@ -656,24 +668,33 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
                     coursesAsync.when(
                       loading: () => const SizedBox.shrink(),
                       error: (_, _) => const SizedBox.shrink(),
-                      data: (courses) => DropdownButtonFormField<String>(
-                        key: ValueKey('course-$_selectedCourse'),
-                        initialValue: _selectedCourse,
-                        decoration: _filterDecoration(context, 'Course'),
-                        items: [
-                          const DropdownMenuItem(
-                            value: null,
-                            child: Text('All Courses'),
-                          ),
-                          ...courses.map(
-                            (c) => DropdownMenuItem(value: c, child: Text(c)),
-                          ),
-                        ],
-                        onChanged: (v) {
-                          setState(() => _selectedCourse = v);
-                          _runSearch();
-                        },
-                      ),
+                      data: (courses) {
+                        final uniqueCourses =
+                            CollegeConstants.dedupePreserveOrder(courses);
+                        final courseValue = CollegeConstants.clampToAllowed(
+                          _selectedCourse,
+                          uniqueCourses,
+                        );
+                        return DropdownButtonFormField<String>(
+                          key: ValueKey('course-$courseValue'),
+                          initialValue: courseValue,
+                          decoration: _filterDecoration(context, 'Course'),
+                          items: [
+                            const DropdownMenuItem(
+                              value: null,
+                              child: Text('All Courses'),
+                            ),
+                            ...uniqueCourses.map(
+                              (c) =>
+                                  DropdownMenuItem(value: c, child: Text(c)),
+                            ),
+                          ],
+                          onChanged: (v) {
+                            setState(() => _selectedCourse = v);
+                            _runSearch();
+                          },
+                        );
+                      },
                     ),
                     const SizedBox(height: AppSpacing.md),
                     DropdownButtonFormField<String>(
@@ -700,32 +721,33 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
                       },
                     ),
                     const SizedBox(height: AppSpacing.md),
-                    DropdownButtonFormField<String>(
-                      key: ValueKey('category-$_selectedCategory'),
-                      initialValue: _selectedCategory,
-                      decoration: _filterDecoration(context, 'Category'),
-                      items: const [
-                        DropdownMenuItem(
-                            value: null, child: Text('All Categories')),
-                        DropdownMenuItem(
-                            value: 'Engineering', child: Text('Engineering')),
-                        DropdownMenuItem(
-                            value: 'Medical', child: Text('Medical')),
-                        DropdownMenuItem(value: 'MBA', child: Text('MBA')),
-                        DropdownMenuItem(value: 'Law', child: Text('Law')),
-                        DropdownMenuItem(
-                            value: 'Pharmacy', child: Text('Pharmacy')),
-                        DropdownMenuItem(value: 'Arts', child: Text('Arts')),
-                        DropdownMenuItem(
-                            value: 'Commerce', child: Text('Commerce')),
-                        DropdownMenuItem(
-                            value: 'Science', child: Text('Science')),
-                        DropdownMenuItem(
-                            value: 'General', child: Text('General')),
-                      ],
-                      onChanged: (v) {
-                        setState(() => _selectedCategory = v);
-                        _runSearch();
+                    Builder(
+                      builder: (context) {
+                        final categoryValue = CollegeConstants.clampToAllowed(
+                          _selectedCategory,
+                          CollegeConstants.collegeCategories,
+                        );
+                        return DropdownButtonFormField<String>(
+                          key: ValueKey('category-$categoryValue'),
+                          initialValue: categoryValue,
+                          decoration: _filterDecoration(context, 'Category'),
+                          items: [
+                            const DropdownMenuItem(
+                              value: null,
+                              child: Text('All Categories'),
+                            ),
+                            ...CollegeConstants.collegeCategories.map(
+                              (c) => DropdownMenuItem(
+                                value: c,
+                                child: Text(c),
+                              ),
+                            ),
+                          ],
+                          onChanged: (v) {
+                            setState(() => _selectedCategory = v);
+                            _runSearch();
+                          },
+                        );
                       },
                     ),
                     Align(

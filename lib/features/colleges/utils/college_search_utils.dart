@@ -47,7 +47,22 @@ class CollegeSearchUtils {
 
   static String normalizeDistrict(String district) => _normalizeExact(district);
 
-  static String normalizeState(String state) => _normalizeExact(state);
+  /// Canonicalizes common misspellings so filters match seed/import data.
+  static const Map<String, String> stateAliases = {
+    'chhatisgarh': 'chhattisgarh',
+    'chhattisgarh': 'chhattisgarh',
+    'uttrakhand': 'uttarakhand',
+    'uttarakhand': 'uttarakhand',
+    'orissa': 'odisha',
+    'pondicherry': 'puducherry',
+    'nct of delhi': 'delhi',
+    'delhi nct': 'delhi',
+  };
+
+  static String normalizeState(String state) {
+    final normalized = _normalizeExact(state);
+    return stateAliases[normalized] ?? normalized;
+  }
 
   static String _normalizeExact(String value) =>
       value.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');

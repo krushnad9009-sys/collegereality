@@ -187,8 +187,23 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final authUser = ref.watch(currentUserProvider);
     final userDetailAsync = ref.watch(currentUserDetailProvider);
     if (authUser == null) {
-      return const Scaffold(
-        body: Center(child: Text('Please log in to view your profile')),
+      return Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('Please log in to view your profile'),
+                const SizedBox(height: 16),
+                FilledButton(
+                  onPressed: () => context.go(RouteNames.login),
+                  child: const Text('Log in'),
+                ),
+              ],
+            ),
+          ),
+        ),
       );
     }
 

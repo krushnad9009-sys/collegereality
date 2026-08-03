@@ -23,14 +23,14 @@ class WriteReviewButton extends ConsumerWidget {
   });
 
   void _onPressed(BuildContext context, WidgetRef ref) {
+    final writePath =
+        '${RouteNames.writeReviewPath(collegeId)}?name=${Uri.encodeComponent(collegeName)}';
     final user = ref.read(currentUserProvider);
     if (user == null) {
-      context.go(RouteNames.login);
+      context.go(RouteNames.loginWithReturn(writePath));
       return;
     }
-    context.go(
-      '${RouteNames.writeReviewPath(collegeId)}?name=${Uri.encodeComponent(collegeName)}',
-    );
+    context.go(writePath);
   }
 
   @override

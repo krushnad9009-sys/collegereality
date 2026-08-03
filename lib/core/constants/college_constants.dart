@@ -18,6 +18,24 @@ class CollegeConstants {
     'autonomous',
   ];
 
+  /// Must stay in sync with browse/home category chips and seed categories.
+  static const List<String> collegeCategories = [
+    'Engineering',
+    'Medical',
+    'MBA',
+    'Law',
+    'Pharmacy',
+    'Arts',
+    'Commerce',
+    'Science',
+    'General',
+    'Polytechnic',
+    'Nursing',
+    'Agriculture',
+    'Architecture',
+    'Fashion',
+  ];
+
   static const List<String> naacGrades = [
     'A++',
     'A+',
@@ -36,6 +54,9 @@ class CollegeConstants {
     'BCA',
     'B.Com',
     'B.Sc',
+    'B.Sc Nursing',
+    'GNM',
+    'ANM',
     'MBA',
     'M.Tech',
     'MBBS',
@@ -86,4 +107,25 @@ class CollegeConstants {
     'Uttarakhand',
     'West Bengal',
   ];
+
+  /// Case-insensitive dedupe preserving first-seen casing.
+  static List<String> dedupePreserveOrder(Iterable<String> values) {
+    final seen = <String>{};
+    final out = <String>[];
+    for (final value in values) {
+      final key = value.trim().toLowerCase();
+      if (key.isEmpty || !seen.add(key)) continue;
+      out.add(value.trim());
+    }
+    return out;
+  }
+
+  /// Returns [value] only when it exists in [allowed] (case-sensitive match).
+  static String? clampToAllowed(String? value, Iterable<String> allowed) {
+    if (value == null || value.isEmpty) return null;
+    for (final item in allowed) {
+      if (item == value) return value;
+    }
+    return null;
+  }
 }

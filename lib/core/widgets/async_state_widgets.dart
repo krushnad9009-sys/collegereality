@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../config/theme/app_design_tokens.dart';
+import '../../config/theme/app_fonts.dart';
 import '../../config/theme/app_theme.dart';
 import '../utils/firestore_error_utils.dart';
 import 'skeleton_loader.dart';
@@ -31,7 +31,7 @@ class AsyncLoadingView extends StatelessWidget {
             const SizedBox(height: 20),
             Text(
               message!,
-              style: GoogleFonts.poppins(
+              style: AppFonts.plusJakarta(
                 color: tokens.textSecondary,
                 fontSize: 14,
               ),
@@ -81,7 +81,7 @@ class AsyncEmptyView extends StatelessWidget {
             const SizedBox(height: 24),
             Text(
               title,
-              style: GoogleFonts.plusJakartaSans(
+              style: AppFonts.plusJakarta(
                 fontSize: 20,
                 fontWeight: FontWeight.w800,
                 color: tokens.textPrimary,
@@ -93,7 +93,7 @@ class AsyncEmptyView extends StatelessWidget {
               const SizedBox(height: 10),
               Text(
                 subtitle!,
-                style: GoogleFonts.plusJakartaSans(
+                style: AppFonts.plusJakarta(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                   color: tokens.textSecondary,
@@ -170,7 +170,7 @@ class AsyncErrorView extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               isQuota ? 'Temporarily unavailable' : 'Unable to load',
-              style: GoogleFonts.poppins(
+              style: AppFonts.plusJakarta(
                 fontSize: compact ? 15 : 17,
                 fontWeight: FontWeight.w700,
                 color: tokens.textPrimary,
@@ -180,7 +180,7 @@ class AsyncErrorView extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               message,
-              style: GoogleFonts.poppins(
+              style: AppFonts.plusJakarta(
                 color: tokens.textSecondary,
                 fontSize: compact ? 13 : 14,
                 height: 1.45,

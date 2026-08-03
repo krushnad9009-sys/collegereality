@@ -41,7 +41,12 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
     try {
       await ref.read(authProvider.notifier).signInWithEmail(email, password);
       ref.invalidate(isStaffProvider);
-      final isStaff = await ref.read(isStaffProvider.future);
+      var isStaff = false;
+      try {
+        isStaff = await ref.read(isStaffProvider.future);
+      } catch (_) {
+        isStaff = false;
+      }
       if (!mounted) return;
       if (isStaff) {
         context.go(RouteNames.admin);
@@ -54,6 +59,9 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
         );
       }
     } catch (e) {
+      try {
+        await ref.read(authProvider.notifier).signOut();
+      } catch (_) {}
       if (mounted) {
         SnackBarHelper.showErrorSnackBar(context, message: 'Login failed: $e');
       }

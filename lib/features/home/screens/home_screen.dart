@@ -132,21 +132,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           child: const PremiumHomeSearchBar(),
                         ),
                       ),
-                      Transform.translate(
-                        offset: const Offset(0, -10),
-                        child: FadeInSection(
-                          delayMs: 70,
-                          child: Align(
-                            alignment: Alignment.centerLeft,
-                            child: FilledButton.icon(
-                              onPressed: () =>
-                                  context.go(RouteNames.requestCollege),
-                              icon: const Icon(Icons.add_rounded),
-                              label: const Text('+ Add My College'),
-                            ),
-                          ),
-                        ),
-                      ),
                       const DeferredIncomingCallBanner(),
                       if (quotaBlocked) ...[
                         const SizedBox(height: AppSpacing.sm),
@@ -156,6 +141,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       FadeInSection(
                         delayMs: 80,
                         child: const FeaturedCollegesSection(),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      FadeInSection(
+                        delayMs: 90,
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: OutlinedButton.icon(
+                            onPressed: () =>
+                                context.go(RouteNames.requestCollege),
+                            icon: const Icon(Icons.add_rounded),
+                            label: const Text('Add My College'),
+                          ),
+                        ),
                       ),
                       const SizedBox(height: AppSpacing.section),
                       FadeInSection(
@@ -225,7 +223,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       FadeInSection(
                         delayMs: 380,
                         child: SectionHeader(
-                          title: 'Browse by Type',
+                          title: 'Browse by Category',
                           subtitle: 'Engineering, Medical, MBA and more',
                           actionLabel: 'All',
                           onAction: () => context.go(RouteNames.collegeBrowse),

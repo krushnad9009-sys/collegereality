@@ -174,4 +174,35 @@ class RouteNames {
       queryParameters: {'ids': ids.join(',')},
     ).toString();
   }
+
+  /// Login URL that returns the user to [returnLocation] after auth.
+  static String loginWithReturn(String returnLocation) {
+    return Uri(
+      path: login,
+      queryParameters: {'from': returnLocation},
+    ).toString();
+  }
+
+  /// Safe in-app return path from a `from` query value. Rejects absolute URLs.
+  static String? safeReturnPath(String? from) {
+    if (from == null || from.trim().isEmpty) return null;
+    final value = from.trim();
+    if (!value.startsWith('/') || value.startsWith('//')) return null;
+
+    final qIndex = value.indexOf('?');
+    final path = qIndex < 0 ? value : value.substring(0, qIndex);
+    if (path == login ||
+        path == signup ||
+        path == forgotPassword ||
+        path == adminLogin ||
+        path == onboarding) {
+      return null;
+    }
+
+    if (qIndex < 0) return path;
+    final query = value.substring(qIndex + 1);
+    if (query.isEmpty) return path;
+    final params = Uri.splitQueryString(query);
+    return Uri(path: path, queryParameters: params).toString();
+  }
 }
