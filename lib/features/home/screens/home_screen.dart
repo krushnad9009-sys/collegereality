@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_spacing.dart';
@@ -146,19 +147,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         delayMs: 80,
                         child: const FeaturedCollegesSection(),
                       ),
-                      const SizedBox(height: AppSpacing.md),
-                      FadeInSection(
-                        delayMs: 90,
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: OutlinedButton.icon(
-                            onPressed: () =>
-                                context.go(RouteNames.requestCollege),
-                            icon: const Icon(Icons.add_rounded),
-                            label: const Text('Add My College'),
-                          ),
-                        ),
-                      ),
                       const SizedBox(height: AppSpacing.section),
                       FadeInSection(
                         delayMs: 100,
@@ -213,18 +201,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                       const SizedBox(height: AppSpacing.section),
                       FadeInSection(
-                        delayMs: 340,
-                        child: const SectionHeader(
-                          title: 'Top Branches',
-                          subtitle: 'Browse by course',
-                        ),
-                      ),
-                      FadeInSection(
-                        delayMs: 360,
-                        child: const TopBranchesSection(),
-                      ),
-                      const SizedBox(height: AppSpacing.section),
-                      FadeInSection(
                         delayMs: 380,
                         child: SectionHeader(
                           title: 'Browse by Category',
@@ -250,6 +226,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       FadeInSection(
                         delayMs: 440,
                         child: const StudentReviewsSection(),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      FadeInSection(
+                        delayMs: 450,
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: OutlinedButton.icon(
+                            onPressed: () =>
+                                context.go(RouteNames.requestCollege),
+                            icon: const Icon(Icons.add_rounded),
+                            label: const Text('Add My College'),
+                          ),
+                        ),
                       ),
                       const SizedBox(height: AppSpacing.section),
                       FadeInSection(
@@ -414,7 +403,20 @@ class _HomePromoAdsStrip extends ConsumerWidget {
               subtitle: ad.body.isEmpty ? null : Text(ad.body, maxLines: 2),
               trailing: ad.ctaUrl.isEmpty
                   ? null
-                  : Text(ad.ctaLabel, style: TextStyle(color: AppTheme.primaryColor)),
+                  : Text(
+                      ad.ctaLabel,
+                      style: TextStyle(color: AppTheme.primaryColor),
+                    ),
+              onTap: ad.ctaUrl.isEmpty
+                  ? null
+                  : () async {
+                      final uri = Uri.tryParse(ad.ctaUrl);
+                      if (uri == null) return;
+                      await launchUrl(
+                        uri,
+                        mode: LaunchMode.externalApplication,
+                      );
+                    },
             ),
           ),
         );

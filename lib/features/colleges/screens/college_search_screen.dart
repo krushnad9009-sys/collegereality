@@ -158,7 +158,11 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
         );
         if (!mounted) return;
         setState(() {
-          _results = [..._results, ...page.colleges];
+          final existingIds = _results.map((c) => c.id).toSet();
+          final fresh = page.colleges
+              .where((c) => existingIds.add(c.id))
+              .toList();
+          _results = [..._results, ...fresh];
           _cursor = page.lastDocumentId;
           _hasMore = page.hasMore;
           _isLoadingMore = false;

@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
+import '../../../core/widgets/async_state_widgets.dart';
 import '../../colleges/models/college_model.dart';
 import '../providers/placement_provider.dart';
 import 'branch_placement_chart.dart';
@@ -25,7 +26,11 @@ class PlacementsTabContent extends ConsumerWidget {
 
     return statsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Error: $e')),
+      error: (e, _) => AsyncErrorView(
+        message: e.toString(),
+        onRetry: () =>
+            ref.invalidate(collegeVerifiedPlacementStatsProvider(college.id)),
+      ),
       data: (stats) {
         final hasVerified = stats.hasData;
         final official = college.placements;

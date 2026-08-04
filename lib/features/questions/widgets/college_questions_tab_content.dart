@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
+import '../../../core/widgets/async_state_widgets.dart';
 import '../../colleges/models/college_model.dart';
 import '../providers/question_provider.dart';
 import 'ask_question_sheet.dart';
@@ -60,7 +61,11 @@ class _CollegeQuestionsTabContentState
 
     return resultAsync.when(
       loading: () => const QuestionListShimmer(),
-      error: (e, _) => Center(child: Text('Error loading questions: $e')),
+      error: (e, _) => AsyncErrorView(
+        message: 'Error loading questions: $e',
+        onRetry: () =>
+            ref.invalidate(displayedCollegeQuestionsProvider(collegeId)),
+      ),
       data: (result) {
         final questions = result.questions;
         return ListView(

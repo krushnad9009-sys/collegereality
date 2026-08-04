@@ -101,7 +101,11 @@ class _CollegeCardWidgetState extends ConsumerState<CollegeCardWidget> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Sign in to save colleges')),
         );
-        context.go(RouteNames.login);
+        context.go(
+          RouteNames.loginWithReturn(
+            RouteNames.collegeDetailsPath(widget.collegeId),
+          ),
+        );
       }
       return;
     }

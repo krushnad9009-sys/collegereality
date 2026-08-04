@@ -85,9 +85,27 @@ class MyReviewsScreen extends ConsumerWidget {
                     ),
                   ],
                 ),
-                child: ReviewCardWidget(
-                  review: review,
-                  showCollegeName: true,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    ReviewCardWidget(
+                      review: review,
+                      showCollegeName: true,
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton.icon(
+                          onPressed: () => context.go(
+                            RouteNames.writeReviewPath(review.collegeId),
+                          ),
+                          icon: const Icon(Icons.edit_outlined, size: 18),
+                          label: const Text('Edit'),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               );
             },

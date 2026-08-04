@@ -23,7 +23,9 @@ Future<QuestionModel?> showAskQuestionSheet({
   final authUser = ref.read(authStateProvider).valueOrNull;
   if (authUser == null) {
     if (context.mounted) {
-      context.go(RouteNames.login);
+      context.go(RouteNames.loginWithReturn(
+        RouteNames.collegeDetailsPath(collegeId),
+      ));
     }
     return null;
   }

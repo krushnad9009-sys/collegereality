@@ -63,8 +63,27 @@ class CollegeSearchUtils {
     if (normalized == 'poona' || normalized == 'pune') {
       return const {'pune', 'poona'};
     }
+    if (normalized == 'delhi' || normalized == 'new delhi') {
+      return const {'delhi', 'new delhi'};
+    }
+    if (normalized == 'gurgaon' || normalized == 'gurugram') {
+      return const {'gurgaon', 'gurugram'};
+    }
     if (normalized.isEmpty) return const {};
     return {normalized};
+  }
+
+  /// True when alias cities are not covered by a single Firestore prefix range.
+  static bool cityNeedsAliasMerge(String city) {
+    final normalized = normalizeCity(city);
+    final keys = citySearchKeys(city);
+    if (keys.length <= 1) return false;
+    return keys.any(
+      (key) =>
+          key != normalized &&
+          !key.startsWith(normalized) &&
+          !normalized.startsWith(key),
+    );
   }
 
   static bool cityMatchesCollege({
@@ -125,7 +144,13 @@ class CollegeSearchUtils {
     if (needle.isEmpty) return true;
     return courses.any((c) {
       final key = normalizeCourseKey(c);
-      return key == needle || key.contains(needle) || needle.contains(key);
+      if (key == needle) return true;
+      // Short needles (BA) must not substring-match longer courses (MBA/BBA).
+      if (needle.length <= 2 || key.length <= 2) return false;
+      if (needle.length <= 3) {
+        return key.startsWith(needle) || needle.startsWith(key);
+      }
+      return key.contains(needle) || needle.contains(key);
     });
   }
 

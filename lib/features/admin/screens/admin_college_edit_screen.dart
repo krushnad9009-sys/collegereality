@@ -90,8 +90,16 @@ class _AdminCollegeEditScreenState extends ConsumerState<AdminCollegeEditScreen>
       _existing = college;
       _nameController.text = college.name;
       _cityController.text = college.city;
-      _state = college.state;
-      _type = college.type;
+      _state = CollegeConstants.clampToAllowed(
+            college.state,
+            CollegeConstants.indianStates,
+          ) ??
+          CollegeConstants.indianStates.first;
+      _type = CollegeConstants.clampToAllowed(
+            college.type,
+            CollegeConstants.collegeTypes,
+          ) ??
+          CollegeConstants.collegeTypes.first;
       _addressController.text = college.address;
       _websiteController.text = college.website ?? '';
       _universityController.text = college.universityName ?? '';

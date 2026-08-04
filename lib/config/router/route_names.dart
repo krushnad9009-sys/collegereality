@@ -183,6 +183,24 @@ class RouteNames {
     ).toString();
   }
 
+  /// Signup URL that preserves post-auth return location.
+  static String signupWithReturn(String returnLocation) {
+    return Uri(
+      path: signup,
+      queryParameters: {'from': returnLocation},
+    ).toString();
+  }
+
+  /// Display-name setup that continues to [returnLocation] afterward.
+  static String displayNameSetupWithReturn(String? returnLocation) {
+    final safe = safeReturnPath(returnLocation);
+    if (safe == null) return displayNameSetup;
+    return Uri(
+      path: displayNameSetup,
+      queryParameters: {'from': safe},
+    ).toString();
+  }
+
   /// Safe in-app return path from a `from` query value. Rejects absolute URLs.
   static String? safeReturnPath(String? from) {
     if (from == null || from.trim().isEmpty) return null;

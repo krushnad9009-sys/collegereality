@@ -51,6 +51,13 @@ class CollegeSessionCache {
   }
 
   static void setFeatured(List<CollegeModel> colleges) {
+    // Keep the larger pool so limit:6 home featured cannot starve trending.
+    if (_featured != null &&
+        colleges.length < _featured!.length &&
+        _featuredAt != null &&
+        DateTime.now().difference(_featuredAt!) <= _ttl) {
+      return;
+    }
     _featured = List.unmodifiable(colleges);
     _featuredAt = DateTime.now();
   }

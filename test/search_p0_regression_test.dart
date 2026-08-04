@@ -17,6 +17,17 @@ void main() {
         isTrue,
       );
     });
+
+    test('Delhi and New Delhi share search keys', () {
+      expect(
+        CollegeSearchUtils.cityMatchesCollege(
+          cityLower: 'new delhi',
+          districtLower: '',
+          cityFilter: 'Delhi',
+        ),
+        isTrue,
+      );
+    });
   });
 
   group('CollegeSearchUtils course matching', () {
@@ -33,6 +44,10 @@ void main() {
         CollegeSearchUtils.courseMatches(['MBA'], 'B.Tech'),
         isFalse,
       );
+    });
+
+    test('short course codes do not substring-match longer courses', () {
+      expect(CollegeSearchUtils.courseMatches(['MBA', 'BBA'], 'BA'), isFalse);
     });
   });
 

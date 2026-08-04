@@ -341,7 +341,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           TextLink(
                             text: 'Sign Up',
                             fontSize: 14,
-                            onPressed: () => context.go(RouteNames.signup),
+                            onPressed: () {
+                              final from = GoRouterState.of(context)
+                                  .uri
+                                  .queryParameters['from'];
+                              final safe = RouteNames.safeReturnPath(from);
+                              context.go(
+                                safe != null
+                                    ? RouteNames.signupWithReturn(safe)
+                                    : RouteNames.signup,
+                              );
+                            },
                           ),
                         ],
                       ),

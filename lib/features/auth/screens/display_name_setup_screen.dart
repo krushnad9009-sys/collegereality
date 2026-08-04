@@ -119,7 +119,12 @@ class _DisplayNameSetupScreenState extends ConsumerState<DisplayNameSetupScreen>
           context,
           message: 'Public display name saved!',
         );
-        context.go(RouteNames.home);
+        context.go(
+          RouteNames.safeReturnPath(
+                GoRouterState.of(context).uri.queryParameters['from'],
+              ) ??
+              RouteNames.home,
+        );
       }
     } catch (e, stack) {
       DisplayNameDiagnostics.logFailure(

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../config/theme/app_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/rating_parameters.dart';
+import '../../../core/utils/firestore_error_utils.dart';
 import '../../../core/utils/indian_currency_formatter.dart';
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_design_tokens.dart';
@@ -225,13 +226,25 @@ class _CollegeDetailScreenState extends ConsumerState<CollegeDetailScreen>
                         color: isFavorite ? AppTheme.accentColor : null,
                       ),
                       tooltip: isFavorite ? 'Remove bookmark' : 'Save college',
-                      onPressed: user == null
-                          ? null
-                          : () async {
-                              await ref
-                                  .read(engagementRepositoryProvider)
-                                  .toggleFavoriteCollege(user.uid, college.id);
-                            },
+                      onPressed: () async {
+                        if (user == null) {
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Sign in to save colleges'),
+                            ),
+                          );
+                          context.go(
+                            RouteNames.loginWithReturn(
+                              RouteNames.collegeDetailsPath(college.id),
+                            ),
+                          );
+                          return;
+                        }
+                        await ref
+                            .read(engagementRepositoryProvider)
+                            .toggleFavoriteCollege(user.uid, college.id);
+                      },
                     ),
                     TextButton.icon(
                       onPressed: () {
@@ -1205,6 +1218,18 @@ Future<void> _showReportDialog(
   WidgetRef ref,
   ReviewModel review,
 ) async {
+  final user = ref.read(currentUserProvider);
+  if (user == null) {
+    if (context.mounted) {
+      final returnTo = RouteNames.collegeDetailsPath(
+        review.collegeId,
+        tab: 'reviews',
+      );
+      context.go(RouteNames.loginWithReturn(returnTo));
+    }
+    return;
+  }
+
   final controller = TextEditingController();
   final reason = await showDialog<String>(
     context: context,
@@ -1229,28 +1254,24 @@ Future<void> _showReportDialog(
   controller.dispose();
   if (reason == null || reason.isEmpty) return;
 
-  final user = ref.read(currentUserProvider);
-  if (user == null) {
+  try {
+    await ref.read(reviewRepositoryProvider).reportReview(
+          reviewId: review.id,
+          collegeId: review.collegeId,
+          reporterId: user.uid,
+          reason: reason,
+        );
     if (context.mounted) {
-      final returnTo = RouteNames.collegeDetailsPath(
-        review.collegeId,
-        tab: 'reviews',
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Review reported. Our team will review it.')),
       );
-      context.go(RouteNames.loginWithReturn(returnTo));
     }
-    return;
-  }
-
-  await ref.read(reviewRepositoryProvider).reportReview(
-        reviewId: review.id,
-        collegeId: review.collegeId,
-        reporterId: user.uid,
-        reason: reason,
+  } catch (e) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(FirestoreErrorUtils.userMessage(e))),
       );
-  if (context.mounted) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Review reported. Our team will review it.')),
-    );
+    }
   }
 }
 

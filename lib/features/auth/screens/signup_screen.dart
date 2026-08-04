@@ -176,7 +176,15 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                           if (context.canPop()) {
                             context.pop();
                           } else {
-                            context.go(RouteNames.login);
+                            final from = GoRouterState.of(context)
+                                .uri
+                                .queryParameters['from'];
+                            final safe = RouteNames.safeReturnPath(from);
+                            context.go(
+                              safe != null
+                                  ? RouteNames.loginWithReturn(safe)
+                                  : RouteNames.login,
+                            );
                           }
                         },
                         borderRadius:
@@ -423,7 +431,17 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                         TextLink(
                           text: 'Sign In',
                           fontSize: 14,
-                          onPressed: () => context.go(RouteNames.login),
+                          onPressed: () {
+                            final from = GoRouterState.of(context)
+                                .uri
+                                .queryParameters['from'];
+                            final safe = RouteNames.safeReturnPath(from);
+                            context.go(
+                              safe != null
+                                  ? RouteNames.loginWithReturn(safe)
+                                  : RouteNames.login,
+                            );
+                          },
                         ),
                       ],
                     ),

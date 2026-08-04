@@ -160,9 +160,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               path == RouteNames.forgotPassword)) {
         final user = await userDetail();
         if (user != null && !user.displayNameSetupComplete) {
-          return RouteNames.displayNameSetup;
+          final from = state.uri.queryParameters['from'];
+          return RouteNames.displayNameSetupWithReturn(from);
         }
-        if (path == RouteNames.login) {
+        if (path == RouteNames.login || path == RouteNames.signup) {
           final returnTo = RouteNames.safeReturnPath(
             state.uri.queryParameters['from'],
           );
@@ -174,7 +175,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       if (isLoggedIn && path != RouteNames.displayNameSetup) {
         final user = await userDetail();
         if (user != null && !user.displayNameSetupComplete) {
-          return RouteNames.displayNameSetup;
+          final intended = state.uri.toString();
+          return RouteNames.displayNameSetupWithReturn(intended);
         }
       }
 

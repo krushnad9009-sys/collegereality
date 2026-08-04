@@ -223,10 +223,6 @@ class CollegeRepositoryImpl implements CollegeRepository {
           );
         }
       }
-      if (isLoadMore) {
-        // Bundled search has no cursor — stop pagination to avoid duplicates.
-        return const CollegeSearchPage(colleges: [], hasMore: false);
-      }
       return CollegeBundledDataSource.search(
         query: query,
         state: state,
@@ -237,6 +233,7 @@ class CollegeRepositoryImpl implements CollegeRepository {
         type: type,
         limit: limit,
         includeInactive: includeInactive,
+        startAfterDocumentId: isLoadMore ? startAfterDocumentId : null,
       );
     }
 
@@ -256,7 +253,11 @@ class CollegeRepositoryImpl implements CollegeRepository {
       FirestoreQuotaGuard.instance.markRecovered();
       if (page.colleges.isNotEmpty && !isLoadMore) {
         CollegeSessionCache.setSearch(page.colleges, key: cacheKey);
-        await CollegeLocalCache.saveSearch(page.colleges);
+        // Only persist unfiltered search to the single local blob.
+        final hasFilters = cacheKey != '||||||';
+        if (!hasFilters) {
+          await CollegeLocalCache.saveSearch(page.colleges);
+        }
       }
       return page;
     } on FirebaseException catch (e) {
@@ -278,9 +279,6 @@ class CollegeRepositoryImpl implements CollegeRepository {
           );
         }
       }
-      if (isLoadMore) {
-        return const CollegeSearchPage(colleges: [], hasMore: false);
-      }
       return CollegeBundledDataSource.search(
         query: query,
         state: state,
@@ -291,6 +289,7 @@ class CollegeRepositoryImpl implements CollegeRepository {
         type: type,
         limit: limit,
         includeInactive: includeInactive,
+        startAfterDocumentId: isLoadMore ? startAfterDocumentId : null,
       );
     }
   }

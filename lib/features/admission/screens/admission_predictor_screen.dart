@@ -136,20 +136,43 @@ class _AdmissionPredictorScreenState extends ConsumerState<AdmissionPredictorScr
           examsAsync.when(
             loading: () => const CircularProgressIndicator(),
             error: (e, _) => Text('Error: $e'),
-            data: (exams) => DropdownButtonFormField<EntranceExamModel>(
-              initialValue: _selectedExam,
-              decoration: InputDecoration(
-                labelText: 'Exam',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              items: exams
-                  .map((e) => DropdownMenuItem(value: e, child: Text(e.name)))
-                  .toList(),
-              onChanged: (v) => setState(() {
-                _selectedExam = v;
-                _results = [];
-              }),
-            ),
+            data: (exams) {
+              final selectedId = _selectedExam == null
+                  ? null
+                  : exams.any((e) => e.id == _selectedExam!.id)
+                      ? _selectedExam!.id
+                      : null;
+              return DropdownButtonFormField<String>(
+                initialValue: selectedId,
+                decoration: InputDecoration(
+                  labelText: 'Exam',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                items: exams
+                    .map(
+                      (e) => DropdownMenuItem(
+                        value: e.id,
+                        child: Text(e.name),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (id) => setState(() {
+                  EntranceExamModel? match;
+                  if (id != null) {
+                    for (final exam in exams) {
+                      if (exam.id == id) {
+                        match = exam;
+                        break;
+                      }
+                    }
+                  }
+                  _selectedExam = match;
+                  _results = [];
+                }),
+              );
+            },
           ),
           const SizedBox(height: 12),
           if (_selectedExam?.scoreType == AdmissionConstants.scoreTypeRank)

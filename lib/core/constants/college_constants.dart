@@ -120,11 +120,13 @@ class CollegeConstants {
     return out;
   }
 
-  /// Returns [value] only when it exists in [allowed] (case-sensitive match).
+  /// Returns [value] only when it exists in [allowed] (case-insensitive).
+  /// Returns the canonical casing from [allowed] on match.
   static String? clampToAllowed(String? value, Iterable<String> allowed) {
     if (value == null || value.isEmpty) return null;
     for (final item in allowed) {
-      if (item == value) return value;
+      if (item == value) return item;
+      if (item.toLowerCase() == value.toLowerCase()) return item;
     }
     return null;
   }

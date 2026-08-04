@@ -42,6 +42,15 @@ class CollegeBundledDataSource {
   }
 
   static Future<List<CollegeModel>> trendingFallback({int limit = 12}) async {
+    final all = await loadAll();
+    final sorted = [...all]
+      ..sort((a, b) {
+        final reviewCompare = b.reviewCount.compareTo(a.reviewCount);
+        if (reviewCompare != 0) return reviewCompare;
+        return b.aggregatedRatings.overall.compareTo(a.aggregatedRatings.overall);
+      });
+    final results = sorted.take(limit).toList();
+    if (results.isNotEmpty) return results;
     final featured = await featuredFallback(limit: minimumFallbackCount);
     return featured.take(limit).toList();
   }
@@ -70,6 +79,7 @@ class CollegeBundledDataSource {
     String? type,
     int limit = 24,
     bool includeInactive = false,
+    String? startAfterDocumentId,
   }) async {
     final all = await loadAll();
     var results = all.where((c) => includeInactive || c.isActive).toList();
@@ -103,7 +113,10 @@ class CollegeBundledDataSource {
           .toList();
     }
     if (category != null && category.isNotEmpty) {
-      results = results.where((c) => c.category == category).toList();
+      final categoryLower = category.toLowerCase();
+      results = results
+          .where((c) => c.category.toLowerCase() == categoryLower)
+          .toList();
     }
     if (type != null && type.isNotEmpty) {
       results = results.where((c) => c.type.toLowerCase() == type.toLowerCase()).toList();
@@ -112,6 +125,13 @@ class CollegeBundledDataSource {
       results = results
           .where((c) => CollegeSearchUtils.matchesQuery(c, query.trim()))
           .toList();
+    }
+
+    if (startAfterDocumentId != null && startAfterDocumentId.isNotEmpty) {
+      final idx = results.indexWhere((c) => c.id == startAfterDocumentId);
+      if (idx >= 0) {
+        results = results.skip(idx + 1).toList();
+      }
     }
 
     final page = results.take(limit).toList();

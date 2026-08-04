@@ -28,7 +28,8 @@ class AskStudentButton extends ConsumerWidget {
   Future<void> _onPressed(BuildContext context, WidgetRef ref) async {
     final user = ref.read(currentUserProvider);
     if (user == null) {
-      context.go(RouteNames.login);
+      final returnTo = RouteNames.collegeDetailsPath(collegeId);
+      context.go(RouteNames.loginWithReturn(returnTo));
       return;
     }
     await showAskQuestionSheet(
