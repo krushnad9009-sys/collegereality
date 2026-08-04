@@ -191,17 +191,24 @@ class CollegeRepositoryImpl implements CollegeRepository {
     int limit = 24,
     bool includeInactive = false,
   }) async {
+    final cacheKey = CollegeSessionCache.searchCacheKey(
+      query: query,
+      state: state,
+      city: city,
+      university: university,
+      course: course,
+      category: category,
+      type: type,
+    );
+    final isLoadMore =
+        startAfterDocumentId != null && startAfterDocumentId.isNotEmpty;
+
     if (FirestoreQuotaGuard.instance.shouldBlockRequest()) {
       // Never return unfiltered cache when the user applied filters.
-      final hasFilters = (query?.trim().isNotEmpty ?? false) ||
-          (state?.trim().isNotEmpty ?? false) ||
-          (city?.trim().isNotEmpty ?? false) ||
-          (university?.trim().isNotEmpty ?? false) ||
-          (course?.trim().isNotEmpty ?? false) ||
-          (category?.trim().isNotEmpty ?? false) ||
-          (type?.trim().isNotEmpty ?? false);
-      if (!hasFilters) {
-        final session = CollegeSessionCache.getSearchStale(limit);
+      final hasFilters = cacheKey != '||||||';
+      if (!hasFilters && !isLoadMore) {
+        final session =
+            CollegeSessionCache.getSearchStale(limit, key: cacheKey);
         if (session != null && session.isNotEmpty) {
           return CollegeSearchPage(
             colleges: session,
@@ -215,6 +222,10 @@ class CollegeRepositoryImpl implements CollegeRepository {
             hasMore: false,
           );
         }
+      }
+      if (isLoadMore) {
+        // Bundled search has no cursor — stop pagination to avoid duplicates.
+        return const CollegeSearchPage(colleges: [], hasMore: false);
       }
       return CollegeBundledDataSource.search(
         query: query,
@@ -243,8 +254,8 @@ class CollegeRepositoryImpl implements CollegeRepository {
         includeInactive: includeInactive,
       );
       FirestoreQuotaGuard.instance.markRecovered();
-      if (page.colleges.isNotEmpty) {
-        CollegeSessionCache.setSearch(page.colleges);
+      if (page.colleges.isNotEmpty && !isLoadMore) {
+        CollegeSessionCache.setSearch(page.colleges, key: cacheKey);
         await CollegeLocalCache.saveSearch(page.colleges);
       }
       return page;
@@ -252,18 +263,13 @@ class CollegeRepositoryImpl implements CollegeRepository {
       if (!FirestoreErrorUtils.isQuotaExceeded(e)) rethrow;
       FirestoreQuotaGuard.instance.markQuotaExceeded();
 
-      final session = CollegeSessionCache.getSearchStale(limit);
-      final hasFilters = (query?.trim().isNotEmpty ?? false) ||
-          (state?.trim().isNotEmpty ?? false) ||
-          (city?.trim().isNotEmpty ?? false) ||
-          (university?.trim().isNotEmpty ?? false) ||
-          (course?.trim().isNotEmpty ?? false) ||
-          (category?.trim().isNotEmpty ?? false) ||
-          (type?.trim().isNotEmpty ?? false);
-      if (!hasFilters && session != null && session.isNotEmpty) {
-        return CollegeSearchPage(colleges: session, hasMore: false);
-      }
-      if (!hasFilters) {
+      final hasFilters = cacheKey != '||||||';
+      if (!hasFilters && !isLoadMore) {
+        final session =
+            CollegeSessionCache.getSearchStale(limit, key: cacheKey);
+        if (session != null && session.isNotEmpty) {
+          return CollegeSearchPage(colleges: session, hasMore: false);
+        }
         final local = await CollegeLocalCache.loadSearch();
         if (local != null && local.isNotEmpty) {
           return CollegeSearchPage(
@@ -271,6 +277,9 @@ class CollegeRepositoryImpl implements CollegeRepository {
             hasMore: false,
           );
         }
+      }
+      if (isLoadMore) {
+        return const CollegeSearchPage(colleges: [], hasMore: false);
       }
       return CollegeBundledDataSource.search(
         query: query,

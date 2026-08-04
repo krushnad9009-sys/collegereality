@@ -29,4 +29,38 @@ class AdminPermissions {
   static bool canExportData(String? userType) => isAdmin(userType);
 
   static bool canViewAnalytics(String? userType) => isStaff(userType);
+
+  static bool canManageRoles(String? userType) => isSuperAdmin(userType);
+
+  static bool canManageAds(String? userType) => isSuperAdmin(userType);
+
+  static bool canManageTaxonomy(String? userType) => isSuperAdmin(userType);
+
+  static bool canViewAuditLogs(String? userType) => isStaff(userType);
+
+  static bool canOverrideReviews(String? userType) => isAdmin(userType);
+
+  static bool canEditReviewContent(String? userType) => isSuperAdmin(userType);
+
+  static bool canManageAppSettings(String? userType) => isSuperAdmin(userType);
+
+  /// Roles an actor may assign to another user.
+  static List<String> assignableRoles(String? actorUserType) {
+    if (isSuperAdmin(actorUserType)) {
+      return const [
+        RoleConstants.userTypeStudent,
+        RoleConstants.userTypeModerator,
+        RoleConstants.userTypeAdmin,
+        RoleConstants.userTypeSuperAdmin,
+        RoleConstants.userTypeCompany,
+      ];
+    }
+    if (isAdmin(actorUserType)) {
+      return const [
+        RoleConstants.userTypeStudent,
+        RoleConstants.userTypeModerator,
+      ];
+    }
+    return const [];
+  }
 }

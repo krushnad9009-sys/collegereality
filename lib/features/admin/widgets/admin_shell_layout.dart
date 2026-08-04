@@ -43,12 +43,14 @@ class AdminShellLayout extends StatelessWidget {
   final Widget child;
   final bool showBack;
   final bool isAdminUser;
+  final Widget? floatingActionButton;
 
   const AdminShellLayout({
     required this.title,
     required this.child,
     this.showBack = true,
     this.isAdminUser = true,
+    this.floatingActionButton,
     super.key,
   });
 
@@ -64,6 +66,7 @@ class AdminShellLayout extends StatelessWidget {
 
     if (isWide) {
       return Scaffold(
+        floatingActionButton: floatingActionButton,
         body: Row(
           children: [
             _Sidebar(currentPath: GoRouterState.of(context).uri.path, isAdminUser: isAdminUser),
@@ -82,6 +85,7 @@ class AdminShellLayout extends StatelessWidget {
     }
 
     return Scaffold(
+      floatingActionButton: floatingActionButton,
       appBar: AppBar(
         title: Text(title, style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
         leading: showBack

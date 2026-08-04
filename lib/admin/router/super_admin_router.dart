@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../config/router/go_router_refresh_stream.dart';
 import '../../features/admin/screens/admin_analytics_screen.dart';
 import '../../features/admin/screens/admin_announcements_screen.dart';
+import '../../features/admin/screens/admin_ads_screen.dart';
+import '../../features/admin/screens/admin_audit_logs_screen.dart';
 import '../../features/admin/screens/admin_college_edit_screen.dart';
 import '../../features/admin/screens/admin_colleges_screen.dart';
 import '../../features/admin/screens/admin_community_screen.dart';
@@ -14,6 +16,8 @@ import '../../features/admin/screens/admin_merge_colleges_screen.dart';
 import '../../features/admin/screens/admin_questions_screen.dart';
 import '../../features/admin/screens/admin_reports_hub_screen.dart';
 import '../../features/admin/screens/admin_reviews_screen.dart';
+import '../../features/admin/screens/admin_roles_screen.dart';
+import '../../features/admin/screens/admin_student_life_screen.dart';
 import '../../features/admin/screens/admin_users_screen.dart';
 import '../../features/admin/screens/admin_verification_screen.dart';
 import '../../features/ecosystem/screens/admin_ecosystem_hub_screen.dart';
@@ -88,6 +92,10 @@ final superAdminRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const AdminUsersScreen(),
       ),
       GoRoute(
+        path: SuperAdminRouteNames.roles,
+        builder: (context, state) => const AdminRolesScreen(),
+      ),
+      GoRoute(
         path: SuperAdminRouteNames.colleges,
         builder: (context, state) => const AdminCollegesScreen(),
       ),
@@ -153,6 +161,18 @@ final superAdminRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: SuperAdminRouteNames.ecosystem,
         builder: (context, state) => const AdminEcosystemHubScreen(),
+      ),
+      GoRoute(
+        path: SuperAdminRouteNames.studentLife,
+        builder: (context, state) => const AdminStudentLifeScreen(),
+      ),
+      GoRoute(
+        path: SuperAdminRouteNames.ads,
+        builder: (context, state) => const AdminAdsScreen(),
+      ),
+      GoRoute(
+        path: SuperAdminRouteNames.auditLogs,
+        builder: (context, state) => const AdminAuditLogsScreen(),
       ),
     ],
   );

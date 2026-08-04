@@ -8,7 +8,28 @@ class CollegeSessionCache {
   static DateTime? _featuredAt;
   static List<CollegeModel>? _search;
   static DateTime? _searchAt;
+  static String? _searchKey;
   static const Duration _ttl = Duration(minutes: 20);
+
+  static String searchCacheKey({
+    String? query,
+    String? state,
+    String? city,
+    String? university,
+    String? course,
+    String? category,
+    String? type,
+  }) {
+    return [
+      query?.trim().toLowerCase() ?? '',
+      state?.trim().toLowerCase() ?? '',
+      city?.trim().toLowerCase() ?? '',
+      university?.trim().toLowerCase() ?? '',
+      course?.trim().toLowerCase() ?? '',
+      category?.trim().toLowerCase() ?? '',
+      type?.trim().toLowerCase() ?? '',
+    ].join('|');
+  }
 
   static List<CollegeModel>? getFeatured(int limit) {
     final cached = _featured;
@@ -39,25 +60,28 @@ class CollegeSessionCache {
     _featuredAt = null;
   }
 
-  static List<CollegeModel>? getSearch(int limit) {
+  static List<CollegeModel>? getSearch(int limit, {String? key}) {
     final cached = _search;
     final at = _searchAt;
     if (cached == null || at == null) return null;
+    if (key != null && _searchKey != key) return null;
     if (DateTime.now().difference(at) > _ttl) return null;
     if (cached.length <= limit) return cached;
     return cached.take(limit).toList();
   }
 
-  static List<CollegeModel>? getSearchStale(int limit) {
+  static List<CollegeModel>? getSearchStale(int limit, {String? key}) {
     final cached = _search;
     if (cached == null) return null;
+    if (key != null && _searchKey != key) return null;
     if (cached.length <= limit) return cached;
     return cached.take(limit).toList();
   }
 
-  static void setSearch(List<CollegeModel> colleges) {
+  static void setSearch(List<CollegeModel> colleges, {String? key}) {
     _search = List.unmodifiable(colleges);
     _searchAt = DateTime.now();
+    _searchKey = key;
   }
 
   static final Map<String, _CachedCollege> _byId = {};

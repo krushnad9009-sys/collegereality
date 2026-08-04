@@ -10,24 +10,25 @@ import '../../reviews/providers/review_provider.dart';
 import '../../careers/models/careers_models.dart';
 import '../../careers/providers/careers_provider.dart';
 
-/// Trending colleges — always returns data (Firestore → cache → bundled seed).
+/// Trending colleges — ranked by review activity, distinct from Featured.
 final trendingCollegesProvider =
     FutureProvider<List<CollegeModel>>((ref) async {
   try {
     if (!FirestoreQuotaGuard.instance.shouldBlockRequest()) {
       try {
         await ref.watch(collegeDataReadyProvider.future);
-        final featured = await ref.watch(homeFeaturedCollegesProvider.future);
-        if (featured.isNotEmpty) {
-          final trending = featured.take(12).toList();
-          await CollegeLocalCache.saveTrending(trending);
-          return trending;
-        }
         final colleges = await ref.watch(featuredCollegesProvider.future);
         if (colleges.isNotEmpty) {
-          final trending = colleges.take(12).toList();
-          await CollegeLocalCache.saveTrending(trending);
-          return trending;
+          final trending = [...colleges]
+            ..sort((a, b) {
+              final byReviews = b.reviewCount.compareTo(a.reviewCount);
+              if (byReviews != 0) return byReviews;
+              return b.aggregatedRatings.overall
+                  .compareTo(a.aggregatedRatings.overall);
+            });
+          final page = trending.take(12).toList();
+          await CollegeLocalCache.saveTrending(page);
+          return page;
         }
       } catch (_) {}
     }

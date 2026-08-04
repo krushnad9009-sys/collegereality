@@ -27,6 +27,11 @@ const superAdminPanelConfig = SuperAdminPanelConfig(
       route: SuperAdminRouteNames.users,
     ),
     SuperAdminNavItem(
+      title: 'Roles',
+      icon: Icons.admin_panel_settings_outlined,
+      route: SuperAdminRouteNames.roles,
+    ),
+    SuperAdminNavItem(
       title: 'Colleges',
       icon: Icons.school_outlined,
       route: SuperAdminRouteNames.colleges,
@@ -42,9 +47,24 @@ const superAdminPanelConfig = SuperAdminPanelConfig(
       route: SuperAdminRouteNames.notifications,
     ),
     SuperAdminNavItem(
+      title: 'Ads',
+      icon: Icons.campaign,
+      route: SuperAdminRouteNames.ads,
+    ),
+    SuperAdminNavItem(
       title: 'Analytics',
       icon: Icons.analytics_outlined,
       route: SuperAdminRouteNames.analytics,
+    ),
+    SuperAdminNavItem(
+      title: 'Audit Logs',
+      icon: Icons.history,
+      route: SuperAdminRouteNames.auditLogs,
+    ),
+    SuperAdminNavItem(
+      title: 'Export',
+      icon: Icons.download_outlined,
+      route: SuperAdminRouteNames.export,
     ),
     SuperAdminNavItem(
       title: 'Settings',

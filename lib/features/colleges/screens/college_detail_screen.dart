@@ -1079,7 +1079,16 @@ class _ReviewsTabState extends ConsumerState<_ReviewsTab> {
                 review: review,
                 onHelpful: () async {
                   final user = ref.read(currentUserProvider);
-                  if (user == null) return;
+                  if (user == null) {
+                    if (context.mounted) {
+                      final returnTo = RouteNames.collegeDetailsPath(
+                        review.collegeId,
+                        tab: 'reviews',
+                      );
+                      context.go(RouteNames.loginWithReturn(returnTo));
+                    }
+                    return;
+                  }
                   ref.read(optimisticHelpfulProvider.notifier).mark(review.id);
                   try {
                     await ref
@@ -1221,7 +1230,16 @@ Future<void> _showReportDialog(
   if (reason == null || reason.isEmpty) return;
 
   final user = ref.read(currentUserProvider);
-  if (user == null) return;
+  if (user == null) {
+    if (context.mounted) {
+      final returnTo = RouteNames.collegeDetailsPath(
+        review.collegeId,
+        tab: 'reviews',
+      );
+      context.go(RouteNames.loginWithReturn(returnTo));
+    }
+    return;
+  }
 
   await ref.read(reviewRepositoryProvider).reportReview(
         reviewId: review.id,

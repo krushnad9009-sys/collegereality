@@ -80,4 +80,6 @@ class FirestoreConstants {
   static const String facultyResearchCollection = 'faculty_research';
   static const String alumniMentorshipOffersCollection = 'alumni_mentorship_offers';
   static const String auditLogsCollection = 'audit_logs';
+  static const String superAdminAuditCollection = 'super_admin_audit';
+  static const String adminAdsCollection = 'admin_ads';
 }

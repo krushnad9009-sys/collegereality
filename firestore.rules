@@ -1016,7 +1016,14 @@ service cloud.firestore {
     }
 
     match /admin_settings/{docId} {
-      allow read, write: if isSuperAdmin();
+      // Public read so home can show banners/announcements.
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    match /admin_ads/{adId} {
+      allow read: if true;
+      allow create, update, delete: if isSuperAdmin();
     }
 
     match /super_admin_audit/{logId} {

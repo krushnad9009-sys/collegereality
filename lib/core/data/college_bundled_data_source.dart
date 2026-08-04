@@ -81,12 +81,13 @@ class CollegeBundledDataSource {
           .toList();
     }
     if (city != null && city.isNotEmpty) {
-      final cityLower = CollegeSearchUtils.normalizeCity(city);
       results = results
           .where(
-            (c) =>
-                c.cityLower.contains(cityLower) ||
-                c.districtLower.contains(cityLower),
+            (c) => CollegeSearchUtils.cityMatchesCollege(
+              cityLower: c.cityLower,
+              districtLower: c.districtLower,
+              cityFilter: city,
+            ),
           )
           .toList();
     }
@@ -97,7 +98,9 @@ class CollegeBundledDataSource {
           .toList();
     }
     if (course != null && course.isNotEmpty) {
-      results = results.where((c) => c.courses.contains(course)).toList();
+      results = results
+          .where((c) => CollegeSearchUtils.courseMatches(c.courses, course))
+          .toList();
     }
     if (category != null && category.isNotEmpty) {
       results = results.where((c) => c.category == category).toList();

@@ -140,6 +140,7 @@ class AdminUserSearchResult {
   final String accountStatus;
   final String verificationStatus;
   final String verificationBadge;
+  final String userType;
   final DateTime? lastSeenAt;
 
   const AdminUserSearchResult({
@@ -149,6 +150,7 @@ class AdminUserSearchResult {
     this.accountStatus = 'active',
     this.verificationStatus = '',
     this.verificationBadge = '',
+    this.userType = 'student',
     this.lastSeenAt,
   });
 }

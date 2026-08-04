@@ -50,6 +50,7 @@ class _AdminCollegeEditScreenState extends ConsumerState<AdminCollegeEditScreen>
   bool _ugc = false;
   bool _aicte = false;
   bool _isActive = true;
+  bool _isFeatured = false;
   bool _isSaving = false;
   CollegeModel? _existing;
 
@@ -108,6 +109,7 @@ class _AdminCollegeEditScreenState extends ConsumerState<AdminCollegeEditScreen>
       _ugc = college.accreditation.ugcRecognized;
       _aicte = college.accreditation.aicteApproved;
       _isActive = college.isActive;
+      _isFeatured = college.isFeatured;
       _placementHighController.text = '${college.placements.highestPackageLpa}';
       _placementAvgController.text = '${college.placements.averagePackageLpa}';
       _placementPctController.text = '${college.placements.placementPercentage}';
@@ -211,6 +213,7 @@ class _AdminCollegeEditScreenState extends ConsumerState<AdminCollegeEditScreen>
       reviewCount: _existing?.reviewCount ?? 0,
       photoUrls: _existing?.photoUrls ?? const [],
       isActive: _isActive,
+      isFeatured: _isFeatured,
       createdAt: _existing?.createdAt,
     );
   }
@@ -386,9 +389,16 @@ class _AdminCollegeEditScreenState extends ConsumerState<AdminCollegeEditScreen>
                 maxLines: 2,
               ),
               SwitchListTile(
-                title: const Text('Active'),
+                title: const Text('Active / Published'),
+                subtitle: const Text('Unpublish hides the college from search'),
                 value: _isActive,
                 onChanged: (v) => setState(() => _isActive = v),
+              ),
+              SwitchListTile(
+                title: const Text('Featured on Home'),
+                subtitle: const Text('Shows in Featured Colleges carousel'),
+                value: _isFeatured,
+                onChanged: (v) => setState(() => _isFeatured = v),
               ),
               const SizedBox(height: 24),
               PrimaryButton(

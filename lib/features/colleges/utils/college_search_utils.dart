@@ -45,6 +45,40 @@ class CollegeSearchUtils {
 
   static String normalizeCity(String city) => _normalizeExact(city);
 
+  /// Keys used for city matching (handles Bangalore/Bengaluru and similar).
+  static Set<String> citySearchKeys(String city) {
+    final normalized = normalizeCity(city);
+    if (normalized == 'bangalore' || normalized == 'bengaluru') {
+      return const {'bangalore', 'bengaluru'};
+    }
+    if (normalized == 'bombay' || normalized == 'mumbai') {
+      return const {'mumbai', 'bombay'};
+    }
+    if (normalized == 'madras' || normalized == 'chennai') {
+      return const {'chennai', 'madras'};
+    }
+    if (normalized == 'calcutta' || normalized == 'kolkata') {
+      return const {'kolkata', 'calcutta'};
+    }
+    if (normalized == 'poona' || normalized == 'pune') {
+      return const {'pune', 'poona'};
+    }
+    if (normalized.isEmpty) return const {};
+    return {normalized};
+  }
+
+  static bool cityMatchesCollege({
+    required String cityLower,
+    required String districtLower,
+    required String cityFilter,
+  }) {
+    final keys = citySearchKeys(cityFilter);
+    if (keys.isEmpty) return true;
+    return keys.any(
+      (key) => cityLower.contains(key) || districtLower.contains(key),
+    );
+  }
+
   static String normalizeDistrict(String district) => _normalizeExact(district);
 
   /// Canonicalizes common misspellings so filters match seed/import data.
@@ -79,7 +113,21 @@ class CollegeSearchUtils {
   }
 
   static String normalizeUniversity(String? university) =>
-      (university ?? '').trim().toLowerCase();
+      _normalizeExact(university ?? '');
+
+  /// Course equality tolerant of dots/spaces/case (B.Tech ≈ BTech ≈ b.tech).
+  static String normalizeCourseKey(String course) =>
+      course.trim().toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+
+  static bool courseMatches(List<String> courses, String? courseFilter) {
+    if (courseFilter == null || courseFilter.trim().isEmpty) return true;
+    final needle = normalizeCourseKey(courseFilter);
+    if (needle.isEmpty) return true;
+    return courses.any((c) {
+      final key = normalizeCourseKey(c);
+      return key == needle || key.contains(needle) || needle.contains(key);
+    });
+  }
 
   static String buildSlug(String name, String city) {
     final base = '${name.trim()}-${city.trim()}'

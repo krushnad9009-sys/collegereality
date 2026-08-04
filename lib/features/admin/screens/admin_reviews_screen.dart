@@ -2,12 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import '../utils/admin_route_resolver.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/widgets/index.dart';
 import '../../reviews/models/review_model.dart';
 import '../../reviews/providers/review_provider.dart';
 import '../../reviews/widgets/review_card_widget.dart';
+import '../providers/admin_provider.dart';
+import '../services/admin_action_logger.dart';
+import '../utils/admin_permissions.dart';
 
 class AdminReviewsScreen extends ConsumerStatefulWidget {
   const AdminReviewsScreen({super.key});
@@ -26,13 +30,26 @@ class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
   }) async {
     try {
       final repository = ref.read(reviewRepositoryProvider);
+      final logger = ref.read(adminActionLoggerProvider);
       if (delete) {
         await repository.deleteReview(review.id, review.collegeId);
+        await logger.log(
+          action: 'review.delete',
+          targetId: review.id,
+          targetType: 'review',
+          metadata: {'collegeId': review.collegeId},
+        );
       } else {
         await repository.updateReviewStatus(
           review.id,
           review.collegeId,
           status,
+        );
+        await logger.log(
+          action: 'review.status',
+          targetId: review.id,
+          targetType: 'review',
+          metadata: {'status': status, 'collegeId': review.collegeId},
         );
       }
       ref.invalidate(allReviewsAdminProvider(_statusFilter));
@@ -50,9 +67,53 @@ class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
     }
   }
 
+  Future<void> _editContent(ReviewModel review) async {
+    final controller = TextEditingController(text: review.textReview);
+    final next = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Edit review content'),
+        content: TextField(
+          controller: controller,
+          maxLines: 8,
+          decoration: const InputDecoration(border: OutlineInputBorder()),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (next == null) return;
+    try {
+      final repository = ref.read(reviewRepositoryProvider);
+      await repository.updateReview(review.copyWith(textReview: next));
+      await ref.read(adminActionLoggerProvider).log(
+            action: 'review.edit_content',
+            targetId: review.id,
+            targetType: 'review',
+          );
+      ref.invalidate(allReviewsAdminProvider(_statusFilter));
+      if (mounted) {
+        SnackBarHelper.showSuccessSnackBar(context, message: 'Review content updated');
+      }
+    } catch (e) {
+      if (mounted) {
+        SnackBarHelper.showErrorSnackBar(context, message: e.toString());
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final reviewsAsync = ref.watch(allReviewsAdminProvider(_statusFilter));
+    final actor = ref.watch(currentUserModelProvider).valueOrNull;
+    final canOverride = AdminPermissions.canOverrideReviews(actor?.userType);
+    final canEdit = AdminPermissions.canEditReviewContent(actor?.userType);
 
     return Scaffold(
       appBar: AppBar(
@@ -89,6 +150,13 @@ class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
                   ),
                 ),
                 _FilterChip(
+                  label: 'Hidden',
+                  selected: _statusFilter == ReviewModel.statusHidden,
+                  onTap: () => setState(
+                    () => _statusFilter = ReviewModel.statusHidden,
+                  ),
+                ),
+                _FilterChip(
                   label: 'Rejected',
                   selected: _statusFilter == ReviewModel.statusRejected,
                   onTap: () => setState(
@@ -101,7 +169,11 @@ class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
           Expanded(
             child: reviewsAsync.when(
               loading: () => const ReviewListSkeleton(),
-              error: (e, _) => Center(child: Text('Error: $e')),
+              error: (e, _) => AsyncErrorView.fromError(
+                e,
+                onRetry: () =>
+                    ref.invalidate(allReviewsAdminProvider(_statusFilter)),
+              ),
               data: (reviews) {
                 if (reviews.isEmpty) {
                   return Center(
@@ -116,8 +188,9 @@ class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
                   itemCount: reviews.length,
                   itemBuilder: (context, index) {
                     final review = reviews[index];
-                    final isPublished = review.status ==
-                        ReviewModel.statusPublished;
+                    final isPublished =
+                        review.status == ReviewModel.statusPublished;
+                    final isHidden = review.status == ReviewModel.statusHidden;
                     return ReviewCardWidget(
                       review: review,
                       showCollegeName: true,
@@ -133,6 +206,20 @@ class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
                                 review,
                                 ReviewModel.statusRejected,
                               ),
+                      onHide: !canOverride || isHidden
+                          ? null
+                          : () => _moderate(
+                                review,
+                                ReviewModel.statusHidden,
+                              ),
+                      onRestore: !canOverride || !isHidden
+                          ? null
+                          : () => _moderate(
+                                review,
+                                ReviewModel.statusPublished,
+                              ),
+                      onEditContent:
+                          canEdit ? () => _editContent(review) : null,
                       onDelete: () => _moderate(
                         review,
                         review.status,

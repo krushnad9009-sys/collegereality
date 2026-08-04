@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/cache/admin_session_cache.dart';
 import '../models/admin_models.dart';
+import '../services/admin_action_logger.dart';
 import '../services/admin_analytics_service.dart';
 import '../services/admin_user_moderation_service.dart';
 
@@ -10,7 +11,9 @@ final adminAnalyticsServiceProvider = Provider<AdminAnalyticsService>((ref) {
 });
 
 final adminUserModerationServiceProvider = Provider<AdminUserModerationService>((ref) {
-  return AdminUserModerationService();
+  return AdminUserModerationService(
+    logger: ref.watch(adminActionLoggerProvider),
+  );
 });
 
 final adminDashboardStatsProvider = FutureProvider<AdminDashboardStats>((ref) async {

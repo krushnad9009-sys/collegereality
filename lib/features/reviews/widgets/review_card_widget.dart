@@ -17,6 +17,9 @@ class ReviewCardWidget extends ConsumerStatefulWidget {
   final VoidCallback? onApprove;
   final VoidCallback? onReject;
   final VoidCallback? onDelete;
+  final VoidCallback? onHide;
+  final VoidCallback? onRestore;
+  final VoidCallback? onEditContent;
 
   const ReviewCardWidget({
     required this.review,
@@ -26,6 +29,9 @@ class ReviewCardWidget extends ConsumerStatefulWidget {
     this.onApprove,
     this.onReject,
     this.onDelete,
+    this.onHide,
+    this.onRestore,
+    this.onEditContent,
     super.key,
   });
 
@@ -288,6 +294,24 @@ class _ReviewCardWidgetState extends ConsumerState<ReviewCardWidget> {
                     tooltip: 'Reject',
                     onPressed: widget.onReject,
                     icon: const Icon(Icons.block, color: AppTheme.warningColor),
+                  ),
+                if (widget.onHide != null)
+                  IconButton(
+                    tooltip: 'Hide',
+                    onPressed: widget.onHide,
+                    icon: const Icon(Icons.visibility_off_outlined),
+                  ),
+                if (widget.onRestore != null)
+                  IconButton(
+                    tooltip: 'Restore',
+                    onPressed: widget.onRestore,
+                    icon: const Icon(Icons.visibility_outlined),
+                  ),
+                if (widget.onEditContent != null)
+                  IconButton(
+                    tooltip: 'Edit content',
+                    onPressed: widget.onEditContent,
+                    icon: const Icon(Icons.edit_outlined),
                   ),
                 if (widget.onDelete != null)
                   IconButton(

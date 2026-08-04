@@ -14,6 +14,8 @@ import '../../../core/widgets/premium_components.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/providers/user_provider.dart';
 import '../../colleges/providers/college_provider.dart';
+import '../../admin/providers/platform_settings_provider.dart';
+import '../../admin/services/admin_ads_service.dart';
 import '../providers/home_content_provider.dart';
 import '../widgets/deferred_incoming_call_banner.dart';
 import '../widgets/featured_colleges_section.dart';
@@ -137,6 +139,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         const SizedBox(height: AppSpacing.sm),
                         _QuotaNoticeBanner(),
                       ],
+                      const _PlatformAnnouncementBanner(),
+                      const _HomePromoAdsStrip(),
                       const SizedBox(height: AppSpacing.lg),
                       FadeInSection(
                         delayMs: 80,
@@ -326,6 +330,96 @@ class _QuotaNoticeBanner extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _PlatformAnnouncementBanner extends ConsumerWidget {
+  const _PlatformAnnouncementBanner();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final text = ref.watch(platformAnnouncementProvider);
+    final bannerUrl = ref.watch(platformHomeBannerUrlProvider);
+    if (text.isEmpty && bannerUrl.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.sm),
+      child: Column(
+        children: [
+          if (text.isNotEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: AppTheme.primaryColor.withValues(alpha: 0.18),
+                ),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.campaign_outlined, color: AppTheme.primaryColor),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      text,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          if (bannerUrl.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: Image.network(
+                bannerUrl,
+                height: 120,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => const SizedBox.shrink(),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _HomePromoAdsStrip extends ConsumerWidget {
+  const _HomePromoAdsStrip();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final adsAsync = ref.watch(activeHomeAdsProvider);
+    return adsAsync.maybeWhen(
+      data: (ads) {
+        if (ads.isEmpty) return const SizedBox.shrink();
+        final ad = ads.first;
+        return Padding(
+          padding: const EdgeInsets.only(top: AppSpacing.sm),
+          child: Material(
+            color: AppTheme.surfaceMuted,
+            borderRadius: BorderRadius.circular(14),
+            child: ListTile(
+              leading: const Icon(Icons.local_offer_outlined),
+              title: Text(ad.title),
+              subtitle: ad.body.isEmpty ? null : Text(ad.body, maxLines: 2),
+              trailing: ad.ctaUrl.isEmpty
+                  ? null
+                  : Text(ad.ctaLabel, style: TextStyle(color: AppTheme.primaryColor)),
+            ),
+          ),
+        );
+      },
+      orElse: () => const SizedBox.shrink(),
     );
   }
 }

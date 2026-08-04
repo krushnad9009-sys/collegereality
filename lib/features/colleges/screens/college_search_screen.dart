@@ -68,33 +68,56 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
   @override
   void initState() {
     super.initState();
-    _searchController = TextEditingController(text: widget.initialQuery ?? '');
-    _cityController = TextEditingController(text: widget.initialCity ?? '');
+    _searchController = TextEditingController();
+    _cityController = TextEditingController();
     _universityController = TextEditingController();
+    _applyInitialFilters();
+    if (_shouldAutoSearchFromInitials()) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _runSearch());
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant CollegeSearchScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final changed = oldWidget.initialQuery != widget.initialQuery ||
+        oldWidget.initialCity != widget.initialCity ||
+        oldWidget.initialState != widget.initialState ||
+        oldWidget.initialCourse != widget.initialCourse ||
+        oldWidget.initialCategory != widget.initialCategory ||
+        oldWidget.initialFilter != widget.initialFilter;
+    if (!changed) return;
+    _applyInitialFilters();
+    _runSearch();
+  }
+
+  void _applyInitialFilters() {
+    _searchController.text = widget.initialQuery ?? '';
+    _cityController.text = widget.initialCity ?? '';
     _selectedState = widget.initialState;
     _selectedCourse = widget.initialCourse;
     _selectedCategory = CollegeConstants.clampToAllowed(
       widget.initialCategory,
       CollegeConstants.collegeCategories,
     );
-    if (widget.initialFilter == 'city' || widget.initialFilter == 'state') {
-      _showFilters = true;
-    }
-    if (widget.initialCity != null ||
+    if (widget.initialFilter == 'city' ||
+        widget.initialFilter == 'state' ||
+        widget.initialCity != null ||
         widget.initialState != null ||
         widget.initialCourse != null ||
         widget.initialCategory != null ||
         widget.initialFilter != null) {
       _showFilters = true;
     }
-    if (widget.initialCity != null ||
+  }
+
+  bool _shouldAutoSearchFromInitials() {
+    return widget.initialCity != null ||
         widget.initialState != null ||
         widget.initialCourse != null ||
         widget.initialCategory != null ||
         widget.initialFilter != null ||
-        (widget.initialQuery != null && widget.initialQuery!.trim().isNotEmpty)) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _runSearch());
-    }
+        (widget.initialQuery != null && widget.initialQuery!.trim().isNotEmpty);
   }
 
   @override

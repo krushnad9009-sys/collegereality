@@ -3,6 +3,7 @@ class SuperAdminRouteNames {
   static const String accessDenied = '/panel/access-denied';
   static const String dashboard = '/panel/dashboard';
   static const String users = '/panel/users';
+  static const String roles = '/panel/roles';
   static const String colleges = '/panel/colleges';
   static const String collegeNew = '/panel/colleges/new';
   static const String collegeEdit = '/panel/colleges/:id/edit';
@@ -20,6 +21,8 @@ class SuperAdminRouteNames {
   static const String export = '/panel/export';
   static const String ecosystem = '/panel/ecosystem';
   static const String studentLife = '/panel/student-life';
+  static const String ads = '/panel/ads';
+  static const String auditLogs = '/panel/audit-logs';
 
   static String collegeEditPath(String id) => '/panel/colleges/$id/edit';
 }
