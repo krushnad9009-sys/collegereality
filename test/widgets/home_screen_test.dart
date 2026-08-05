@@ -1,3 +1,4 @@
+import 'package:college_reality_india/core/constants/college_constants.dart';
 import 'package:college_reality_india/features/home/widgets/home_hero_banner.dart';
 import 'package:college_reality_india/features/home/widgets/premium_home_search_bar.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -11,15 +12,15 @@ void main() {
     await pumpScreen(
       tester,
       overrides: testAuthOverrides(),
-      child: const HomeHeroBanner(
+      child: HomeHeroBanner(
         greeting: 'Find your dream college',
-        subtitle: 'Explore 47,000+ colleges with real campus photos & ratings',
+        subtitle: CollegeConstants.homeExploreLabel(),
       ),
     );
 
     expect(find.text('Find your dream college'), findsOneWidget);
     expect(
-      find.textContaining('Explore 47,000+ colleges'),
+      find.textContaining('Explore 45,020 colleges'),
       findsOneWidget,
     );
   });

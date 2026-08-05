@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
+import '../../../core/constants/college_constants.dart';
 import '../../colleges/providers/college_provider.dart';
 
 class CollegeBrowseScreen extends ConsumerWidget {
@@ -47,9 +48,7 @@ class CollegeBrowseScreen extends ConsumerWidget {
             children: [
               totalAsync.when(
                 data: (total) => Text(
-                  total > 0
-                      ? '$total colleges across India'
-                      : '47,000+ colleges across India',
+                  CollegeConstants.acrossIndiaLabel(liveCount: total),
                   style: GoogleFonts.poppins(
                     fontSize: 14,
                     color: AppTheme.gray600,
@@ -57,7 +56,7 @@ class CollegeBrowseScreen extends ConsumerWidget {
                 ),
                 loading: () => const SizedBox.shrink(),
                 error: (_, _) => Text(
-                  '47,000+ colleges across India',
+                  CollegeConstants.acrossIndiaLabel(),
                   style: GoogleFonts.poppins(
                     fontSize: 14,
                     color: AppTheme.gray600,

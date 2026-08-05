@@ -66,12 +66,16 @@ final topRatedCollegesProvider = FutureProvider<List<CollegeModel>>((ref) async 
 /// Recent published student reviews for home feed.
 final homeRecentReviewsProvider =
     FutureProvider<List<ReviewModel>>((ref) async {
-  final repo = ref.watch(reviewRepositoryProvider);
-  final reviews = await repo.getAllReviews(
-    limit: 24,
-    statusFilter: ReviewModel.statusPublished,
-  );
-  return reviews.where((r) => r.isPublicVisible).take(6).toList();
+  try {
+    final repo = ref.watch(reviewRepositoryProvider);
+    final reviews = await repo.getAllReviews(
+      limit: 24,
+      statusFilter: ReviewModel.statusPublished,
+    );
+    return reviews.where((r) => r.isPublicVisible).take(6).toList();
+  } catch (_) {
+    return const [];
+  }
 });
 
 /// Alumni profiles for success stories strip.

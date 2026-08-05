@@ -8,6 +8,7 @@ import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/bootstrap/startup_bootstrap.dart';
+import '../../../core/constants/college_constants.dart';
 import '../../../core/cache/college_session_cache.dart';
 import '../../../core/cache/firestore_quota_guard.dart';
 import '../../../core/providers/firestore_quota_provider.dart';
@@ -73,6 +74,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ? 'Hi, ${userDetail?.effectivePublicDisplayName ?? currentUser.displayName ?? 'Student'} 👋'
         : 'Find your dream college';
 
+    final countAsync = ref.watch(collegeCountProvider);
+    final guestSubtitle = countAsync.when(
+      data: (total) => CollegeConstants.homeExploreLabel(liveCount: total),
+      loading: () => CollegeConstants.homeExploreLabel(),
+      error: (_, _) => CollegeConstants.homeExploreLabel(),
+    );
+
     return Scaffold(
       backgroundColor: isDark ? AppTheme.gray900 : AppTheme.surfaceMuted,
       body: SafeArea(
@@ -102,7 +110,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           greeting: greeting,
                           subtitle: currentUser != null
                               ? 'Personalized recommendations, verified reviews & CR Scores'
-                              : 'Explore 47,000+ colleges with real campus photos & ratings',
+                              : guestSubtitle,
                           trailing: currentUser != null
                               ? HomeHeaderActions(user: currentUser)
                               : TextButton(

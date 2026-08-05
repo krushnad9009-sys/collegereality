@@ -14,6 +14,41 @@ class CollegeConstants {
 
   static const String metaDirectoryDoc = 'collegeDirectory';
 
+  /// Verified live Firestore document count (2026-08-05 production audit).
+  static const int auditedProductionCount = 45020;
+
+  static String formatCollegeCount(int count) {
+    final s = count.toString();
+    if (s.length <= 3) return s;
+    final buf = StringBuffer();
+    for (var i = 0; i < s.length; i++) {
+      final remaining = s.length - i;
+      if (i > 0 && remaining % 3 == 0) buf.write(',');
+      buf.write(s[i]);
+    }
+    return buf.toString();
+  }
+
+  static int effectiveCollegeCount(int? liveCount) {
+    if (liveCount != null && liveCount > 0) return liveCount;
+    return auditedProductionCount;
+  }
+
+  static String acrossIndiaLabel({int? liveCount}) =>
+      '${formatCollegeCount(effectiveCollegeCount(liveCount))} colleges across India';
+
+  static String searchIndexedLabel({int? liveCount}) =>
+      '${formatCollegeCount(effectiveCollegeCount(liveCount))} colleges indexed';
+
+  static String searchByNameLabel({int? liveCount}) =>
+      'Search ${formatCollegeCount(effectiveCollegeCount(liveCount))} colleges by name';
+
+  static String autocompleteHintLabel({int? liveCount}) =>
+      'Search from ${formatCollegeCount(effectiveCollegeCount(liveCount))} colleges...';
+
+  static String homeExploreLabel({int? liveCount}) =>
+      'Explore ${formatCollegeCount(effectiveCollegeCount(liveCount))} colleges with real campus photos & ratings';
+
   static const List<String> collegeTypes = [
     'government',
     'private',

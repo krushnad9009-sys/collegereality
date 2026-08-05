@@ -55,10 +55,7 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
   String? _selectedCategory;
   String? _selectedType;
   bool _showFilters = false;
-  String? _cursor;
   List<CollegeModel> _results = [];
-  bool _hasMore = false;
-  bool _isLoadingMore = false;
   bool _isSearching = false;
   bool _hasSearched = false;
   int? _totalCount;
@@ -97,8 +94,6 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
         _results = [];
         _hasSearched = false;
         _searchError = null;
-        _cursor = null;
-        _hasMore = false;
         _showFilters = false;
       });
     }
@@ -157,47 +152,16 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
     );
   }
 
-  Future<void> _runSearch({bool loadMore = false}) async {
-    if (loadMore) {
-      if (!_hasMore || _isLoadingMore || _cursor == null) return;
-      setState(() => _isLoadingMore = true);
-      try {
-        final page = await ref.read(
-          collegeSearchPageProvider(_buildParams(startAfter: _cursor)).future,
-        );
-        if (!mounted) return;
-        setState(() {
-          final existingIds = _results.map((c) => c.id).toSet();
-          final fresh = page.colleges
-              .where((c) => existingIds.add(c.id))
-              .toList();
-          _results = [..._results, ...fresh];
-          _cursor = page.lastDocumentId;
-          _hasMore = page.hasMore;
-          _isLoadingMore = false;
-        });
-      } catch (e) {
-        if (!mounted) return;
-        setState(() {
-          _isLoadingMore = false;
-          _searchError = FirestoreErrorUtils.userMessage(e);
-        });
-      }
-      return;
-    }
-
+  Future<void> _runSearch() async {
     final params = _buildParams();
     setState(() {
-      _cursor = null;
       _results = [];
-      _hasMore = false;
       _isSearching = true;
       _searchError = null;
       _hasSearched = true;
       _liveQuery = '';
       _totalCount = null;
       _fromLiveDatabase = true;
-      // Show results immediately; advanced filters stay closed until opened.
       _showFilters = false;
     });
 
@@ -220,8 +184,6 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
       }
       setState(() {
         _results = page.colleges;
-        _cursor = null;
-        _hasMore = false;
         _totalCount = page.totalCount ?? page.colleges.length;
         _fromLiveDatabase = page.fromLiveDatabase;
         _isSearching = false;
@@ -251,8 +213,6 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
       _results = [];
       _hasSearched = false;
       _searchError = null;
-      _cursor = null;
-      _hasMore = false;
       _showFilters = false;
     });
     final hasRouteFilters = widget.initialQuery != null ||
@@ -313,7 +273,7 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
     final tokens = context.tokens;
     final statesAsync = ref.watch(indianStatesProvider);
     final coursesAsync = ref.watch(indianCoursesProvider);
-    final metaAsync = ref.watch(collegeDirectoryMetaProvider);
+    final countAsync = ref.watch(collegeCountProvider);
     final basket = ref.watch(compareBasketProvider);
     final searchSuggestions = _liveQuery.trim().isEmpty
         ? const <String>[]
@@ -362,13 +322,18 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
               AppSpacing.lg,
               AppSpacing.xs,
             ),
-            child: metaAsync.when(
+            child: countAsync.when(
               loading: () => const SizedBox.shrink(),
-              error: (_, _) => const SizedBox.shrink(),
-              data: (meta) => Text(
-                meta.totalColleges > 0
-                    ? '${meta.totalColleges.toString()} colleges indexed'
-                    : 'Search 47,000+ colleges by name',
+              error: (_, _) => Text(
+                CollegeConstants.searchByNameLabel(),
+                style: AppFonts.plusJakarta(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: tokens.textTertiary,
+                ),
+              ),
+              data: (liveTotal) => Text(
+                CollegeConstants.searchIndexedLabel(liveCount: liveTotal),
                 style: AppFonts.plusJakarta(
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
@@ -891,33 +856,8 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
                             : ListView.builder(
                                 padding:
                                     const EdgeInsets.fromLTRB(16, 16, 16, 96),
-                                itemCount: _results.length + (_hasMore ? 1 : 0),
+                                itemCount: _results.length,
                                 itemBuilder: (context, index) {
-                                  if (index == _results.length) {
-                                    return Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 12),
-                                      child: Center(
-                                        child: _isLoadingMore
-                                            ? SizedBox(
-                                                width: 28,
-                                                height: 28,
-                                                child:
-                                                    CircularProgressIndicator(
-                                                  strokeWidth: 2.5,
-                                                  color: AppTheme.primaryColor,
-                                                ),
-                                              )
-                                            : OutlinedButton.icon(
-                                                onPressed: () =>
-                                                    _runSearch(loadMore: true),
-                                                icon: const Icon(
-                                                    Icons.expand_more_rounded),
-                                                label: const Text('Load more'),
-                                              ),
-                                      ),
-                                    );
-                                  }
                                   final college = _results[index];
                                   return Padding(
                                     padding:

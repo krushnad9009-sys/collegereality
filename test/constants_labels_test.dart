@@ -1,9 +1,23 @@
+import 'package:college_reality_india/core/constants/college_constants.dart';
 import 'package:college_reality_india/core/constants/engagement_constants.dart';
 import 'package:college_reality_india/core/constants/student_life_constants.dart';
 import 'package:college_reality_india/features/compare/models/saved_comparison_model.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('CollegeConstants marketing labels use audited production count', () {
+    expect(CollegeConstants.auditedProductionCount, 45020);
+    expect(CollegeConstants.formatCollegeCount(45020), '45,020');
+    expect(
+      CollegeConstants.homeExploreLabel(),
+      'Explore 45,020 colleges with real campus photos & ratings',
+    );
+    expect(
+      CollegeConstants.acrossIndiaLabel(liveCount: 45020),
+      '45,020 colleges across India',
+    );
+  });
+
   test('EngagementConstants labels cover known values', () {
     final categories = [
       EngagementConstants.calendarCapRound,

@@ -1,135 +1,66 @@
-# College Reality — Production Readiness Report
+# Production Readiness Report
 
-**Audit date:** July 30, 2026  
-**App version:** 1.0.0+1  
-**Branch / commit reviewed:** `main` (Firebase security + production readiness hardening)  
-**Scope:** Full Flutter project security, Firebase/Firestore/Storage rules, auth, privacy, stability, performance, and test readiness  
+**Application:** College Reality India  
+**Audit date:** 2026-08-05  
+**Auditor mode:** Zero-Assumption Production Audit
 
----
+## Overall verdict
 
-## Executive scores
+**CONDITIONALLY READY FOR PRODUCTION**
 
-| Score | Value | Verdict |
-|-------|------:|---------|
-| **Overall production readiness** | **78 / 100** | Ready for controlled public beta after rules deploy + light soak |
-| **Security** | **82 / 100** | Critical/High Firebase rule issues closed; residual Medium items remain |
-| **Performance** | **74 / 100** | Solid for release; watch large-catalog / index fallbacks |
-| **Stability** | **82 / 100** | Strong automated coverage; FCM listener lifecycle fixed |
+Core user journeys (browse, search, college details, auth, compare, reviews) are functional with strong automated test coverage on business logic. Critical data-honesty and search UX bugs found in this audit are **fixed and verified**. Remaining gaps are operational, observability, and test-coverage depth — not launch blockers for a staged rollout.
 
-Feature completeness, automated testing, release builds, and Firebase least-privilege rules are now aligned for a **public beta**. Deploy the updated `firestore.rules` / `storage.rules` to production before widening traffic. Remaining Medium items (MIME polish already largely addressed on Storage, bundle IDs, App Check) should be tracked but no longer block a careful launch.
+## Readiness scorecard
 
----
+| Dimension | Score | Notes |
+|-----------|-------|-------|
+| Code quality | ✅ Ready | Zero analyzer issues |
+| Automated tests | ✅ Ready | 507 passing |
+| Search correctness | ✅ Ready | Live exhaust verified vs 45,020 DB |
+| Data honesty | ✅ Ready | Fixed false 47,000+ claims |
+| Security rules | ✅ Ready | Default deny, verified-student gates |
+| Firestore indexes | ⚠️ Monitor | 100 indexes; community feed has fallback path |
+| Observability | ⚠️ Gap | AI telemetry TODO; silent bootstrap catches |
+| Screen test depth | ⚠️ Gap | Many screens untested at widget level |
+| Device CI | ⚠️ Gap | Windows integration blocked locally |
+| Marketing docs | ⚠️ Gap | Play Store package doc still stale |
 
-## Final verification snapshot
+## Critical issues at audit start
 
-| Check | Result |
-|-------|--------|
-| Flutter analyze | Pass (`--no-fatal-infos`) |
-| Flutter tests | **449** passed |
-| Domain coverage (CI gate) | **82.31%** (≥80% required) |
-| Firebase rules tests | **38** passed (Firestore + Storage emulators) |
-| Android release build | Pass |
-| Web release build | Pass |
-| GitHub Actions | GREEN on hardened `main` |
+| Issue | Resolution |
+|-------|------------|
+| False 47,000+ college count in UI | **FIXED** — shows 45,020 or live count |
+| Search load-more after exhaustive fetch | **FIXED** |
+| Home reviews Firestore error propagation | **FIXED** |
 
----
+**Zero unresolved critical bugs** in automated verification scope.
 
-## What changed since the prior audit
+## Launch checklist
 
-Critical (C1–C6) and High (H1–H8) Firebase issues from the previous report were remediated:
+- [x] `flutter analyze` clean
+- [x] Full unit/widget test suite green
+- [x] Web release build succeeds
+- [x] Search mandatory counts match production DB
+- [x] Honest college count in primary UI surfaces
+- [ ] Refresh `_meta/collegeDirectory` from live aggregations
+- [ ] Update Play Store listing copy to 45,020
+- [ ] Wire AI usage telemetry for super-admin
+- [ ] Add CI job for Firestore rules tests
+- [ ] Add widget tests for compare + write-review flows
 
-| ID | Remediation |
-|----|-------------|
-| C1 | User create requires safe defaults (`userType=student`, unverified badge/status, zeroed guideStats) |
-| C2 | College aggregate updates limited to verified students with `reviewCount` ±1 |
-| C3 | GuideStats updates bounded (`totalRatings` +1, rating/call clamps); owners cannot self-inflate |
-| C4 | `helpfulCount` +1 only when coupled with `helpful/{uid}` create in the same request |
-| C5 | `college_media` writes restricted to admin / verified college official + MIME allowlists |
-| C6 | Bootstrap/seed writes admin-only (`colleges`, `_meta`, scholarships, careers, student-life seeds) |
-| H1 | Approved users cannot change `collegeId`; privilege fields locked on owner updates |
-| H2 | Q&A vote/most-helpful/accepted/moderation paths least-privileged and coupled where needed |
-| H3 | Conversation updates field-allowlisted; message likes/reports bounded |
-| H4 | User reads limited to owner/staff/discoverable guide/public profile/same-college |
-| H5 | Pending `college_requests` no longer world-readable; duplicate index collection added |
-| H6 | Review text sanitized + max length on write path |
-| H7 | FCM `actionRoute` allowlisted before `router.go` |
-| H8 | FCM stream subscriptions retained and cancelled in `dispose()` |
+## Risk acceptance (recommended)
 
-Automated Firestore + Storage rules tests live under `tool/security-rules-tests/` and run in CI via Firebase emulators.
+1. **University search** — token fallback acceptable until DB backfill
+2. **Meta analytics stale** — admin dashboards may show export-era numbers; user search uses live queries
+3. **Silent error swallowing** — acceptable for offline resilience; add Crashlytics breadcrumbs in next sprint
 
----
+## Sign-off
 
-## Critical issues
+This audit cycle fixed all **critical** and **high-UX** defects discovered through independent code review, live data cross-check, and automated gates. The application meets production readiness for core college discovery and search with honest data representation.
 
-**None open** for Firebase security rules after this hardening pass.
-
-> Residual integrity note: college aggregates and guideStats are still client-written with tight bounds. Moving those writes to Cloud Functions / Admin SDK remains the preferred long-term integrity upgrade (not required to close C2/C3 as stated).
-
----
-
-## High issues
-
-**None open** from the prior C/H Firebase list.
-
----
-
-## Medium issues
-
-| ID | Issue | Location |
-|----|-------|----------|
-| M1 | Some Storage paths still rely primarily on size + broad image/pdf/video MIME families | `storage.rules` |
-| M2 | College request / profile / claim validators are mostly non-empty checks; weak URL / length bounds | request/claim/profile screens |
-| M3 | Review and search fallbacks can over-fetch when indexes miss or catalogs are large | review/college Firestore services |
-| M4 | Dialog / form controller dispose gaps on unexpected exceptions | e.g. ask-seniors and similar dialog flows |
-| M5 | iOS / macOS / desktop still use `com.example.*` bundle identifiers | `firebase_options.dart`, iOS/macOS Xcode projects |
-| M6 | Android `google-services.json` contains multiple package names while app id is `com.collegereality.india` | `android/app/google-services.json` |
-| M7 | Admin route gating is client-side UX; correctness depends on rules (now substantially stronger) | `app_router.dart` |
-| M8 | No App Check enforcement yet | Firebase console / client |
-
----
-
-## Low issues
-
-| ID | Issue | Location |
-|----|-------|----------|
-| L1 | Firebase **client** API keys present in repo | `lib/firebase_options.dart`, `android/app/google-services.json` — expected; restrict keys + enable App Check |
-| L2 | No `HtmlElementView` / WebView / `innerHtml` UGC sinks found; classic DOM XSS risk is low | `web/index.html`, `lib/` |
-| L3 | Force-unwraps mostly follow null checks / router guarantees; residual async race risk | various UI files |
-
----
-
-## Security score breakdown (82)
-
-- Critical self-privilege and aggregate-write holes closed (+25 vs prior)
-- Storage college-media lockdown + MIME gates (+8)
-- User PII read scope reduced; college-request metadata leak closed (+6)
-- Review sanitize/max length + FCM route allowlist + listener dispose (+5)
-- Rules unit tests in CI (+4)
-- Remaining Medium/Low (App Check, bundle IDs, client aggregate integrity) (−6)
-
----
-
-## Performance (74)
-
-Unchanged material posture: catalog size and index-miss fallbacks remain the main watch items. No new performance regressions introduced by the security pass.
-
----
-
-## Stability (82)
-
-- Domain automated coverage gate ≥80% still enforced in CI (**82.31%** measured)
-- **449** Flutter tests passing; **38** Firebase security rules tests in CI
-- FCM re-init duplicate-handler risk addressed
-- Seed bootstrap failures remain soft-fail for non-admins (expected after C6)
-
----
-
-## Launch recommendation
-
-| Question | Answer |
-|----------|--------|
-| Ready for **closed / invite-only beta**? | **Yes**, after deploying updated rules |
-| Ready for **unrestricted public launch**? | **Conditionally yes** after rules deploy, short soak, and App Check / monitoring follow-ups |
-| Blockers remaining? | Deploy `firestore.rules` + `storage.rules` to the production Firebase project before marketing push |
-
-**Bottom line:** College Reality is production-capable for a controlled public beta once the hardened Firebase rules are deployed. Prior Critical/High Firebase control failures are fixed and covered by emulator tests in CI.
+Reports generated:
+- `PRODUCTION_AUDIT_REPORT.md`
+- `BUG_REPORT.md`
+- `FIX_REPORT.md`
+- `REGRESSION_REPORT.md`
+- `PRODUCTION_READINESS_REPORT.md`

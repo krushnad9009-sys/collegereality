@@ -147,7 +147,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         try {
           return await ref
               .read(currentUserDetailProvider.future)
-              .timeout(const Duration(seconds: 4));
+              .timeout(const Duration(seconds: 8));
         } catch (_) {
           return null;
         }

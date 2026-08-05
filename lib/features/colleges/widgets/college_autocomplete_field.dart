@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../config/theme/app_theme.dart';
+import '../../../core/constants/college_constants.dart';
 import '../models/college_model.dart';
 import '../providers/college_provider.dart';
 
@@ -63,6 +64,13 @@ class _CollegeAutocompleteFieldState
         ? ref.watch(collegeInstantSuggestProvider(query))
         : const AsyncValue<List<CollegeModel>>.data([]);
 
+    final countAsync = ref.watch(collegeCountProvider);
+    final hint = countAsync.when(
+      data: (total) => CollegeConstants.autocompleteHintLabel(liveCount: total),
+      loading: () => CollegeConstants.autocompleteHintLabel(),
+      error: (_, _) => CollegeConstants.autocompleteHintLabel(),
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -70,7 +78,7 @@ class _CollegeAutocompleteFieldState
           controller: _controller,
           decoration: InputDecoration(
             labelText: 'College',
-            hintText: 'Search from 47,000+ colleges...',
+            hintText: hint,
             filled: true,
             fillColor: AppTheme.gray100,
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
