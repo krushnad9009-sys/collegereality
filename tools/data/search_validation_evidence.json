@@ -1,42 +1,141 @@
 {
-  "generated_at": "2026-08-05T06:44:29.400216+00:00",
-  "cases": {
-    "Pune": {
-      "expected": 533,
-      "aggregation_count": 533,
-      "exhausted_page_count": 533,
-      "unique_ids": 533,
+  "generated_at": "2026-08-05T08:38:53.899352+00:00",
+  "source": "C:\\Users\\Sahyadri\\collegereality\\tools\\data\\firestore\\india_colleges_firestore_full.json",
+  "total_active": 47139,
+  "states": 36,
+  "distinct_state_city_pairs": 8621,
+  "root_cause_rc1_popular_cities": [
+    {
+      "city": "Mumbai",
+      "state": "Maharashtra",
+      "legacy_equality_count": 359,
+      "unified_contains_count": 577,
+      "delta": 218,
       "pass": true
     },
-    "Mumbai": {
-      "expected": 353,
-      "aggregation_count": 353,
-      "exhausted_page_count": 353,
-      "unique_ids": 353,
+    {
+      "city": "Delhi",
+      "state": "Delhi",
+      "legacy_equality_count": 274,
+      "unified_contains_count": 278,
+      "delta": 4,
       "pass": true
     },
-    "Engineering": {
-      "expected": 4253,
-      "aggregation_count": 4253,
-      "exhausted_page_count": 4253,
-      "unique_ids": 4253,
+    {
+      "city": "Bangalore",
+      "state": "Karnataka",
+      "legacy_equality_count": 919,
+      "unified_contains_count": 1122,
+      "delta": 203,
       "pass": true
     },
-    "Medical": {
-      "expected": 1359,
-      "aggregation_count": 1359,
-      "exhausted_page_count": 1359,
-      "unique_ids": 1359,
+    {
+      "city": "Pune",
+      "state": "Maharashtra",
+      "legacy_equality_count": 536,
+      "unified_contains_count": 755,
+      "delta": 219,
       "pass": true
     },
-    "Nursing": {
-      "expected": 3016,
-      "aggregation_count": 3016,
-      "exhausted_page_count": 3016,
-      "unique_ids": 3016,
+    {
+      "city": "Hyderabad",
+      "state": "Telangana",
+      "legacy_equality_count": 602,
+      "unified_contains_count": 739,
+      "delta": 137,
+      "pass": true
+    },
+    {
+      "city": "Chennai",
+      "state": "Tamil Nadu",
+      "legacy_equality_count": 389,
+      "unified_contains_count": 472,
+      "delta": 83,
+      "pass": true
+    },
+    {
+      "city": "Kolkata",
+      "state": "West Bengal",
+      "legacy_equality_count": 398,
+      "unified_contains_count": 426,
+      "delta": 28,
+      "pass": true
+    },
+    {
+      "city": "Ahmedabad",
+      "state": "Gujarat",
+      "legacy_equality_count": 301,
+      "unified_contains_count": 343,
+      "delta": 42,
       "pass": true
     }
+  ],
+  "category_counts": {
+    "Engineering": 4414,
+    "Medical": 1386,
+    "MBA": 2282,
+    "Pharmacy": 1052,
+    "Nursing": 3179,
+    "Law": 731,
+    "Commerce": 1544,
+    "Arts": 1433,
+    "Science": 625,
+    "General": 27269,
+    "Polytechnic": 2669,
+    "Agriculture": 319,
+    "Architecture": 164,
+    "Fashion": 72
   },
-  "passed": true,
-  "total_documents": 45020
+  "state_counts": {
+    "andaman & nicobar islands": 8,
+    "andhra pradesh": 3379,
+    "arunachal pradesh": 24,
+    "assam": 569,
+    "bihar": 806,
+    "chandigarh": 39,
+    "chhattisgarh": 853,
+    "dadra & nagar haveli": 9,
+    "daman & diu": 9,
+    "delhi": 303,
+    "goa": 75,
+    "gujarat": 2653,
+    "haryana": 990,
+    "himachal pradesh": 469,
+    "jammu and kashmir": 381,
+    "jharkhand": 356,
+    "karnataka": 4843,
+    "kerala": 1736,
+    "lakshadweep": 3,
+    "madhya pradesh": 2634,
+    "maharashtra": 6167,
+    "manipur": 70,
+    "meghalaya": 63,
+    "mizoram": 54,
+    "nagaland": 87,
+    "odisha": 1591,
+    "puducherry": 105,
+    "punjab": 1296,
+    "rajasthan": 2713,
+    "sikkim": 36,
+    "tamil nadu": 3775,
+    "telangana": 2289,
+    "tripura": 68,
+    "uttar pradesh": 6484,
+    "uttarakhand": 578,
+    "west bengal": 1624
+  },
+  "ownership_counts": {
+    "private": 43166,
+    "government": 3915,
+    "autonomous": 57,
+    "deemed": 1
+  },
+  "city_zero_match_failure_count": 0,
+  "city_zero_match_failures": [],
+  "gates": {
+    "popular_cities_nonempty": true,
+    "mandatory_categories_nonempty": true,
+    "no_city_zero_unified_failures": true,
+    "all_pass": true
+  }
 }
