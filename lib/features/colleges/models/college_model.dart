@@ -503,6 +503,7 @@ class CollegeModel implements CollegeModelLike {
   final int wouldChooseAgainTotal;
   final int verifiedStudentCount;
   final int verifiedAlumniCount;
+  @override
   final String cityLower;
   final String districtLower;
   final String universityLower;
@@ -1020,10 +1021,18 @@ class CollegeSearchPage {
   final String? lastDocumentId;
   final bool hasMore;
 
+  /// Total matches for the current filters when known (Firestore count).
+  final int? totalCount;
+
+  /// False when results came from bundled offline fallback.
+  final bool fromLiveDatabase;
+
   const CollegeSearchPage({
     required this.colleges,
     this.lastDocumentId,
     this.hasMore = false,
+    this.totalCount,
+    this.fromLiveDatabase = true,
   });
 }
 

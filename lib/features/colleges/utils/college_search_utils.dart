@@ -24,6 +24,7 @@ class ResolvedSearchIntent {
   final String? university;
   final String? course;
   final String? category;
+  final String? type;
 
   const ResolvedSearchIntent({
     this.retrievalQuery,
@@ -33,6 +34,7 @@ class ResolvedSearchIntent {
     this.university,
     this.course,
     this.category,
+    this.type,
   });
 
   bool get hasCity => city != null && city!.trim().isNotEmpty;
@@ -285,6 +287,8 @@ class CollegeSearchUtils {
     String? university,
     String? course,
     String? category,
+    String? type,
+    String? ownership,
   }) {
     final trimmed = query?.trim() ?? '';
     final parsed = parseCompoundQuery(trimmed.isEmpty ? null : trimmed);
@@ -297,6 +301,9 @@ class CollegeSearchUtils {
 
     var effectiveState = _firstNonEmpty(state);
     var effectiveCategory = _firstNonEmpty(category);
+    // Ownership is empty in production DB — map to `type` (government/private/...).
+    final effectiveType = _firstNonEmpty(type) ??
+        _ownershipToType(_firstNonEmpty(ownership));
 
     if (effectiveCategory == null && trimmed.isNotEmpty) {
       effectiveCategory = matchCategoryLabel(trimmed);
@@ -305,8 +312,6 @@ class CollegeSearchUtils {
       effectiveState = matchStateLabel(trimmed);
     }
 
-    // When free-text is fully explained by structured fields, skip name-prefix
-    // retrieval so city/category searches are not narrowed to name startsWith.
     String? retrievalQuery = trimmed.isEmpty ? null : trimmed;
     final cityOnlyFreeText = parsed.city != null &&
         parsed.course == null &&
@@ -340,7 +345,23 @@ class CollegeSearchUtils {
       university: effectiveUniversity,
       course: effectiveCourse,
       category: effectiveCategory,
+      type: effectiveType,
     );
+  }
+
+  static String? _ownershipToType(String? ownership) {
+    if (ownership == null || ownership.isEmpty) return null;
+    final key = ownership.trim().toLowerCase();
+    const map = {
+      'government': 'government',
+      'govt': 'government',
+      'gov': 'government',
+      'public': 'government',
+      'private': 'private',
+      'deemed': 'deemed',
+      'autonomous': 'autonomous',
+    };
+    return map[key] ?? key;
   }
 
   static String? matchCategoryLabel(String raw) {
@@ -462,7 +483,9 @@ class CollegeSearchUtils {
       results = results
           .where(
             (c) => cityMatchesCollege(
-              cityLower: normalizeCity(c.city),
+              cityLower: c.cityLower.isNotEmpty
+                  ? normalizeCity(c.cityLower)
+                  : normalizeCity(c.city),
               districtLower: normalizeDistrict(c.district),
               cityFilter: city,
             ),
@@ -471,12 +494,19 @@ class CollegeSearchUtils {
     }
     if (university != null && university.isNotEmpty) {
       final normalizedUniversity = normalizeUniversity(university);
-      results = results
-          .where(
-            (c) => normalizeUniversity(c.universityName)
-                .contains(normalizedUniversity),
-          )
-          .toList();
+      results = results.where((c) {
+        final uni = normalizeUniversity(c.universityName);
+        if (uni.contains(normalizedUniversity)) return true;
+        // Production data often lacks universityName — fall back to tokens/name.
+        if (c.searchTokens.any(
+          (t) =>
+              t.contains(normalizedUniversity) ||
+              normalizedUniversity.contains(t),
+        )) {
+          return true;
+        }
+        return matchesQuery(c, university);
+      }).toList();
     }
     if (course != null && course.isNotEmpty) {
       results =
@@ -489,9 +519,12 @@ class CollegeSearchUtils {
           .toList();
     }
     if (type != null && type.isNotEmpty) {
-      results = results
-          .where((c) => c.type.toLowerCase() == type.toLowerCase())
-          .toList();
+      final typeLower = type.toLowerCase();
+      results = results.where((c) {
+        if (c.type.toLowerCase() == typeLower) return true;
+        // ownership field is empty in production; keep type-compatible match.
+        return false;
+      }).toList();
     }
     if (query != null && query.trim().isNotEmpty) {
       results =
@@ -597,9 +630,13 @@ class CollegeSearchUtils {
 
   static bool _matchesParsedCity(CollegeModelLike college, String? city) {
     if (city == null || city.isEmpty) return true;
-    final normalizedCity = normalizeCity(city);
-    return normalizeCity(college.city).contains(normalizedCity) ||
-        normalizeDistrict(college.district).contains(normalizedCity);
+    return cityMatchesCollege(
+      cityLower: college.cityLower.isNotEmpty
+          ? normalizeCity(college.cityLower)
+          : normalizeCity(college.city),
+      districtLower: normalizeDistrict(college.district),
+      cityFilter: city,
+    );
   }
 
   static bool _containsToken(String haystack, String token) {
@@ -626,6 +663,7 @@ class CollegeSearchUtils {
 abstract class CollegeModelLike {
   String get name;
   String get city;
+  String get cityLower;
   String get district;
   String get state;
   String? get universityName;

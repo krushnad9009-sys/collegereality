@@ -121,6 +121,214 @@ class FirestoreCollegeService {
     return CollegeDirectoryMeta.fromJson(doc.data());
   }
 
+  Future<int> countSearchMatches({
+    String? query,
+    String? state,
+    String? city,
+    String? university,
+    String? course,
+    String? category,
+    String? type,
+    String? ownership,
+    bool includeInactive = false,
+  }) async {
+    final intent = CollegeSearchUtils.resolveSearchIntent(
+      query: query,
+      state: state,
+      city: city,
+      university: university,
+      course: course,
+      category: category,
+      type: type,
+      ownership: ownership,
+    );
+    final effectiveType = intent.type;
+
+    if (intent.hasRetrievalQuery && !intent.hasCity && intent.category == null) {
+      // Free-text totals require a fetch; avoid recursion with searchAllMatching.
+      return -1;
+    }
+
+    if (intent.hasCity) {
+      var total = 0;
+      for (final key in CollegeSearchUtils.citySearchKeys(intent.city!)) {
+        total += await _countStructured(
+          cityLowerEquals: key,
+          state: intent.state,
+          category: intent.category,
+          course: intent.course,
+          type: effectiveType,
+          includeInactive: includeInactive,
+        );
+      }
+      return total;
+    }
+
+    return _countStructured(
+      state: intent.state,
+      category: intent.category,
+      course: intent.course,
+      type: effectiveType,
+      includeInactive: includeInactive,
+    );
+  }
+
+  Future<int> _countStructured({
+    String? cityLowerEquals,
+    String? state,
+    String? category,
+    String? course,
+    String? type,
+    bool includeInactive = false,
+  }) async {
+    Query<Map<String, dynamic>> q = _colleges;
+    if (!includeInactive) {
+      q = q.where('isActive', isEqualTo: true);
+    }
+    if (state != null && state.isNotEmpty) {
+      q = q.where(
+        'stateLower',
+        isEqualTo: CollegeSearchUtils.normalizeState(state),
+      );
+    }
+    if (cityLowerEquals != null && cityLowerEquals.isNotEmpty) {
+      q = q.where('cityLower', isEqualTo: cityLowerEquals);
+    }
+    if (category != null && category.isNotEmpty) {
+      q = q.where('category', isEqualTo: category);
+    }
+    if (course != null && course.isNotEmpty) {
+      q = q.where('courses', arrayContains: course);
+    }
+    if (type != null && type.isNotEmpty) {
+      q = q.where('type', isEqualTo: type.toLowerCase());
+    }
+    final snap = await q.count().get();
+    return snap.count ?? 0;
+  }
+
+  /// Exhaustively pages live Firestore until every match is collected.
+  Future<CollegeSearchPage> searchAllMatching({
+    String? query,
+    String? state,
+    String? city,
+    String? university,
+    String? course,
+    String? category,
+    String? type,
+    String? ownership,
+    bool includeInactive = false,
+  }) async {
+    final intent = CollegeSearchUtils.resolveSearchIntent(
+      query: query,
+      state: state,
+      city: city,
+      university: university,
+      course: course,
+      category: category,
+      type: type,
+      ownership: ownership,
+    );
+    final effectiveType = intent.type;
+    final batch = CollegeConstants.searchExhaustBatchSize;
+    final byId = <String, CollegeModel>{};
+    var fromLive = true;
+    int? totalCount;
+
+    try {
+      totalCount = await countSearchMatches(
+        query: query,
+        state: state,
+        city: city,
+        university: university,
+        course: course,
+        category: category,
+        type: effectiveType,
+        includeInactive: includeInactive,
+      );
+      if (totalCount < 0) totalCount = null;
+    } catch (_) {
+      totalCount = null;
+    }
+
+    if (!intent.hasRetrievalQuery) {
+      // Structured path: page Firestore fully (city aliases merged by id).
+      final cityKeys = intent.hasCity
+          ? CollegeSearchUtils.citySearchKeys(intent.city!).toList()
+          : <String?>[null];
+      for (final key in cityKeys) {
+        String? cursor;
+        var hasMore = true;
+        while (hasMore) {
+          final page = await _queryStructuredPage(
+            cityLowerEquals: key,
+            state: intent.state,
+            category: intent.category,
+            course: intent.course,
+            type: effectiveType,
+            university: intent.university,
+            retrievalQuery: null,
+            rankingQuery: intent.rankingQuery,
+            includeInactive: includeInactive,
+            limit: batch,
+            startAfterDocumentId: cursor,
+          );
+          fromLive = fromLive && page.fromLiveDatabase;
+          for (final c in page.colleges) {
+            byId[c.id] = c;
+          }
+          cursor = page.lastDocumentId;
+          hasMore = page.hasMore;
+          if (page.colleges.isEmpty) break;
+        }
+      }
+    } else {
+      // Free-text: merge fields once at exhaust batch size; stop when growth ends.
+      String? cursor;
+      var hasMore = true;
+      var stagnant = 0;
+      while (hasMore && stagnant < 2 && byId.length < 100000) {
+        final before = byId.length;
+        final page = await searchColleges(
+          query: query,
+          state: state,
+          city: city,
+          university: university,
+          course: course,
+          category: category,
+          type: effectiveType,
+          startAfterDocumentId: cursor,
+          limit: batch,
+          includeInactive: includeInactive,
+        );
+        fromLive = fromLive && page.fromLiveDatabase;
+        for (final c in page.colleges) {
+          byId[c.id] = c;
+        }
+        if (byId.length == before) {
+          stagnant++;
+        } else {
+          stagnant = 0;
+        }
+        cursor = page.lastDocumentId;
+        hasMore = page.hasMore;
+        if (page.colleges.isEmpty) break;
+      }
+    }
+
+    final colleges = byId.values.toList()
+      ..sort((a, b) => a.nameLower.compareTo(b.nameLower));
+    final hasUniversity =
+        intent.university != null && intent.university!.trim().isNotEmpty;
+    return CollegeSearchPage(
+      colleges: colleges,
+      lastDocumentId: colleges.isEmpty ? null : colleges.last.id,
+      hasMore: false,
+      totalCount: hasUniversity ? colleges.length : (totalCount ?? colleges.length),
+      fromLiveDatabase: fromLive,
+    );
+  }
+
   Future<CollegeSearchPage> searchColleges({
     String? query,
     String? state,
@@ -132,6 +340,7 @@ class FirestoreCollegeService {
     String? startAfterDocumentId,
     int limit = CollegeConstants.searchPageSize,
     bool includeInactive = false,
+    String? ownership,
   }) async {
     final intent = CollegeSearchUtils.resolveSearchIntent(
       query: query,
@@ -140,109 +349,153 @@ class FirestoreCollegeService {
       university: university,
       course: course,
       category: category,
+      type: type,
+      ownership: ownership,
     );
-    final effectiveState = intent.state;
-    final effectiveCity = intent.city;
-    final effectiveUniversity = intent.university;
-    final effectiveCourse = intent.course;
-    final effectiveCategory = intent.category;
-    final retrievalQuery = intent.retrievalQuery;
-    final rankingQuery = intent.rankingQuery;
-    final hasRetrievalQuery =
-        retrievalQuery != null &&
-        retrievalQuery.length >= CollegeConstants.minSearchChars;
-    final hasCity = effectiveCity != null && effectiveCity.isNotEmpty;
-    final hasCourse = effectiveCourse != null && effectiveCourse.isNotEmpty;
-    final hasUniversity =
-        effectiveUniversity != null && effectiveUniversity.isNotEmpty;
+    final effectiveType = intent.type;
+    final pageLimit =
+        limit <= 0 ? CollegeConstants.searchExhaustBatchSize : limit;
 
-    // Merge multi-field free-text hits; never early-return a sparse token page
-    // when a city/category was resolved from the same query.
-    if (hasRetrievalQuery && !hasCity) {
-      final merged = await _searchGlobalFreeText(
-        retrievalQuery,
-        state: effectiveState,
-        city: effectiveCity,
-        university: effectiveUniversity,
-        course: effectiveCourse,
-        category: effectiveCategory,
-        type: type,
-        includeInactive: includeInactive,
-        limit: limit + 1,
-      );
-      if (merged.isNotEmpty) {
-        final hasMore = merged.length > limit;
-        return _buildSearchPage(
-          merged.take(limit).toList(),
-          hasMore: hasMore,
-          query: rankingQuery,
-          city: effectiveCity,
-          state: effectiveState,
-          university: effectiveUniversity,
-          course: effectiveCourse,
-          category: effectiveCategory,
-          type: type,
-          limit: limit,
+    try {
+      if (intent.hasCity && !intent.hasRetrievalQuery) {
+        final keys = CollegeSearchUtils.citySearchKeys(intent.city!).toList();
+        if (keys.length == 1) {
+          return _queryStructuredPage(
+            cityLowerEquals: keys.first,
+            state: intent.state,
+            category: intent.category,
+            course: intent.course,
+            type: effectiveType,
+            university: intent.university,
+            retrievalQuery: null,
+            rankingQuery: intent.rankingQuery,
+            includeInactive: includeInactive,
+            limit: pageLimit,
+            startAfterDocumentId: startAfterDocumentId,
+          );
+        }
+        final all = await searchAllMatching(
+          state: intent.state,
+          city: intent.city,
+          university: intent.university,
+          course: intent.course,
+          category: intent.category,
+          type: effectiveType,
+          includeInactive: includeInactive,
+        );
+        return _windowPage(
+          all.colleges,
+          limit: pageLimit,
+          startAfterDocumentId: startAfterDocumentId,
+          totalCount: all.totalCount,
+          fromLiveDatabase: all.fromLiveDatabase,
         );
       }
-    }
 
+      if (!intent.hasRetrievalQuery) {
+        return _queryStructuredPage(
+          state: intent.state,
+          category: intent.category,
+          course: intent.course,
+          type: effectiveType,
+          university: intent.university,
+          retrievalQuery: null,
+          rankingQuery: intent.rankingQuery,
+          includeInactive: includeInactive,
+          limit: pageLimit,
+          startAfterDocumentId: startAfterDocumentId,
+        );
+      }
+
+      final merged = await _searchGlobalFreeText(
+        intent.retrievalQuery!,
+        state: intent.state,
+        city: intent.city,
+        university: intent.university,
+        course: intent.course,
+        category: intent.category,
+        type: effectiveType,
+        includeInactive: includeInactive,
+        limit: pageLimit + 1,
+      );
+      final hasMore = merged.length > pageLimit;
+      final page = merged.take(pageLimit).toList();
+      return CollegeSearchPage(
+        colleges: _finalizeSearchResults(
+          page,
+          query: intent.rankingQuery,
+          city: intent.city,
+          state: intent.state,
+          university: intent.university,
+          course: intent.course,
+          category: intent.category,
+          type: effectiveType,
+          limit: pageLimit,
+        ),
+        lastDocumentId: page.isEmpty ? null : page.last.id,
+        hasMore: hasMore,
+        fromLiveDatabase: true,
+      );
+    } on FirebaseException catch (e) {
+      if (e.code != 'failed-precondition') rethrow;
+      final fallback = await CollegeBundledDataSource.search(
+        query: intent.rankingQuery,
+        state: intent.state,
+        city: intent.city,
+        university: intent.university,
+        course: intent.course,
+        category: intent.category,
+        type: effectiveType,
+        limit: pageLimit,
+        includeInactive: includeInactive,
+        startAfterDocumentId: startAfterDocumentId,
+      );
+      return CollegeSearchPage(
+        colleges: fallback.colleges,
+        lastDocumentId: fallback.lastDocumentId,
+        hasMore: fallback.hasMore,
+        fromLiveDatabase: false,
+      );
+    }
+  }
+
+  Future<CollegeSearchPage> _queryStructuredPage({
+    String? cityLowerEquals,
+    String? state,
+    String? category,
+    String? course,
+    String? type,
+    String? university,
+    String? retrievalQuery,
+    String? rankingQuery,
+    bool includeInactive = false,
+    required int limit,
+    String? startAfterDocumentId,
+  }) async {
     Query<Map<String, dynamic>> q = _colleges;
     if (!includeInactive) {
       q = q.where('isActive', isEqualTo: true);
     }
-
-    if (effectiveState != null && effectiveState.isNotEmpty) {
+    if (state != null && state.isNotEmpty) {
       q = q.where(
         'stateLower',
-        isEqualTo: CollegeSearchUtils.normalizeState(effectiveState),
+        isEqualTo: CollegeSearchUtils.normalizeState(state),
       );
     }
-    if (hasCity) {
-      final normalizedCity = CollegeSearchUtils.normalizeCity(effectiveCity);
-      q = q
-          .where('cityLower', isGreaterThanOrEqualTo: normalizedCity)
-          .where('cityLower', isLessThan: '$normalizedCity\uf8ff');
+    if (cityLowerEquals != null && cityLowerEquals.isNotEmpty) {
+      q = q.where('cityLower', isEqualTo: cityLowerEquals);
     }
-    if (hasCourse) {
-      q = q.where('courses', arrayContains: effectiveCourse);
+    if (category != null && category.isNotEmpty) {
+      q = q.where('category', isEqualTo: category);
     }
-    if (effectiveCategory != null && effectiveCategory.isNotEmpty) {
-      q = q.where('category', isEqualTo: effectiveCategory);
+    if (course != null && course.isNotEmpty) {
+      q = q.where('courses', arrayContains: course);
     }
     if (type != null && type.isNotEmpty) {
       q = q.where('type', isEqualTo: type.toLowerCase());
     }
 
-    final fetchLimit =
-        (hasUniversity || hasCity || hasCourse) ? limit * 8 : limit * 3;
-
-    if (hasRetrievalQuery) {
-      final normalized = retrievalQuery.toLowerCase();
-      q = q
-          .where('nameLower', isGreaterThanOrEqualTo: normalized)
-          .where('nameLower', isLessThan: '$normalized\uf8ff');
-      q = q.orderBy('nameLower');
-    } else if (hasCity) {
-      q = q.orderBy('cityLower').orderBy('nameLower');
-    } else if (hasUniversity) {
-      final normalizedUniversity =
-          CollegeSearchUtils.normalizeUniversity(effectiveUniversity);
-      q = q
-          .where(
-            'universityLower',
-            isGreaterThanOrEqualTo: normalizedUniversity,
-          )
-          .where(
-            'universityLower',
-            isLessThan: '$normalizedUniversity\uf8ff',
-          )
-          .orderBy('universityLower');
-    } else {
-      q = q.orderBy('nameLower');
-    }
-
-    q = q.limit(fetchLimit);
+    q = q.orderBy('nameLower').limit(limit);
 
     if (startAfterDocumentId != null && startAfterDocumentId.isNotEmpty) {
       final cursor = await _colleges.doc(startAfterDocumentId).get();
@@ -251,130 +504,62 @@ class FirestoreCollegeService {
       }
     }
 
-    try {
-      final snapshot = await q.get();
-      final rawDocs = snapshot.docs;
-      var colleges = _mapDocs(rawDocs);
+    final snapshot = await q.get();
+    // Do not re-filter city/state/category/course/type — already constrained by
+    // Firestore equality. Only university (and optional free-text) need client filter.
+    var colleges = _mapDocs(snapshot.docs);
+    if ((university != null && university.isNotEmpty) ||
+        (retrievalQuery != null && retrievalQuery.trim().isNotEmpty)) {
       colleges = CollegeSearchUtils.applyFilters(
         colleges,
-        state: effectiveState,
-        city: effectiveCity,
-        university: effectiveUniversity,
-        course: effectiveCourse,
-        category: effectiveCategory,
-        type: type,
-        query: hasRetrievalQuery ? retrievalQuery : null,
-      );
-
-      var usedCityFallback = false;
-      if (hasCity &&
-          (colleges.isEmpty ||
-              colleges.length < limit ||
-              CollegeSearchUtils.cityNeedsAliasMerge(effectiveCity))) {
-        final aliasHits = await _searchByCityFallback(
-          effectiveCity,
-          limit: fetchLimit,
-        );
-        final byId = {for (final c in colleges) c.id: c};
-        for (final c in aliasHits) {
-          byId.putIfAbsent(c.id, () => c);
-        }
-        // Also merge free-text global hits when city was resolved from query.
-        if (hasRetrievalQuery) {
-          final global = await _searchGlobalFreeText(
-            retrievalQuery,
-            state: effectiveState,
-            city: effectiveCity,
-            university: effectiveUniversity,
-            course: effectiveCourse,
-            category: effectiveCategory,
-            type: type,
-            includeInactive: includeInactive,
-            limit: fetchLimit,
-          );
-          for (final c in global) {
-            byId.putIfAbsent(c.id, () => c);
-          }
-        }
-        colleges = CollegeSearchUtils.applyFilters(
-          byId.values.toList(),
-          state: effectiveState,
-          city: effectiveCity,
-          university: effectiveUniversity,
-          course: effectiveCourse,
-          category: effectiveCategory,
-          type: type,
-          query: hasRetrievalQuery ? retrievalQuery : null,
-        );
-        usedCityFallback = true;
-      }
-
-      if (colleges.isEmpty && hasCourse) {
-        colleges = await _searchCourseFuzzyFallback(
-          state: effectiveState,
-          city: effectiveCity,
-          university: effectiveUniversity,
-          course: effectiveCourse,
-          category: effectiveCategory,
-          type: type,
-          query: hasRetrievalQuery ? retrievalQuery : null,
-          includeInactive: includeInactive,
-          limit: fetchLimit,
-        );
-      }
-
-      if (colleges.isEmpty && hasRetrievalQuery) {
-        colleges = await _searchGlobalFreeText(
-          retrievalQuery,
-          state: effectiveState,
-          city: effectiveCity,
-          university: effectiveUniversity,
-          course: effectiveCourse,
-          category: effectiveCategory,
-          type: type,
-          includeInactive: includeInactive,
-          limit: limit + 1,
-        );
-      }
-
-      final pageWindow = colleges.take(limit).toList();
-      final hasMore = usedCityFallback
-          ? colleges.length > limit
-          : rawDocs.length >= fetchLimit && pageWindow.length >= limit;
-      final cursorId = pageWindow.isEmpty ? null : pageWindow.last.id;
-      final ranked = _finalizeSearchResults(
-        pageWindow,
-        query: rankingQuery,
-        city: effectiveCity,
-        state: effectiveState,
-        university: effectiveUniversity,
-        course: effectiveCourse,
-        category: effectiveCategory,
-        type: type,
-        limit: limit,
-      );
-
-      return CollegeSearchPage(
-        colleges: ranked,
-        lastDocumentId: cursorId,
-        hasMore: hasMore,
-      );
-    } on FirebaseException catch (e) {
-      if (e.code != 'failed-precondition') rethrow;
-      return _searchFallback(
-        trimmedQuery: rankingQuery ?? '',
-        hasQuery: rankingQuery != null && rankingQuery.isNotEmpty,
-        state: effectiveState,
-        city: effectiveCity,
-        university: effectiveUniversity,
-        course: effectiveCourse,
-        category: effectiveCategory,
-        type: type,
-        includeInactive: includeInactive,
-        limit: limit,
-        startAfterDocumentId: startAfterDocumentId,
+        university: university,
+        query: retrievalQuery,
       );
     }
+
+    final hasMore = snapshot.docs.length >= limit;
+    final cursorId = snapshot.docs.isEmpty ? null : snapshot.docs.last.id;
+
+    // Rank without truncating below the Firestore page — exhaust callers need all rows.
+    return CollegeSearchPage(
+      colleges: _finalizeSearchResults(
+        colleges,
+        query: rankingQuery,
+        city: cityLowerEquals,
+        state: state,
+        university: university,
+        course: course,
+        category: category,
+        type: type,
+      ),
+      lastDocumentId: cursorId,
+      hasMore: hasMore,
+      fromLiveDatabase: true,
+    );
+  }
+
+  CollegeSearchPage _windowPage(
+    List<CollegeModel> all, {
+    required int limit,
+    String? startAfterDocumentId,
+    int? totalCount,
+    bool fromLiveDatabase = true,
+  }) {
+    var list = all;
+    if (startAfterDocumentId != null && startAfterDocumentId.isNotEmpty) {
+      final idx = list.indexWhere((c) => c.id == startAfterDocumentId);
+      if (idx >= 0) {
+        list = list.skip(idx + 1).toList();
+      }
+    }
+    final page = list.take(limit).toList();
+    return CollegeSearchPage(
+      colleges: page,
+      lastDocumentId: page.isEmpty ? null : page.last.id,
+      hasMore: list.length > limit,
+      totalCount: totalCount ?? all.length,
+      fromLiveDatabase: fromLiveDatabase,
+    );
   }
 
   Future<List<CollegeModel>> _searchGlobalFreeText(
@@ -448,130 +633,6 @@ class FirestoreCollegeService {
       query: query,
     );
     return filtered.take(limit).toList();
-  }
-
-  Future<CollegeSearchPage> _searchFallback({
-    required String trimmedQuery,
-    required bool hasQuery,
-    String? state,
-    String? city,
-    String? university,
-    String? course,
-    String? category,
-    String? type,
-    bool includeInactive = false,
-    int limit = CollegeConstants.searchPageSize,
-    String? startAfterDocumentId,
-  }) async {
-    return CollegeBundledDataSource.search(
-      query: hasQuery ? trimmedQuery : null,
-      state: state,
-      city: city,
-      university: university,
-      course: course,
-      category: category,
-      type: type,
-      limit: limit,
-      includeInactive: includeInactive,
-      startAfterDocumentId: startAfterDocumentId,
-    );
-  }
-
-  Future<List<CollegeModel>> _searchCourseFuzzyFallback({
-    String? state,
-    String? city,
-    String? university,
-    required String course,
-    String? category,
-    String? type,
-    String? query,
-    bool includeInactive = false,
-    int limit = CollegeConstants.searchPageSize,
-  }) async {
-    Query<Map<String, dynamic>> q = _colleges;
-    if (!includeInactive) {
-      q = q.where('isActive', isEqualTo: true);
-    }
-    if (state != null && state.isNotEmpty) {
-      q = q.where(
-        'stateLower',
-        isEqualTo: CollegeSearchUtils.normalizeState(state),
-      );
-    }
-    if (city != null && city.isNotEmpty) {
-      final normalizedCity = CollegeSearchUtils.normalizeCity(city);
-      q = q
-          .where('cityLower', isGreaterThanOrEqualTo: normalizedCity)
-          .where('cityLower', isLessThan: '$normalizedCity\uf8ff');
-    }
-    if (category != null && category.isNotEmpty) {
-      q = q.where('category', isEqualTo: category);
-    }
-    if (type != null && type.isNotEmpty) {
-      q = q.where('type', isEqualTo: type.toLowerCase());
-    }
-    q = q.orderBy('nameLower').limit(limit);
-
-    try {
-      final snapshot = await q.get();
-      var colleges = _mapDocs(snapshot.docs);
-      if (city != null &&
-          city.isNotEmpty &&
-          CollegeSearchUtils.cityNeedsAliasMerge(city)) {
-        final aliasHits = await _searchByCityFallback(city);
-        final byId = {for (final c in colleges) c.id: c};
-        for (final c in aliasHits) {
-          byId.putIfAbsent(c.id, () => c);
-        }
-        colleges = byId.values.toList();
-      }
-      return _applyClientFilters(
-        colleges,
-        state: state,
-        city: city,
-        university: university,
-        course: course,
-        category: category,
-        type: type,
-        query: query,
-      );
-    } on FirebaseException catch (e) {
-      if (e.code != 'failed-precondition') rethrow;
-      final page = await CollegeBundledDataSource.search(
-        query: query,
-        state: state,
-        city: city,
-        university: university,
-        course: course,
-        category: category,
-        type: type,
-        limit: limit,
-        includeInactive: includeInactive,
-      );
-      return page.colleges;
-    }
-  }
-
-  List<CollegeModel> _applyClientFilters(
-    List<CollegeModel> colleges, {
-    String? state,
-    String? city,
-    String? university,
-    String? course,
-    String? category,
-    String? type,
-    String? query,
-  }) {
-    return CollegeSearchUtils.applyFilters(
-      colleges,
-      state: state,
-      city: city,
-      university: university,
-      course: course,
-      category: category,
-      type: type,
-      query: query,
-    );
   }
 
   Future<List<CollegeModel>> _searchByTokens(
@@ -718,44 +779,6 @@ class FirestoreCollegeService {
     return resultsList.take(CollegeConstants.autocompleteLimit).toList();
   }
 
-  Future<List<CollegeModel>> _searchByCityFallback(
-    String city, {
-    int limit = CollegeConstants.searchPageSize,
-  }) async {
-    final variants = <String>{
-      city.trim(),
-      CollegeSearchUtils.titleCaseCity(city),
-      ...CollegeSearchUtils.citySearchKeys(city),
-      ...CollegeSearchUtils.citySearchKeys(city)
-          .map(CollegeSearchUtils.titleCaseCity),
-    }.where((v) => v.isNotEmpty).toList();
-
-    final found = <String, CollegeModel>{};
-    final perVariantLimit = limit.clamp(CollegeConstants.searchPageSize, 200);
-    for (final variant in variants) {
-      final snap = await _colleges
-          .where('isActive', isEqualTo: true)
-          .where('city', isEqualTo: variant)
-          .limit(perVariantLimit)
-          .get();
-      for (final doc in snap.docs) {
-        found[doc.id] = CollegeModel.fromJson(doc.data(), docId: doc.id);
-      }
-      final lowerSnap = await _colleges
-          .where('isActive', isEqualTo: true)
-          .where(
-            'cityLower',
-            isEqualTo: CollegeSearchUtils.normalizeCity(variant),
-          )
-          .limit(perVariantLimit)
-          .get();
-      for (final doc in lowerSnap.docs) {
-        found[doc.id] = CollegeModel.fromJson(doc.data(), docId: doc.id);
-      }
-    }
-    return found.values.toList();
-  }
-
   Future<List<CollegeModel>> instantSearchColleges(String query) async {
     return autocompleteColleges(query);
   }
@@ -869,36 +892,6 @@ class FirestoreCollegeService {
       return deduped.sublist(0, limit);
     }
     return deduped;
-  }
-
-  CollegeSearchPage _buildSearchPage(
-    List<CollegeModel> colleges, {
-    required bool hasMore,
-    String? query,
-    String? city,
-    String? state,
-    String? university,
-    String? course,
-    String? category,
-    String? type,
-    int limit = CollegeConstants.searchPageSize,
-  }) {
-    final ranked = _finalizeSearchResults(
-      colleges,
-      query: query,
-      city: city,
-      state: state,
-      university: university,
-      course: course,
-      category: category,
-      type: type,
-      limit: limit,
-    );
-    return CollegeSearchPage(
-      colleges: ranked,
-      lastDocumentId: ranked.isEmpty ? null : ranked.last.id,
-      hasMore: hasMore,
-    );
   }
 
   Map<String, dynamic> _prepareForWrite(CollegeModel college) {

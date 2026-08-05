@@ -61,6 +61,8 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
   bool _isLoadingMore = false;
   bool _isSearching = false;
   bool _hasSearched = false;
+  int? _totalCount;
+  bool _fromLiveDatabase = true;
   String? _searchError;
   String _liveQuery = '';
   Timer? _debounce;
@@ -193,12 +195,23 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
       _searchError = null;
       _hasSearched = true;
       _liveQuery = '';
+      _totalCount = null;
+      _fromLiveDatabase = true;
       // Show results immediately; advanced filters stay closed until opened.
       _showFilters = false;
     });
 
     try {
-      final page = await ref.read(collegeSearchPageProvider(params).future);
+      // Exhaust all live Firestore pages so every matching college is returned.
+      final page = await ref.read(collegeRepositoryProvider).searchAllMatching(
+            query: params.query,
+            city: params.city,
+            state: params.state,
+            university: params.university,
+            course: params.course,
+            category: params.category,
+            type: params.type,
+          );
       if (!mounted) return;
       final query = _searchController.text.trim();
       if (query.isNotEmpty) {
@@ -207,8 +220,10 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
       }
       setState(() {
         _results = page.colleges;
-        _cursor = page.lastDocumentId;
-        _hasMore = page.hasMore;
+        _cursor = null;
+        _hasMore = false;
+        _totalCount = page.totalCount ?? page.colleges.length;
+        _fromLiveDatabase = page.fromLiveDatabase;
         _isSearching = false;
       });
     } catch (e) {
@@ -494,7 +509,13 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  '${_results.length} result${_results.length == 1 ? '' : 's'} found',
+                  [
+                    if (_totalCount != null)
+                      '${_results.length} of $_totalCount result${_totalCount == 1 ? '' : 's'}'
+                    else
+                      '${_results.length} result${_results.length == 1 ? '' : 's'} found',
+                    if (!_fromLiveDatabase) ' (offline cache)',
+                  ].join(),
                   style: AppFonts.plusJakarta(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,

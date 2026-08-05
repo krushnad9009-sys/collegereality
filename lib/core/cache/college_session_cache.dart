@@ -91,6 +91,12 @@ class CollegeSessionCache {
     _searchKey = key;
   }
 
+  static void clearSearch() {
+    _search = null;
+    _searchAt = null;
+    _searchKey = null;
+  }
+
   static final Map<String, _CachedCollege> _byId = {};
 
   static CollegeModel? getById(String id) {

@@ -3,6 +3,9 @@ class CollegeConstants {
   CollegeConstants._();
 
   static const int searchPageSize = 24;
+
+  /// Batch size when exhausting all matching pages from live Firestore.
+  static const int searchExhaustBatchSize = 500;
   static const int autocompleteLimit = 15;
   static const int featuredLimit = 12;
   static const int adminPageSize = 30;

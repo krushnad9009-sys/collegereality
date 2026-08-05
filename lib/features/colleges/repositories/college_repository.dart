@@ -25,6 +25,25 @@ abstract class CollegeRepository {
     int limit,
     bool includeInactive,
   });
+  Future<CollegeSearchPage> searchAllMatching({
+    String? query,
+    String? state,
+    String? city,
+    String? university,
+    String? course,
+    String? category,
+    String? type,
+    bool includeInactive,
+  });
+  Future<int> countSearchMatches({
+    String? query,
+    String? state,
+    String? city,
+    String? university,
+    String? course,
+    String? category,
+    String? type,
+  });
   Future<List<CollegeModel>> autocomplete(String query);
   Future<CollegeDirectoryMeta> getDirectoryMeta();
   Future<int> getCollegeCount({bool activeOnly});
@@ -191,6 +210,7 @@ class CollegeRepositoryImpl implements CollegeRepository {
     int limit = 24,
     bool includeInactive = false,
   }) async {
+    // Always prefer live Firestore. Clear stale session cache for this query.
     final cacheKey = CollegeSessionCache.searchCacheKey(
       query: query,
       state: state,
@@ -202,39 +222,8 @@ class CollegeRepositoryImpl implements CollegeRepository {
     );
     final isLoadMore =
         startAfterDocumentId != null && startAfterDocumentId.isNotEmpty;
-
-    if (FirestoreQuotaGuard.instance.shouldBlockRequest()) {
-      // Never return unfiltered cache when the user applied filters.
-      final hasFilters = cacheKey != '||||||';
-      if (!hasFilters && !isLoadMore) {
-        final session =
-            CollegeSessionCache.getSearchStale(limit, key: cacheKey);
-        if (session != null && session.isNotEmpty) {
-          return CollegeSearchPage(
-            colleges: session,
-            hasMore: false,
-          );
-        }
-        final local = await CollegeLocalCache.loadSearch();
-        if (local != null && local.isNotEmpty) {
-          return CollegeSearchPage(
-            colleges: local.take(limit).toList(),
-            hasMore: false,
-          );
-        }
-      }
-      return CollegeBundledDataSource.search(
-        query: query,
-        state: state,
-        city: city,
-        university: university,
-        course: course,
-        category: category,
-        type: type,
-        limit: limit,
-        includeInactive: includeInactive,
-        startAfterDocumentId: isLoadMore ? startAfterDocumentId : null,
-      );
+    if (!isLoadMore) {
+      CollegeSessionCache.clearSearch();
     }
 
     try {
@@ -251,35 +240,21 @@ class CollegeRepositoryImpl implements CollegeRepository {
         includeInactive: includeInactive,
       );
       FirestoreQuotaGuard.instance.markRecovered();
-      if (page.colleges.isNotEmpty && !isLoadMore) {
+      if (page.colleges.isNotEmpty && !isLoadMore && page.fromLiveDatabase) {
         CollegeSessionCache.setSearch(page.colleges, key: cacheKey);
-        // Only persist unfiltered search to the single local blob.
-        final hasFilters = cacheKey != '||||||';
-        if (!hasFilters) {
-          await CollegeLocalCache.saveSearch(page.colleges);
-        }
       }
       return page;
     } on FirebaseException catch (e) {
       if (!FirestoreErrorUtils.isQuotaExceeded(e)) rethrow;
       FirestoreQuotaGuard.instance.markQuotaExceeded();
-
-      final hasFilters = cacheKey != '||||||';
-      if (!hasFilters && !isLoadMore) {
-        final session =
-            CollegeSessionCache.getSearchStale(limit, key: cacheKey);
-        if (session != null && session.isNotEmpty) {
-          return CollegeSearchPage(colleges: session, hasMore: false);
-        }
-        final local = await CollegeLocalCache.loadSearch();
-        if (local != null && local.isNotEmpty) {
-          return CollegeSearchPage(
-            colleges: local.take(limit).toList(),
-            hasMore: false,
-          );
-        }
+      // Structured city/category searches must not silently return tiny bundled sets.
+      final hasStructured = (city != null && city.trim().isNotEmpty) ||
+          (category != null && category.trim().isNotEmpty) ||
+          (state != null && state.trim().isNotEmpty);
+      if (hasStructured) {
+        rethrow;
       }
-      return CollegeBundledDataSource.search(
+      final bundled = await CollegeBundledDataSource.search(
         query: query,
         state: state,
         city: city,
@@ -291,7 +266,58 @@ class CollegeRepositoryImpl implements CollegeRepository {
         includeInactive: includeInactive,
         startAfterDocumentId: isLoadMore ? startAfterDocumentId : null,
       );
+      return CollegeSearchPage(
+        colleges: bundled.colleges,
+        lastDocumentId: bundled.lastDocumentId,
+        hasMore: bundled.hasMore,
+        fromLiveDatabase: false,
+      );
     }
+  }
+
+  @override
+  Future<CollegeSearchPage> searchAllMatching({
+    String? query,
+    String? state,
+    String? city,
+    String? university,
+    String? course,
+    String? category,
+    String? type,
+    bool includeInactive = false,
+  }) async {
+    CollegeSessionCache.clearSearch();
+    return _service.searchAllMatching(
+      query: query,
+      state: state,
+      city: city,
+      university: university,
+      course: course,
+      category: category,
+      type: type,
+      includeInactive: includeInactive,
+    );
+  }
+
+  @override
+  Future<int> countSearchMatches({
+    String? query,
+    String? state,
+    String? city,
+    String? university,
+    String? course,
+    String? category,
+    String? type,
+  }) {
+    return _service.countSearchMatches(
+      query: query,
+      state: state,
+      city: city,
+      university: university,
+      course: course,
+      category: category,
+      type: type,
+    );
   }
 
   @override

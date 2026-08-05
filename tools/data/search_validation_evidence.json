@@ -1,0 +1,42 @@
+{
+  "generated_at": "2026-08-05T06:44:29.400216+00:00",
+  "cases": {
+    "Pune": {
+      "expected": 533,
+      "aggregation_count": 533,
+      "exhausted_page_count": 533,
+      "unique_ids": 533,
+      "pass": true
+    },
+    "Mumbai": {
+      "expected": 353,
+      "aggregation_count": 353,
+      "exhausted_page_count": 353,
+      "unique_ids": 353,
+      "pass": true
+    },
+    "Engineering": {
+      "expected": 4253,
+      "aggregation_count": 4253,
+      "exhausted_page_count": 4253,
+      "unique_ids": 4253,
+      "pass": true
+    },
+    "Medical": {
+      "expected": 1359,
+      "aggregation_count": 1359,
+      "exhausted_page_count": 1359,
+      "unique_ids": 1359,
+      "pass": true
+    },
+    "Nursing": {
+      "expected": 3016,
+      "aggregation_count": 3016,
+      "exhausted_page_count": 3016,
+      "unique_ids": 3016,
+      "pass": true
+    }
+  },
+  "passed": true,
+  "total_documents": 45020
+}
