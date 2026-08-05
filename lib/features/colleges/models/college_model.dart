@@ -473,6 +473,7 @@ class CollegeModel implements CollegeModelLike {
   @override
   final String state;
   final String address;
+  @override
   final String type;
   final String? ownership;
   final int? establishedYear;

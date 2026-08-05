@@ -88,7 +88,18 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
         oldWidget.initialFilter != widget.initialFilter;
     if (!changed) return;
     _applyInitialFilters();
-    _runSearch();
+    if (_shouldAutoSearchFromInitials()) {
+      _runSearch();
+    } else {
+      setState(() {
+        _results = [];
+        _hasSearched = false;
+        _searchError = null;
+        _cursor = null;
+        _hasMore = false;
+        _showFilters = false;
+      });
+    }
   }
 
   void _applyInitialFilters() {
@@ -100,15 +111,11 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
       widget.initialCategory,
       CollegeConstants.collegeCategories,
     );
-    if (widget.initialFilter == 'city' ||
-        widget.initialFilter == 'state' ||
-        widget.initialCity != null ||
-        widget.initialState != null ||
-        widget.initialCourse != null ||
-        widget.initialCategory != null ||
-        widget.initialFilter != null) {
-      _showFilters = true;
-    }
+    // Reset stale advanced filters that are not deep-linked.
+    _selectedType = null;
+    _universityController.clear();
+    // Advanced filter form opens only via the Filters icon.
+    _showFilters = false;
   }
 
   bool _shouldAutoSearchFromInitials() {
@@ -186,6 +193,8 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
       _searchError = null;
       _hasSearched = true;
       _liveQuery = '';
+      // Show results immediately; advanced filters stay closed until opened.
+      _showFilters = false;
     });
 
     try {
@@ -229,7 +238,17 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
       _searchError = null;
       _cursor = null;
       _hasMore = false;
+      _showFilters = false;
     });
+    final hasRouteFilters = widget.initialQuery != null ||
+        widget.initialCity != null ||
+        widget.initialState != null ||
+        widget.initialCourse != null ||
+        widget.initialCategory != null ||
+        widget.initialFilter != null;
+    if (hasRouteFilters && mounted) {
+      context.go(RouteNames.collegeSearch);
+    }
   }
 
   bool get _hasActiveFilters =>

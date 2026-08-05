@@ -81,51 +81,26 @@ class CollegeBundledDataSource {
     bool includeInactive = false,
     String? startAfterDocumentId,
   }) async {
+    final intent = CollegeSearchUtils.resolveSearchIntent(
+      query: query,
+      state: state,
+      city: city,
+      university: university,
+      course: course,
+      category: category,
+    );
     final all = await loadAll();
     var results = all.where((c) => includeInactive || c.isActive).toList();
-
-    if (state != null && state.isNotEmpty) {
-      final normalizedState = CollegeSearchUtils.normalizeState(state);
-      results = results
-          .where((c) => CollegeSearchUtils.normalizeState(c.state) == normalizedState)
-          .toList();
-    }
-    if (city != null && city.isNotEmpty) {
-      results = results
-          .where(
-            (c) => CollegeSearchUtils.cityMatchesCollege(
-              cityLower: c.cityLower,
-              districtLower: c.districtLower,
-              cityFilter: city,
-            ),
-          )
-          .toList();
-    }
-    if (university != null && university.isNotEmpty) {
-      final universityLower = CollegeSearchUtils.normalizeUniversity(university);
-      results = results
-          .where((c) => c.universityLower.contains(universityLower))
-          .toList();
-    }
-    if (course != null && course.isNotEmpty) {
-      results = results
-          .where((c) => CollegeSearchUtils.courseMatches(c.courses, course))
-          .toList();
-    }
-    if (category != null && category.isNotEmpty) {
-      final categoryLower = category.toLowerCase();
-      results = results
-          .where((c) => c.category.toLowerCase() == categoryLower)
-          .toList();
-    }
-    if (type != null && type.isNotEmpty) {
-      results = results.where((c) => c.type.toLowerCase() == type.toLowerCase()).toList();
-    }
-    if (query != null && query.trim().isNotEmpty) {
-      results = results
-          .where((c) => CollegeSearchUtils.matchesQuery(c, query.trim()))
-          .toList();
-    }
+    results = CollegeSearchUtils.applyFilters(
+      results,
+      state: intent.state,
+      city: intent.city,
+      university: intent.university,
+      course: intent.course,
+      category: intent.category,
+      type: type,
+      query: intent.retrievalQuery,
+    );
 
     if (startAfterDocumentId != null && startAfterDocumentId.isNotEmpty) {
       final idx = results.indexWhere((c) => c.id == startAfterDocumentId);

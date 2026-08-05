@@ -11,6 +11,35 @@ class ParsedSearchQuery {
   });
 }
 
+/// Normalized search inputs after promoting free-text into structured filters.
+class ResolvedSearchIntent {
+  /// Free-text still used for name/token/university multi-field retrieval.
+  final String? retrievalQuery;
+
+  /// Original user text for ranking (may equal [retrievalQuery] or full input).
+  final String? rankingQuery;
+
+  final String? state;
+  final String? city;
+  final String? university;
+  final String? course;
+  final String? category;
+
+  const ResolvedSearchIntent({
+    this.retrievalQuery,
+    this.rankingQuery,
+    this.state,
+    this.city,
+    this.university,
+    this.course,
+    this.category,
+  });
+
+  bool get hasCity => city != null && city!.trim().isNotEmpty;
+  bool get hasRetrievalQuery =>
+      retrievalQuery != null && retrievalQuery!.trim().isNotEmpty;
+}
+
 /// Builds Firestore-friendly search fields for 40k+ college prefix lookup.
 class CollegeSearchUtils {
   CollegeSearchUtils._();
@@ -248,6 +277,229 @@ class CollegeSearchUtils {
     );
   }
 
+  /// Promotes free-text into city/course/category/state while keeping explicit filters.
+  static ResolvedSearchIntent resolveSearchIntent({
+    String? query,
+    String? state,
+    String? city,
+    String? university,
+    String? course,
+    String? category,
+  }) {
+    final trimmed = query?.trim() ?? '';
+    final parsed = parseCompoundQuery(trimmed.isEmpty ? null : trimmed);
+
+    final effectiveCity = _firstNonEmpty(city) ??
+        (parsed.city == null ? null : titleCaseCity(parsed.city!));
+    final effectiveCourse =
+        _firstNonEmpty(course) ?? _canonicalizeParsedCourse(parsed.course);
+    final effectiveUniversity = _firstNonEmpty(university);
+
+    var effectiveState = _firstNonEmpty(state);
+    var effectiveCategory = _firstNonEmpty(category);
+
+    if (effectiveCategory == null && trimmed.isNotEmpty) {
+      effectiveCategory = matchCategoryLabel(trimmed);
+    }
+    if (effectiveState == null && trimmed.isNotEmpty) {
+      effectiveState = matchStateLabel(trimmed);
+    }
+
+    // When free-text is fully explained by structured fields, skip name-prefix
+    // retrieval so city/category searches are not narrowed to name startsWith.
+    String? retrievalQuery = trimmed.isEmpty ? null : trimmed;
+    final cityOnlyFreeText = parsed.city != null &&
+        parsed.course == null &&
+        parsed.remainingTokens.isEmpty &&
+        _firstNonEmpty(city) == null;
+    final categoryOnlyFreeText = effectiveCategory != null &&
+        normalizeName(trimmed) == normalizeName(effectiveCategory) &&
+        parsed.city == null &&
+        parsed.course == null;
+    final stateOnlyFreeText = effectiveState != null &&
+        normalizeState(trimmed) == normalizeState(effectiveState) &&
+        parsed.city == null &&
+        parsed.course == null &&
+        effectiveCategory == null;
+
+    if (cityOnlyFreeText || categoryOnlyFreeText || stateOnlyFreeText) {
+      retrievalQuery = null;
+    } else if (parsed.city != null &&
+        parsed.course != null &&
+        parsed.remainingTokens.isEmpty &&
+        _firstNonEmpty(city) == null &&
+        _firstNonEmpty(course) == null) {
+      retrievalQuery = null;
+    }
+
+    return ResolvedSearchIntent(
+      retrievalQuery: retrievalQuery,
+      rankingQuery: trimmed.isEmpty ? null : trimmed,
+      state: effectiveState,
+      city: effectiveCity,
+      university: effectiveUniversity,
+      course: effectiveCourse,
+      category: effectiveCategory,
+    );
+  }
+
+  static String? matchCategoryLabel(String raw) {
+    final needle = normalizeName(raw);
+    if (needle.isEmpty) return null;
+    for (final category in const [
+      'Engineering',
+      'Medical',
+      'MBA',
+      'Law',
+      'Pharmacy',
+      'Arts',
+      'Commerce',
+      'Science',
+      'General',
+      'Polytechnic',
+      'Nursing',
+      'Agriculture',
+      'Architecture',
+      'Fashion',
+    ]) {
+      if (normalizeName(category) == needle) return category;
+    }
+    return null;
+  }
+
+  static String? matchStateLabel(String raw) {
+    final needle = normalizeState(raw);
+    if (needle.isEmpty) return null;
+    for (final state in const [
+      'Andaman and Nicobar Islands',
+      'Andhra Pradesh',
+      'Arunachal Pradesh',
+      'Assam',
+      'Bihar',
+      'Chandigarh',
+      'Chhattisgarh',
+      'Dadra and Nagar Haveli and Daman and Diu',
+      'Delhi',
+      'Goa',
+      'Gujarat',
+      'Haryana',
+      'Himachal Pradesh',
+      'Jammu and Kashmir',
+      'Jharkhand',
+      'Karnataka',
+      'Kerala',
+      'Ladakh',
+      'Lakshadweep',
+      'Madhya Pradesh',
+      'Maharashtra',
+      'Manipur',
+      'Meghalaya',
+      'Mizoram',
+      'Nagaland',
+      'Odisha',
+      'Puducherry',
+      'Punjab',
+      'Rajasthan',
+      'Sikkim',
+      'Tamil Nadu',
+      'Telangana',
+      'Tripura',
+      'Uttar Pradesh',
+      'Uttarakhand',
+      'West Bengal',
+    ]) {
+      if (normalizeState(state) == needle) return state;
+    }
+    return null;
+  }
+
+  static String? _canonicalizeParsedCourse(String? parsed) {
+    if (parsed == null || parsed.isEmpty) return null;
+    const map = <String, String>{
+      'b.tech': 'B.Tech',
+      'b.e.': 'B.E.',
+      'bba': 'BBA',
+      'bca': 'BCA',
+      'b.com': 'B.Com',
+      'b.sc': 'B.Sc',
+      'mba': 'MBA',
+      'm.tech': 'M.Tech',
+      'mbbs': 'MBBS',
+      'b.pharm': 'B.Pharm',
+      'ba': 'BA',
+      'b.arch': 'B.Arch',
+      'llb': 'LLB',
+      'bds': 'BDS',
+      'mca': 'MCA',
+    };
+    return map[parsed.toLowerCase()] ?? parsed;
+  }
+
+  static String? _firstNonEmpty(String? value) {
+    final trimmed = value?.trim() ?? '';
+    return trimmed.isEmpty ? null : trimmed;
+  }
+
+  /// Single client-side filter path used by Firestore + bundled search.
+  static List<T> applyFilters<T extends CollegeModelLike>(
+    List<T> colleges, {
+    String? state,
+    String? city,
+    String? university,
+    String? course,
+    String? category,
+    String? type,
+    String? query,
+  }) {
+    var results = colleges;
+    if (state != null && state.isNotEmpty) {
+      final normalizedState = normalizeState(state);
+      results = results
+          .where((c) => normalizeState(c.state) == normalizedState)
+          .toList();
+    }
+    if (city != null && city.isNotEmpty) {
+      results = results
+          .where(
+            (c) => cityMatchesCollege(
+              cityLower: normalizeCity(c.city),
+              districtLower: normalizeDistrict(c.district),
+              cityFilter: city,
+            ),
+          )
+          .toList();
+    }
+    if (university != null && university.isNotEmpty) {
+      final normalizedUniversity = normalizeUniversity(university);
+      results = results
+          .where(
+            (c) => normalizeUniversity(c.universityName)
+                .contains(normalizedUniversity),
+          )
+          .toList();
+    }
+    if (course != null && course.isNotEmpty) {
+      results =
+          results.where((c) => courseMatches(c.courses, course)).toList();
+    }
+    if (category != null && category.isNotEmpty) {
+      final categoryLower = category.toLowerCase();
+      results = results
+          .where((c) => c.category.toLowerCase() == categoryLower)
+          .toList();
+    }
+    if (type != null && type.isNotEmpty) {
+      results = results
+          .where((c) => c.type.toLowerCase() == type.toLowerCase())
+          .toList();
+    }
+    if (query != null && query.trim().isNotEmpty) {
+      results =
+          results.where((c) => matchesQuery(c, query.trim())).toList();
+    }
+    return results;
+  }
+
   /// Tokenizes query words for array-contains-any Firestore lookup.
   static List<String> queryTokens(String query) {
     final tokens = <String>{};
@@ -378,6 +630,7 @@ abstract class CollegeModelLike {
   String get state;
   String? get universityName;
   String get category;
+  String get type;
   List<String> get courses;
   List<String> get searchKeywords;
   List<String> get searchTokens;
