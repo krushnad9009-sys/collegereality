@@ -256,6 +256,10 @@ class CommunityFirestoreService {
     return _messages
         .where('conversationId', isEqualTo: conversationId)
         .orderBy('createdAt', descending: false)
+        // Bound the live listener to the most recent window instead of
+        // streaming/re-syncing unbounded history on every open. Older
+        // messages remain reachable via fetchMessagesPage.
+        .limitToLast(SocialConstants.liveMessageWindow)
         .snapshots()
         .map((snapshot) => snapshot.docs
             .map((d) => ChatMessageModel.fromJson(d.data(), docId: d.id))

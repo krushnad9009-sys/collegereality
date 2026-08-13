@@ -1,5 +1,10 @@
 class FirestoreConstants {
   static const String usersCollection = 'users';
+  // Safe-fields-only mirror of `users` (no email/phone) used for any
+  // cross-user read — guide directory, connectable students, call setup.
+  // See canReadUserProfile() in firestore.rules for why `users` itself
+  // cannot be read cross-user anymore.
+  static const String publicProfilesCollection = 'public_profiles';
   static const String displayNamesCollection = 'display_names';
   static const String collegesCollection = 'colleges';
   static const String reviewsCollection = 'reviews';

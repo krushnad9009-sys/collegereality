@@ -21,7 +21,7 @@ class CommunicationFirestoreService {
     int limit = 50,
   }) async {
     Query<Map<String, dynamic>> query = _firestore
-        .collection(FirestoreConstants.usersCollection)
+        .collection(FirestoreConstants.publicProfilesCollection)
         .where('communicationSettings.isGuideAvailable', isEqualTo: true)
         .limit(limit);
 
@@ -36,7 +36,7 @@ class CommunicationFirestoreService {
   }
 
   Future<PublicGuideProfile?> getPublicGuideProfile(String uid) async {
-    final user = await _userService.getUserByUID(uid);
+    final user = await _userService.getPublicProfileByUID(uid);
     if (user == null || !user.communicationSettings.isGuideAvailable) {
       return null;
     }
@@ -51,7 +51,7 @@ class CommunicationFirestoreService {
     if (collegeId.isEmpty) return [];
 
     final snapshot = await _firestore
-        .collection(FirestoreConstants.usersCollection)
+        .collection(FirestoreConstants.publicProfilesCollection)
         .where('collegeId', isEqualTo: collegeId)
         .where('communicationSettings.allowPublicProfile', isEqualTo: true)
         .limit(limit)
@@ -161,7 +161,7 @@ class CommunicationFirestoreService {
     await _checkSpam(callerId);
 
     final caller = await _userService.getUserByUID(callerId);
-    final callee = await _userService.getUserByUID(calleeId);
+    final callee = await _userService.getPublicProfileByUID(calleeId);
     if (caller == null || callee == null) {
       throw CommunicationException('User not found.');
     }
@@ -306,7 +306,7 @@ class CommunicationFirestoreService {
         .where('rateeId', isEqualTo: rating.rateeId)
         .get();
 
-    final ratee = await _userService.getUserByUID(rating.rateeId);
+    final ratee = await _userService.getPublicProfileByUID(rating.rateeId);
     if (ratee == null) return;
 
     final allRatings = ratingsSnapshot.docs.map((d) => d.data()).toList();
@@ -317,13 +317,15 @@ class CommunicationFirestoreService {
       incrementChat: !incrementCall,
     );
 
+    final guideStatsUpdate = {
+      'guideStats': newStats.toJson(),
+      'updatedAt': DateTime.now().toIso8601String(),
+    };
     await _firestore
         .collection(FirestoreConstants.usersCollection)
         .doc(rating.rateeId)
-        .update({
-      'guideStats': newStats.toJson(),
-      'updatedAt': DateTime.now().toIso8601String(),
-    });
+        .update(guideStatsUpdate);
+    await _userService.syncPublicProfile(rating.rateeId, guideStatsUpdate);
 
     final sessionRef = _firestore
         .collection(FirestoreConstants.callSessionsCollection)

@@ -20,11 +20,11 @@ class ProfileStorageService {
     required String extension,
   }) async {
     final optimized = await ImageOptimizationUtils.optimizeForUpload(bytes);
-    final path = 'profile_images/$userId/avatar.$extension';
+    final path = 'profile_images/$userId/avatar.${_extensionFor(optimized.contentType, extension)}';
     final ref = _storage.ref().child(path);
     await ref.putData(
-      optimized,
-      SettableMetadata(contentType: _imageType(extension)),
+      optimized.bytes,
+      SettableMetadata(contentType: optimized.contentType),
     );
     return ref.getDownloadURL();
   }
@@ -35,23 +35,28 @@ class ProfileStorageService {
     required String extension,
   }) async {
     final optimized = await ImageOptimizationUtils.optimizeForUpload(bytes);
-    final path = 'profile_images/$userId/cover.$extension';
+    final path = 'profile_images/$userId/cover.${_extensionFor(optimized.contentType, extension)}';
     final ref = _storage.ref().child(path);
     await ref.putData(
-      optimized,
-      SettableMetadata(contentType: _imageType(extension)),
+      optimized.bytes,
+      SettableMetadata(contentType: optimized.contentType),
     );
     return ref.getDownloadURL();
   }
 
-  String _imageType(String ext) {
-    switch (ext.toLowerCase()) {
-      case 'png':
-        return 'image/png';
-      case 'webp':
-        return 'image/webp';
+  // The path extension is cosmetic (Storage serves by contentType, not by
+  // path), but keep it truthful to the actual bytes rather than whatever
+  // the source file happened to be named.
+  String _extensionFor(String contentType, String fallback) {
+    switch (contentType) {
+      case 'image/png':
+        return 'png';
+      case 'image/webp':
+        return 'webp';
+      case 'image/jpeg':
+        return 'jpg';
       default:
-        return 'image/jpeg';
+        return fallback;
     }
   }
 }

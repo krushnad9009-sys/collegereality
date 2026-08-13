@@ -17,7 +17,12 @@ class MessageCacheService {
   ) async {
     if (conversationId.isEmpty || messages.isEmpty) return;
     final prefs = await SharedPreferences.getInstance();
-    final slice = messages.take(_maxMessages).map((m) => m.toJson()).toList();
+    // Messages arrive oldest-first; keep the most RECENT ones (not the
+    // oldest _maxMessages, which would freeze the cache on old history).
+    final recent = messages.length > _maxMessages
+        ? messages.sublist(messages.length - _maxMessages)
+        : messages;
+    final slice = recent.map((m) => m.toJson()).toList();
     await prefs.setString('$_prefix$conversationId', jsonEncode(slice));
   }
 

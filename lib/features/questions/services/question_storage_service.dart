@@ -18,7 +18,10 @@ class QuestionStorageService {
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     final path = 'qa_media/$subPath/$userId/$questionId/img_$timestamp.$extension';
     final ref = _storage.ref().child(path);
-    await ref.putData(optimized);
+    await ref.putData(
+      optimized.bytes,
+      SettableMetadata(contentType: optimized.contentType),
+    );
     return ref.getDownloadURL();
   }
 }

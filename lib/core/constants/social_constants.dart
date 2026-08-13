@@ -3,6 +3,10 @@ class SocialConstants {
 
   static const int defaultPageSize = 20;
   static const int maxMessagesPerMinute = 15;
+  // Cap on the live chat listener (watchMessages) so an old, very long
+  // conversation doesn't stream/re-listen its entire history forever.
+  // Older messages are still reachable via fetchMessagesPage.
+  static const int liveMessageWindow = 200;
   static const int maxPostsPerHour = 10;
 
   static const String contentStatusVisible = 'visible';

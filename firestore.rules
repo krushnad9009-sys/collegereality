@@ -158,17 +158,11 @@ service cloud.firestore {
     }
 
     function canReadUserProfile(userId) {
-      let data = resource.data;
-      let viewer = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
-      return isOwner(userId) ||
-        isStaff() ||
-        data.get('communicationSettings', {}).get('isGuideAvailable', false) == true ||
-        data.get('communicationSettings', {}).get('allowPublicProfile', false) == true ||
-        (
-          data.get('collegeId', '') is string &&
-          data.get('collegeId', '') != '' &&
-          data.get('collegeId', '') == viewer.get('collegeId', '')
-        );
+      // `users` holds email/phone, so only the owner or staff may read the
+      // full document. Any other viewer (same-college, guide directory,
+      // public-profile lookups) must read the PII-free public_profiles
+      // mirror instead — see match /public_profiles/{userId} below.
+      return isOwner(userId) || isStaff();
     }
 
     function isVerifiedStudent() {
@@ -374,6 +368,24 @@ service cloud.firestore {
           isGuideStatsRatingUpdate()) ||
         (isOwner(userId) && ownerCannotElevatePrivileges())
       );
+      allow delete: if isOwner(userId) || isAdmin();
+    }
+
+    // PII-free mirror of `users` (no email/phone) read by any authenticated
+    // user for guide directory / connectable-students / call setup. Written
+    // by the owner or admin, or by a rater updating someone else's
+    // guideStats mirror after a call/chat rating (same shape-validated
+    // carve-out as the `users` doc below) — and never allowed to carry
+    // email/phone even if application code has a bug.
+    match /public_profiles/{userId} {
+      allow read: if isAuthenticated();
+      allow create, update: if (
+        isOwner(userId) ||
+        isAdmin() ||
+        (isAuthenticated() &&
+          request.auth.uid != userId &&
+          isGuideStatsRatingUpdate())
+      ) && !request.resource.data.keys().hasAny(['email', 'phone']);
       allow delete: if isOwner(userId) || isAdmin();
     }
 
@@ -845,12 +857,20 @@ service cloud.firestore {
     }
 
     match /user_notifications/{notificationId} {
+      // Notifications are authored by whoever triggers them (commenter,
+      // rater, connection request, ...), not the recipient — there is no
+      // Cloud Functions layer to proxy these as a trusted backend, so
+      // cross-user creates must be allowed here (shape-validated below).
+      // `resource == null` covers reads of a not-yet-created doc (the
+      // dedupe check that runs before every insert), which would
+      // otherwise error out and deny even the eventual owner.
       allow read: if isAuthenticated() &&
-        resource.data.userId == request.auth.uid;
+        (resource == null || resource.data.userId == request.auth.uid);
       allow create: if isAuthenticated() && (
         isAdmin() ||
         (
-          request.resource.data.userId == request.auth.uid &&
+          request.resource.data.userId is string &&
+          request.resource.data.userId != '' &&
           request.resource.data.type is string &&
           request.resource.data.title is string &&
           request.resource.data.category is string &&
@@ -869,7 +889,10 @@ service cloud.firestore {
     }
 
     match /notification_preferences/{userId} {
-      allow read: if isAuthenticated() && request.auth.uid == userId;
+      // Read must be cross-user: notifyUser() checks the *recipient's*
+      // alert toggles from the actor's auth context before writing a
+      // notification. These are boolean toggles only, no PII.
+      allow read: if isAuthenticated();
       allow create, update: if isAuthenticated() && request.auth.uid == userId;
     }
 

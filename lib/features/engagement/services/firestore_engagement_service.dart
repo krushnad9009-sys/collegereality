@@ -183,6 +183,21 @@ class FirestoreEngagementService {
     return defaults;
   }
 
+  // Read-only variant: returns defaults without persisting when missing.
+  // Firestore rules only let a user create/update their own preferences
+  // doc, so this is the one to use when checking someone ELSE's
+  // preferences (e.g. notifyUser() checking the recipient's toggles from
+  // the sender's auth context) — a write there would be denied.
+  Future<NotificationPreferencesModel> _getPreferencesOrDefault(
+    String userId,
+  ) async {
+    final doc = await _preferences.doc(userId).get();
+    if (doc.exists) {
+      return NotificationPreferencesModel.fromJson(doc.data()!, docId: userId);
+    }
+    return NotificationPreferencesModel.defaults(userId);
+  }
+
   Stream<NotificationPreferencesModel> watchPreferences(String userId) {
     return _preferences.doc(userId).snapshots().map((doc) {
       if (!doc.exists) {
@@ -383,7 +398,7 @@ class FirestoreEngagementService {
     String entityId = '',
     String actionRoute = '',
   }) async {
-    final prefs = await getOrCreatePreferences(userId);
+    final prefs = await _getPreferencesOrDefault(userId);
     if (!isPreferenceEnabled(prefs, type)) return;
 
     await createNotificationFromDraft(

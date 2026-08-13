@@ -483,11 +483,29 @@ describe('H4 users read least privilege', () => {
           allowPublicProfile: false,
         },
       },
+      // PII-free mirror `syncPublicProfile` maintains for `users/guidePublic`
+      // — this, not the `users` doc, is what other viewers read for guide
+      // discovery. See match /public_profiles/{userId} in firestore.rules.
+      'public_profiles/guidePublic': {
+        uid: 'guidePublic',
+        userType: safeUser.userType,
+        verificationBadge: safeUser.verificationBadge,
+        verificationStatus: safeUser.verificationStatus,
+        isVerified: safeUser.isVerified,
+        collegeId: 'college-c',
+        guideStats: safeUser.guideStats,
+        communicationSettings: {
+          isGuideAvailable: true,
+          allowPublicProfile: false,
+        },
+      },
     });
   });
 
   it('allows reading discoverable guide profiles', async () => {
-    await assertSucceeds(getDoc(doc(authDb('viewer'), 'users/guidePublic')));
+    await assertSucceeds(
+      getDoc(doc(authDb('viewer'), 'public_profiles/guidePublic')),
+    );
   });
 
   it('denies reading private users from other colleges', async () => {

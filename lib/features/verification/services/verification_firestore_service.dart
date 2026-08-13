@@ -233,6 +233,7 @@ class VerificationFirestoreService {
         .collection(FirestoreConstants.usersCollection)
         .doc(request.userId)
         .update(userUpdate);
+    await _userService.syncPublicProfile(request.userId, userUpdate);
 
     if (request.collegeId != null && request.collegeId!.trim().isNotEmpty) {
       final countField = badge == VerificationConstants.badgeVerifiedAlumni

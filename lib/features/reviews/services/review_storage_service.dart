@@ -17,7 +17,10 @@ class ReviewStorageService {
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     final path = 'review_media/$userId/$reviewId/photo_$timestamp.$extension';
     final ref = _storage.ref().child(path);
-    await ref.putData(optimized);
+    await ref.putData(
+      optimized.bytes,
+      SettableMetadata(contentType: optimized.contentType),
+    );
     return ref.getDownloadURL();
   }
 
@@ -30,7 +33,10 @@ class ReviewStorageService {
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     final path = 'review_media/$userId/$reviewId/video_$timestamp.$extension';
     final ref = _storage.ref().child(path);
-    await ref.putData(bytes);
+    await ref.putData(
+      bytes,
+      SettableMetadata(contentType: 'video/${extension.toLowerCase() == 'mov' ? 'quicktime' : extension.toLowerCase()}'),
+    );
     return ref.getDownloadURL();
   }
 }

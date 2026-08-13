@@ -47,7 +47,15 @@ service firebase.storage {
     }
 
     match /community_media/{conversationId}/{userId}/{fileName} {
-      allow read: if isAuthenticated();
+      // Mirror community_conversations' Firestore access rule: private
+      // conversation attachments are only for participants, not any
+      // authenticated user.
+      allow read: if isAuthenticated() &&
+        firestore.exists(/databases/(default)/documents/community_conversations/$(conversationId)) &&
+        (
+          firestore.get(/databases/(default)/documents/community_conversations/$(conversationId)).data.type != 'private' ||
+          request.auth.uid in firestore.get(/databases/(default)/documents/community_conversations/$(conversationId)).data.get('participantIds', [])
+        );
       allow write: if isOwner(userId) &&
         request.resource.size < 8 * 1024 * 1024 &&
         isImageOrPdf();

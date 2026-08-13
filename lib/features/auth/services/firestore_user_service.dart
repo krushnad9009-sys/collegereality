@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../core/constants/display_name_constants.dart';
+import '../../../core/constants/firestore_constants.dart';
 import '../../../core/utils/firestore_auth_utils.dart';
 import '../../../core/utils/firestore_error_utils.dart';
 import '../models/user_model.dart';
@@ -19,6 +20,7 @@ class FirestoreUserService {
             user.toJson(),
             SetOptions(merge: true),
           );
+      await syncPublicProfile(user.uid, user.toJson());
     } on FirebaseException catch (e) {
       throw _mapFirestoreError(
         e,
@@ -56,6 +58,55 @@ class FirestoreUserService {
       throw FirestoreException(
         message: 'Could not load your profile. Please try again.',
       );
+    }
+  }
+
+  // Get another user's PII-free public profile (safe for cross-user reads —
+  // guide directory, connectable students, call setup). Use getUserByUID
+  // only for the current user's own document.
+  Future<UserModel?> getPublicProfileByUID(String uid) async {
+    try {
+      await FirestoreAuthUtils.ensureAuthenticated();
+      final doc = await _firestore
+          .collection(FirestoreConstants.publicProfilesCollection)
+          .doc(uid)
+          .get();
+      if (doc.exists) {
+        return UserModel.fromJson(doc.data() as Map<String, dynamic>);
+      }
+      return null;
+    } on FirebaseException catch (e) {
+      throw _mapFirestoreError(
+        e,
+        collectionPath: FirestoreConstants.publicProfilesCollection,
+        documentPath: uid,
+        action: 'fetch public profile',
+      );
+    } catch (e) {
+      if (e is FirestoreException) rethrow;
+      throw FirestoreException(
+        message: 'Could not load this profile. Please try again.',
+      );
+    }
+  }
+
+  // Mirrors non-PII fields from a `users` write into public_profiles so
+  // other users can discover/view this profile without ever reading
+  // email/phone. Safe to call with a full user JSON or a partial update
+  // map — email/phone are stripped either way.
+  Future<void> syncPublicProfile(String uid, Map<String, dynamic> data) async {
+    final safeFields = Map<String, dynamic>.from(data)
+      ..remove('email')
+      ..remove('phone');
+    if (safeFields.isEmpty) return;
+    try {
+      await _firestore
+          .collection(FirestoreConstants.publicProfilesCollection)
+          .doc(uid)
+          .set(safeFields, SetOptions(merge: true));
+    } catch (_) {
+      // Best-effort mirror; the source-of-truth `users` write already
+      // succeeded, so a mirror hiccup should not fail the caller's action.
     }
   }
 
@@ -177,6 +228,7 @@ class FirestoreUserService {
           .collection(usersCollection)
           .doc(uid)
           .update(updateData);
+      await syncPublicProfile(uid, updateData);
     } on FirebaseException catch (e) {
       throw _mapFirestoreError(
         e,
@@ -233,6 +285,16 @@ class FirestoreUserService {
         message: 'Could not delete account. Please try again.',
       );
     }
+    try {
+      // Best-effort: the source-of-truth `users` doc is already gone,
+      // which is what account deletion requires. Without this, the
+      // public_profiles mirror would keep showing a deleted account in
+      // the guide directory / connectable-students list indefinitely.
+      await _firestore
+          .collection(FirestoreConstants.publicProfilesCollection)
+          .doc(uid)
+          .delete();
+    } catch (_) {}
   }
 
   // Check if user exists
