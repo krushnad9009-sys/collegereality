@@ -7,6 +7,8 @@ import '../../features/admin/screens/admin_analytics_screen.dart';
 import '../../features/admin/screens/admin_announcements_screen.dart';
 import '../../features/admin/screens/admin_ads_screen.dart';
 import '../../features/admin/screens/admin_audit_logs_screen.dart';
+import '../../features/admin/screens/admin_consultations_screen.dart';
+import '../../features/admin/screens/admin_consultation_revenue_screen.dart';
 import '../../features/admin/screens/admin_college_edit_screen.dart';
 import '../../features/admin/screens/admin_colleges_screen.dart';
 import '../../features/admin/screens/admin_community_screen.dart';
@@ -173,6 +175,14 @@ final superAdminRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: SuperAdminRouteNames.auditLogs,
         builder: (context, state) => const AdminAuditLogsScreen(),
+      ),
+      GoRoute(
+        path: SuperAdminRouteNames.consultations,
+        builder: (context, state) => const AdminConsultationsScreen(),
+      ),
+      GoRoute(
+        path: SuperAdminRouteNames.consultationRevenue,
+        builder: (context, state) => const AdminConsultationRevenueScreen(),
       ),
     ],
   );

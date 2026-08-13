@@ -1,0 +1,23 @@
+{
+  "name": "college-reality-functions",
+  "description": "Trusted backend for the \"Talk to a Verified Student/Alumni\" paid consultation feature — Razorpay order creation/webhook verification, refunds, consultation completion, and Agora call-token minting. Nothing here is optional client trust; see README.md before deploying.",
+  "private": true,
+  "engines": {
+    "node": "20"
+  },
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "serve": "firebase emulators:start --only functions,firestore"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.6.0",
+    "firebase-functions": "^5.1.1",
+    "razorpay": "^2.9.4",
+    "agora-token": "^2.0.5"
+  },
+  "devDependencies": {
+    "firebase-functions-test": "^3.3.0",
+    "jest": "^29.7.0"
+  }
+}

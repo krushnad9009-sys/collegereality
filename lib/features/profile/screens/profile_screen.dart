@@ -361,18 +361,53 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         });
                       },
                     ),
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('Available as a guide'),
-                      value: settings.isGuideAvailable,
-                      onChanged: (value) {
-                        setState(() {
-                          _communicationSettings =
-                              settings.copyWith(isGuideAvailable: value);
-                        });
-                      },
-                    ),
+                    Builder(builder: (context) {
+                      // Mirrors guideAvailabilityRequiresVerification() in
+                      // firestore.rules — the UI gate here is convenience
+                      // only; the rule is what actually enforces this.
+                      final isEligibleGuide = userDetail != null &&
+                          (userDetail.verificationBadge ==
+                                  VerificationConstants.badgeVerifiedStudent ||
+                              userDetail.verificationBadge ==
+                                  VerificationConstants.badgeVerifiedAlumni) &&
+                          userDetail.verificationStatus ==
+                              VerificationConstants.statusApproved;
+                      return SwitchListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Available as a guide'),
+                        subtitle: isEligibleGuide
+                            ? null
+                            : const Text(
+                                'Only verified students/alumni can become a guide. Complete verification first.',
+                              ),
+                        value: settings.isGuideAvailable && isEligibleGuide,
+                        onChanged: isEligibleGuide
+                            ? (value) {
+                                setState(() {
+                                  _communicationSettings =
+                                      settings.copyWith(isGuideAvailable: value);
+                                });
+                              }
+                            : null,
+                      );
+                    }),
+                    if ((_communicationSettings ?? settings).isGuideAvailable)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: OutlinedButton.icon(
+                          onPressed: () =>
+                              context.push(RouteNames.guidePricingSetup),
+                          icon: const Icon(Icons.sell_outlined),
+                          label: const Text('Set chat/call prices'),
+                        ),
+                      ),
                   ],
+                  const SizedBox(height: 16),
+                  OutlinedButton.icon(
+                    onPressed: () => context.push(RouteNames.consultationHistory),
+                    icon: const Icon(Icons.forum_outlined),
+                    label: const Text('My consultations'),
+                  ),
                   const SizedBox(height: 24),
                   OutlinedButton.icon(
                     onPressed: _confirmDeleteAccount,

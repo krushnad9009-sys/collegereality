@@ -1,17 +1,39 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../config/router/route_names.dart';
 import '../../config/theme/app_design_tokens.dart';
 import '../../config/theme/app_elevation.dart';
 import '../../config/theme/app_theme.dart';
+import '../../features/community/providers/presence_heartbeat_provider.dart';
 
-/// Premium bottom navigation shell for primary app destinations.
-class AppShell extends StatelessWidget {
+/// Premium bottom navigation shell for primary app destinations. Also hosts
+/// the app-lifecycle-aware presence heartbeat (see
+/// PresenceHeartbeatController) for the entire authenticated app — a single
+/// foreground timer here, not a write per screen.
+class AppShell extends ConsumerStatefulWidget {
   final Widget child;
 
   const AppShell({required this.child, super.key});
+
+  @override
+  ConsumerState<AppShell> createState() => _AppShellState();
+}
+
+class _AppShellState extends ConsumerState<AppShell> {
+  @override
+  void initState() {
+    super.initState();
+    // Starts a >=heartbeatInterval foreground timer; auto-pauses/resumes
+    // with app lifecycle and disposes with this shell (app session ends).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) ref.read(presenceHeartbeatControllerProvider).start();
+    });
+  }
+
+  Widget get child => widget.child;
 
   static const _tabRoutes = <String>[
     RouteNames.home,

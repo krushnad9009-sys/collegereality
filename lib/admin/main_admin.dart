@@ -62,6 +62,16 @@ const superAdminPanelConfig = SuperAdminPanelConfig(
       route: SuperAdminRouteNames.auditLogs,
     ),
     SuperAdminNavItem(
+      title: 'Consultations',
+      icon: Icons.forum_outlined,
+      route: SuperAdminRouteNames.consultations,
+    ),
+    SuperAdminNavItem(
+      title: 'Revenue',
+      icon: Icons.payments_outlined,
+      route: SuperAdminRouteNames.consultationRevenue,
+    ),
+    SuperAdminNavItem(
       title: 'Export',
       icon: Icons.download_outlined,
       route: SuperAdminRouteNames.export,

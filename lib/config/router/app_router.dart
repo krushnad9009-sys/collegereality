@@ -29,6 +29,8 @@ import '../../features/admin/screens/admin_reviews_screen.dart';
 import '../../features/admin/screens/admin_users_screen.dart';
 import '../../features/admin/screens/admin_analytics_screen.dart';
 import '../../features/admin/screens/admin_reports_hub_screen.dart';
+import '../../features/admin/screens/admin_consultations_screen.dart';
+import '../../features/admin/screens/admin_consultation_revenue_screen.dart';
 import '../../features/admin/screens/admin_system_monitor_screen.dart';
 import '../../features/admin/screens/admin_college_bulk_screen.dart';
 import '../../features/admin/screens/admin_export_screen.dart';
@@ -99,6 +101,10 @@ import '../../features/ecosystem/screens/admin_ecosystem_hub_screen.dart';
 import '../../features/communication/screens/guides_directory_screen.dart';
 import '../../features/communication/screens/guide_public_profile_screen.dart';
 import '../../features/communication/screens/active_call_screen.dart';
+import '../../features/consultations/screens/guide_pricing_setup_screen.dart';
+import '../../features/consultations/screens/consultation_checkout_screen.dart';
+import '../../features/consultations/screens/consultation_room_screen.dart';
+import '../../features/consultations/screens/consultation_history_screen.dart';
 import 'route_names.dart';
 import '../../core/widgets/app_shell.dart';
 import '../../core/widgets/page_transitions.dart';
@@ -680,6 +686,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const AdminReportsHubScreen(),
       ),
       GoRoute(
+        path: RouteNames.adminConsultations,
+        builder: (context, state) => const AdminConsultationsScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.adminConsultationRevenue,
+        builder: (context, state) => const AdminConsultationRevenueScreen(),
+      ),
+      GoRoute(
         path: RouteNames.adminSystem,
         builder: (context, state) => const AdminSystemMonitorScreen(),
       ),
@@ -762,6 +776,28 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final sessionId = state.pathParameters['sessionId']!;
           return ActiveCallScreen(sessionId: sessionId);
+        },
+      ),
+      GoRoute(
+        path: RouteNames.guidePricingSetup,
+        builder: (context, state) => const GuidePricingSetupScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.consultationCheckout,
+        builder: (context, state) {
+          final guideId = state.pathParameters['guideId']!;
+          return ConsultationCheckoutScreen(guideId: guideId);
+        },
+      ),
+      GoRoute(
+        path: RouteNames.consultationHistory,
+        builder: (context, state) => const ConsultationHistoryScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.consultationRoom,
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return ConsultationRoomScreen(consultationId: id);
         },
       ),
     ],

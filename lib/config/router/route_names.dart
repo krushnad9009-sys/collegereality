@@ -40,10 +40,17 @@ class RouteNames {
   static const String adminCommunication = '/admin/communication';
   static const String adminAnnouncements = '/admin/announcements';
   static const String adminVerification = '/admin/verification';
+  static const String adminConsultations = '/admin/consultations';
+  static const String adminConsultationRevenue = '/admin/consultation-revenue';
   static const String verification = '/verification';
   static const String guidesDirectory = '/guides';
   static const String guideProfile = '/guides/:uid';
   static const String activeCall = '/call/:sessionId';
+  // "Talk to a Verified Student/Alumni" paid consultations.
+  static const String guidePricingSetup = '/guides/pricing';
+  static const String consultationCheckout = '/consultations/:guideId/checkout';
+  static const String consultationRoom = '/consultations/:id';
+  static const String consultationHistory = '/consultations';
   static const String community = '/community';
   static const String communityPrivateChats = '/community/private-chats';
   static const String communityChat = '/community/chat/:id';
@@ -126,6 +133,9 @@ class RouteNames {
       '/college-details/$collegeId/submit-placement?name=${Uri.encodeComponent(collegeName)}';
   static String guideProfilePath(String uid) => '/guides/$uid';
   static String activeCallPath(String sessionId) => '/call/$sessionId';
+  static String consultationCheckoutPath(String guideId) =>
+      '/consultations/$guideId/checkout';
+  static String consultationRoomPath(String id) => '/consultations/$id';
   static String communityChatPath(String id) => '/community/chat/$id';
   static String studentProfilePath(String uid) => '/student/$uid';
   static String adminCollegeEditPath(String id) => '/admin/colleges/$id/edit';

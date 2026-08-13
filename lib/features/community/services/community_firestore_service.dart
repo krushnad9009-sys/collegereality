@@ -38,6 +38,27 @@ class CommunityFirestoreService {
   CollectionReference<Map<String, dynamic>> get _messages =>
       _firestore.collection(FirestoreConstants.communityMessagesCollection);
 
+  // Presence lives on `users/{uid}.presence` (source of truth, owner-only
+  // read) and is mirrored to `public_profiles/{uid}.presence` (PII-free,
+  // any-authenticated-user read) the same way guideStats already is — see
+  // FirestoreUserService.syncPublicProfile. Cross-user presence reads MUST
+  // go through public_profiles: `users/{uid}` is owner/staff-only since the
+  // PII lockdown, so reading it here for another user would be denied.
+  Future<void> _writePresence(
+    String userId,
+    Map<String, dynamic> presenceJson,
+  ) async {
+    final update = {
+      'presence': presenceJson,
+      'updatedAt': DateTime.now().toIso8601String(),
+    };
+    await _firestore.collection(FirestoreConstants.usersCollection).doc(userId).update(update);
+    await _userService.syncPublicProfile(userId, update);
+  }
+
+  /// Screen-level online marker (chat opened/closed) — kept for existing
+  /// call sites, but cross-user viewers should prefer staleness-derived
+  /// status (see UserPresenceModel.isFresh) over trusting `isOnline` alone.
   Future<void> updatePresence(String userId, {required bool isOnline}) async {
     final doc =
         await _firestore.collection(FirestoreConstants.usersCollection).doc(userId).get();
@@ -46,25 +67,60 @@ class CommunityFirestoreService {
         existingPresence?['availabilityStatus'] as String? ??
             ProfileConstants.availabilityOffline;
 
-    await _firestore.collection(FirestoreConstants.usersCollection).doc(userId).update({
-      'presence': {
-        'isOnline': isOnline,
-        'lastSeenAt': DateTime.now().toIso8601String(),
-        'availabilityStatus': availabilityStatus,
-      },
-      'updatedAt': DateTime.now().toIso8601String(),
+    await _writePresence(userId, {
+      'isOnline': isOnline,
+      'lastSeenAt': DateTime.now().toIso8601String(),
+      'availabilityStatus': availabilityStatus,
+      'busyUntil': existingPresence?['busyUntil'],
     });
   }
 
+  /// Lightweight heartbeat — call at most every
+  /// [ConsultationConstants.heartbeatInterval] while the app is
+  /// foregrounded (see PresenceHeartbeatController), never per-second.
+  /// Viewers treat presence as stale (offline) once `lastSeenAt` exceeds
+  /// [ConsultationConstants.presenceStaleAfter], so a killed/crashed app
+  /// naturally goes offline without needing an explicit "going offline"
+  /// write.
+  Future<void> sendHeartbeat(
+    String userId, {
+    String? availabilityStatus,
+    DateTime? busyUntil,
+  }) async {
+    final doc =
+        await _firestore.collection(FirestoreConstants.usersCollection).doc(userId).get();
+    final existingPresence = doc.data()?['presence'] as Map<String, dynamic>?;
+    await _writePresence(userId, {
+      'isOnline': true,
+      'lastSeenAt': DateTime.now().toIso8601String(),
+      'availabilityStatus': availabilityStatus ??
+          existingPresence?['availabilityStatus'] as String? ??
+          ProfileConstants.availabilityOffline,
+      'busyUntil':
+          (busyUntil ?? _parseBusyUntil(existingPresence))?.toIso8601String(),
+    });
+  }
+
+  DateTime? _parseBusyUntil(Map<String, dynamic>? presence) {
+    final raw = presence?['busyUntil'];
+    if (raw == null) return null;
+    return DateTime.tryParse(raw.toString());
+  }
+
   Future<UserPresenceModel?> getPresence(String userId) async {
-    final user = await _userService.getUserByUID(userId);
-    if (user == null) return null;
-    return user.presence;
+    final doc = await _firestore
+        .collection(FirestoreConstants.publicProfilesCollection)
+        .doc(userId)
+        .get();
+    if (!doc.exists) return null;
+    return UserPresenceModel.fromJson(
+      doc.data()?['presence'] as Map<String, dynamic>?,
+    );
   }
 
   Stream<UserPresenceModel?> watchPresence(String userId) {
     return _firestore
-        .collection(FirestoreConstants.usersCollection)
+        .collection(FirestoreConstants.publicProfilesCollection)
         .doc(userId)
         .snapshots()
         .map((doc) {

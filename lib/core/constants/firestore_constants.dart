@@ -87,4 +87,11 @@ class FirestoreConstants {
   static const String auditLogsCollection = 'audit_logs';
   static const String superAdminAuditCollection = 'super_admin_audit';
   static const String adminAdsCollection = 'admin_ads';
+
+  // "Talk to a Verified Student/Alumni" paid consultations.
+  static const String consultationsCollection = 'consultations';
+  static const String paymentsCollection = 'payments';
+  static const String guideEarningsCollection = 'guide_earnings';
+  static const String guideEarningsEntriesSubcollection = 'entries';
+  static const String consultationRatingsCollection = 'consultation_ratings';
 }

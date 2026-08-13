@@ -1,4 +1,5 @@
 import '../../auth/models/user_model.dart';
+import '../../community/models/user_presence_model.dart';
 import 'guide_stats_model.dart';
 
 /// Public-facing guide profile — no phone, email, or documents.
@@ -12,8 +13,10 @@ class PublicGuideProfile {
   final String? course;
   final int? batchYear;
   final String verificationBadge;
+  final String verificationStatus;
   final GuideStatsModel stats;
   final GuideCommunicationSettings settings;
+  final UserPresenceModel presence;
 
   const PublicGuideProfile({
     required this.uid,
@@ -25,12 +28,21 @@ class PublicGuideProfile {
     this.course,
     this.batchYear,
     this.verificationBadge = 'none',
+    this.verificationStatus = 'incomplete',
     required this.stats,
     required this.settings,
+    this.presence = const UserPresenceModel(),
   });
 
   bool get hasVerificationBadge =>
       verificationBadge != 'none' && verificationBadge.isNotEmpty;
+
+  /// Only an approved verified_student/verified_alumni may be a paid guide
+  /// — mirrors guideAvailabilityRequiresVerification() in firestore.rules.
+  bool get isEligibleGuide =>
+      (verificationBadge == 'verified_student' ||
+          verificationBadge == 'verified_alumni') &&
+      verificationStatus == 'approved';
 
   factory PublicGuideProfile.fromUser(UserModel user) {
     return PublicGuideProfile(
@@ -45,8 +57,10 @@ class PublicGuideProfile {
       course: user.course,
       batchYear: user.batchYear,
       verificationBadge: user.verificationBadge,
+      verificationStatus: user.verificationStatus,
       stats: user.guideStats,
       settings: user.communicationSettings,
+      presence: user.presence,
     );
   }
 }

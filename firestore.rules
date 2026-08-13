@@ -111,6 +111,36 @@ service cloud.firestore {
         newStats.get('recommendPercent', 0) <= 100;
     }
 
+    // Non-owner write of a guide's consultation-rating aggregate (denorm'd
+    // onto guideStats for fast directory reads) — parallel to
+    // isGuideStatsRatingUpdate() but for the paid-consultation fields,
+    // which that function's exact free-call increment checks don't cover.
+    function isConsultationStatsUpdate() {
+      let oldStats = guideStatsMap(resource.data);
+      let newStats = guideStatsMap(request.resource.data);
+      return isGuideStatsOnlyUpdate() &&
+        newStats.get('overallRating', 0) == oldStats.get('overallRating', 0) &&
+        newStats.get('totalRatings', 0) == oldStats.get('totalRatings', 0) &&
+        newStats.get('totalCalls', 0) == oldStats.get('totalCalls', 0) &&
+        newStats.get('totalChats', 0) == oldStats.get('totalChats', 0) &&
+        newStats.get('badgeTier', 'none') == oldStats.get('badgeTier', 'none') &&
+        newStats.get('helpfulPercent', 0) == oldStats.get('helpfulPercent', 0) &&
+        newStats.get('respectfulPercent', 0) == oldStats.get('respectfulPercent', 0) &&
+        newStats.get('recommendPercent', 0) == oldStats.get('recommendPercent', 0) &&
+        newStats.get('completedConsultations', 0) ==
+          oldStats.get('completedConsultations', 0) + 1 &&
+        newStats.get('consultationRatingAvg', 0) >= 0 &&
+        newStats.get('consultationRatingAvg', 0) <= 5 &&
+        newStats.get('communicationAvg', 0) >= 0 &&
+        newStats.get('communicationAvg', 0) <= 5 &&
+        newStats.get('helpfulOrRespectfulAvg', 0) >= 0 &&
+        newStats.get('helpfulOrRespectfulAvg', 0) <= 5 &&
+        newStats.get('knowledgeOrSeriousnessAvg', 0) >= 0 &&
+        newStats.get('knowledgeOrSeriousnessAvg', 0) <= 5 &&
+        newStats.get('genuineOrAppropriateAvg', 0) >= 0 &&
+        newStats.get('genuineOrAppropriateAvg', 0) <= 5;
+    }
+
     function ownerAllowedVerificationStatusChange() {
       let oldStatus = resource.data.get('verificationStatus', 'incomplete');
       let newStatus = request.resource.data.get('verificationStatus', 'incomplete');
@@ -122,6 +152,27 @@ service cloud.firestore {
             'pending_review', 'flagged'
           ] &&
           newStatus != 'approved'
+        );
+    }
+
+    // Paid-guide eligibility: turning ON chat/call availability requires an
+    // approved verified_student/verified_alumni badge. Applies identically
+    // to `users` and its `public_profiles` mirror (same flat field shape).
+    function guideAvailabilityRequiresVerification(oldData, newData) {
+      let oldSettings = oldData.get('communicationSettings', {});
+      let newSettings = newData.get('communicationSettings', {});
+      let turnedOnGuideMode =
+        (newSettings.get('isGuideAvailable', false) == true &&
+          oldSettings.get('isGuideAvailable', false) != true) ||
+        (newSettings.get('chatAvailable', false) == true &&
+          oldSettings.get('chatAvailable', false) != true) ||
+        (newSettings.get('callAvailable', false) == true &&
+          oldSettings.get('callAvailable', false) != true);
+      return !turnedOnGuideMode ||
+        (
+          newData.get('verificationBadge', 'none') in
+            ['verified_student', 'verified_alumni'] &&
+          newData.get('verificationStatus', '') == 'approved'
         );
     }
 
@@ -140,7 +191,8 @@ service cloud.firestore {
         ) &&
         // Guide reputation must use dedicated lastActive / rating helpers.
         request.resource.data.get('guideStats', {}) ==
-          resource.data.get('guideStats', {});
+          resource.data.get('guideStats', {}) &&
+        guideAvailabilityRequiresVerification(resource.data, request.resource.data);
     }
 
     function isSafeUserCreate(userId) {
@@ -357,6 +409,172 @@ service cloud.firestore {
         );
     }
 
+    // ---- Paid consultations ("Talk to a Verified Student/Alumni") ----
+
+    function isConsultationParticipant(data) {
+      return isAuthenticated() &&
+        (data.studentId == request.auth.uid || data.guideId == request.auth.uid);
+    }
+
+    // Guide must be an approved verified_student/verified_alumni. Reads the
+    // PII-free mirror since the caller (a prospective student) cannot read
+    // `users/{guideId}` directly.
+    function isEligibleGuide(guideId) {
+      let guide = get(/databases/$(database)/documents/public_profiles/$(guideId)).data;
+      return guide.get('verificationBadge', 'none') in
+          ['verified_student', 'verified_alumni'];
+    }
+
+    // Client may only stand up a *request* for a consultation — no money
+    // has moved yet, so every payment/earning/rating field must be at its
+    // untouched default. The Cloud Function that creates the Razorpay
+    // order (trusted, Admin SDK) is what later moves this to paid.
+    function isSafeConsultationCreate() {
+      let data = request.resource.data;
+      let price = data.get('priceInfo', {});
+      return data.studentId == request.auth.uid &&
+        data.guideId != request.auth.uid &&
+        isEligibleGuide(data.guideId) &&
+        data.status == 'requested' &&
+        data.type in ['chat', 'call', 'video'] &&
+        data.get('paymentId', null) == null &&
+        data.get('paidAt', null) == null &&
+        data.get('startedAt', null) == null &&
+        data.get('completedAt', null) == null &&
+        data.get('conversationId', null) == null &&
+        data.get('callSessionId', null) == null &&
+        data.get('refundStatus', 'none') == 'none' &&
+        data.get('ratingByStudentSubmitted', false) == false &&
+        data.get('ratingByGuideSubmitted', false) == false &&
+        price.get('grossPaise', 0) is int &&
+        price.get('grossPaise', 0) > 0 &&
+        price.get('platformFeePaise', 0) == 0 &&
+        price.get('guideAmountPaise', 0) == 0;
+    }
+
+    // Fields only a trusted backend (Cloud Functions via Admin SDK, which
+    // bypasses these rules entirely) may ever change — payment/earnings
+    // amounts, payment linkage, refund state, completion, chat/call unlock,
+    // and rating-submitted flags. No client-allowed branch below may touch
+    // these; this helper just documents/enforces that for the branches that
+    // are allowed to touch *other* fields on the same document.
+    function consultationTrustedFieldsUnchanged() {
+      return request.resource.data.get('priceInfo', {}) == resource.data.get('priceInfo', {}) &&
+        request.resource.data.get('paymentId', null) == resource.data.get('paymentId', null) &&
+        request.resource.data.get('paidAt', null) == resource.data.get('paidAt', null) &&
+        request.resource.data.get('completedAt', null) == resource.data.get('completedAt', null) &&
+        request.resource.data.get('refundStatus', 'none') == resource.data.get('refundStatus', 'none') &&
+        request.resource.data.get('conversationId', null) == resource.data.get('conversationId', null) &&
+        request.resource.data.get('callSessionId', null) == resource.data.get('callSessionId', null) &&
+        request.resource.data.get('ratingByStudentSubmitted', false) ==
+          resource.data.get('ratingByStudentSubmitted', false) &&
+        request.resource.data.get('ratingByGuideSubmitted', false) ==
+          resource.data.get('ratingByGuideSubmitted', false);
+    }
+
+    // Student may cancel their own request before any payment exists.
+    function isPrePaymentStudentCancel() {
+      return resource.data.studentId == request.auth.uid &&
+        resource.data.status in ['requested', 'payment_pending'] &&
+        request.resource.data.status == 'cancelled' &&
+        consultationTrustedFieldsUnchanged() &&
+        affectedKeys().hasOnly(['status', 'cancelledAt', 'cancelReason', 'updatedAt']);
+    }
+
+    // Either participant may cancel a paid-but-not-started consultation.
+    // Refund initiation is handled server-side by a Cloud Function watching
+    // for this exact status transition — the client never sets refundStatus.
+    function isPostPaymentParticipantCancel() {
+      return isConsultationParticipant(resource.data) &&
+        resource.data.status in ['paid', 'waiting_for_guide'] &&
+        request.resource.data.status == 'cancelled' &&
+        consultationTrustedFieldsUnchanged() &&
+        affectedKeys().hasOnly(['status', 'cancelledAt', 'cancelReason', 'updatedAt']);
+    }
+
+    // Pure call/chat-join signaling between the two participants once paid
+    // — mirrors the existing call_sessions accept flow, but scoped so it
+    // can never touch money, unlock, or rating fields.
+    function isConsultationSignalingUpdate() {
+      let oldStatus = resource.data.status;
+      let newStatus = request.resource.data.status;
+      return isConsultationParticipant(resource.data) &&
+        (
+          (oldStatus == 'paid' && newStatus == 'waiting_for_guide') ||
+          (oldStatus == 'waiting_for_guide' && newStatus == 'active') ||
+          (oldStatus == 'paid' && newStatus == 'active')
+        ) &&
+        consultationTrustedFieldsUnchanged() &&
+        affectedKeys().hasOnly(['status', 'startedAt', 'updatedAt']);
+    }
+
+    // Either participant may mark an active consultation complete (mirrors
+    // the existing endCall flow) — this alone does NOT unlock rating;
+    // ratings additionally require the completed status AND are only
+    // eligible once this transition has already landed (see
+    // isEligibleConsultationRating). Still fully excludes every
+    // money/unlock/rating-submitted field.
+    function isConsultationCompletionUpdate() {
+      return isConsultationParticipant(resource.data) &&
+        resource.data.status == 'active' &&
+        request.resource.data.status == 'completed' &&
+        request.resource.data.get('priceInfo', {}) == resource.data.get('priceInfo', {}) &&
+        request.resource.data.get('paymentId', null) == resource.data.get('paymentId', null) &&
+        request.resource.data.get('paidAt', null) == resource.data.get('paidAt', null) &&
+        request.resource.data.get('refundStatus', 'none') == resource.data.get('refundStatus', 'none') &&
+        request.resource.data.get('conversationId', null) == resource.data.get('conversationId', null) &&
+        request.resource.data.get('callSessionId', null) == resource.data.get('callSessionId', null) &&
+        request.resource.data.get('ratingByStudentSubmitted', false) ==
+          resource.data.get('ratingByStudentSubmitted', false) &&
+        request.resource.data.get('ratingByGuideSubmitted', false) ==
+          resource.data.get('ratingByGuideSubmitted', false) &&
+        affectedKeys().hasOnly(['status', 'completedAt', 'updatedAt']);
+    }
+
+    // A rater may flip *only their own* ratingBy{Role}Submitted flag, only
+    // after the consultation is completed, and only once the matching
+    // consultation_ratings doc genuinely exists (proving they passed
+    // isEligibleConsultationRating a moment earlier) — never both
+    // participants' flags, never any other field.
+    function isConsultationRatingFlagUpdate(consultationId) {
+      let isStudentRater = request.auth.uid == resource.data.studentId;
+      let isGuideRater = request.auth.uid == resource.data.guideId;
+      let flagField = isStudentRater ? 'ratingByStudentSubmitted' : 'ratingByGuideSubmitted';
+      let raterRole = isStudentRater ? 'student' : 'guide';
+      let ratingPath = /databases/$(database)/documents/consultation_ratings/$(consultationId + '_' + raterRole);
+      return isConsultationParticipant(resource.data) &&
+        (isStudentRater || isGuideRater) &&
+        resource.data.status == 'completed' &&
+        resource.data.get(flagField, false) == false &&
+        request.resource.data.get(flagField, false) == true &&
+        existsAfter(ratingPath) &&
+        request.resource.data.get('priceInfo', {}) == resource.data.get('priceInfo', {}) &&
+        request.resource.data.get('paymentId', null) == resource.data.get('paymentId', null) &&
+        request.resource.data.get('paidAt', null) == resource.data.get('paidAt', null) &&
+        request.resource.data.get('refundStatus', 'none') == resource.data.get('refundStatus', 'none') &&
+        request.resource.data.get('completedAt', null) == resource.data.get('completedAt', null) &&
+        request.resource.data.get('conversationId', null) == resource.data.get('conversationId', null) &&
+        request.resource.data.get('callSessionId', null) == resource.data.get('callSessionId', null) &&
+        affectedKeys().hasOnly([flagField, 'updatedAt']);
+    }
+
+    function isEligibleConsultationRating(consultationId, raterRole) {
+      let c = get(/databases/$(database)/documents/consultations/$(consultationId)).data;
+      let data = request.resource.data;
+      return c.status == 'completed' &&
+        data.consultationId == consultationId &&
+        data.raterRole == raterRole &&
+        data.raterId == request.auth.uid &&
+        data.raterId != data.rateeId &&
+        data.overall is number && data.overall >= 1 && data.overall <= 5 &&
+        (
+          (raterRole == 'student' && c.studentId == request.auth.uid &&
+            data.rateeId == c.guideId) ||
+          (raterRole == 'guide' && c.guideId == request.auth.uid &&
+            data.rateeId == c.studentId)
+        );
+    }
+
     match /users/{userId} {
       allow read: if isAuthenticated() && canReadUserProfile(userId);
       allow create: if isSafeUserCreate(userId);
@@ -366,6 +584,9 @@ service cloud.firestore {
         (isAuthenticated() &&
           request.auth.uid != userId &&
           isGuideStatsRatingUpdate()) ||
+        (isAuthenticated() &&
+          request.auth.uid != userId &&
+          isConsultationStatsUpdate()) ||
         (isOwner(userId) && ownerCannotElevatePrivileges())
       );
       allow delete: if isOwner(userId) || isAdmin();
@@ -384,8 +605,11 @@ service cloud.firestore {
         isAdmin() ||
         (isAuthenticated() &&
           request.auth.uid != userId &&
-          isGuideStatsRatingUpdate())
-      ) && !request.resource.data.keys().hasAny(['email', 'phone']);
+          (isGuideStatsRatingUpdate() || isConsultationStatsUpdate()))
+      ) && !request.resource.data.keys().hasAny(['email', 'phone']) &&
+        guideAvailabilityRequiresVerification(
+          resource == null ? {} : resource.data, request.resource.data
+        );
       allow delete: if isOwner(userId) || isAdmin();
     }
 
@@ -456,6 +680,65 @@ service cloud.firestore {
          isAdmin());
       allow create: if isAuthenticated() &&
         request.resource.data.raterId == request.auth.uid;
+    }
+
+    // Paid consultation record — the source of truth for the whole
+    // "Talk to a Verified Student/Alumni" flow. See helper functions above.
+    match /consultations/{consultationId} {
+      allow read: if isAdmin() || isConsultationParticipant(resource.data);
+      allow create: if isSafeConsultationCreate();
+      allow update: if isAdmin() ||
+        isPrePaymentStudentCancel() ||
+        isPostPaymentParticipantCancel() ||
+        isConsultationSignalingUpdate() ||
+        isConsultationCompletionUpdate() ||
+        isConsultationRatingFlagUpdate(consultationId);
+      allow delete: if false;
+    }
+
+    // Payment intents/records. Every status transition (pending -> success
+    // / failed / refunded) is trusted-backend-only (Cloud Functions via
+    // Admin SDK, which bypasses these rules) — the order/intent itself is
+    // also created server-side so a client can never forge a payment
+    // record that doesn't correspond to a real gateway order.
+    match /payments/{paymentId} {
+      allow read: if isAdmin() ||
+        (isAuthenticated() &&
+          (resource.data.studentId == request.auth.uid ||
+           resource.data.guideId == request.auth.uid));
+      allow write: if false;
+    }
+
+    // Per-guide earnings ledger — written only by trusted backend logic
+    // (consultation-completion Cloud Function), readable by the guide
+    // themself (their own balance) or admin.
+    match /guide_earnings/{guideId} {
+      allow read: if isAdmin() || (isAuthenticated() && request.auth.uid == guideId);
+      allow write: if false;
+
+      match /entries/{entryId} {
+        allow read: if isAdmin() || (isAuthenticated() && request.auth.uid == guideId);
+        allow write: if false;
+      }
+    }
+
+    // Two-way post-consultation ratings. Doc ID is deterministically
+    // `${consultationId}_${raterRole}` (student|guide) — that alone
+    // enforces "one rating per participant per consultation" without a
+    // query, since a second create at the same ID is evaluated as an
+    // update, which is always denied below.
+    match /consultation_ratings/{ratingId} {
+      allow read: if isAdmin() ||
+        (isAuthenticated() &&
+          (resource.data.raterId == request.auth.uid ||
+           resource.data.rateeId == request.auth.uid));
+      allow create: if isAuthenticated() &&
+        ratingId == (request.resource.data.consultationId + '_' + request.resource.data.raterRole) &&
+        request.resource.data.raterRole in ['student', 'guide'] &&
+        isEligibleConsultationRating(
+          request.resource.data.consultationId, request.resource.data.raterRole
+        );
+      allow update, delete: if false;
     }
 
     match /user_blocks/{blockId} {

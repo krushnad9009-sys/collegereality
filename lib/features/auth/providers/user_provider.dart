@@ -29,6 +29,15 @@ final userStreamProvider =
   return userRepository.getUserStream(uid);
 });
 
+// Cross-user-safe profile lookup (public_profiles, no PII) — use this
+// (not userByUIDProvider, which reads the owner/staff-only `users` doc)
+// whenever displaying *another* user's info, e.g. a consultation peer.
+final publicProfileByUidProvider =
+    FutureProvider.family<UserModel?, String>((ref, uid) {
+  final service = ref.watch(firestoreUserServiceProvider);
+  return service.getPublicProfileByUID(uid);
+});
+
 // Current user detail provider (combines auth state with user data)
 final currentUserDetailProvider = FutureProvider<UserModel?>((ref) async {
   final authState = await ref.watch(authStateProvider.future);

@@ -13,6 +13,7 @@ import '../../community/services/community_firestore_service.dart';
 import '../providers/communication_provider.dart';
 import '../services/communication_firestore_service.dart';
 import '../widgets/guide_stats_display.dart';
+import '../../consultations/widgets/guide_pricing_card.dart';
 
 class GuidePublicProfileScreen extends ConsumerStatefulWidget {
   final String guideUid;
@@ -258,6 +259,8 @@ class _GuidePublicProfileScreenState
                   stats: guide.stats,
                   verificationBadge: guide.verificationBadge,
                 ),
+                const SizedBox(height: 20),
+                GuidePricingCard(guide: guide),
                 if (guide.languagesKnown.isNotEmpty) ...[
                   const SizedBox(height: 20),
                   Text(

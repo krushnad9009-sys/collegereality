@@ -577,6 +577,263 @@ describe('H5 college_requests duplicate index', () => {
   });
 });
 
+describe('H6 paid consultations', () => {
+  const eligibleGuide = {
+    uid: 'guide1',
+    userType: 'student',
+    verificationBadge: 'verified_student',
+    verificationStatus: 'approved',
+    isVerified: true,
+    collegeId: 'college-a',
+    guideStats: { totalRatings: 0, overallRating: 0, badgeTier: 'none' },
+    communicationSettings: {
+      isGuideAvailable: true,
+      chatAvailable: true,
+      callAvailable: true,
+      chatPricePaise: 4900,
+      chatDurationMinutes: 15,
+      callPricing: [{ type: 'call', minutes: 15, pricePaise: 9900 }],
+      allowPublicProfile: false,
+    },
+  };
+  const unverifiedGuide = {
+    uid: 'guide2',
+    userType: 'student',
+    verificationBadge: 'none',
+    verificationStatus: 'incomplete',
+    isVerified: false,
+    guideStats: {},
+    communicationSettings: {
+      isGuideAvailable: true,
+      chatAvailable: true,
+      chatPricePaise: 4900,
+      chatDurationMinutes: 15,
+    },
+  };
+
+  function requestPayload(overrides = {}) {
+    return {
+      studentId: 'student1',
+      guideId: 'guide1',
+      type: 'chat',
+      status: 'requested',
+      priceInfo: { grossPaise: 4900, platformFeePaise: 0, guideAmountPaise: 0, currency: 'INR' },
+      durationMinutes: 15,
+      createdAt: new Date().toISOString(),
+      ...overrides,
+    };
+  }
+
+  beforeEach(async () => {
+    await seed({
+      'public_profiles/guide1': eligibleGuide,
+      'public_profiles/guide2': unverifiedGuide,
+    });
+  });
+
+  it('allows booking a consultation with an eligible verified guide', async () => {
+    await assertSucceeds(
+      setDoc(doc(authDb('student1'), 'consultations/c1'), requestPayload()),
+    );
+  });
+
+  it('denies booking with an unverified guide', async () => {
+    await assertFails(
+      setDoc(
+        doc(authDb('student1'), 'consultations/c2'),
+        requestPayload({ guideId: 'guide2' }),
+      ),
+    );
+  });
+
+  it('denies impersonating another student as the requester', async () => {
+    await assertFails(
+      setDoc(
+        doc(authDb('attacker'), 'consultations/c3'),
+        requestPayload({ studentId: 'student1' }),
+      ),
+    );
+  });
+
+  it('denies pre-setting platform fee / guide amount at create', async () => {
+    await assertFails(
+      setDoc(
+        doc(authDb('student1'), 'consultations/c4'),
+        requestPayload({
+          priceInfo: {
+            grossPaise: 4900,
+            platformFeePaise: 1,
+            guideAmountPaise: 4899,
+            currency: 'INR',
+          },
+        }),
+      ),
+    );
+  });
+
+  it('denies a student marking their own consultation paid', async () => {
+    await seed({ 'consultations/c5': requestPayload() });
+    await assertFails(
+      updateDoc(doc(authDb('student1'), 'consultations/c5'), {
+        status: 'paid',
+        paidAt: new Date().toISOString(),
+      }),
+    );
+  });
+
+  it('denies forging guideAmountPaise via an unrelated-looking update', async () => {
+    await seed({
+      'consultations/c6': requestPayload({ status: 'paid', paidAt: new Date().toISOString() }),
+    });
+    await assertFails(
+      updateDoc(doc(authDb('guide1'), 'consultations/c6'), {
+        status: 'waiting_for_guide',
+        'priceInfo.guideAmountPaise': 4900,
+      }),
+    );
+  });
+
+  it('allows the student to cancel before payment', async () => {
+    await seed({ 'consultations/c7': requestPayload() });
+    await assertSucceeds(
+      updateDoc(doc(authDb('student1'), 'consultations/c7'), {
+        status: 'cancelled',
+        cancelledAt: new Date().toISOString(),
+        cancelReason: 'changed my mind',
+      }),
+    );
+  });
+
+  it('denies the guide cancelling before payment (not their call yet)', async () => {
+    await seed({ 'consultations/c8': requestPayload() });
+    await assertFails(
+      updateDoc(doc(authDb('guide1'), 'consultations/c8'), {
+        status: 'cancelled',
+        cancelledAt: new Date().toISOString(),
+      }),
+    );
+  });
+
+  it('denies rating before the consultation is completed', async () => {
+    await seed({
+      'consultations/c9': requestPayload({ status: 'active', startedAt: new Date().toISOString() }),
+    });
+    await assertFails(
+      setDoc(doc(authDb('student1'), 'consultation_ratings/c9_student'), {
+        consultationId: 'c9',
+        raterId: 'student1',
+        raterRole: 'student',
+        rateeId: 'guide1',
+        overall: 5,
+        criteria: { communication: 5, criterion2: 5, criterion3: 5, criterion4: 5 },
+        createdAt: new Date().toISOString(),
+      }),
+    );
+  });
+
+  it('allows rating once completed, then denies a duplicate rating', async () => {
+    await seed({
+      'consultations/c10': requestPayload({
+        status: 'completed',
+        startedAt: new Date().toISOString(),
+        completedAt: new Date().toISOString(),
+      }),
+    });
+    const ratingDoc = doc(authDb('student1'), 'consultation_ratings/c10_student');
+    await assertSucceeds(
+      setDoc(ratingDoc, {
+        consultationId: 'c10',
+        raterId: 'student1',
+        raterRole: 'student',
+        rateeId: 'guide1',
+        overall: 5,
+        criteria: { communication: 5, criterion2: 5, criterion3: 5, criterion4: 5 },
+        createdAt: new Date().toISOString(),
+      }),
+    );
+    // Duplicate write to the same deterministic doc ID is an update, and
+    // no update branch on consultation_ratings is ever allowed.
+    await assertFails(
+      setDoc(ratingDoc, {
+        consultationId: 'c10',
+        raterId: 'student1',
+        raterRole: 'student',
+        rateeId: 'guide1',
+        overall: 1,
+        criteria: { communication: 1, criterion2: 1, criterion3: 1, criterion4: 1 },
+        createdAt: new Date().toISOString(),
+      }),
+    );
+  });
+
+  it('denies a guide rating themself', async () => {
+    await seed({
+      'consultations/c11': requestPayload({
+        studentId: 'guide1',
+        guideId: 'guide1',
+        status: 'completed',
+        completedAt: new Date().toISOString(),
+      }),
+    });
+    await assertFails(
+      setDoc(doc(authDb('guide1'), 'consultation_ratings/c11_student'), {
+        consultationId: 'c11',
+        raterId: 'guide1',
+        raterRole: 'student',
+        rateeId: 'guide1',
+        overall: 5,
+        criteria: { communication: 5, criterion2: 5, criterion3: 5, criterion4: 5 },
+        createdAt: new Date().toISOString(),
+      }),
+    );
+  });
+
+  it('denies any client write to payments', async () => {
+    await assertFails(
+      setDoc(doc(authDb('student1'), 'payments/pay1'), {
+        consultationId: 'c1',
+        studentId: 'student1',
+        guideId: 'guide1',
+        grossAmountPaise: 4900,
+        platformFeePaise: 0,
+        guideAmountPaise: 0,
+        currency: 'INR',
+        gateway: 'razorpay',
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+      }),
+    );
+  });
+
+  it('denies a guide reading another guide\'s earnings', async () => {
+    await seed({
+      'guide_earnings/guide1/entries/c1': { consultationId: 'c1', amountPaise: 3920, status: 'pending' },
+    });
+    await assertFails(
+      getDoc(doc(authDb('guide2'), 'guide_earnings/guide1/entries/c1')),
+    );
+  });
+
+  it('allows a guide reading their own earnings', async () => {
+    await seed({
+      'guide_earnings/guide1/entries/c1': { consultationId: 'c1', amountPaise: 3920, status: 'pending' },
+    });
+    await assertSucceeds(
+      getDoc(doc(authDb('guide1'), 'guide_earnings/guide1/entries/c1')),
+    );
+  });
+
+  it('denies a client writing guide_earnings directly', async () => {
+    await assertFails(
+      setDoc(doc(authDb('guide1'), 'guide_earnings/guide1/entries/fake'), {
+        consultationId: 'fake',
+        amountPaise: 999999,
+        status: 'payable',
+      }),
+    );
+  });
+});
+
 describe('Unauthenticated baseline', () => {
   it('denies anonymous user create', async () => {
     await assertFails(setDoc(doc(anonDb(), 'users/student1'), safeUser));
