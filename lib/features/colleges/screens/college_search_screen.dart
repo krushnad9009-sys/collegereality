@@ -50,6 +50,7 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
   late final TextEditingController _searchController;
   late final TextEditingController _cityController;
   late final TextEditingController _universityController;
+  late final ScrollController _resultsScrollController;
   String? _selectedState;
   String? _selectedCourse;
   String? _selectedCategory;
@@ -57,6 +58,7 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
   bool _showFilters = false;
   List<CollegeModel> _results = [];
   bool _isSearching = false;
+  bool _isLoadingMore = false;
   bool _hasSearched = false;
   int? _totalCount;
   bool _fromLiveDatabase = true;
@@ -64,15 +66,36 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
   String _liveQuery = '';
   Timer? _debounce;
 
+  // Pagination: results stream in a page at a time (see CollegeConstants
+  // .searchPageSize) instead of exhausting every matching Firestore page up
+  // front, so a large city like Bangalore/Mumbai never downloads more than
+  // the visible screen needs.
+  String? _cursorDocumentId;
+  bool _hasMore = false;
+
+  // Guards against a stale response (e.g. a fast city-field edit firing
+  // after a slower earlier request) overwriting newer results.
+  int _searchGeneration = 0;
+
   @override
   void initState() {
     super.initState();
     _searchController = TextEditingController();
     _cityController = TextEditingController();
     _universityController = TextEditingController();
+    _resultsScrollController = ScrollController()
+      ..addListener(_onResultsScroll);
     _applyInitialFilters();
     if (_shouldAutoSearchFromInitials()) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _runSearch());
+    }
+  }
+
+  void _onResultsScroll() {
+    if (!_hasMore || _isLoadingMore || _isSearching) return;
+    final position = _resultsScrollController.position;
+    if (position.pixels >= position.maxScrollExtent - 400) {
+      _loadMoreResults();
     }
   }
 
@@ -90,11 +113,16 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
     if (_shouldAutoSearchFromInitials()) {
       _runSearch();
     } else {
+      _searchGeneration++;
       setState(() {
         _results = [];
         _hasSearched = false;
         _searchError = null;
         _showFilters = false;
+        _cursorDocumentId = null;
+        _hasMore = false;
+        _isLoadingMore = false;
+        _totalCount = null;
       });
     }
   }
@@ -130,6 +158,8 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
     _searchController.dispose();
     _cityController.dispose();
     _universityController.dispose();
+    _resultsScrollController.removeListener(_onResultsScroll);
+    _resultsScrollController.dispose();
     super.dispose();
   }
 
@@ -153,21 +183,31 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
   }
 
   Future<void> _runSearch() async {
+    // Bump the generation so any in-flight request (e.g. a slower earlier
+    // keystroke) that resolves later is discarded instead of clobbering
+    // these fresher results — avoids duplicate/out-of-order query effects.
+    final generation = ++_searchGeneration;
     final params = _buildParams();
     setState(() {
       _results = [];
       _isSearching = true;
+      _isLoadingMore = false;
       _searchError = null;
       _hasSearched = true;
       _liveQuery = '';
       _totalCount = null;
       _fromLiveDatabase = true;
       _showFilters = false;
+      _cursorDocumentId = null;
+      _hasMore = false;
     });
 
     try {
-      // Exhaust all live Firestore pages so every matching college is returned.
-      final page = await ref.read(collegeRepositoryProvider).searchAllMatching(
+      // Fetch a single page (see CollegeConstants.searchPageSize) — a city
+      // search like Mumbai/Pune is now filtered server-side, so this reads
+      // only that city's matching page, not the whole collection. Further
+      // results load via infinite scroll (_loadMoreResults).
+      final page = await ref.read(collegeRepositoryProvider).searchColleges(
             query: params.query,
             city: params.city,
             state: params.state,
@@ -175,21 +215,28 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
             course: params.course,
             category: params.category,
             type: params.type,
+            limit: CollegeConstants.searchPageSize,
           );
-      if (!mounted) return;
+      if (!mounted || generation != _searchGeneration) return;
       final query = _searchController.text.trim();
       if (query.isNotEmpty) {
         await ref.read(searchHistoryServiceProvider).addSearch(query);
         ref.invalidate(recentSearchesProvider);
       }
+      if (!mounted || generation != _searchGeneration) return;
       setState(() {
         _results = page.colleges;
-        _totalCount = page.totalCount ?? page.colleges.length;
+        _totalCount = page.hasMore ? null : page.colleges.length;
         _fromLiveDatabase = page.fromLiveDatabase;
+        _cursorDocumentId = page.lastDocumentId;
+        _hasMore = page.hasMore;
         _isSearching = false;
       });
+      // Exact total is a cheap aggregation for structured filters (city/
+      // state/category/type); skip it for free-text queries (returns -1).
+      unawaited(_refreshTotalCount(generation, params));
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted || generation != _searchGeneration) return;
       final isQuota = FirestoreErrorUtils.isQuotaExceededError(e);
       setState(() {
         _searchError = isQuota
@@ -200,7 +247,70 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
     }
   }
 
+  Future<void> _refreshTotalCount(
+    int generation,
+    CollegeSearchParams params,
+  ) async {
+    try {
+      final total =
+          await ref.read(collegeRepositoryProvider).countSearchMatches(
+                query: params.query,
+                city: params.city,
+                state: params.state,
+                university: params.university,
+                course: params.course,
+                category: params.category,
+                type: params.type,
+              );
+      if (!mounted || generation != _searchGeneration) return;
+      if (total >= 0) {
+        setState(() => _totalCount = total);
+      }
+    } catch (_) {
+      // Non-critical: the results list already renders without an exact total.
+    }
+  }
+
+  Future<void> _loadMoreResults() async {
+    if (!_hasMore || _isLoadingMore || _isSearching) return;
+    final generation = _searchGeneration;
+    setState(() => _isLoadingMore = true);
+    try {
+      final params = _buildParams(startAfter: _cursorDocumentId);
+      final page = await ref.read(collegeRepositoryProvider).searchColleges(
+            query: params.query,
+            city: params.city,
+            state: params.state,
+            university: params.university,
+            course: params.course,
+            category: params.category,
+            type: params.type,
+            startAfterDocumentId: params.startAfterDocumentId,
+            limit: CollegeConstants.searchPageSize,
+          );
+      if (!mounted || generation != _searchGeneration) return;
+      final seenIds = _results.map((c) => c.id).toSet();
+      setState(() {
+        _results = [
+          ..._results,
+          ...page.colleges.where((c) => seenIds.add(c.id)),
+        ];
+        _cursorDocumentId = page.lastDocumentId;
+        _hasMore = page.hasMore;
+        _fromLiveDatabase = _fromLiveDatabase && page.fromLiveDatabase;
+        _isLoadingMore = false;
+      });
+    } catch (_) {
+      if (!mounted || generation != _searchGeneration) return;
+      // Non-fatal: leave existing results in place, allow the next scroll
+      // tick (or a manual re-search) to retry rather than surfacing an error
+      // banner for what is just a pagination hiccup.
+      setState(() => _isLoadingMore = false);
+    }
+  }
+
   void _resetFilters() {
+    _searchGeneration++;
     setState(() {
       _selectedState = null;
       _selectedCourse = null;
@@ -214,6 +324,10 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
       _hasSearched = false;
       _searchError = null;
       _showFilters = false;
+      _cursorDocumentId = null;
+      _hasMore = false;
+      _isLoadingMore = false;
+      _totalCount = null;
     });
     final hasRouteFilters = widget.initialQuery != null ||
         widget.initialCity != null ||
@@ -266,6 +380,51 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
       separatorBuilder: (_, _) => const SizedBox(height: 12),
       itemBuilder: (_, _) => const CollegeCardSkeleton(),
     );
+  }
+
+  /// Trailing row under the results list: a spinner while the next page
+  /// loads, or nothing once every match has been paged in.
+  Widget _buildPaginationFooter(AppDesignTokens tokens) {
+    if (_isLoadingMore) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 20),
+        child: Center(
+          child: SizedBox(
+            width: 22,
+            height: 22,
+            child: CircularProgressIndicator(strokeWidth: 2.4),
+          ),
+        ),
+      );
+    }
+    if (_hasMore) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Center(
+          child: TextButton.icon(
+            onPressed: _loadMoreResults,
+            icon: const Icon(Icons.expand_more_rounded, size: 18),
+            label: const Text('Load more colleges'),
+          ),
+        ),
+      );
+    }
+    if (_results.length > CollegeConstants.searchPageSize) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 4, bottom: 12),
+        child: Center(
+          child: Text(
+            'That\'s every match.',
+            style: AppFonts.plusJakarta(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: tokens.textTertiary,
+            ),
+          ),
+        ),
+      );
+    }
+    return const SizedBox.shrink();
   }
 
   @override
@@ -854,10 +1013,15 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
                                 ),
                               )
                             : ListView.builder(
+                                controller: _resultsScrollController,
                                 padding:
                                     const EdgeInsets.fromLTRB(16, 16, 16, 96),
-                                itemCount: _results.length,
+                                // +1 for the trailing pagination footer.
+                                itemCount: _results.length + 1,
                                 itemBuilder: (context, index) {
+                                  if (index == _results.length) {
+                                    return _buildPaginationFooter(tokens);
+                                  }
                                   final college = _results[index];
                                   return Padding(
                                     padding:

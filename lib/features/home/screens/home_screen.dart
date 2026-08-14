@@ -155,6 +155,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         delayMs: 80,
                         child: const FeaturedCollegesSection(),
                       ),
+                      const SizedBox(height: AppSpacing.lg),
+                      FadeInSection(
+                        delayMs: 90,
+                        child: const PremiumConsultationHomeCard(),
+                      ),
                       const SizedBox(height: AppSpacing.section),
                       FadeInSection(
                         delayMs: 100,

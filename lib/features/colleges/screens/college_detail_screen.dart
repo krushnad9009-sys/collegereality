@@ -12,6 +12,7 @@ import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/widgets/async_state_widgets.dart';
 import '../../../core/widgets/college_image_widget.dart';
+import '../../../core/widgets/college_logo_widget.dart';
 import '../../../core/widgets/skeleton_loader.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../engagement/providers/engagement_provider.dart';
@@ -386,30 +387,33 @@ class _CollegeHeader extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (college.logoUrl != null && college.logoUrl!.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(right: AppSpacing.md),
-                  child: Container(
-                    padding: const EdgeInsets.all(3),
-                    decoration: BoxDecoration(
-                      color: tokens.surfaceElevated,
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: tokens.borderSubtle),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppTheme.black.withValues(alpha: 0.06),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: CircleAvatar(
-                      radius: 30,
-                      backgroundColor: AppTheme.gray100,
-                      backgroundImage: NetworkImage(college.logoUrl!),
-                    ),
+              Padding(
+                padding: const EdgeInsets.only(right: AppSpacing.md),
+                child: Container(
+                  padding: const EdgeInsets.all(3),
+                  decoration: BoxDecoration(
+                    color: tokens.surfaceElevated,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: tokens.borderSubtle),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppTheme.black.withValues(alpha: 0.06),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  // Cached + graceful initials fallback instead of a raw
+                  // NetworkImage, so a missing/broken logo never shows a
+                  // broken-image icon on the profile header.
+                  child: CollegeLogoWidget(
+                    collegeId: college.id,
+                    collegeName: college.name,
+                    logoUrl: college.logoUrl,
+                    radius: 30,
                   ),
                 ),
+              ),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -846,13 +850,16 @@ class _HostelTab extends StatelessWidget {
         const SizedBox(height: 16),
         _RatingBar(label: 'Hostel Quality', value: ratings.hostel),
         const SizedBox(height: 16),
-        _StatCard(
-          label: 'Hostel Fee (Annual)',
-          value: IndianCurrencyFormatter.format(annualFee),
-          icon: Icons.hotel_outlined,
-          color: AppTheme.accentColor,
-        ),
-        const SizedBox(height: 12),
+        // Hide the fee card rather than showing a misleading "₹0".
+        if (annualFee > 0) ...[
+          _StatCard(
+            label: 'Hostel Fee (Annual)',
+            value: IndianCurrencyFormatter.format(annualFee),
+            icon: Icons.hotel_outlined,
+            color: AppTheme.accentColor,
+          ),
+          const SizedBox(height: 12),
+        ],
         if (hostel.available) ...[
           Wrap(
             spacing: 8,
@@ -1379,30 +1386,50 @@ class _FeesTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fees = college.fees;
+    final hasAnyFee = fees.tuitionMin > 0 ||
+        fees.tuitionMax > 0 ||
+        fees.hostelAnnual > 0;
+
+    if (!hasAnyFee && college.scholarships.isEmpty) {
+      return const AsyncEmptyView(
+        icon: Icons.payments_outlined,
+        title: 'Fee details not available',
+        subtitle: 'This college hasn\'t published verified fee data yet.',
+      );
+    }
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        _StatCard(
-          label: 'Tuition (Min)',
-          value: IndianCurrencyFormatter.format(fees.tuitionMin),
-          icon: Icons.payments_outlined,
-          color: AppTheme.primaryColor,
-        ),
+        // Each card is hidden rather than shown with a misleading "₹0".
+        if (fees.tuitionMin > 0) ...[
+          _StatCard(
+            label: 'Tuition (Min)',
+            value: IndianCurrencyFormatter.format(fees.tuitionMin),
+            icon: Icons.payments_outlined,
+            color: AppTheme.primaryColor,
+          ),
+          const SizedBox(height: 12),
+        ],
+        if (fees.tuitionMax > 0) ...[
+          _StatCard(
+            label: 'Tuition (Max)',
+            value: IndianCurrencyFormatter.format(fees.tuitionMax),
+            icon: Icons.payments_outlined,
+            color: AppTheme.secondaryColor,
+          ),
+          const SizedBox(height: 12),
+        ],
+        if (fees.hostelAnnual > 0) ...[
+          _StatCard(
+            label: 'Hostel (Annual)',
+            value: IndianCurrencyFormatter.format(fees.hostelAnnual),
+            icon: Icons.hotel_outlined,
+            color: AppTheme.accentColor,
+          ),
+          const SizedBox(height: 12),
+        ],
         const SizedBox(height: 12),
-        _StatCard(
-          label: 'Tuition (Max)',
-          value: IndianCurrencyFormatter.format(fees.tuitionMax),
-          icon: Icons.payments_outlined,
-          color: AppTheme.secondaryColor,
-        ),
-        const SizedBox(height: 12),
-        _StatCard(
-          label: 'Hostel (Annual)',
-          value: IndianCurrencyFormatter.format(fees.hostelAnnual),
-          icon: Icons.hotel_outlined,
-          color: AppTheme.accentColor,
-        ),
-        const SizedBox(height: 24),
         if (college.scholarships.isNotEmpty) ...[
           Text(
             'Available Scholarships',

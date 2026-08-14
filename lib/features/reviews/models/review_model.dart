@@ -83,9 +83,19 @@ class ReviewModel {
 
   factory ReviewModel.fromJson(Map<String, dynamic> json, {String? docId}) {
     final ratingsRaw = json['ratings'] as Map<String, dynamic>? ?? {};
-    final ratings = ratingsRaw.map(
-      (key, value) => MapEntry(key, (value as num).toDouble()),
-    );
+    final ratings = <String, double>{};
+    for (final entry in ratingsRaw.entries) {
+      final value = entry.value;
+      if (value is num) {
+        ratings[entry.key] = value.toDouble();
+      }
+      // Non-numeric/null rating values are skipped instead of throwing —
+      // previously `value as num` threw on any bad entry, and the caller's
+      // catch-all silently dropped the *entire* review document from every
+      // list, so one malformed rating field made a college's reviews vanish
+      // from the Reviews tab while its (independently-written) reviewCount
+      // on the college doc stayed correct — count and list disagreed.
+    }
 
     final yesNoRaw = json['yesNoAnswers'] as Map<String, dynamic>? ?? {};
     final yesNoAnswers = yesNoRaw.map(

@@ -144,18 +144,14 @@ class FirestoreCollegeService {
     );
     final effectiveType = intent.type;
 
-    if (intent.hasRetrievalQuery && !intent.hasCity && intent.category == null) {
+    if (intent.hasRetrievalQuery) {
       // Free-text totals require a fetch; avoid recursion with searchAllMatching.
-      return -1;
-    }
-
-    // City matching uses client semantics (city + district contains); not Firestore equality.
-    if (intent.hasCity) {
       return -1;
     }
 
     return _countStructured(
       state: intent.state,
+      city: intent.city,
       category: intent.category,
       course: intent.course,
       type: effectiveType,
@@ -165,6 +161,7 @@ class FirestoreCollegeService {
 
   Future<int> _countStructured({
     String? state,
+    String? city,
     String? category,
     String? course,
     String? type,
@@ -179,6 +176,14 @@ class FirestoreCollegeService {
         'stateLower',
         isEqualTo: CollegeSearchUtils.normalizeState(state),
       );
+    }
+    if (city != null && city.trim().isNotEmpty) {
+      final keys = CollegeSearchUtils.citySearchKeys(city).toList();
+      if (keys.length == 1) {
+        q = q.where('cityLower', isEqualTo: keys.first);
+      } else if (keys.length > 1) {
+        q = q.where('cityLower', whereIn: keys);
+      }
     }
     if (category != null && category.isNotEmpty) {
       q = q.where('category', isEqualTo: category);
@@ -447,6 +452,19 @@ class FirestoreCollegeService {
         isEqualTo: CollegeSearchUtils.normalizeState(state),
       );
     }
+    // City is filtered server-side (cityLower equality/alias whereIn) so a
+    // city search like Mumbai/Pune only ever reads the matching page of
+    // documents instead of paging through the whole collection. Falls back
+    // to the bundled dataset automatically (see searchColleges catch below)
+    // if a combo needs a composite index that hasn't been deployed yet.
+    final cityKeys = (cityFilter != null && cityFilter.trim().isNotEmpty)
+        ? CollegeSearchUtils.citySearchKeys(cityFilter).toList()
+        : const <String>[];
+    if (cityKeys.length == 1) {
+      q = q.where('cityLower', isEqualTo: cityKeys.first);
+    } else if (cityKeys.length > 1) {
+      q = q.where('cityLower', whereIn: cityKeys);
+    }
     if (category != null && category.isNotEmpty) {
       q = q.where('category', isEqualTo: category);
     }
@@ -469,7 +487,9 @@ class FirestoreCollegeService {
     final snapshot = await q.get();
     var colleges = _mapDocs(snapshot.docs);
 
-    // City is always matched client-side (cityLower + district contains alias keys).
+    // Defense-in-depth only: the Firestore filter above already restricts
+    // results to the matching city, this just guards against a stale/blank
+    // cityLower on an individual document (falls back to district match).
     if (cityFilter != null && cityFilter.trim().isNotEmpty) {
       colleges = colleges
           .where(
