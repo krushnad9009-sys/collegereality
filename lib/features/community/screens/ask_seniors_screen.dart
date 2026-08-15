@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
@@ -10,6 +9,7 @@ import '../../../core/widgets/index.dart';
 import '../../auth/providers/user_provider.dart';
 import '../providers/community_provider.dart';
 import '../services/community_firestore_service.dart';
+import '../widgets/community_thread_card.dart';
 
 class AskSeniorsScreen extends ConsumerStatefulWidget {
   const AskSeniorsScreen({super.key});
@@ -39,44 +39,48 @@ class _AskSeniorsScreenState extends ConsumerState<AskSeniorsScreen> {
         ],
       ),
       body: user?.collegeId == null
-          ? Center(
-              child: Text(
-                'Set your college in profile to ask seniors.',
-                style: GoogleFonts.poppins(color: AppTheme.gray600),
+          ? AsyncEmptyView(
+              icon: Icons.school_outlined,
+              title: 'Set your college first',
+              subtitle: 'Add your college in Profile to ask seniors there.',
+              action: OutlinedButton.icon(
+                onPressed: () => context.push(RouteNames.profile),
+                icon: const Icon(Icons.person_outline, size: 18),
+                label: const Text('Go to Profile'),
               ),
             )
           : threadsAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('$e')),
+              loading: () => const ListSkeletonLoader(itemCount: 5),
+              error: (e, _) => AsyncErrorView(
+                message: e.toString().replaceFirst('Exception: ', ''),
+                onRetry: () => ref.invalidate(askSeniorsThreadsProvider),
+              ),
               data: (threads) {
                 if (threads.isEmpty) {
-                  return Center(
-                    child: Text(
-                      'No questions yet. Tap + to ask a senior.',
-                      style: GoogleFonts.poppins(color: AppTheme.gray600),
+                  return AsyncEmptyView(
+                    icon: Icons.support_agent_outlined,
+                    title: 'No questions yet',
+                    subtitle: 'Be the first to ask a senior for advice.',
+                    action: FilledButton.icon(
+                      onPressed: () => _createThread(context),
+                      icon: const Icon(Icons.add, size: 18),
+                      label: const Text('Ask a Senior'),
                     ),
                   );
                 }
-                return ListView.builder(
+                return ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: threads.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 10),
                   itemBuilder: (context, index) {
                     final thread = threads[index];
-                    return Card(
-                      child: ListTile(
-                        title: Text(
-                          thread.title ?? 'Question',
-                          style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-                        ),
-                        subtitle: Text(
-                          thread.lastMessageText ?? '',
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        trailing: Text('${thread.replyCount} replies'),
-                        onTap: () =>
-                            context.push(RouteNames.communityChatPath(thread.id)),
-                      ),
+                    return CommunityThreadCard(
+                      thread: thread,
+                      icon: Icons.support_agent_outlined,
+                      color: AppTheme.warningColor,
+                      replyLabel: 'replies',
+                      onTap: () =>
+                          context.push(RouteNames.communityChatPath(thread.id)),
                     );
                   },
                 );

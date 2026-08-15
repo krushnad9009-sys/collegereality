@@ -1,0 +1,222 @@
+{
+  "timestamp": "2026-08-15T10:03:13.437056+00:00",
+  "totalVerifiedEnriched": 20,
+  "target": 700,
+  "byState": {
+    "Gujarat": 1,
+    "Karnataka": 2,
+    "West Bengal": 3,
+    "Himachal Pradesh": 1,
+    "Uttrakhand": 1,
+    "Odisha": 2,
+    "Punjab": 1,
+    "Andhra Pradesh": 1,
+    "Tamil Nadu": 3,
+    "Tripura": 1,
+    "Delhi": 3,
+    "Kerala": 1
+  },
+  "sample": [
+    {
+      "status": "enriched",
+      "id": "aishe_493",
+      "name": "Surat Municipal Institute Of Medical Education & Research Centre (smimer)",
+      "city": "Surat",
+      "state": "Gujarat",
+      "matchedArticle": "Surat Municipal Institute of Medical Education and Research",
+      "matchScore": 0.71,
+      "image": "https://upload.wikimedia.org/wikipedia/commons/8/8c/Smimer_logo.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"
+    },
+    {
+      "status": "enriched",
+      "id": "aishe_624_karnataka-state-dr-gangubai-hangal-music",
+      "name": "Karnataka State Dr. Gangubai Hangal Music And Performing Arts University",
+      "city": "Mysuru",
+      "state": "Karnataka",
+      "matchedArticle": "Karnataka State Dr. Gangubhai Hangal Music and Performing Arts University",
+      "matchScore": 0.86,
+      "image": "https://upload.wikimedia.org/wikipedia/en/5/5c/KSGH_Musicand_Performing_Arts_University_logo.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"
+    },
+    {
+      "status": "enriched",
+      "id": "aishe_6322",
+      "name": "Govt. College Of Engineering And Leather Technology 112",
+      "city": "Kolkata",
+      "state": "West Bengal",
+      "matchedArticle": "Govt. College of Engineering and Leather Technology",
+      "matchScore": 1.0,
+      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/Government_College_of_Engineering_and_Leather_Technology.jpg/3840px-Government_College_of_Engineering_and_Leather_Technology.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+    },
+    {
+      "status": "enriched",
+      "id": "aishe_1101",
+      "name": "ATAL BIHARI VAJPAYEE GOVERNMENT INSTITUTE OF ENGINEERING & TECHNOLOGY (DIPLOMA PROGRAMME)",
+      "city": "Pragatinagar",
+      "state": "Himachal Pradesh",
+      "matchedArticle": "Atal Bihari Vajpayee Government Institute of Engineering and Technology",
+      "matchScore": 0.6,
+      "image": "https://upload.wikimedia.org/wikipedia/en/4/49/Atal_Bihari_Vajpayee_Government_Institute_of_Engineering_and_Technology_Pragatinagar_Logo.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"
+    },
+    {
+      "status": "enriched",
+      "id": "aishe_12180_government-polytechnic-nainital-nainital",
+      "name": "GOVERNMENT POLYTECHNIC, NAINITAL",
+      "city": "Nainital",
+      "state": "Uttrakhand",
+      "matchedArticle": "Government Polytechnic Nainital",
+      "matchScore": 1.0,
+      "image": "https://upload.wikimedia.org/wikipedia/en/a/a5/Government_Polytechnic_Nainital_logo.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"
+    },
+    {
+      "status": "enriched",
+      "id": "aishe_39365",
+      "name": "Rayagada (autonomous) College, Rayagada",
+      "city": "Rayagada",
+      "state": "Odisha",
+      "matchedArticle": "Rayagada Autonomous College, Rayagada",
+      "matchScore": 1.0,
+      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Rayagada_Autonomous_College%2C_Rayagada.jpg/3840px-Rayagada_Autonomous_College%2C_Rayagada.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+    },
+    {
+      "status": "enriched",
+      "id": "aishe_39767",
+      "name": "Dhenkanal Autonomous College, Dhenkanal",
+      "city": "Dhenkanal",
+      "state": "Odisha",
+      "matchedArticle": "Dhenkanal Autonomous College, Dhenkanal",
+      "matchScore": 1.0,
+      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Dhenkanal_College.jpg/3840px-Dhenkanal_College.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+    },
+    {
+      "status": "enriched",
+      "id": "aishe_22257",
+      "name": "Prof. Gursewak Singh Government College Of Physical Education, Patiala",
+      "city": "Patiala",
+      "state": "Punjab",
+      "matchedArticle": "Prof. Gursewak Singh Government College of Physical Education",
+      "matchScore": 0.83,
+      "image": "https://upload.wikimedia.org/wikipedia/en/c/c4/Maharaja_Bhupinder_Singh_Punjab_Sports_University_Logo.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"
+    },
+    {
+      "status": "enriched",
+      "id": "aishe_30409",
+      "name": "Government Medical College, Anantapur",
+      "city": "Anantapur",
+      "state": "Andhra Pradesh",
+      "matchedArticle": "Government Medical College, Anantapur",
+      "matchScore": 1.0,
+      "image": "https://upload.wikimedia.org/wikipedia/commons/9/9e/GMC_ATP_Front_Gate.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"
+    },
+    {
+      "status": "enriched",
+      "id": "aishe_39281",
+      "name": "Government Law College, Chengalpattu",
+      "city": "Chengalpattu-1",
+      "state": "Tamil Nadu",
+      "matchedArticle": "Government Law College, Chengalpattu",
+      "matchScore": 1.0,
+      "image": "https://upload.wikimedia.org/wikipedia/commons/b/b1/M._Venkaiah_Naidu_presenting_the_Best_Law_Student_Award_2018_to_Ms._Bhargavi_Kannan%2C_School_of_Excellence%2C_Ambedkar_University%2C_Chennai_and_received_by_her_mother.JPG?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"
+    },
+    {
+      "status": "enriched",
+      "id": "aishe_47426",
+      "name": "NATIONAL INSTITUTE OF ELECTRONICS AND INFORMATION TECHNOLOGY, AGARTALA",
+      "city": "Agartala",
+      "state": "Tripura",
+      "matchedArticle": "National Institute of Electronics and Information Technology",
+      "matchScore": 0.75,
+      "image": "https://upload.wikimedia.org/wikipedia/en/b/b4/NIELIT_Logo.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"
+    },
+    {
+      "status": "enriched",
+      "id": "aishe_471_ponnaiyah-ramajayam-institute-of-science",
+      "name": "Ponnaiyah Ramajayam Institute Of Science & Technology, Thanjavur",
+      "city": "Thanjavur",
+      "state": "Tamil Nadu",
+      "matchedArticle": "Ponnaiyah Ramajayam Institute of Science and Technology",
+      "matchScore": 0.67,
+      "image": "https://upload.wikimedia.org/wikipedia/commons/4/42/Prist_university_logo.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"
+    },
+    {
+      "status": "enriched",
+      "id": "aishe_78_new-delhi-institute-of-management-new-delhi",
+      "name": "NEW DELHI INSTITUTE OF MANAGEMENT",
+      "city": "New Delhi",
+      "state": "Delhi",
+      "matchedArticle": "New Delhi Institute of Management",
+      "matchScore": 1.0,
+      "image": "https://upload.wikimedia.org/wikipedia/commons/f/fb/The_Minister_of_State_for_Information_%26_Broadcasting%2C_Col._Rajyavardhan_Singh_Rathore_addressing_at_the_23rd_Foundation_Day_of_New_Delhi_Institute_of_Management_%28NDIM%29%2C_in_New_Delhi_on_October_16%2C_2015.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"
+    },
+    {
+      "status": "enriched",
+      "id": "aishe_47719",
+      "name": "MURSHIDABAD MEDICAL COLLEGE AND HOSPITAL",
+      "city": "Berhampore",
+      "state": "West Bengal",
+      "matchedArticle": "Murshidabad Medical College and Hospital, Berhampore",
+      "matchScore": 1.0,
+      "image": "https://upload.wikimedia.org/wikipedia/en/0/0c/Murshidabad_Medical_College_and_Hospital_Logo.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"
+    },
+    {
+      "status": "enriched",
+      "id": "aishe_478_sri-ramachandra-medical-college-and-rese",
+      "name": "Sri Ramachandra Medical College And Research Institute, Chennai",
+      "city": "Chennai",
+      "state": "Tamil Nadu",
+      "matchedArticle": "Sri Ramachandra Medical College and Research Institute",
+      "matchScore": 0.8,
+      "image": "https://upload.wikimedia.org/wikipedia/en/5/53/SRMC%26RI_Official_Logo.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"
+    },
+    {
+      "status": "enriched",
+      "id": "aishe_48141",
+      "name": "SUT ACADEMY OF MEDICAL SCIENCES",
+      "city": "Thiruvananthapuram",
+      "state": "Kerala",
+      "matchedArticle": "SUT Academy of Medical Sciences",
+      "matchScore": 1.0,
+      "image": "https://upload.wikimedia.org/wikipedia/commons/7/7b/SUTcampus.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"
+    },
+    {
+      "status": "enriched",
+      "id": "aishe_17610",
+      "name": "University Law College",
+      "city": "Bangalore",
+      "state": "Karnataka",
+      "matchedArticle": "University Law College, Bangalore University",
+      "matchScore": 1.0,
+      "image": "https://upload.wikimedia.org/wikipedia/en/d/dd/ULC_Logo.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"
+    },
+    {
+      "status": "enriched",
+      "id": "aishe_19067",
+      "name": "Midnapore Law College",
+      "city": "Midnapore",
+      "state": "West Bengal",
+      "matchedArticle": "Midnapore Law College",
+      "matchScore": 1.0,
+      "image": "https://upload.wikimedia.org/wikipedia/en/thumb/d/d7/Vidyasagar_University_Logo.svg/330px-Vidyasagar_University_Logo.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+    },
+    {
+      "status": "enriched",
+      "id": "aishe_6419",
+      "name": "Shri Ram College Of Commerce",
+      "city": "Delhi",
+      "state": "Delhi",
+      "matchedArticle": "Shri Ram College of Commerce",
+      "matchScore": 1.0,
+      "image": "https://upload.wikimedia.org/wikipedia/en/5/55/The_Official_Logo_of_Shri_Ram_College_of_Commerce%28SRCC%29.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"
+    },
+    {
+      "status": "enriched",
+      "id": "aishe_6413",
+      "name": "Sri Guru Gobind Singh College Of Commerce",
+      "city": "Delhi",
+      "state": "Delhi",
+      "matchedArticle": "Sri Guru Gobind Singh College of Commerce",
+      "matchScore": 1.0,
+      "image": "https://upload.wikimedia.org/wikipedia/en/1/19/The_Official_Seal_of_SGGSCC.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"
+    }
+  ],
+  "dryRun": false
+}

@@ -28,9 +28,13 @@ class CollegeBundledDataSource {
       }
     }
 
-    await loadAsset('assets/data/colleges_seed.json');
+    // NOTE: colleges_seed.json intentionally excluded — it contains
+    // synthetically generated (non-real) college names and fabricated
+    // review counts/ratings. Only real AISHE-sourced or verified
+    // institution data is used as offline fallback.
     await loadAsset('assets/data/prominent_colleges_seed.json');
     await loadAsset('assets/data/india_colleges_seed.json');
+    await loadAsset('assets/data/maharashtra_colleges_seed.json');
 
     _cache = merged.values.toList();
     return _cache!;

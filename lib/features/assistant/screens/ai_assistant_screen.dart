@@ -131,7 +131,10 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
               icon: const Icon(Icons.compare, size: 18),
               label: Text(
                 'Compare (${basket.collegeIds.length})',
-                style: GoogleFonts.poppins(fontSize: 12),
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           if (state.contextCollegeIds.isNotEmpty)
@@ -141,7 +144,10 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
                 child: Chip(
                   label: Text(
                     '${state.contextCollegeIds.length} in compare',
-                    style: GoogleFonts.poppins(fontSize: 11),
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   visualDensity: VisualDensity.compact,
                 ),
@@ -281,6 +287,24 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
                           fontWeight: FontWeight.w500,
                           color: AppTheme.errorColor,
                         ),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: state.isLoading
+                          ? null
+                          : () => ref
+                              .read(aiAssistantProvider.notifier)
+                              .retryLastQuery(),
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppTheme.errorColor,
+                        minimumSize: Size.zero,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.sm,
+                        ),
+                      ),
+                      child: const Text(
+                        'Retry',
+                        style: TextStyle(fontWeight: FontWeight.w700),
                       ),
                     ),
                   ],

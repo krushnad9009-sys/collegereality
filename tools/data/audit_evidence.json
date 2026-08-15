@@ -1,0 +1,1991 @@
+{
+  "generated_at": "2026-08-15T06:40:36.948421+00:00",
+  "audit_mode": "read_only",
+  "production_source": "Firestore project college-reality collection colleges",
+  "fallback_source": "assets/data bundled JSON via CollegeBundledDataSource",
+  "firestore_export_json": {
+    "source": "tools\\data\\firestore\\india_colleges_firestore_full.json",
+    "total_records": 47139,
+    "unique_nonempty_ids": 43118,
+    "empty_id_count": 0,
+    "duplicate_id_groups": 3882,
+    "duplicate_id_extra_docs": 4021,
+    "duplicate_ids_top": [
+      {
+        "id": "aishe_535",
+        "count": 3
+      },
+      {
+        "id": "aishe_519",
+        "count": 3
+      },
+      {
+        "id": "aishe_613",
+        "count": 3
+      },
+      {
+        "id": "aishe_506",
+        "count": 3
+      },
+      {
+        "id": "aishe_659",
+        "count": 3
+      },
+      {
+        "id": "aishe_599",
+        "count": 3
+      },
+      {
+        "id": "aishe_657",
+        "count": 3
+      },
+      {
+        "id": "aishe_491",
+        "count": 3
+      },
+      {
+        "id": "aishe_534",
+        "count": 3
+      },
+      {
+        "id": "aishe_537",
+        "count": 3
+      },
+      {
+        "id": "aishe_541",
+        "count": 3
+      },
+      {
+        "id": "aishe_515",
+        "count": 3
+      },
+      {
+        "id": "aishe_497",
+        "count": 3
+      },
+      {
+        "id": "aishe_543",
+        "count": 3
+      },
+      {
+        "id": "aishe_522",
+        "count": 3
+      },
+      {
+        "id": "aishe_642",
+        "count": 3
+      },
+      {
+        "id": "aishe_648",
+        "count": 3
+      },
+      {
+        "id": "aishe_529",
+        "count": 3
+      },
+      {
+        "id": "aishe_521",
+        "count": 3
+      },
+      {
+        "id": "aishe_556",
+        "count": 3
+      }
+    ],
+    "duplicate_college_groups_name_city_state": 4025,
+    "duplicate_college_extra": 4028,
+    "duplicate_college_top": [
+      {
+        "key": "new delhi institute of management|new delhi|delhi",
+        "count": 3
+      },
+      {
+        "key": "vijaya engineering college|khammam|telangana",
+        "count": 3
+      },
+      {
+        "key": "indur institute of engineering & technology|siddipet|telangana",
+        "count": 3
+      },
+      {
+        "key": "government polytechnic, addanki|addanki|andhra pradesh",
+        "count": 2
+      },
+      {
+        "key": "t.g.l. polytechnic adoni|adoni|andhra pradesh",
+        "count": 2
+      },
+      {
+        "key": "amaravathi d.ed college, amaravathi|amaravathi|andhra pradesh",
+        "count": 2
+      },
+      {
+        "key": "government polytechnic, anakapalli|anakapalli|andhra pradesh",
+        "count": 2
+      },
+      {
+        "key": "faith school of nursing, ananthapur|anantapur|andhra pradesh",
+        "count": 2
+      },
+      {
+        "key": "govt polytechnic ananthapur|anantapur|andhra pradesh",
+        "count": 2
+      },
+      {
+        "key": "sri krishnadevaraya university, anantapur|anantapur|andhra pradesh",
+        "count": 2
+      },
+      {
+        "key": "susheela college ofeducation (d.ed.m,) bellary road, rachanapalli, anantapur district-515001|anantapur|andhra pradesh",
+        "count": 2
+      },
+      {
+        "key": "balaji college of elementary teacher education, khajanagar, near rtc bus stand, anantapur- 515001|anantapuramu|andhra pradesh",
+        "count": 2
+      },
+      {
+        "key": "tech college of education|anantapuramu|andhra pradesh",
+        "count": 2
+      },
+      {
+        "key": "raghavendra institute of education|ananthapuramu|andhra pradesh",
+        "count": 2
+      },
+      {
+        "key": "the mother integral college of elementary teacher education, aryavatatam, kajuluru (m), east godavari-533468.|aryavatam|andhra pradesh",
+        "count": 2
+      },
+      {
+        "key": "divi seema polytechnic avanigadda|avanigadda|andhra pradesh",
+        "count": 2
+      },
+      {
+        "key": "s.v.c.m. polytechnic badvel|badvel|andhra pradesh",
+        "count": 2
+      },
+      {
+        "key": "sri ponnavolu gopi reddy d.ed college|badvel|andhra pradesh",
+        "count": 2
+      },
+      {
+        "key": "rangamudri demudamma diploma in education college|balijipeta|andhra pradesh",
+        "count": 2
+      },
+      {
+        "key": "vasavi polytechnic banagananpalli|banaganapalle|andhra pradesh",
+        "count": 2
+      }
+    ],
+    "duplicate_college_samples": [
+      {
+        "key": "new delhi institute of management|new delhi|delhi",
+        "count": 3,
+        "samples": [
+          {
+            "id": "aishe_32887",
+            "name": "New Delhi Institute Of Management",
+            "city": "New Delhi",
+            "state": "Delhi"
+          },
+          {
+            "id": "aishe_78",
+            "name": "NEW DELHI INSTITUTE OF MANAGEMENT",
+            "city": "New Delhi",
+            "state": "Delhi"
+          },
+          {
+            "id": "aishe_78_new-delhi-institute-of-management-new-delhi",
+            "name": "NEW DELHI INSTITUTE OF MANAGEMENT",
+            "city": "New Delhi",
+            "state": "Delhi"
+          }
+        ]
+      },
+      {
+        "key": "vijaya engineering college|khammam|telangana",
+        "count": 3,
+        "samples": [
+          {
+            "id": "aishe_19820",
+            "name": "Vijaya Engineering College",
+            "city": "Khammam",
+            "state": "Telangana"
+          },
+          {
+            "id": "aishe_15360",
+            "name": "VIJAYA ENGINEERING COLLEGE",
+            "city": "Khammam",
+            "state": "Telangana"
+          },
+          {
+            "id": "aishe_15360_vijaya-engineering-college-khammam",
+            "name": "VIJAYA ENGINEERING COLLEGE",
+            "city": "Khammam",
+            "state": "Telangana"
+          }
+        ]
+      },
+      {
+        "key": "indur institute of engineering & technology|siddipet|telangana",
+        "count": 3,
+        "samples": [
+          {
+            "id": "aishe_19929",
+            "name": "Indur Institute Of Engineering & Technology",
+            "city": "Siddipet",
+            "state": "Telangana"
+          },
+          {
+            "id": "aishe_575",
+            "name": "INDUR INSTITUTE OF ENGINEERING & TECHNOLOGY",
+            "city": "Siddipet",
+            "state": "Telangana"
+          },
+          {
+            "id": "aishe_575_indur-institute-of-engineering-technology-siddipet",
+            "name": "INDUR INSTITUTE OF ENGINEERING & TECHNOLOGY",
+            "city": "Siddipet",
+            "state": "Telangana"
+          }
+        ]
+      },
+      {
+        "key": "government polytechnic, addanki|addanki|andhra pradesh",
+        "count": 2,
+        "samples": [
+          {
+            "id": "aishe_14431",
+            "name": "GOVERNMENT POLYTECHNIC, ADDANKI",
+            "city": "Addanki",
+            "state": "Andhra Pradesh"
+          },
+          {
+            "id": "aishe_14431_government-polytechnic-addanki-addanki",
+            "name": "GOVERNMENT POLYTECHNIC, ADDANKI",
+            "city": "Addanki",
+            "state": "Andhra Pradesh"
+          }
+        ]
+      },
+      {
+        "key": "t.g.l. polytechnic adoni|adoni|andhra pradesh",
+        "count": 2,
+        "samples": [
+          {
+            "id": "aishe_662",
+            "name": "T.G.L. POLYTECHNIC ADONI",
+            "city": "Adoni",
+            "state": "Andhra Pradesh"
+          },
+          {
+            "id": "aishe_662_t-g-l-polytechnic-adoni-adoni",
+            "name": "T.G.L. POLYTECHNIC ADONI",
+            "city": "Adoni",
+            "state": "Andhra Pradesh"
+          }
+        ]
+      },
+      {
+        "key": "amaravathi d.ed college, amaravathi|amaravathi|andhra pradesh",
+        "count": 2,
+        "samples": [
+          {
+            "id": "aishe_15843",
+            "name": "Amaravathi D.ed College, Amaravathi",
+            "city": "Amaravathi",
+            "state": "Andhra Pradesh"
+          },
+          {
+            "id": "aishe_15843_amaravathi-d-ed-college-amaravathi-amaravathi",
+            "name": "Amaravathi D.ed College, Amaravathi",
+            "city": "Amaravathi",
+            "state": "Andhra Pradesh"
+          }
+        ]
+      },
+      {
+        "key": "government polytechnic, anakapalli|anakapalli|andhra pradesh",
+        "count": 2,
+        "samples": [
+          {
+            "id": "aishe_14921",
+            "name": "GOVERNMENT POLYTECHNIC, ANAKAPALLI",
+            "city": "Anakapalli",
+            "state": "Andhra Pradesh"
+          },
+          {
+            "id": "aishe_14921_government-polytechnic-anakapalli-anakapalli",
+            "name": "GOVERNMENT POLYTECHNIC, ANAKAPALLI",
+            "city": "Anakapalli",
+            "state": "Andhra Pradesh"
+          }
+        ]
+      },
+      {
+        "key": "faith school of nursing, ananthapur|anantapur|andhra pradesh",
+        "count": 2,
+        "samples": [
+          {
+            "id": "aishe_13099",
+            "name": "FAITH SCHOOL OF NURSING, ANANTHAPUR",
+            "city": "Anantapur",
+            "state": "Andhra Pradesh"
+          },
+          {
+            "id": "aishe_13099_faith-school-of-nursing-ananthapur-anantapur",
+            "name": "FAITH SCHOOL OF NURSING, ANANTHAPUR",
+            "city": "Anantapur",
+            "state": "Andhra Pradesh"
+          }
+        ]
+      },
+      {
+        "key": "govt polytechnic ananthapur|anantapur|andhra pradesh",
+        "count": 2,
+        "samples": [
+          {
+            "id": "aishe_535",
+            "name": "GOVT POLYTECHNIC ANANTHAPUR",
+            "city": "Anantapur",
+            "state": "Andhra Pradesh"
+          },
+          {
+            "id": "aishe_535_govt-polytechnic-ananthapur-anantapur",
+            "name": "GOVT POLYTECHNIC ANANTHAPUR",
+            "city": "Anantapur",
+            "state": "Andhra Pradesh"
+          }
+        ]
+      },
+      {
+        "key": "sri krishnadevaraya university, anantapur|anantapur|andhra pradesh",
+        "count": 2,
+        "samples": [
+          {
+            "id": "aishe_33",
+            "name": "Sri Krishnadevaraya University, Anantapur",
+            "city": "Anantapur",
+            "state": "Andhra Pradesh"
+          },
+          {
+            "id": "aishe_33_sri-krishnadevaraya-university-anantapur-anantapur",
+            "name": "Sri Krishnadevaraya University, Anantapur",
+            "city": "Anantapur",
+            "state": "Andhra Pradesh"
+          }
+        ]
+      }
+    ],
+    "active": 47139,
+    "inactive": 0,
+    "by_state": [
+      [
+        "Uttar Pradesh",
+        6484
+      ],
+      [
+        "Maharashtra",
+        6167
+      ],
+      [
+        "Karnataka",
+        4843
+      ],
+      [
+        "Tamil Nadu",
+        3775
+      ],
+      [
+        "Andhra Pradesh",
+        3379
+      ],
+      [
+        "Rajasthan",
+        2713
+      ],
+      [
+        "Gujarat",
+        2653
+      ],
+      [
+        "Madhya Pradesh",
+        2634
+      ],
+      [
+        "Telangana",
+        2289
+      ],
+      [
+        "Kerala",
+        1736
+      ],
+      [
+        "West Bengal",
+        1624
+      ],
+      [
+        "Odisha",
+        1591
+      ],
+      [
+        "Punjab",
+        1296
+      ],
+      [
+        "Haryana",
+        990
+      ],
+      [
+        "Chhatisgarh",
+        853
+      ],
+      [
+        "Bihar",
+        806
+      ],
+      [
+        "Uttrakhand",
+        578
+      ],
+      [
+        "Assam",
+        569
+      ],
+      [
+        "Himachal Pradesh",
+        469
+      ],
+      [
+        "Jammu And Kashmir",
+        381
+      ],
+      [
+        "Jharkhand",
+        356
+      ],
+      [
+        "Delhi",
+        303
+      ],
+      [
+        "Puducherry",
+        105
+      ],
+      [
+        "Nagaland",
+        87
+      ],
+      [
+        "Goa",
+        75
+      ],
+      [
+        "Manipur",
+        70
+      ],
+      [
+        "Tripura",
+        68
+      ],
+      [
+        "Meghalaya",
+        63
+      ],
+      [
+        "Mizoram",
+        54
+      ],
+      [
+        "Chandigarh",
+        39
+      ],
+      [
+        "Sikkim",
+        36
+      ],
+      [
+        "Arunachal Pradesh",
+        24
+      ],
+      [
+        "Dadra & Nagar Haveli",
+        9
+      ],
+      [
+        "Daman & Diu",
+        9
+      ],
+      [
+        "Andaman & Nicobar Islands",
+        8
+      ],
+      [
+        "Lakshadweep",
+        3
+      ]
+    ],
+    "by_city_top50": [
+      [
+        "Bangalore",
+        863
+      ],
+      [
+        "Hyderabad",
+        604
+      ],
+      [
+        "Pune",
+        536
+      ],
+      [
+        "Jaipur",
+        426
+      ],
+      [
+        "Kolkata",
+        397
+      ],
+      [
+        "Chennai",
+        389
+      ],
+      [
+        "Mumbai",
+        359
+      ],
+      [
+        "Bhopal",
+        346
+      ],
+      [
+        "Allahabad",
+        329
+      ],
+      [
+        "Nagpur",
+        320
+      ],
+      [
+        "Ahmedabad",
+        301
+      ],
+      [
+        "Lucknow",
+        301
+      ],
+      [
+        "Coimbatore",
+        257
+      ],
+      [
+        "Indore",
+        249
+      ],
+      [
+        "Bhubaneswar",
+        223
+      ],
+      [
+        "Gulbarga",
+        219
+      ],
+      [
+        "Meerut",
+        215
+      ],
+      [
+        "Aurangabad",
+        205
+      ],
+      [
+        "Visakhapatnam",
+        194
+      ],
+      [
+        "Azamgarh",
+        193
+      ],
+      [
+        "Varanasi",
+        190
+      ],
+      [
+        "Ghazipur",
+        188
+      ],
+      [
+        "Jaunpur",
+        184
+      ],
+      [
+        "Mangalore",
+        175
+      ],
+      [
+        "Gwalior",
+        166
+      ],
+      [
+        "Mysore",
+        160
+      ],
+      [
+        "Nashik",
+        158
+      ],
+      [
+        "Agra",
+        154
+      ],
+      [
+        "Gorakhpur",
+        154
+      ],
+      [
+        "Jabalpur",
+        153
+      ],
+      [
+        "New Delhi",
+        151
+      ],
+      [
+        "Rajkot",
+        149
+      ],
+      [
+        "Guntur",
+        144
+      ],
+      [
+        "Raipur",
+        138
+      ],
+      [
+        "Sikar",
+        132
+      ],
+      [
+        "Guwahati",
+        129
+      ],
+      [
+        "Nellore",
+        128
+      ],
+      [
+        "Salem",
+        128
+      ],
+      [
+        "Madurai",
+        127
+      ],
+      [
+        "Surat",
+        126
+      ],
+      [
+        "Delhi",
+        125
+      ],
+      [
+        "Bidar",
+        125
+      ],
+      [
+        "Tumkur",
+        125
+      ],
+      [
+        "Mau",
+        121
+      ],
+      [
+        "Faizabad",
+        121
+      ],
+      [
+        "Dehradun",
+        121
+      ],
+      [
+        "Kadapa",
+        120
+      ],
+      [
+        "Patna",
+        119
+      ],
+      [
+        "Pratapgarh",
+        113
+      ],
+      [
+        "Ghaziabad",
+        112
+      ]
+    ],
+    "by_category": [
+      [
+        "General",
+        27269
+      ],
+      [
+        "Engineering",
+        4414
+      ],
+      [
+        "Nursing",
+        3179
+      ],
+      [
+        "Polytechnic",
+        2669
+      ],
+      [
+        "MBA",
+        2282
+      ],
+      [
+        "Commerce",
+        1544
+      ],
+      [
+        "Arts",
+        1433
+      ],
+      [
+        "Medical",
+        1386
+      ],
+      [
+        "Pharmacy",
+        1052
+      ],
+      [
+        "Law",
+        731
+      ],
+      [
+        "Science",
+        625
+      ],
+      [
+        "Agriculture",
+        319
+      ],
+      [
+        "Architecture",
+        164
+      ],
+      [
+        "Fashion",
+        72
+      ]
+    ],
+    "by_type": [
+      [
+        "private",
+        43166
+      ],
+      [
+        "government",
+        3915
+      ],
+      [
+        "autonomous",
+        57
+      ],
+      [
+        "deemed",
+        1
+      ]
+    ],
+    "category_targets": {
+      "Engineering": 4414,
+      "Medical": 1386,
+      "MBA": 2282,
+      "Pharmacy": 1052,
+      "Nursing": 3179,
+      "Law": 731,
+      "Commerce": 1544,
+      "Arts": 1433,
+      "Science": 625,
+      "General": 27269,
+      "Polytechnic": 2669,
+      "Agriculture": 319,
+      "Architecture": 164,
+      "Fashion": 72,
+      "<other_or_missing>": 0
+    },
+    "pune_count": 567,
+    "mumbai_count": 501,
+    "missing_mandatory": {
+      "id": {
+        "count": 0,
+        "samples": []
+      },
+      "name": {
+        "count": 0,
+        "samples": []
+      },
+      "city": {
+        "count": 0,
+        "samples": []
+      },
+      "state": {
+        "count": 0,
+        "samples": []
+      },
+      "category": {
+        "count": 0,
+        "samples": []
+      },
+      "type": {
+        "count": 0,
+        "samples": []
+      }
+    },
+    "invalid_record_count": 0,
+    "invalid_samples": [],
+    "search_field_coverage": {
+      "name": {
+        "present": 47139,
+        "missing": 0
+      },
+      "nameLower": {
+        "present": 47139,
+        "missing": 0
+      },
+      "city": {
+        "present": 47139,
+        "missing": 0
+      },
+      "cityLower": {
+        "present": 47139,
+        "missing": 0
+      },
+      "state": {
+        "present": 47139,
+        "missing": 0
+      },
+      "stateLower": {
+        "present": 47139,
+        "missing": 0
+      },
+      "universityName": {
+        "present": 0,
+        "missing": 47139
+      },
+      "universityLower": {
+        "present": 0,
+        "missing": 47139
+      },
+      "courses": {
+        "present": 47139,
+        "missing": 0
+      },
+      "category": {
+        "present": 47139,
+        "missing": 0
+      },
+      "type": {
+        "present": 47139,
+        "missing": 0
+      },
+      "ownership": {
+        "present": 0,
+        "missing": 47139
+      },
+      "searchTokens": {
+        "present": 47139,
+        "missing": 0
+      },
+      "isActive": {
+        "present": 47139,
+        "missing": 0
+      }
+    },
+    "missing_searchTokens_count": 0,
+    "empty_searchTokens_count": 0,
+    "missing_searchTokens_samples": [],
+    "empty_searchTokens_samples": []
+  },
+  "firestore_live": {
+    "error": "429 Quota exceeded."
+  },
+  "bundled_fallback": {
+    "source": "bundled_loadAll_merged",
+    "total_records": 610,
+    "unique_nonempty_ids": 610,
+    "empty_id_count": 0,
+    "duplicate_id_groups": 0,
+    "duplicate_id_extra_docs": 0,
+    "duplicate_ids_top": [],
+    "duplicate_college_groups_name_city_state": 17,
+    "duplicate_college_extra": 17,
+    "duplicate_college_top": [
+      {
+        "key": "national rohtak school of business|rohtak|haryana",
+        "count": 2
+      },
+      {
+        "key": "government polytechnic, addanki|addanki|andhra pradesh",
+        "count": 2
+      },
+      {
+        "key": "t.g.l. polytechnic adoni|adoni|andhra pradesh",
+        "count": 2
+      },
+      {
+        "key": "amaravathi d.ed college, amaravathi|amaravathi|andhra pradesh",
+        "count": 2
+      },
+      {
+        "key": "government polytechnic, anakapalli|anakapalli|andhra pradesh",
+        "count": 2
+      },
+      {
+        "key": "faith school of nursing, ananthapur|anantapur|andhra pradesh",
+        "count": 2
+      },
+      {
+        "key": "govt polytechnic ananthapur|anantapur|andhra pradesh",
+        "count": 2
+      },
+      {
+        "key": "sri krishnadevaraya university, anantapur|anantapur|andhra pradesh",
+        "count": 2
+      },
+      {
+        "key": "susheela college ofeducation (d.ed.m,) bellary road, rachanapalli, anantapur district-515001|anantapur|andhra pradesh",
+        "count": 2
+      },
+      {
+        "key": "balaji college of elementary teacher education, khajanagar, near rtc bus stand, anantapur- 515001|anantapuramu|andhra pradesh",
+        "count": 2
+      },
+      {
+        "key": "tech college of education|anantapuramu|andhra pradesh",
+        "count": 2
+      },
+      {
+        "key": "raghavendra institute of education|ananthapuramu|andhra pradesh",
+        "count": 2
+      },
+      {
+        "key": "the mother integral college of elementary teacher education, aryavatatam, kajuluru (m), east godavari-533468.|aryavatam|andhra pradesh",
+        "count": 2
+      },
+      {
+        "key": "divi seema polytechnic avanigadda|avanigadda|andhra pradesh",
+        "count": 2
+      },
+      {
+        "key": "s.v.c.m. polytechnic badvel|badvel|andhra pradesh",
+        "count": 2
+      },
+      {
+        "key": "sri ponnavolu gopi reddy d.ed college|badvel|andhra pradesh",
+        "count": 2
+      },
+      {
+        "key": "rangamudri demudamma diploma in education college|balijipeta|andhra pradesh",
+        "count": 2
+      }
+    ],
+    "duplicate_college_samples": [
+      {
+        "key": "national rohtak school of business|rohtak|haryana",
+        "count": 2,
+        "samples": [
+          {
+            "id": "college_085",
+            "name": "National Rohtak School of Business",
+            "city": "Rohtak",
+            "state": "Haryana"
+          },
+          {
+            "id": "national_rohtak_school_business",
+            "name": "National Rohtak School of Business",
+            "city": "Rohtak",
+            "state": "Haryana"
+          }
+        ]
+      },
+      {
+        "key": "government polytechnic, addanki|addanki|andhra pradesh",
+        "count": 2,
+        "samples": [
+          {
+            "id": "aishe_14431",
+            "name": "GOVERNMENT POLYTECHNIC, ADDANKI",
+            "city": "Addanki",
+            "state": "Andhra Pradesh"
+          },
+          {
+            "id": "aishe_14431_government-polytechnic-addanki-addanki",
+            "name": "GOVERNMENT POLYTECHNIC, ADDANKI",
+            "city": "Addanki",
+            "state": "Andhra Pradesh"
+          }
+        ]
+      },
+      {
+        "key": "t.g.l. polytechnic adoni|adoni|andhra pradesh",
+        "count": 2,
+        "samples": [
+          {
+            "id": "aishe_662",
+            "name": "T.G.L. POLYTECHNIC ADONI",
+            "city": "Adoni",
+            "state": "Andhra Pradesh"
+          },
+          {
+            "id": "aishe_662_t-g-l-polytechnic-adoni-adoni",
+            "name": "T.G.L. POLYTECHNIC ADONI",
+            "city": "Adoni",
+            "state": "Andhra Pradesh"
+          }
+        ]
+      },
+      {
+        "key": "amaravathi d.ed college, amaravathi|amaravathi|andhra pradesh",
+        "count": 2,
+        "samples": [
+          {
+            "id": "aishe_15843",
+            "name": "Amaravathi D.ed College, Amaravathi",
+            "city": "Amaravathi",
+            "state": "Andhra Pradesh"
+          },
+          {
+            "id": "aishe_15843_amaravathi-d-ed-college-amaravathi-amaravathi",
+            "name": "Amaravathi D.ed College, Amaravathi",
+            "city": "Amaravathi",
+            "state": "Andhra Pradesh"
+          }
+        ]
+      },
+      {
+        "key": "government polytechnic, anakapalli|anakapalli|andhra pradesh",
+        "count": 2,
+        "samples": [
+          {
+            "id": "aishe_14921",
+            "name": "GOVERNMENT POLYTECHNIC, ANAKAPALLI",
+            "city": "Anakapalli",
+            "state": "Andhra Pradesh"
+          },
+          {
+            "id": "aishe_14921_government-polytechnic-anakapalli-anakapalli",
+            "name": "GOVERNMENT POLYTECHNIC, ANAKAPALLI",
+            "city": "Anakapalli",
+            "state": "Andhra Pradesh"
+          }
+        ]
+      },
+      {
+        "key": "faith school of nursing, ananthapur|anantapur|andhra pradesh",
+        "count": 2,
+        "samples": [
+          {
+            "id": "aishe_13099",
+            "name": "FAITH SCHOOL OF NURSING, ANANTHAPUR",
+            "city": "Anantapur",
+            "state": "Andhra Pradesh"
+          },
+          {
+            "id": "aishe_13099_faith-school-of-nursing-ananthapur-anantapur",
+            "name": "FAITH SCHOOL OF NURSING, ANANTHAPUR",
+            "city": "Anantapur",
+            "state": "Andhra Pradesh"
+          }
+        ]
+      },
+      {
+        "key": "govt polytechnic ananthapur|anantapur|andhra pradesh",
+        "count": 2,
+        "samples": [
+          {
+            "id": "aishe_535",
+            "name": "GOVT POLYTECHNIC ANANTHAPUR",
+            "city": "Anantapur",
+            "state": "Andhra Pradesh"
+          },
+          {
+            "id": "aishe_535_govt-polytechnic-ananthapur-anantapur",
+            "name": "GOVT POLYTECHNIC ANANTHAPUR",
+            "city": "Anantapur",
+            "state": "Andhra Pradesh"
+          }
+        ]
+      },
+      {
+        "key": "sri krishnadevaraya university, anantapur|anantapur|andhra pradesh",
+        "count": 2,
+        "samples": [
+          {
+            "id": "aishe_33",
+            "name": "Sri Krishnadevaraya University, Anantapur",
+            "city": "Anantapur",
+            "state": "Andhra Pradesh"
+          },
+          {
+            "id": "aishe_33_sri-krishnadevaraya-university-anantapur-anantapur",
+            "name": "Sri Krishnadevaraya University, Anantapur",
+            "city": "Anantapur",
+            "state": "Andhra Pradesh"
+          }
+        ]
+      },
+      {
+        "key": "susheela college ofeducation (d.ed.m,) bellary road, rachanapalli, anantapur district-515001|anantapur|andhra pradesh",
+        "count": 2,
+        "samples": [
+          {
+            "id": "aishe_13404",
+            "name": "Susheela College Ofeducation (d.ed.m,) Bellary Road, Rachanapalli, Anantapur District-515001",
+            "city": "Anantapur",
+            "state": "Andhra Pradesh"
+          },
+          {
+            "id": "aishe_13404_susheela-college-ofeducation-d-ed-m-bellary-road-rachanapalli-anantapur-district",
+            "name": "Susheela College Ofeducation (d.ed.m,) Bellary Road, Rachanapalli, Anantapur District-515001",
+            "city": "Anantapur",
+            "state": "Andhra Pradesh"
+          }
+        ]
+      },
+      {
+        "key": "balaji college of elementary teacher education, khajanagar, near rtc bus stand, anantapur- 515001|anantapuramu|andhra pradesh",
+        "count": 2,
+        "samples": [
+          {
+            "id": "aishe_13397",
+            "name": "Balaji College Of Elementary Teacher Education, Khajanagar, Near Rtc Bus Stand, Anantapur- 515001",
+            "city": "Anantapuramu",
+            "state": "Andhra Pradesh"
+          },
+          {
+            "id": "aishe_13397_balaji-college-of-elementary-teacher-education-khajanagar-near-rtc-bus-stand-ana",
+            "name": "Balaji College Of Elementary Teacher Education, Khajanagar, Near Rtc Bus Stand, Anantapur- 515001",
+            "city": "Anantapuramu",
+            "state": "Andhra Pradesh"
+          }
+        ]
+      }
+    ],
+    "active": 610,
+    "inactive": 0,
+    "by_state": [
+      [
+        "Andhra Pradesh",
+        227
+      ],
+      [
+        "Maharashtra",
+        48
+      ],
+      [
+        "Tamil Nadu",
+        36
+      ],
+      [
+        "Madhya Pradesh",
+        30
+      ],
+      [
+        "Karnataka",
+        29
+      ],
+      [
+        "Delhi",
+        28
+      ],
+      [
+        "Uttar Pradesh",
+        26
+      ],
+      [
+        "Gujarat",
+        19
+      ],
+      [
+        "Odisha",
+        19
+      ],
+      [
+        "Telangana",
+        18
+      ],
+      [
+        "Rajasthan",
+        17
+      ],
+      [
+        "West Bengal",
+        15
+      ],
+      [
+        "Bihar",
+        15
+      ],
+      [
+        "Kerala",
+        14
+      ],
+      [
+        "Haryana",
+        14
+      ],
+      [
+        "Assam",
+        14
+      ],
+      [
+        "Uttrakhand",
+        9
+      ],
+      [
+        "Andaman & Nicobar Islands",
+        8
+      ],
+      [
+        "Punjab",
+        7
+      ],
+      [
+        "Chandigarh",
+        7
+      ],
+      [
+        "Jharkhand",
+        4
+      ],
+      [
+        "Chhattisgarh",
+        3
+      ],
+      [
+        "Himachal Pradesh",
+        3
+      ]
+    ],
+    "by_city_top50": [
+      [
+        "Anantapur",
+        61
+      ],
+      [
+        "Pune",
+        18
+      ],
+      [
+        "Hyderabad",
+        17
+      ],
+      [
+        "Chennai",
+        16
+      ],
+      [
+        "New Delhi",
+        16
+      ],
+      [
+        "Nagpur",
+        15
+      ],
+      [
+        "Bangalore",
+        15
+      ],
+      [
+        "Ahmedabad",
+        15
+      ],
+      [
+        "Indore",
+        15
+      ],
+      [
+        "Bhubaneswar",
+        15
+      ],
+      [
+        "Amalapuram",
+        15
+      ],
+      [
+        "Jaipur",
+        14
+      ],
+      [
+        "Anantapuramu",
+        14
+      ],
+      [
+        "Mumbai",
+        13
+      ],
+      [
+        "Coimbatore",
+        13
+      ],
+      [
+        "Lucknow",
+        13
+      ],
+      [
+        "Bhopal",
+        13
+      ],
+      [
+        "Patna",
+        13
+      ],
+      [
+        "Kolkata",
+        12
+      ],
+      [
+        "Visakhapatnam",
+        12
+      ],
+      [
+        "Guwahati",
+        12
+      ],
+      [
+        "Kochi",
+        11
+      ],
+      [
+        "Adoni",
+        11
+      ],
+      [
+        "Ananthapuramu",
+        11
+      ],
+      [
+        "Badvel",
+        11
+      ],
+      [
+        "Delhi",
+        10
+      ],
+      [
+        "Chandigarh",
+        9
+      ],
+      [
+        "Bengaluru",
+        9
+      ],
+      [
+        "Dehradun",
+        9
+      ],
+      [
+        "Anakapalle",
+        9
+      ],
+      [
+        "Noida",
+        8
+      ],
+      [
+        "Gurgaon",
+        8
+      ],
+      [
+        "Allagadda",
+        5
+      ],
+      [
+        "Anaparthi",
+        5
+      ],
+      [
+        "Port Blair",
+        4
+      ],
+      [
+        "Addanki",
+        4
+      ],
+      [
+        "Anakapalli",
+        4
+      ],
+      [
+        "Andhra Pradesh",
+        4
+      ],
+      [
+        "Avanigadda",
+        4
+      ],
+      [
+        "Jalandhar",
+        3
+      ],
+      [
+        "Rohtak",
+        3
+      ],
+      [
+        "Amadalavalasa",
+        3
+      ],
+      [
+        "Amaravathi",
+        3
+      ],
+      [
+        "Aryavatam",
+        3
+      ],
+      [
+        "Atmakur",
+        3
+      ],
+      [
+        "Mangalore",
+        2
+      ],
+      [
+        "Madurai",
+        2
+      ],
+      [
+        "Trichy",
+        2
+      ],
+      [
+        "Kanpur",
+        2
+      ],
+      [
+        "Agra",
+        2
+      ]
+    ],
+    "by_category": [
+      [
+        "General",
+        165
+      ],
+      [
+        "<missing>",
+        110
+      ],
+      [
+        "Engineering",
+        45
+      ],
+      [
+        "Nursing",
+        41
+      ],
+      [
+        "MBA",
+        37
+      ],
+      [
+        "Polytechnic",
+        35
+      ],
+      [
+        "Pharmacy",
+        25
+      ],
+      [
+        "Medical",
+        25
+      ],
+      [
+        "Law",
+        24
+      ],
+      [
+        "Arts",
+        22
+      ],
+      [
+        "Commerce",
+        19
+      ],
+      [
+        "Science",
+        19
+      ],
+      [
+        "Architecture",
+        17
+      ],
+      [
+        "Fashion",
+        15
+      ],
+      [
+        "Agriculture",
+        11
+      ]
+    ],
+    "by_type": [
+      [
+        "private",
+        503
+      ],
+      [
+        "government",
+        74
+      ],
+      [
+        "deemed",
+        32
+      ],
+      [
+        "autonomous",
+        1
+      ]
+    ],
+    "category_targets": {
+      "Engineering": 45,
+      "Medical": 25,
+      "MBA": 37,
+      "Pharmacy": 25,
+      "Nursing": 41,
+      "Law": 24,
+      "Commerce": 19,
+      "Arts": 22,
+      "Science": 19,
+      "General": 165,
+      "Polytechnic": 35,
+      "Agriculture": 11,
+      "Architecture": 17,
+      "Fashion": 15,
+      "<other_or_missing>": 110
+    },
+    "pune_count": 18,
+    "mumbai_count": 13,
+    "missing_mandatory": {
+      "id": {
+        "count": 0,
+        "samples": []
+      },
+      "name": {
+        "count": 0,
+        "samples": []
+      },
+      "city": {
+        "count": 0,
+        "samples": []
+      },
+      "state": {
+        "count": 0,
+        "samples": []
+      },
+      "category": {
+        "count": 110,
+        "samples": [
+          {
+            "id": "college_001",
+            "name": "Global Mumbai Institute of Technology",
+            "city": "Mumbai",
+            "state": "Maharashtra"
+          },
+          {
+            "id": "college_002",
+            "name": "Progressive Pune College of Pharmacy",
+            "city": "Pune",
+            "state": "Maharashtra"
+          },
+          {
+            "id": "college_003",
+            "name": "United Nagpur College of Engineering",
+            "city": "Nagpur",
+            "state": "Maharashtra"
+          },
+          {
+            "id": "college_004",
+            "name": "Central Nashik Polytechnic",
+            "city": "Nashik",
+            "state": "Maharashtra"
+          },
+          {
+            "id": "college_005",
+            "name": "Heritage Aurangabad Academy of Science",
+            "city": "Aurangabad",
+            "state": "Maharashtra"
+          },
+          {
+            "id": "college_006",
+            "name": "Global Bangalore University",
+            "city": "Bangalore",
+            "state": "Karnataka"
+          },
+          {
+            "id": "college_007",
+            "name": "Modern Mysore School of Business",
+            "city": "Mysore",
+            "state": "Karnataka"
+          },
+          {
+            "id": "college_008",
+            "name": "Progressive Mangalore Institute of Technology",
+            "city": "Mangalore",
+            "state": "Karnataka"
+          }
+        ]
+      },
+      "type": {
+        "count": 0,
+        "samples": []
+      }
+    },
+    "invalid_record_count": 110,
+    "invalid_samples": [
+      {
+        "id": "college_001",
+        "name": "Global Mumbai Institute of Technology",
+        "reasons": [
+          "missing_category"
+        ]
+      },
+      {
+        "id": "college_002",
+        "name": "Progressive Pune College of Pharmacy",
+        "reasons": [
+          "missing_category"
+        ]
+      },
+      {
+        "id": "college_003",
+        "name": "United Nagpur College of Engineering",
+        "reasons": [
+          "missing_category"
+        ]
+      },
+      {
+        "id": "college_004",
+        "name": "Central Nashik Polytechnic",
+        "reasons": [
+          "missing_category"
+        ]
+      },
+      {
+        "id": "college_005",
+        "name": "Heritage Aurangabad Academy of Science",
+        "reasons": [
+          "missing_category"
+        ]
+      },
+      {
+        "id": "college_006",
+        "name": "Global Bangalore University",
+        "reasons": [
+          "missing_category"
+        ]
+      },
+      {
+        "id": "college_007",
+        "name": "Modern Mysore School of Business",
+        "reasons": [
+          "missing_category"
+        ]
+      },
+      {
+        "id": "college_008",
+        "name": "Progressive Mangalore Institute of Technology",
+        "reasons": [
+          "missing_category"
+        ]
+      },
+      {
+        "id": "college_009",
+        "name": "Central Hubli Institute of Medical Sciences",
+        "reasons": [
+          "missing_category"
+        ]
+      },
+      {
+        "id": "college_010",
+        "name": "Central Belgaum College of Engineering",
+        "reasons": [
+          "missing_category"
+        ]
+      },
+      {
+        "id": "college_011",
+        "name": "National Chennai College of Engineering",
+        "reasons": [
+          "missing_category"
+        ]
+      },
+      {
+        "id": "college_012",
+        "name": "National Coimbatore College of Engineering",
+        "reasons": [
+          "missing_category"
+        ]
+      },
+      {
+        "id": "college_013",
+        "name": "Progressive Madurai University",
+        "reasons": [
+          "missing_category"
+        ]
+      },
+      {
+        "id": "college_014",
+        "name": "Global Trichy College of Pharmacy",
+        "reasons": [
+          "missing_category"
+        ]
+      },
+      {
+        "id": "college_015",
+        "name": "National Salem College of Arts",
+        "reasons": [
+          "missing_category"
+        ]
+      }
+    ],
+    "search_field_coverage": {
+      "name": {
+        "present": 610,
+        "missing": 0
+      },
+      "nameLower": {
+        "present": 500,
+        "missing": 110
+      },
+      "city": {
+        "present": 610,
+        "missing": 0
+      },
+      "cityLower": {
+        "present": 500,
+        "missing": 110
+      },
+      "state": {
+        "present": 610,
+        "missing": 0
+      },
+      "stateLower": {
+        "present": 500,
+        "missing": 110
+      },
+      "universityName": {
+        "present": 10,
+        "missing": 600
+      },
+      "universityLower": {
+        "present": 0,
+        "missing": 610
+      },
+      "courses": {
+        "present": 610,
+        "missing": 0
+      },
+      "category": {
+        "present": 500,
+        "missing": 110
+      },
+      "type": {
+        "present": 610,
+        "missing": 0
+      },
+      "ownership": {
+        "present": 0,
+        "missing": 610
+      },
+      "searchTokens": {
+        "present": 500,
+        "missing": 110
+      },
+      "isActive": {
+        "present": 600,
+        "missing": 10
+      }
+    },
+    "missing_searchTokens_count": 110,
+    "empty_searchTokens_count": 0,
+    "missing_searchTokens_samples": [
+      {
+        "id": "college_001",
+        "name": "Global Mumbai Institute of Technology",
+        "city": "Mumbai"
+      },
+      {
+        "id": "college_002",
+        "name": "Progressive Pune College of Pharmacy",
+        "city": "Pune"
+      },
+      {
+        "id": "college_003",
+        "name": "United Nagpur College of Engineering",
+        "city": "Nagpur"
+      },
+      {
+        "id": "college_004",
+        "name": "Central Nashik Polytechnic",
+        "city": "Nashik"
+      },
+      {
+        "id": "college_005",
+        "name": "Heritage Aurangabad Academy of Science",
+        "city": "Aurangabad"
+      },
+      {
+        "id": "college_006",
+        "name": "Global Bangalore University",
+        "city": "Bangalore"
+      },
+      {
+        "id": "college_007",
+        "name": "Modern Mysore School of Business",
+        "city": "Mysore"
+      },
+      {
+        "id": "college_008",
+        "name": "Progressive Mangalore Institute of Technology",
+        "city": "Mangalore"
+      }
+    ],
+    "empty_searchTokens_samples": [],
+    "per_file": {
+      "colleges_seed.json": {
+        "exists": true,
+        "records": 100
+      },
+      "prominent_colleges_seed.json": {
+        "exists": true,
+        "records": 10
+      },
+      "india_colleges_seed.json": {
+        "exists": true,
+        "records": 500
+      },
+      "maharashtra_colleges_seed.json": {
+        "exists": true,
+        "records": 300
+      }
+    },
+    "note": "CollegeBundledDataSource.loadAll merges colleges_seed + prominent + india_colleges_seed only; maharashtra seed excluded"
+  },
+  "prior_import_final_report": {
+    "timestamp": "2026-07-24T10:51:18.670437+00:00",
+    "totalColleges": 45020,
+    "totalCollegesExpected": 47139,
+    "totalCollegesImported": 47139,
+    "totalFirestoreDocuments": 45020,
+    "newlyImported": 0,
+    "skippedDuplicates": 0,
+    "failedImports": 0,
+    "validationFailures": 0,
+    "missingColleges": 2119,
+    "duplicateDocuments": 5823,
+    "allStatesImported": false,
+    "statesWithData": 36,
+    "statesExpected": 36,
+    "missingStates": [],
+    "underImportedStates": [
+      {
+        "state": "West Bengal",
+        "got": 1420,
+        "expected": 1624
+      },
+      {
+        "state": "Bihar",
+        "got": 661,
+        "expected": 806
+      },
+      {
+        "state": "Assam",
+        "got": 499,
+        "expected": 569
+      },
+      {
+        "state": "Uttrakhand",
+        "got": 490,
+        "expected": 578
+      },
+      {
+        "state": "Goa",
+        "got": 67,
+        "expected": 75
+      },
+      {
+        "state": "Delhi",
+        "got": 247,
+        "expected": 303
+      },
+      {
+        "state": "Chandigarh",
+        "got": 34,
+        "expected": 39
+      },
+      {
+        "state": "Manipur",
+        "got": 26,
+        "expected": 70
+      },
+      {
+        "state": "Mizoram",
+        "got": 41,
+        "expected": 54
+      },
+      {
+        "state": "Tripura",
+        "got": 38,
+        "expected": 68
+      },
+      {
+        "state": "Arunachal Pradesh",
+        "got": 21,
+        "expected": 24
+      },
+      {
+        "state": "Sikkim",
+        "got": 31,
+        "expected": 36
+      },
+      {
+        "state": "Andaman & Nicobar Islands",
+        "got": 7,
+        "expected": 8
+      },
+      {
+        "state": "Dadra & Nagar Haveli",
+        "got": 8,
+        "expected": 9
+      },
+      {
+        "state": "Lakshadweep",
+        "got": 1,
+        "expected": 3
+      },
+      {
+        "state": "Daman & Diu",
+        "got": 8,
+        "expected": 9
+      }
+    ],
+    "searchWorking": true,
+    "searchFailures": [],
+    "indexesDeployed": false,
+    "indexesMessage": "firebase CLI not found",
+    "sampleMissingSearchTokens": 0,
+    "sampleMissingCategory": 0,
+    "databaseProductionReady": false,
+    "metaTotalColleges": null,
+    "categoryCounts": null
+  }
+}

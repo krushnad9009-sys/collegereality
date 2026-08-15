@@ -1,6 +1,6 @@
 # Search Coverage Report
 
-Generated: 2026-08-05T08:38:53.899352+00:00
+Generated: 2026-08-05T08:59:38.562671+00:00
 Source: `C:\Users\Sahyadri\collegereality\tools\data\firestore\india_colleges_firestore_full.json`
 
 Active colleges: **47139**

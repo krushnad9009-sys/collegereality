@@ -146,18 +146,58 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
     final sessionAsync = ref.watch(callSessionProvider(widget.sessionId));
 
     if (user == null) {
-      return const Scaffold(body: Center(child: Text('Please log in')));
+      return Scaffold(
+        backgroundColor: AppTheme.gray900,
+        body: const Center(
+          child: Text('Please log in', style: TextStyle(color: Colors.white70)),
+        ),
+      );
     }
 
     return sessionAsync.when(
-      loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (e, _) => Scaffold(body: Center(child: Text('Error: $e'))),
+      loading: () => Scaffold(
+        backgroundColor: AppTheme.gray900,
+        body: const Center(
+          child: CircularProgressIndicator(color: Colors.white70),
+        ),
+      ),
+      error: (e, _) => Scaffold(
+        backgroundColor: AppTheme.gray900,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          foregroundColor: Colors.white,
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.error_outline_rounded,
+                    color: Colors.white54, size: 40),
+                const SizedBox(height: 12),
+                Text(
+                  e.toString().replaceFirst('Exception: ', ''),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.white70),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
       data: (session) {
         if (session == null) {
           return Scaffold(
-            appBar: AppBar(),
-            body: const Center(child: Text('Call session not found')),
+            backgroundColor: AppTheme.gray900,
+            appBar: AppBar(
+              backgroundColor: Colors.transparent,
+              foregroundColor: Colors.white,
+            ),
+            body: const Center(
+              child: Text('Call session not found',
+                  style: TextStyle(color: Colors.white70)),
+            ),
           );
         }
 
@@ -239,7 +279,7 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                       backgroundColor: AppTheme.primaryColor,
                       child: Text(
                         peerAlias.replaceAll('Guide #', '').substring(0, 2),
-                        style: GoogleFonts.poppins(
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 28,
                           fontWeight: FontWeight.w700,
                           color: Colors.white,
@@ -249,7 +289,7 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                   const SizedBox(height: 20),
                   Text(
                     peerAlias,
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 24,
                       fontWeight: FontWeight.w700,
                       color: Colors.white,
@@ -258,14 +298,14 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                   const SizedBox(height: 8),
                   Text(
                     _statusLabel(session.status, needsAccept),
-                    style: GoogleFonts.poppins(color: Colors.white70),
+                    style: GoogleFonts.plusJakartaSans(color: Colors.white70),
                   ),
                   if (session.status ==
                       CommunicationConstants.callStatusActive) ...[
                     const SizedBox(height: 16),
                     Text(
                       formatCallDuration(_elapsedSeconds),
-                      style: GoogleFonts.poppins(
+                      style: GoogleFonts.plusJakartaSans(
                         fontSize: 32,
                         fontWeight: FontWeight.w300,
                         color: Colors.white,
@@ -273,7 +313,7 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                     ),
                     Text(
                       'Max ${formatCallDuration(session.maxDurationSeconds)}',
-                      style: GoogleFonts.poppins(
+                      style: GoogleFonts.plusJakartaSans(
                         fontSize: 12,
                         color: Colors.white54,
                       ),

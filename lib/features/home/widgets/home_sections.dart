@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../config/theme/app_fonts.dart';
 
 import '../../../config/router/route_names.dart';
+import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../assistant/widgets/ai_search_bar.dart';
 import '../../../core/widgets/async_state_widgets.dart';
@@ -210,6 +211,84 @@ class PremiumConsultationHomeCard extends StatelessWidget {
               const Icon(
                 Icons.arrow_forward_ios_rounded,
                 color: Colors.white,
+                size: 16,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Obvious home entry point into side-by-side college comparison. Previously
+/// only reachable from within a college's own detail screen, so users had
+/// no way to start a comparison without first opening a specific college.
+class CompareCollegesHomeCard extends StatelessWidget {
+  const CompareCollegesHomeCard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: () => context.go(RouteNames.compare),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: tokens.surfaceElevated,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: tokens.borderSubtle),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(
+                  Icons.compare_arrows_rounded,
+                  color: AppTheme.primaryColor,
+                  size: 26,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Compare Colleges',
+                      style: AppFonts.plusJakarta(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: tokens.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Fees, placements, hostel & ratings — side by side',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppFonts.plusJakarta(
+                        fontSize: 12,
+                        color: tokens.textSecondary,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                color: tokens.textSecondary,
                 size: 16,
               ),
             ],

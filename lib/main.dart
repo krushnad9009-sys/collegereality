@@ -16,8 +16,19 @@ Future<void> main() async {
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
   AppErrorHandler.install();
-  await FirebaseBootstrap.ensureInitialized();
-  await CrashlyticsService.initialize();
+
+  // Firebase init failing or hanging (e.g. a stale IndexedDB persistence
+  // lock from another browser tab after a hard refresh) must never prevent
+  // runApp() from firing — otherwise the native splash never gets removed
+  // and the app looks permanently frozen. SplashScreen re-resolves/retries
+  // this on its own once the widget tree exists.
+  try {
+    await FirebaseBootstrap.ensureInitialized();
+    await CrashlyticsService.initialize();
+  } catch (e, st) {
+    debugPrint('Firebase bootstrap failed at startup, continuing: $e\n$st');
+  }
+
   runApp(
     const ProviderScope(
       child: CollegeRealityApp(),

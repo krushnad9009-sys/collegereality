@@ -202,6 +202,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                       const SizedBox(height: AppSpacing.section),
                       FadeInSection(
+                        delayMs: 250,
+                        child: const CompareCollegesHomeCard(),
+                      ),
+                      const SizedBox(height: AppSpacing.section),
+                      FadeInSection(
                         delayMs: 280,
                         child: const SectionHeader(
                           title: 'Popular Cities',

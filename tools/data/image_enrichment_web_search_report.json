@@ -1,0 +1,12 @@
+{
+  "timestamp": "2026-08-15T16:07:41.874256+00:00",
+  "source": "web_search_official_site",
+  "dryRun": false,
+  "target": 30,
+  "searched": 0,
+  "highConfidenceMatches": 0,
+  "rejected": 0,
+  "skipped": 0,
+  "estimatedSuccessRatePercent": 0.0,
+  "sampleSourceUrls": []
+}

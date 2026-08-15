@@ -9,7 +9,11 @@ import '../../../config/router/route_names.dart';
 import '../../../core/bootstrap/firebase_bootstrap.dart';
 
 /// Maximum time to wait for Firebase/auth/prefs before forcing navigation.
-const _kSplashTimeout = Duration(seconds: 8);
+/// Must comfortably exceed FirebaseBootstrap's own init timeout (5s) plus
+/// the auth-state-restore timeout below (5s) plus the minimum splash
+/// duration, so those inner, more specific timeouts get a chance to fire
+/// (and log something useful) instead of this outer one masking them.
+const _kSplashTimeout = Duration(seconds: 14);
 
 /// Minimum time the splash stays visible before exit fade.
 const _kMinimumSplashDuration = Duration(milliseconds: 1600);

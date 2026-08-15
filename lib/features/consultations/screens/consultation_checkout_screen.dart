@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../config/router/route_names.dart';
+import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_spacing.dart';
+import '../../../config/theme/app_theme.dart';
 import '../../../core/widgets/index.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../communication/models/guide_stats_model.dart';
@@ -175,13 +177,21 @@ class _ConsultationCheckoutScreenState
                     children: [
                       CircleAvatar(
                         radius: 24,
+                        backgroundColor:
+                            AppTheme.primaryColor.withValues(alpha: 0.15),
                         backgroundImage: guide.photoURL != null
                             ? NetworkImage(guide.photoURL!)
                             : null,
                         child: guide.photoURL == null
-                            ? Text(guide.displayName.isNotEmpty
-                                ? guide.displayName[0].toUpperCase()
-                                : 'G')
+                            ? Text(
+                                guide.displayName.isNotEmpty
+                                    ? guide.displayName[0].toUpperCase()
+                                    : 'G',
+                                style: AppFonts.plusJakarta(
+                                  fontWeight: FontWeight.w800,
+                                  color: AppTheme.primaryColor,
+                                ),
+                              )
                             : null,
                       ),
                       const SizedBox(width: 12),
@@ -193,7 +203,7 @@ class _ConsultationCheckoutScreenState
                               Flexible(
                                 child: Text(
                                   guide.displayName,
-                                  style: const TextStyle(fontWeight: FontWeight.w700),
+                                  style: Theme.of(context).textTheme.titleLarge,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
@@ -204,7 +214,10 @@ class _ConsultationCheckoutScreenState
                             if (guide.collegeName != null)
                               Text(
                                 guide.collegeName!,
-                                style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(color: AppTheme.gray600),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             const SizedBox(height: 4),
@@ -215,21 +228,43 @@ class _ConsultationCheckoutScreenState
                     ],
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 24),
                 SectionHeader(title: 'Choose a consultation', subtitle: null),
-                const SizedBox(height: 8),
-                for (final option in options)
-                  RadioListTile<_PriceOption>(
-                    contentPadding: EdgeInsets.zero,
-                    value: option,
-                    groupValue: _selected,
-                    onChanged: (v) => setState(() => _selected = v),
-                    title: Text(option.label),
-                    subtitle: Text('₹${(option.pricePaise / 100).toStringAsFixed(0)}'),
+                const SizedBox(height: 10),
+                for (final option in options) ...[
+                  _PriceOptionCard(
+                    option: option,
+                    selected: _selected == option,
+                    onTap: () => setState(() => _selected = option),
                   ),
+                  const SizedBox(height: 10),
+                ],
                 if (_error != null) ...[
-                  const SizedBox(height: 12),
-                  Text(_error!, style: const TextStyle(color: Colors.red)),
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppTheme.errorColor.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.error_outline,
+                            size: 18, color: AppTheme.errorColor),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _error!,
+                            style: AppFonts.plusJakarta(
+                              color: AppTheme.errorColor,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
                 const SizedBox(height: 20),
                 if (kIsWeb)
@@ -253,6 +288,62 @@ class _ConsultationCheckoutScreenState
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _PriceOptionCard extends StatelessWidget {
+  const _PriceOptionCard({
+    required this.option,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final _PriceOption option;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: selected
+              ? AppTheme.primaryColor.withValues(alpha: 0.08)
+              : Theme.of(context).cardTheme.color,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: selected ? AppTheme.primaryColor : AppTheme.gray200,
+            width: selected ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              selected
+                  ? Icons.radio_button_checked
+                  : Icons.radio_button_unchecked,
+              color: selected ? AppTheme.primaryColor : AppTheme.gray400,
+              size: 22,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(option.label, style: textTheme.titleMedium),
+            ),
+            Text(
+              '₹${(option.pricePaise / 100).toStringAsFixed(0)}',
+              style: textTheme.titleLarge?.copyWith(
+                color: selected ? AppTheme.primaryColor : null,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

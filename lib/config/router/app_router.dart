@@ -126,6 +126,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // Never block splash — it handles its own navigation.
       if (path == RouteNames.splash) return null;
 
+      // On first load (including a Flutter Web hard refresh), wait for
+      // Firebase Auth to finish restoring any persisted session before
+      // trusting `currentUser`. Otherwise an already-logged-in user briefly
+      // reads as logged-out and gets bounced to /login for a flash on every
+      // refresh of a protected route. Bounded so a genuinely logged-out
+      // user (or a slow/broken auth SDK) is never stuck waiting.
+      try {
+        await authRefresh.firstEvent.timeout(const Duration(seconds: 4));
+      } catch (_) {
+        // Timed out — proceed with whatever currentUser currently reads.
+      }
+
       final isLoggedIn = firebaseAuth.currentUser != null;
       final isCollegeDetailPublic = RegExp(r'^/college-details/[^/]+/?$')
           .hasMatch(path);

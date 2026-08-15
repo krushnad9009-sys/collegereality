@@ -58,9 +58,17 @@ android/upload-keystore.jks
 analyze_*.txt
 flutter_analyze_*.txt
 flutter_test_*.txt
+flutter_build_*.txt
 *_ci_check.txt
 admin_analyze_output.txt
 analyze_output*.txt
+test_stab_focus.txt
+tools/data/*_run_log.txt
+tools/data/*_continuous_log.txt
+tools/data/wait_for_quota_log.txt
+
+# Claude Code local session/tooling state (machine + session specific)
+.claude/
 
 # Security rules test tooling
 tool/security-rules-tests/node_modules/

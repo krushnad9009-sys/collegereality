@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/ai_assistant_constants.dart';
 import '../../../core/constants/compare_constants.dart';
+import '../../../core/utils/firestore_error_utils.dart';
 import '../../auth/providers/user_provider.dart';
 import '../../colleges/providers/college_provider.dart';
 import '../../community_feed/providers/college_community_feed_provider.dart';
@@ -78,6 +79,7 @@ class AiAssistantNotifier extends StateNotifier<AiAssistantState> {
 
   final AiAssistantService _service;
   final Ref _ref;
+  String? _lastQuery;
 
   Future<void> _loadHistory() async {
     final saved = await AiConversationStore.load();
@@ -125,10 +127,22 @@ class AiAssistantNotifier extends StateNotifier<AiAssistantState> {
     await AiConversationStore.clear();
   }
 
+  /// Retries the last failed query without re-adding a duplicate user
+  /// message to the conversation.
+  Future<void> retryLastQuery() async {
+    final query = _lastQuery;
+    if (query == null || query.isEmpty || state.isLoading) return;
+    await _runQuery(query, addUserMessage: false);
+  }
+
   Future<void> sendMessage(String query) async {
     final trimmed = query.trim();
     if (trimmed.isEmpty || state.isLoading) return;
+    await _runQuery(trimmed, addUserMessage: true);
+  }
 
+  Future<void> _runQuery(String trimmed, {required bool addUserMessage}) async {
+    _lastQuery = trimmed;
     final userMessage = AiAssistantMessage(
       id: '${DateTime.now().millisecondsSinceEpoch}_user',
       role: AiMessageRole.user,
@@ -138,7 +152,7 @@ class AiAssistantNotifier extends StateNotifier<AiAssistantState> {
     );
 
     state = state.copyWith(
-      messages: [...state.messages, userMessage],
+      messages: addUserMessage ? [...state.messages, userMessage] : state.messages,
       isLoading: true,
       clearError: true,
     );
@@ -204,7 +218,7 @@ class AiAssistantNotifier extends StateNotifier<AiAssistantState> {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        error: e.toString(),
+        error: FirestoreErrorUtils.userMessage(e),
       );
     }
   }
