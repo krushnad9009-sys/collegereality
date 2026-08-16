@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../config/router/route_names.dart';
+import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/bootstrap/startup_bootstrap.dart';
@@ -68,7 +70,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final authState = ref.watch(authProvider);
     final currentUser = authState.user ?? FirebaseAuth.instance.currentUser;
     final userDetail = ref.watch(currentUserDetailProvider).valueOrNull;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final greeting = currentUser != null
         ? 'Hi, ${userDetail?.effectivePublicDisplayName ?? currentUser.displayName ?? 'Student'} 👋'
@@ -82,11 +83,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
 
     return Scaffold(
-      backgroundColor: isDark ? AppTheme.gray900 : AppTheme.surfaceMuted,
+      backgroundColor: context.tokens.surfaceMuted,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _onRefresh,
-          color: AppTheme.primaryColor,
+          color: Theme.of(context).colorScheme.primary,
           edgeOffset: 8,
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(
@@ -299,43 +300,65 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 }
 
+/// Shared icon-badge + text banner treatment used across the home screen's
+/// informational strips (quota notice, platform announcement) so they read
+/// as one consistent visual family instead of ad hoc gradient containers.
+class _HomeInfoBanner extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final Widget child;
+
+  const _HomeInfoBanner({
+    required this.icon,
+    required this.color,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(tokens.buttonRadius),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(tokens.buttonRadius * 0.7),
+            ),
+            child: Icon(icon, size: 18, color: color),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(child: child),
+        ],
+      ),
+    );
+  }
+}
+
 class _QuotaNoticeBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppTheme.warningColor.withValues(alpha: 0.14),
-            AppTheme.warningColor.withValues(alpha: 0.06),
-          ],
+    final tokens = context.tokens;
+    return _HomeInfoBanner(
+      icon: Icons.cloud_off_rounded,
+      color: AppTheme.warningColor,
+      child: Text(
+        'Offline data • Live sync resumes automatically.',
+        style: AppFonts.plusJakarta(
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+          color: tokens.textSecondary,
+          height: 1.35,
         ),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: AppTheme.warningColor.withValues(alpha: 0.22),
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.cloud_off_rounded,
-            size: 20,
-            color: AppTheme.warningColor.withValues(alpha: 0.9),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              'Offline data • Live sync resumes automatically.',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface
-                        .withValues(alpha: 0.75),
-                    height: 1.35,
-                  ),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -350,41 +373,31 @@ class _PlatformAnnouncementBanner extends ConsumerWidget {
     final bannerUrl = ref.watch(platformHomeBannerUrlProvider);
     if (text.isEmpty && bannerUrl.isEmpty) return const SizedBox.shrink();
 
+    final tokens = context.tokens;
+    final primary = Theme.of(context).colorScheme.primary;
+
     return Padding(
       padding: const EdgeInsets.only(top: AppSpacing.sm),
       child: Column(
         children: [
           if (text.isNotEmpty)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: AppTheme.primaryColor.withValues(alpha: 0.18),
+            _HomeInfoBanner(
+              icon: Icons.campaign_outlined,
+              color: primary,
+              child: Text(
+                text,
+                style: AppFonts.plusJakarta(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w600,
+                  color: tokens.textPrimary,
+                  height: 1.4,
                 ),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(Icons.campaign_outlined, color: AppTheme.primaryColor),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      text,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                    ),
-                  ),
-                ],
               ),
             ),
           if (bannerUrl.isNotEmpty) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             ClipRRect(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(tokens.cardRadius),
               child: Image.network(
                 bannerUrl,
                 height: 120,
@@ -410,31 +423,88 @@ class _HomePromoAdsStrip extends ConsumerWidget {
       data: (ads) {
         if (ads.isEmpty) return const SizedBox.shrink();
         final ad = ads.first;
+        final tokens = context.tokens;
+        final primary = Theme.of(context).colorScheme.primary;
         return Padding(
           padding: const EdgeInsets.only(top: AppSpacing.sm),
-          child: Material(
-            color: AppTheme.surfaceMuted,
-            borderRadius: BorderRadius.circular(14),
-            child: ListTile(
-              leading: const Icon(Icons.local_offer_outlined),
-              title: Text(ad.title),
-              subtitle: ad.body.isEmpty ? null : Text(ad.body, maxLines: 2),
-              trailing: ad.ctaUrl.isEmpty
-                  ? null
-                  : Text(
-                      ad.ctaLabel,
-                      style: TextStyle(color: AppTheme.primaryColor),
+          child: PremiumCard(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            onTap: ad.ctaUrl.isEmpty
+                ? null
+                : () async {
+                    final uri = Uri.tryParse(ad.ctaUrl);
+                    if (uri == null) return;
+                    await launchUrl(
+                      uri,
+                      mode: LaunchMode.externalApplication,
+                    );
+                  },
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: primary.withValues(alpha: 0.12),
+                    borderRadius:
+                        BorderRadius.circular(tokens.buttonRadius * 0.65),
+                  ),
+                  child: Icon(
+                    Icons.local_offer_outlined,
+                    size: 20,
+                    color: primary,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        ad.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppFonts.plusJakarta(
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w600,
+                          color: tokens.textPrimary,
+                        ),
+                      ),
+                      if (ad.body.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          ad.body,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppFonts.plusJakarta(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w500,
+                            color: tokens.textTertiary,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                if (ad.ctaUrl.isNotEmpty) ...[
+                  const SizedBox(width: AppSpacing.sm),
+                  Text(
+                    ad.ctaLabel,
+                    style: AppFonts.plusJakarta(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                      color: primary,
                     ),
-              onTap: ad.ctaUrl.isEmpty
-                  ? null
-                  : () async {
-                      final uri = Uri.tryParse(ad.ctaUrl);
-                      if (uri == null) return;
-                      await launchUrl(
-                        uri,
-                        mode: LaunchMode.externalApplication,
-                      );
-                    },
+                  ),
+                  const SizedBox(width: 2),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    size: 18,
+                    color: tokens.textTertiary,
+                  ),
+                ],
+              ],
             ),
           ),
         );

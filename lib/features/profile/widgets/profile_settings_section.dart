@@ -5,9 +5,9 @@ import '../../../config/theme/app_fonts.dart';
 
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_design_tokens.dart';
-import '../../../config/theme/app_theme.dart';
 import '../../../config/theme/theme_provider.dart';
 import '../../../core/widgets/premium_components.dart';
+import '../../../core/widgets/premium_list_row.dart';
 
 /// App preferences: theme, legal links, notifications.
 class ProfileSettingsSection extends ConsumerWidget {
@@ -84,74 +84,26 @@ class ProfileSettingsSection extends ConsumerWidget {
               ),
             ),
           ),
-          const SizedBox(height: 16),
-          _SettingsLink(
-            icon: Icons.notifications_outlined,
-            label: 'Notification preferences',
+          const SizedBox(height: 8),
+          PremiumListRow(
+            leadingIcon: Icons.notifications_outlined,
+            title: 'Notification preferences',
+            dense: true,
             onTap: () => context.push(RouteNames.notificationPreferences),
           ),
-          _SettingsLink(
-            icon: Icons.privacy_tip_outlined,
-            label: 'Privacy policy',
+          PremiumListRow(
+            leadingIcon: Icons.privacy_tip_outlined,
+            title: 'Privacy policy',
+            dense: true,
             onTap: () => context.push(RouteNames.privacyPolicy),
           ),
-          _SettingsLink(
-            icon: Icons.description_outlined,
-            label: 'Terms of service',
+          PremiumListRow(
+            leadingIcon: Icons.description_outlined,
+            title: 'Terms of service',
+            dense: true,
             onTap: () => context.push(RouteNames.termsOfService),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _SettingsLink extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  const _SettingsLink({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = context.tokens;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
-            child: Row(
-              children: [
-                Icon(icon, size: 20, color: AppTheme.primaryColor),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    label,
-                    style: AppFonts.plusJakarta(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: tokens.textPrimary,
-                    ),
-                  ),
-                ),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  color: tokens.textTertiary,
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }

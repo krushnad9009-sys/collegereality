@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../config/router/route_names.dart';
+import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../core/widgets/premium_components.dart';
@@ -24,6 +25,8 @@ class GuidePricingCard extends StatelessWidget {
       return const SizedBox.shrink();
     }
     final stats = guide.stats;
+    final tokens = context.tokens;
+    final primary = Theme.of(context).colorScheme.primary;
 
     return PremiumCard(
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -32,13 +35,14 @@ class GuidePricingCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.verified, size: 18, color: Color(0xFF1D9BF0)),
+              Icon(Icons.verified_rounded, size: 18, color: primary),
               const SizedBox(width: 6),
               Text(
                 'Talk to this student',
                 style: AppFonts.plusJakarta(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
+                  color: tokens.textPrimary,
                 ),
               ),
               const Spacer(),
@@ -74,13 +78,20 @@ class GuidePricingCard extends StatelessWidget {
           ),
           if (stats.completedConsultations > 0) ...[
             const SizedBox(height: 10),
-            Text(
-              '⭐ ${stats.consultationRatingAvg.toStringAsFixed(1)}  (${stats.completedConsultations} consultation${stats.completedConsultations == 1 ? '' : 's'})',
-              style: AppFonts.plusJakarta(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey.shade700,
-              ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.star_rounded, size: 15, color: Color(0xFFF59E0B)),
+                const SizedBox(width: 4),
+                Text(
+                  '${stats.consultationRatingAvg.toStringAsFixed(1)}  (${stats.completedConsultations} consultation${stats.completedConsultations == 1 ? '' : 's'})',
+                  style: AppFonts.plusJakarta(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: tokens.textSecondary,
+                  ),
+                ),
+              ],
             ),
           ],
         ],

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../config/theme/app_fonts.dart';
 
+import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/widgets/index.dart';
 import '../../auth/providers/auth_provider.dart';
@@ -89,6 +90,7 @@ class _EmailVerificationSectionState
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
     final emailVerified =
         ref.watch(authProvider.select((state) => state.user?.emailVerified)) ==
             true;
@@ -96,23 +98,31 @@ class _EmailVerificationSectionState
     if (emailVerified) {
       return Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(14),
         margin: const EdgeInsets.only(bottom: 16),
         decoration: BoxDecoration(
           color: AppTheme.accentColor.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(tokens.buttonRadius),
+          border: Border.all(color: AppTheme.accentColor.withValues(alpha: 0.22)),
         ),
         child: Row(
           children: [
             const Icon(Icons.mark_email_read_rounded, color: AppTheme.accentColor),
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
             Expanded(
               child: Text(
                 'Email verified: ${widget.email}',
-                style: AppFonts.plusJakarta(fontWeight: FontWeight.w600),
+                style: AppFonts.plusJakarta(
+                  fontWeight: FontWeight.w600,
+                  color: tokens.textPrimary,
+                ),
               ),
             ),
-            const Icon(Icons.verified, color: AppTheme.accentColor, size: 18),
+            StatusBadge(
+              label: 'Verified',
+              icon: Icons.verified,
+              color: AppTheme.accentColor,
+            ),
           ],
         ),
       );
@@ -124,23 +134,34 @@ class _EmailVerificationSectionState
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: AppTheme.warningColor.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(tokens.cardRadius),
         border: Border.all(color: AppTheme.warningColor.withValues(alpha: 0.25)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Verify Your Email',
-            style: AppFonts.plusJakarta(
-              fontWeight: FontWeight.w700,
-              color: AppTheme.warningColor,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Verify Your Email',
+                  style: AppFonts.plusJakarta(
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.warningColor,
+                  ),
+                ),
+              ),
+              StatusBadge(
+                label: 'Unverified',
+                icon: Icons.error_outline_rounded,
+                color: AppTheme.warningColor,
+              ),
+            ],
           ),
           const SizedBox(height: 6),
           Text(
             'We sent a link to ${widget.email}. Verify to unlock reviews, bookmarks, and community.',
-            style: AppFonts.plusJakarta(fontSize: 12, color: AppTheme.gray600),
+            style: AppFonts.plusJakarta(fontSize: 12, color: tokens.textSecondary),
           ),
           const SizedBox(height: 12),
           Row(

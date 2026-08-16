@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../config/router/route_names.dart';
-import '../../../config/theme/app_theme.dart';
+import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_fonts.dart';
+import '../../../core/widgets/async_state_widgets.dart';
+import '../../../core/widgets/premium_components.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../placements/providers/placement_provider.dart';
 
@@ -25,15 +27,14 @@ class AdminPlacementsScreen extends ConsumerWidget {
         ),
       ),
       body: pendingAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        loading: () => const AsyncLoadingView(),
+        error: (e, _) => AsyncErrorView.fromError(e),
         data: (items) {
           if (items.isEmpty) {
-            return Center(
-              child: Text(
-                'No pending placement submissions',
-                style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-              ),
+            return const AsyncEmptyView(
+              icon: Icons.work_outline,
+              title: 'No pending submissions',
+              subtitle: 'All placement submissions have been reviewed.',
             );
           }
           return ListView.builder(
@@ -41,36 +42,38 @@ class AdminPlacementsScreen extends ConsumerWidget {
             itemCount: items.length,
             itemBuilder: (context, index) {
               final item = items[index];
-              return Card(
-                margin: const EdgeInsets.only(bottom: 12),
-                child: Padding(
+              final tokens = context.tokens;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: PremiumCard(
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         item.collegeName,
-                        style: GoogleFonts.poppins(
+                        style: AppFonts.plusJakarta(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
+                          color: tokens.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         '${item.companyName} • ${item.jobRole}',
-                        style: GoogleFonts.poppins(fontSize: 13),
+                        style: AppFonts.plusJakarta(fontSize: 13, color: tokens.textPrimary),
                       ),
                       Text(
                         '${item.packageLpa} LPA • ${item.employmentLabel} • ${item.year}',
-                        style: GoogleFonts.poppins(
+                        style: AppFonts.plusJakarta(
                           fontSize: 12,
-                          color: AppTheme.gray600,
+                          color: tokens.textSecondary,
                         ),
                       ),
                       if (item.branch != null)
                         Text(
                           'Branch: ${item.branch}',
-                          style: GoogleFonts.poppins(fontSize: 12),
+                          style: AppFonts.plusJakarta(fontSize: 12, color: tokens.textPrimary),
                         ),
                       const SizedBox(height: 12),
                       Row(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../../config/theme/app_theme.dart';
+import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_fonts.dart';
+import '../../../core/widgets/status_badge.dart';
 import '../models/college_model.dart';
 
 class AccreditationBadges extends StatelessWidget {
@@ -18,7 +19,7 @@ class AccreditationBadges extends StatelessWidget {
     final badges = <Widget>[];
 
     if (universityName != null && universityName!.trim().isNotEmpty) {
-      badges.add(_Badge(
+      badges.add(StatusBadge(
         label: universityName!,
         icon: Icons.account_balance_outlined,
         color: const Color(0xFF1E40AF),
@@ -27,7 +28,7 @@ class AccreditationBadges extends StatelessWidget {
     if (accreditation.naacGrade != null &&
         accreditation.naacGrade!.isNotEmpty &&
         accreditation.naacGrade != 'Not Accredited') {
-      badges.add(_Badge(
+      badges.add(StatusBadge(
         label: 'NAAC ${accreditation.naacGrade}',
         icon: Icons.verified_outlined,
         color: const Color(0xFF059669),
@@ -37,21 +38,21 @@ class AccreditationBadges extends StatelessWidget {
       final category = accreditation.nirfCategory?.isNotEmpty == true
           ? ' (${accreditation.nirfCategory})'
           : '';
-      badges.add(_Badge(
+      badges.add(StatusBadge(
         label: 'NIRF #${accreditation.nirfRank}$category',
         icon: Icons.emoji_events_outlined,
         color: const Color(0xFFD97706),
       ));
     }
     if (accreditation.ugcRecognized) {
-      badges.add(const _Badge(
+      badges.add(const StatusBadge(
         label: 'UGC',
         icon: Icons.check_circle_outline,
         color: Color(0xFF7C3AED),
       ));
     }
     if (accreditation.aicteApproved) {
-      badges.add(const _Badge(
+      badges.add(const StatusBadge(
         label: 'AICTE',
         icon: Icons.approval_outlined,
         color: Color(0xFFDC2626),
@@ -61,49 +62,13 @@ class AccreditationBadges extends StatelessWidget {
     if (badges.isEmpty) {
       return Text(
         'Accreditation details unavailable',
-        style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.gray500),
+        style: AppFonts.plusJakarta(
+          fontSize: 13,
+          color: context.tokens.textTertiary,
+        ),
       );
     }
 
     return Wrap(spacing: 8, runSpacing: 8, children: badges);
-  }
-}
-
-class _Badge extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final Color color;
-
-  const _Badge({
-    required this.label,
-    required this.icon,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: 0.25)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: color),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: GoogleFonts.poppins(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: color,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }

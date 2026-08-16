@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../config/theme/app_fonts.dart';
 import '../../../config/router/route_names.dart';
+import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/rating_parameters.dart';
 import '../../../core/constants/review_constants.dart';
@@ -380,6 +381,8 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
   @override
   Widget build(BuildContext context) {
     final userDetailAsync = ref.watch(currentUserDetailProvider);
+    final tokens = context.tokens;
+    final primary = Theme.of(context).colorScheme.primary;
 
     return userDetailAsync.when(
       loading: () => const Scaffold(
@@ -443,20 +446,21 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(Icons.verified_user_outlined,
-                      size: 64, color: AppTheme.primaryColor.withValues(alpha: 0.5)),
+                      size: 64, color: primary.withValues(alpha: 0.5)),
                   const SizedBox(height: 16),
                   Text(
                     'Verified Students & Alumni Only',
                     style: AppFonts.plusJakarta(
                       fontSize: 20,
                       fontWeight: FontWeight.w700,
+                      color: tokens.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Complete student or alumni verification to share honest, trusted reviews.',
                     textAlign: TextAlign.center,
-                    style: AppFonts.plusJakarta(color: AppTheme.gray600),
+                    style: AppFonts.plusJakarta(color: tokens.textSecondary),
                   ),
                   const SizedBox(height: 24),
                   PrimaryButton(
@@ -473,6 +477,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
             _existingReview != null && !_existingReview!.canEditAgain;
 
         return Scaffold(
+          backgroundColor: tokens.surfaceMuted,
           appBar: AppBar(
             title: Text(_existingReview != null ? 'Edit Review' : 'Write Review'),
             leading: IconButton(
@@ -489,204 +494,257 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
           body: Form(
             key: _formKey,
             child: ListView(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
               children: [
-                Text(
-                  widget.collegeName,
-                  style: AppFonts.plusJakarta(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Icon(Icons.verified, size: 16, color: AppTheme.accentColor),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        'Verified students & alumni only — India\'s most trusted reviews',
+                // College header card.
+                PremiumCard(
+                  radius: tokens.cardRadius,
+                  padding: const EdgeInsets.all(18),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.collegeName,
                         style: AppFonts.plusJakarta(
-                          fontSize: 13,
-                          color: AppTheme.gray600,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: tokens.textPrimary,
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                if (editLocked) ...[
-                  const SizedBox(height: 12),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppTheme.warningColor.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      'You can edit again in ${_existingReview!.daysUntilEditAllowed} day(s). '
-                      'Reviews can be updated once every ${ReviewConstants.editCooldownDays} days.',
-                      style: AppFonts.plusJakarta(
-                        fontSize: 12,
-                        color: AppTheme.gray700,
+                      const SizedBox(height: 8),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(Icons.verified, size: 16, color: AppTheme.accentColor),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              'Verified students & alumni only — India\'s most trusted reviews',
+                              style: AppFonts.plusJakarta(
+                                fontSize: 13,
+                                color: tokens.textSecondary,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 16),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    'Posting as your public display name from profile settings. '
-                    'Verification badge remains visible.',
-                    style: AppFonts.plusJakarta(
-                      fontSize: 12,
-                      color: AppTheme.gray700,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                ...RatingParameters.categories.expand((category) {
-                  return [
-                    Text(
-                      category.label,
-                      style: AppFonts.plusJakarta(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: AppTheme.primaryColor,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    ...category.parameters.map(
-                      (param) => RatingInputRow(
-                        label: param.label,
-                        value: _ratings[param.key] ?? 0,
-                        enabled: !editLocked,
-                        onChanged: (v) =>
-                            setState(() => _ratings[param.key] = v),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                  ];
-                }),
-                Text(
-                  'Yes / No Questions',
-                  style: AppFonts.plusJakarta(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.primaryColor,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                ...ReviewYesNoQuestions.questions.map((question) {
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          question.label,
-                          style: AppFonts.plusJakarta(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
+                      if (editLocked) ...[
+                        const SizedBox(height: 12),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppTheme.warningColor.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(tokens.buttonRadius),
+                          ),
+                          child: Text(
+                            'You can edit again in ${_existingReview!.daysUntilEditAllowed} day(s). '
+                            'Reviews can be updated once every ${ReviewConstants.editCooldownDays} days.',
+                            style: AppFonts.plusJakarta(
+                              fontSize: 12,
+                              color: AppTheme.warningColor,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
-                        const SizedBox(height: 6),
-                        SegmentedButton<bool>(
-                          segments: const [
-                            ButtonSegment(value: true, label: Text('Yes')),
-                            ButtonSegment(value: false, label: Text('No')),
-                          ],
-                          selected: _yesNoAnswers[question.key] != null
-                              ? {_yesNoAnswers[question.key]!}
-                              : {},
-                          emptySelectionAllowed: true,
-                          onSelectionChanged: editLocked
-                              ? null
-                              : (selected) {
-                                  if (selected.isEmpty) return;
-                                  setState(() {
-                                    _yesNoAnswers[question.key] =
-                                        selected.first;
-                                  });
-                                },
-                        ),
                       ],
-                    ),
-                  );
-                }),
-                const SizedBox(height: 8),
-                CustomTextField(
-                  label: 'Course',
-                  hint: 'e.g. B.Tech CSE',
-                  controller: _courseController,
-                  prefixIcon: Icons.menu_book_outlined,
-                ),
-                const SizedBox(height: 16),
-                YearPickerField(
-                  label: 'Batch Year',
-                  value: _batchYear,
-                  onChanged: (year) => setState(() => _batchYear = year),
-                ),
-                const SizedBox(height: 16),
-                CustomTextField(
-                  label: 'Your Review',
-                  hint: 'Share your honest experience (min ${ReviewConstants.minTextLength} characters)...',
-                  controller: _textController,
-                  maxLines: 5,
-                  prefixIcon: Icons.rate_review_outlined,
-                  isRequired: true,
-                ),
-                const SizedBox(height: 16),
-                CustomTextField(
-                  label: 'Pros (comma separated)',
-                  hint: 'Good faculty, Great placements',
-                  controller: _prosController,
-                  prefixIcon: Icons.thumb_up_outlined,
-                ),
-                const SizedBox(height: 16),
-                CustomTextField(
-                  label: 'Cons (comma separated)',
-                  hint: 'Strict attendance, Old hostel',
-                  controller: _consController,
-                  prefixIcon: Icons.thumb_down_outlined,
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  'Photos & Videos',
-                  style: AppFonts.plusJakarta(fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: _isUploadingMedia ? null : _pickPhotos,
-                        icon: const Icon(Icons.photo_outlined),
-                        label: Text('Photos (${_photoUrls.length}/${ReviewConstants.maxPhotos})'),
+                      const SizedBox(height: 12),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: primary.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(tokens.buttonRadius),
+                        ),
+                        child: Text(
+                          'Posting as your public display name from profile settings. '
+                          'Verification badge remains visible.',
+                          style: AppFonts.plusJakarta(
+                            fontSize: 12,
+                            color: tokens.textSecondary,
+                          ),
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: _isUploadingMedia ? null : _pickVideo,
-                        icon: const Icon(Icons.videocam_outlined),
-                        label: Text('Videos (${_videoUrls.length}/${ReviewConstants.maxVideos})'),
-                      ),
-                    ),
-                  ],
-                ),
-                if (_isUploadingMedia)
-                  const Padding(
-                    padding: EdgeInsets.only(top: 8),
-                    child: LinearProgressIndicator(minHeight: 2),
+                    ],
                   ),
-                const SizedBox(height: 32),
+                ),
+                const SizedBox(height: 16),
+
+                // Rating categories card.
+                PremiumCard(
+                  radius: tokens.cardRadius,
+                  padding: const EdgeInsets.all(18),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SectionHeader(
+                        title: 'Rate your experience',
+                        subtitle: 'Slide to rate each category out of 5',
+                      ),
+                      ...RatingParameters.categories.expand((category) {
+                        return [
+                          Text(
+                            category.label,
+                            style: AppFonts.plusJakarta(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: primary,
+                            ),
+                          ),
+                          ...category.parameters.map(
+                            (param) => RatingInputRow(
+                              label: param.label,
+                              value: _ratings[param.key] ?? 0,
+                              enabled: !editLocked,
+                              onChanged: (v) =>
+                                  setState(() => _ratings[param.key] = v),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                        ];
+                      }),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Yes/No questions card.
+                PremiumCard(
+                  radius: tokens.cardRadius,
+                  padding: const EdgeInsets.all(18),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SectionHeader(title: 'Quick questions'),
+                      ...ReviewYesNoQuestions.questions.map((question) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                question.label,
+                                style: AppFonts.plusJakarta(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: tokens.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              SegmentedButton<bool>(
+                                segments: const [
+                                  ButtonSegment(value: true, label: Text('Yes')),
+                                  ButtonSegment(value: false, label: Text('No')),
+                                ],
+                                selected: _yesNoAnswers[question.key] != null
+                                    ? {_yesNoAnswers[question.key]!}
+                                    : {},
+                                emptySelectionAllowed: true,
+                                onSelectionChanged: editLocked
+                                    ? null
+                                    : (selected) {
+                                        if (selected.isEmpty) return;
+                                        setState(() {
+                                          _yesNoAnswers[question.key] =
+                                              selected.first;
+                                        });
+                                      },
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Review text fields card.
+                PremiumCard(
+                  radius: tokens.cardRadius,
+                  padding: const EdgeInsets.all(18),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SectionHeader(title: 'Your review'),
+                      CustomTextField(
+                        label: 'Course',
+                        hint: 'e.g. B.Tech CSE',
+                        controller: _courseController,
+                        prefixIcon: Icons.menu_book_outlined,
+                      ),
+                      const SizedBox(height: 16),
+                      YearPickerField(
+                        label: 'Batch Year',
+                        value: _batchYear,
+                        onChanged: (year) => setState(() => _batchYear = year),
+                      ),
+                      const SizedBox(height: 16),
+                      CustomTextField(
+                        label: 'Your Review',
+                        hint: 'Share your honest experience (min ${ReviewConstants.minTextLength} characters)...',
+                        controller: _textController,
+                        maxLines: 5,
+                        prefixIcon: Icons.rate_review_outlined,
+                        isRequired: true,
+                      ),
+                      const SizedBox(height: 16),
+                      CustomTextField(
+                        label: 'Pros (comma separated)',
+                        hint: 'Good faculty, Great placements',
+                        controller: _prosController,
+                        prefixIcon: Icons.thumb_up_outlined,
+                      ),
+                      const SizedBox(height: 16),
+                      CustomTextField(
+                        label: 'Cons (comma separated)',
+                        hint: 'Strict attendance, Old hostel',
+                        controller: _consController,
+                        prefixIcon: Icons.thumb_down_outlined,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Photo/video upload card.
+                PremiumCard(
+                  radius: tokens.cardRadius,
+                  padding: const EdgeInsets.all(18),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SectionHeader(title: 'Photos & Videos'),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: _isUploadingMedia ? null : _pickPhotos,
+                              icon: const Icon(Icons.photo_outlined),
+                              label: Text('Photos (${_photoUrls.length}/${ReviewConstants.maxPhotos})'),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: _isUploadingMedia ? null : _pickVideo,
+                              icon: const Icon(Icons.videocam_outlined),
+                              label: Text('Videos (${_videoUrls.length}/${ReviewConstants.maxVideos})'),
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (_isUploadingMedia)
+                        const Padding(
+                          padding: EdgeInsets.only(top: 8),
+                          child: LinearProgressIndicator(minHeight: 2),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Submit.
                 PrimaryButton(
                   label: _existingReview != null ? 'Update Review' : 'Submit Review',
                   isLoading: _isSubmitting,

@@ -149,6 +149,7 @@ class PremiumConsultationHomeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Material(
       color: Colors.transparent,
       borderRadius: BorderRadius.circular(20),
@@ -159,10 +160,10 @@ class PremiumConsultationHomeCard extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
+            gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [AppTheme.primaryColor, AppTheme.secondaryColor],
+              colors: [colorScheme.primary, colorScheme.secondary],
             ),
             borderRadius: BorderRadius.circular(20),
           ),
@@ -230,6 +231,7 @@ class CompareCollegesHomeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
+    final primary = Theme.of(context).colorScheme.primary;
     return Material(
       color: Colors.transparent,
       borderRadius: BorderRadius.circular(20),
@@ -249,12 +251,12 @@ class CompareCollegesHomeCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryColor.withValues(alpha: 0.10),
+                  color: primary.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.compare_arrows_rounded,
-                  color: AppTheme.primaryColor,
+                  color: primary,
                   size: 26,
                 ),
               ),
@@ -427,18 +429,19 @@ class StudentReviewsSection extends ConsumerWidget {
       ),
       data: (reviews) {
         if (reviews.isEmpty) {
+          final tokens = context.tokens;
           return PremiumCard(
             padding: const EdgeInsets.all(20),
             child: Column(
               children: [
                 Icon(Icons.rate_review_outlined,
-                    size: 40, color: AppTheme.gray400),
+                    size: 40, color: tokens.textTertiary),
                 const SizedBox(height: 8),
                 Text(
                   'Be the first to share an honest review',
                   style: AppFonts.plusJakarta(
                     fontWeight: FontWeight.w600,
-                    color: AppTheme.gray600,
+                    color: tokens.textSecondary,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -470,6 +473,8 @@ class _ReviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final primary = Theme.of(context).colorScheme.primary;
     return PremiumCard(
       onTap: () => context.go(RouteNames.collegeDetailsPath(review.collegeId)),
       padding: const EdgeInsets.all(16),
@@ -480,14 +485,14 @@ class _ReviewCard extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 18,
-                backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.12),
+                backgroundColor: primary.withValues(alpha: 0.12),
                 child: Text(
                   review.anonymousAlias.isNotEmpty
                       ? review.anonymousAlias[0].toUpperCase()
                       : 'S',
                   style: AppFonts.plusJakarta(
                     fontWeight: FontWeight.w700,
-                    color: AppTheme.primaryColor,
+                    color: primary,
                   ),
                 ),
               ),
@@ -501,6 +506,7 @@ class _ReviewCard extends StatelessWidget {
                       style: AppFonts.plusJakarta(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
+                        color: tokens.textPrimary,
                       ),
                     ),
                     Text(
@@ -509,7 +515,7 @@ class _ReviewCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: AppFonts.plusJakarta(
                         fontSize: 11,
-                        color: AppTheme.gray500,
+                        color: tokens.textTertiary,
                       ),
                     ),
                   ],
@@ -529,7 +535,7 @@ class _ReviewCard extends StatelessWidget {
             style: AppFonts.plusJakarta(
               fontSize: 13,
               height: 1.45,
-              color: AppTheme.gray700,
+              color: tokens.textSecondary,
             ),
           ),
         ],
@@ -587,6 +593,8 @@ class _AlumniStoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final secondary = Theme.of(context).colorScheme.secondary;
     return PremiumCard(
       onTap: () => context.go(RouteNames.careersAlumni),
       padding: const EdgeInsets.all(16),
@@ -599,14 +607,14 @@ class _AlumniStoryCard extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 20,
-                  backgroundColor: AppTheme.secondaryColor.withValues(alpha: 0.15),
+                  backgroundColor: secondary.withValues(alpha: 0.15),
                   child: Text(
                     alumni.displayName.isNotEmpty
                         ? alumni.displayName[0].toUpperCase()
                         : 'A',
                     style: AppFonts.plusJakarta(
                       fontWeight: FontWeight.w700,
-                      color: AppTheme.secondaryColor,
+                      color: secondary,
                     ),
                   ),
                 ),
@@ -622,6 +630,7 @@ class _AlumniStoryCard extends StatelessWidget {
                         style: AppFonts.plusJakarta(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
+                          color: tokens.textPrimary,
                         ),
                       ),
                       Text(
@@ -630,7 +639,7 @@ class _AlumniStoryCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: AppFonts.plusJakarta(
                           fontSize: 11,
-                          color: AppTheme.gray500,
+                          color: tokens.textTertiary,
                         ),
                       ),
                     ],
@@ -643,7 +652,11 @@ class _AlumniStoryCard extends StatelessWidget {
               alumni.successStory,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: AppFonts.plusJakarta(fontSize: 12, height: 1.4),
+              style: AppFonts.plusJakarta(
+                fontSize: 12,
+                height: 1.4,
+                color: tokens.textSecondary,
+              ),
             ),
             const Spacer(),
             Text(
@@ -652,7 +665,7 @@ class _AlumniStoryCard extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: AppFonts.plusJakarta(
                 fontSize: 10,
-                color: AppTheme.gray500,
+                color: tokens.textTertiary,
               ),
             ),
           ],
@@ -705,6 +718,7 @@ class _PlacementTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
     final avg = college.placements.averagePackageLpa;
     final pct = college.placements.placementPercentage;
 
@@ -737,13 +751,14 @@ class _PlacementTile extends StatelessWidget {
                   style: AppFonts.plusJakarta(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
+                    color: tokens.textPrimary,
                   ),
                 ),
                 Text(
                   '${college.city} · ${pct > 0 ? '$pct% placed' : 'Placements tracked'}',
                   style: AppFonts.plusJakarta(
                     fontSize: 11,
-                    color: AppTheme.gray500,
+                    color: tokens.textTertiary,
                   ),
                 ),
               ],

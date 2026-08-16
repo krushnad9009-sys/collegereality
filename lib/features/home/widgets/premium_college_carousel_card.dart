@@ -379,6 +379,7 @@ class _MiniStat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
@@ -410,7 +411,7 @@ class _MiniStat extends StatelessWidget {
                     style: AppFonts.plusJakarta(
                       fontSize: 10,
                       fontWeight: FontWeight.w500,
-                      color: AppTheme.gray500,
+                      color: tokens.textTertiary,
                     ),
                   ),
                 ],

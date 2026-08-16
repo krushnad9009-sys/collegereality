@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../utils/admin_route_resolver.dart';
+import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_fonts.dart';
 import '../../../core/constants/admin_constants.dart';
+import '../../../core/widgets/async_state_widgets.dart';
+import '../../../core/widgets/premium_components.dart';
 import '../providers/admin_dashboard_provider.dart';
 import '../utils/admin_moderation_utils.dart';
 
@@ -40,8 +43,8 @@ class AdminReportsHubScreen extends ConsumerWidget {
           ],
         ),
         body: reportsAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Center(child: Text('Failed to load reports: $e')),
+          loading: () => const AsyncLoadingView(),
+          error: (e, _) => AsyncErrorView.fromError(e),
           data: (reports) => TabBarView(
             children: [
               _ReportList(reports: reports),
@@ -73,7 +76,11 @@ class _ReportList extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (reports.isEmpty) {
-      return const Center(child: Text('No open reports'));
+      return const AsyncEmptyView(
+        icon: Icons.flag_outlined,
+        title: 'No open reports',
+        subtitle: 'Nothing to moderate right now.',
+      );
     }
 
     return ListView.separated(
@@ -83,42 +90,47 @@ class _ReportList extends ConsumerWidget {
       itemBuilder: (context, index) {
         final report = reports[index];
         final label = moderationLabel(reason: report.reason, source: report.source);
-        return Card(
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label, style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-                const SizedBox(height: 4),
-                Text(report.reason),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    TextButton.icon(
-                      onPressed: () => _resolve(
-                        ref,
-                        report,
-                        AdminConstants.reportStatusReviewed,
-                        context,
-                      ),
-                      icon: const Icon(Icons.check, color: Colors.green),
-                      label: const Text('Approve'),
+        final tokens = context.tokens;
+        return PremiumCard(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: AppFonts.plusJakarta(fontWeight: FontWeight.w700, color: tokens.textPrimary),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                report.reason,
+                style: AppFonts.plusJakarta(fontSize: 13, color: tokens.textSecondary),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  TextButton.icon(
+                    onPressed: () => _resolve(
+                      ref,
+                      report,
+                      AdminConstants.reportStatusReviewed,
+                      context,
                     ),
-                    TextButton.icon(
-                      onPressed: () => _resolve(
-                        ref,
-                        report,
-                        AdminConstants.reportStatusActionTaken,
-                        context,
-                      ),
-                      icon: const Icon(Icons.block, color: Colors.red),
-                      label: const Text('Reject'),
+                    icon: const Icon(Icons.check, color: Colors.green),
+                    label: const Text('Approve'),
+                  ),
+                  TextButton.icon(
+                    onPressed: () => _resolve(
+                      ref,
+                      report,
+                      AdminConstants.reportStatusActionTaken,
+                      context,
                     ),
-                  ],
-                ),
-              ],
-            ),
+                    icon: const Icon(Icons.block, color: Colors.red),
+                    label: const Text('Reject'),
+                  ),
+                ],
+              ),
+            ],
           ),
         );
       },

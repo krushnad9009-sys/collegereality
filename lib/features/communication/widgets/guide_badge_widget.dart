@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../../config/theme/app_theme.dart';
+import '../../../config/theme/app_fonts.dart';
 import '../../../core/constants/communication_constants.dart';
 
 class GuideBadgeWidget extends StatelessWidget {
@@ -44,9 +43,9 @@ class GuideBadgeWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: 0.5)),
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.32)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -55,10 +54,11 @@ class GuideBadgeWidget extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             label,
-            style: GoogleFonts.poppins(
-              fontSize: 11,
+            style: AppFonts.plusJakarta(
+              fontSize: 11.5,
               fontWeight: FontWeight.w700,
-              color: AppTheme.gray800,
+              color: color,
+              letterSpacing: -0.1,
             ),
           ),
         ],

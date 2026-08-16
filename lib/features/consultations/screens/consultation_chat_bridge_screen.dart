@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../config/theme/app_fonts.dart';
 import '../../../core/constants/consultation_constants.dart';
 import '../../community/screens/chat_screen.dart';
 import '../models/consultation_model.dart';
@@ -47,9 +48,21 @@ class ConsultationChatBridgeScreen extends ConsumerWidget {
             top: MediaQuery.of(context).padding.top + 8,
             right: 8,
             child: SafeArea(
-              child: FilledButton.tonal(
+              child: FilledButton.tonalIcon(
                 onPressed: () => _endAndRate(context, ref),
-                child: const Text('End & rate'),
+                style: FilledButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+                icon: const Icon(Icons.check_circle_outline_rounded, size: 18),
+                label: Text(
+                  'End & rate',
+                  style: AppFonts.plusJakarta(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ),
             ),
           ),

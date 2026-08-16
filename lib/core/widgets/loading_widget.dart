@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../config/theme/app_design_tokens.dart';
+import '../../config/theme/app_fonts.dart';
 import '../../config/theme/app_theme.dart';
 
 class LoadingOverlay extends StatelessWidget {
@@ -21,26 +22,34 @@ class LoadingOverlay extends StatelessWidget {
         child,
         if (isLoading)
           Container(
-            color: Colors.black.withValues(alpha: 0.3),
+            color: Colors.black.withValues(alpha: 0.4),
             child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      AppTheme.primaryColor,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+                decoration: BoxDecoration(
+                  color: AppTheme.gray900.withValues(alpha: 0.85),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(
+                      strokeWidth: 3,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        AppTheme.primaryLight,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    message,
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: AppTheme.white,
+                    const SizedBox(height: 16),
+                    Text(
+                      message,
+                      style: AppFonts.plusJakarta(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.white,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -59,29 +68,31 @@ class LoadingDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final tokens = context.tokens;
     return Dialog(
-      backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? AppTheme.gray800
-          : AppTheme.white,
+      backgroundColor: tokens.surfaceElevated,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(tokens.cardRadius),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(28),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             CircularProgressIndicator(
+              strokeWidth: 3,
               valueColor: AlwaysStoppedAnimation<Color>(
-                AppTheme.primaryColor,
+                isDark ? AppTheme.primaryLight : AppTheme.primaryColor,
               ),
             ),
             const SizedBox(height: 16),
             Text(
               message,
-              style: GoogleFonts.poppins(
+              style: AppFonts.plusJakarta(
                 fontSize: 14,
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.w600,
+                color: tokens.textPrimary,
               ),
             ),
           ],

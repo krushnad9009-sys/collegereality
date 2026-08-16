@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 import '../../../config/router/route_names.dart';
-import '../../../config/theme/app_theme.dart';
+import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_fonts.dart';
+import '../../../config/theme/app_spacing.dart';
 import '../../../core/constants/social_constants.dart';
+import '../../../core/widgets/async_state_widgets.dart';
+import '../../../core/widgets/premium_components.dart';
 import '../../auth/providers/user_provider.dart';
 import '../models/social_models.dart';
 import '../providers/social_provider.dart';
@@ -67,10 +70,22 @@ class _CollegeDiscussionFeedScreenState
   Widget build(BuildContext context) {
     final user = ref.watch(currentUserDetailProvider).valueOrNull;
     final collegeName = user?.collegeName ?? 'Your College';
+    final tokens = context.tokens;
 
     return Scaffold(
+      backgroundColor: tokens.surfaceMuted,
       appBar: AppBar(
-        title: const Text('College Discussion Feed'),
+        elevation: 0,
+        scrolledUnderElevation: 0.5,
+        backgroundColor: tokens.surfaceElevated,
+        title: Text(
+          'College Discussion Feed',
+          style: AppFonts.plusJakarta(
+            fontWeight: FontWeight.w700,
+            fontSize: 16,
+            color: tokens.textPrimary,
+          ),
+        ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
           onPressed: () => context.pop(),
@@ -84,48 +99,61 @@ class _CollegeDiscussionFeedScreenState
         ],
       ),
       body: user?.collegeId == null
-          ? Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text(
-                  'Set your college in profile to see the discussion feed.',
-                  style: GoogleFonts.poppins(color: AppTheme.gray600),
-                  textAlign: TextAlign.center,
-                ),
-              ),
+          ? AsyncEmptyView(
+              icon: Icons.school_outlined,
+              title: 'Set your college first',
+              subtitle: 'Add your college in Profile to see the discussion feed.',
             )
           : RefreshIndicator(
               onRefresh: _loadInitial,
               child: _items.isEmpty && !_loading
                   ? ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
                       children: [
-                        const SizedBox(height: 120),
-                        Center(
-                          child: Text(
-                            'No discussions yet for $collegeName',
-                            style: GoogleFonts.poppins(color: AppTheme.gray500),
+                        SizedBox(
+                          height: MediaQuery.sizeOf(context).height * 0.55,
+                          child: AsyncEmptyView(
+                            icon: Icons.forum_outlined,
+                            title: 'No discussions yet',
+                            subtitle: 'Be the first to start a discussion for $collegeName.',
                           ),
                         ),
                       ],
                     )
                   : ListView.separated(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(AppSpacing.lg),
                       itemCount: _items.length + (_hasMore ? 1 : 0),
-                      separatorBuilder: (_, _) => const SizedBox(height: 10),
+                      separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
                       itemBuilder: (context, index) {
                         if (index >= _items.length) {
                           if (_loading) {
-                            return const Center(
-                              child: Padding(
-                                padding: EdgeInsets.all(16),
-                                child: CircularProgressIndicator(),
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+                              child: Center(
+                                child: SizedBox(
+                                  width: 22,
+                                  height: 22,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.4,
+                                    color: Theme.of(context).colorScheme.primary,
+                                  ),
+                                ),
                               ),
                             );
                           }
-                          return Center(
-                            child: TextButton(
-                              onPressed: _loadMore,
-                              child: const Text('Load more'),
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                            child: Center(
+                              child: OutlinedButton(
+                                onPressed: _loadMore,
+                                child: Text(
+                                  'Load more',
+                                  style: AppFonts.plusJakarta(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
                             ),
                           );
                         }
@@ -152,76 +180,94 @@ class _FeedCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final primary = Theme.of(context).colorScheme.primary;
     final dateFmt = DateFormat('MMM d, h:mm a');
-    return Card(
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+
+    return PremiumCard(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      onTap: onTap,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  Chip(
-                    label: Text(
-                      item.feedTypeLabel,
-                      style: const TextStyle(fontSize: 11),
-                    ),
-                    visualDensity: VisualDensity.compact,
-                    backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  item.feedTypeLabel,
+                  style: AppFonts.plusJakarta(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: primary,
                   ),
-                  const Spacer(),
-                  Text(
-                    dateFmt.format(item.createdAt),
-                    style: GoogleFonts.poppins(
-                      fontSize: 11,
-                      color: AppTheme.gray500,
-                    ),
-                  ),
-                ],
+                ),
               ),
-              const SizedBox(height: 8),
+              const Spacer(),
               Text(
-                item.isAnonymous ? 'Anonymous Student' : item.authorName,
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                ),
-              ),
-              if (item.preview.isNotEmpty) ...[
-                const SizedBox(height: 6),
-                Text(
-                  item.preview,
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    color: AppTheme.gray700,
-                    height: 1.4,
-                  ),
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  if (item.likeCount > 0) ...[
-                    const Icon(Icons.favorite_border, size: 14, color: AppTheme.gray500),
-                    const SizedBox(width: 4),
-                    Text('${item.likeCount}', style: const TextStyle(fontSize: 12)),
-                    const SizedBox(width: 12),
-                  ],
-                  if (item.replyCount > 0) ...[
-                    const Icon(Icons.chat_bubble_outline, size: 14, color: AppTheme.gray500),
-                    const SizedBox(width: 4),
-                    Text('${item.replyCount}', style: const TextStyle(fontSize: 12)),
-                  ],
-                ],
+                dateFmt.format(item.createdAt),
+                style: AppFonts.plusJakarta(fontSize: 11, color: tokens.textTertiary),
               ),
             ],
           ),
-        ),
+          const SizedBox(height: 10),
+          Text(
+            item.isAnonymous ? 'Anonymous Student' : item.authorName,
+            style: AppFonts.plusJakarta(
+              fontWeight: FontWeight.w700,
+              fontSize: 14,
+              color: tokens.textPrimary,
+              letterSpacing: -0.2,
+            ),
+          ),
+          if (item.preview.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              item.preview,
+              style: AppFonts.plusJakarta(
+                fontSize: 13,
+                color: tokens.textSecondary,
+                height: 1.4,
+              ),
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              if (item.likeCount > 0) ...[
+                Icon(Icons.favorite_border_rounded, size: 14, color: tokens.textTertiary),
+                const SizedBox(width: 4),
+                Text(
+                  '${item.likeCount}',
+                  style: AppFonts.plusJakarta(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: tokens.textSecondary,
+                  ),
+                ),
+                const SizedBox(width: 12),
+              ],
+              if (item.replyCount > 0) ...[
+                Icon(Icons.chat_bubble_outline_rounded, size: 14, color: tokens.textTertiary),
+                const SizedBox(width: 4),
+                Text(
+                  '${item.replyCount}',
+                  style: AppFonts.plusJakarta(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: tokens.textSecondary,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ],
       ),
     );
   }

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../config/theme/app_fonts.dart';
+import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/widgets/index.dart';
 import '../../../core/services/phone_auth_service.dart';
@@ -226,26 +227,36 @@ class _PhoneVerificationSectionState
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
+
     if (widget.isPhoneVerified) {
       return Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(14),
         margin: const EdgeInsets.only(bottom: 16),
         decoration: BoxDecoration(
           color: AppTheme.accentColor.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(tokens.buttonRadius),
+          border: Border.all(color: AppTheme.accentColor.withValues(alpha: 0.22)),
         ),
         child: Row(
           children: [
             const Icon(Icons.phone_android, color: AppTheme.accentColor),
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
             Expanded(
               child: Text(
                 'Phone verified: +91 ${widget.currentPhone ?? ''}',
-                style: AppFonts.plusJakarta(fontWeight: FontWeight.w600),
+                style: AppFonts.plusJakarta(
+                  fontWeight: FontWeight.w600,
+                  color: tokens.textPrimary,
+                ),
               ),
             ),
-            const Icon(Icons.verified, color: AppTheme.accentColor, size: 18),
+            StatusBadge(
+              label: 'Verified',
+              icon: Icons.verified,
+              color: AppTheme.accentColor,
+            ),
           ],
         ),
       );
@@ -257,7 +268,7 @@ class _PhoneVerificationSectionState
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: AppTheme.secondaryColor.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(tokens.cardRadius),
         border: Border.all(
           color: AppTheme.secondaryColor.withValues(alpha: 0.25),
         ),
@@ -265,17 +276,28 @@ class _PhoneVerificationSectionState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Phone Verification',
-            style: AppFonts.plusJakarta(
-              fontWeight: FontWeight.w700,
-              color: AppTheme.secondaryColor,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Phone Verification',
+                  style: AppFonts.plusJakarta(
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.secondaryColor,
+                  ),
+                ),
+              ),
+              StatusBadge(
+                label: 'Unverified',
+                icon: Icons.error_outline_rounded,
+                color: AppTheme.secondaryColor,
+              ),
+            ],
           ),
           const SizedBox(height: 8),
           Text(
             'Verify your mobile number using a one-time password (OTP).',
-            style: AppFonts.plusJakarta(fontSize: 12, color: AppTheme.gray600),
+            style: AppFonts.plusJakarta(fontSize: 12, color: tokens.textSecondary),
           ),
           const SizedBox(height: 12),
           PhoneTextField(
@@ -313,7 +335,7 @@ class _PhoneVerificationSectionState
                   'Resend available in $_resendSeconds s',
                   style: AppFonts.plusJakarta(
                     fontSize: 12,
-                    color: AppTheme.gray500,
+                    color: tokens.textTertiary,
                   ),
                 ),
               ),

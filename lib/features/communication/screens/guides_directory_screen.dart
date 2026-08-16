@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../config/router/route_names.dart';
+import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_fonts.dart';
-import '../../../config/theme/app_theme.dart';
+import '../../../config/theme/app_spacing.dart';
 import '../../../core/constants/communication_constants.dart';
 import '../../../core/widgets/index.dart';
 import '../models/public_guide_profile.dart';
@@ -26,6 +27,7 @@ class _GuidesDirectoryScreenState extends ConsumerState<GuidesDirectoryScreen> {
   @override
   Widget build(BuildContext context) {
     final guidesAsync = ref.watch(guidesDirectoryProvider(_languageFilter));
+    final tokens = context.tokens;
 
     return Scaffold(
       appBar: AppBar(
@@ -41,19 +43,18 @@ class _GuidesDirectoryScreenState extends ConsumerState<GuidesDirectoryScreen> {
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
             decoration: BoxDecoration(
               color: Theme.of(context).scaffoldBackgroundColor,
-              border: Border(bottom: BorderSide(color: AppTheme.gray200)),
+              border: Border(bottom: BorderSide(color: tokens.borderSubtle)),
             ),
             child: Row(
               children: [
-                const Icon(Icons.language_outlined,
-                    size: 18, color: AppTheme.gray600),
+                Icon(Icons.language_outlined, size: 18, color: tokens.textTertiary),
                 const SizedBox(width: 8),
                 Expanded(
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
                       children: [
-                        _LanguageFilterChip(
+                        PremiumChip(
                           label: 'All languages',
                           selected: _languageFilter == null,
                           onTap: () {
@@ -65,7 +66,7 @@ class _GuidesDirectoryScreenState extends ConsumerState<GuidesDirectoryScreen> {
                         ...CommunicationConstants.supportedLanguages.map(
                           (lang) => Padding(
                             padding: const EdgeInsets.only(left: 8),
-                            child: _LanguageFilterChip(
+                            child: PremiumChip(
                               label: lang,
                               selected: _languageFilter == lang,
                               onTap: () {
@@ -122,41 +123,6 @@ class _GuidesDirectoryScreenState extends ConsumerState<GuidesDirectoryScreen> {
   }
 }
 
-class _LanguageFilterChip extends StatelessWidget {
-  const _LanguageFilterChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 160),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: selected ? AppTheme.primaryColor : AppTheme.gray100,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(
-          label,
-          style: AppFonts.plusJakarta(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: selected ? AppTheme.white : AppTheme.gray700,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _GuideListTile extends StatelessWidget {
   final PublicGuideProfile guide;
 
@@ -164,7 +130,8 @@ class _GuideListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final tokens = context.tokens;
+    final primary = Theme.of(context).colorScheme.primary;
     final settings = guide.settings;
     final priceLabel = settings.chatAvailable && settings.chatPricePaise > 0
         ? '₹${(settings.chatPricePaise / 100).round()} chat'
@@ -180,7 +147,7 @@ class _GuideListTile extends StatelessWidget {
     return PremiumCard(
       padding: EdgeInsets.zero,
       child: InkWell(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(tokens.cardRadius),
         onTap: () => context.push(RouteNames.guideProfilePath(guide.uid)),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -195,8 +162,7 @@ class _GuideListTile extends StatelessWidget {
                     children: [
                       CircleAvatar(
                         radius: 26,
-                        backgroundColor:
-                            AppTheme.primaryColor.withValues(alpha: 0.15),
+                        backgroundColor: primary.withValues(alpha: 0.15),
                         backgroundImage: guide.photoURL != null
                             ? NetworkImage(guide.photoURL!)
                             : null,
@@ -208,7 +174,7 @@ class _GuideListTile extends StatelessWidget {
                                 style: AppFonts.plusJakarta(
                                   fontWeight: FontWeight.w800,
                                   fontSize: 18,
-                                  color: AppTheme.primaryColor,
+                                  color: primary,
                                 ),
                               )
                             : null,
@@ -219,8 +185,7 @@ class _GuideListTile extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.all(2),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).cardTheme.color ??
-                                AppTheme.white,
+                            color: tokens.surfaceElevated,
                             shape: BoxShape.circle,
                           ),
                           child: Container(
@@ -229,8 +194,8 @@ class _GuideListTile extends StatelessWidget {
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: guide.presence.isOnline
-                                  ? AppTheme.accentColor
-                                  : AppTheme.gray400,
+                                  ? PresenceState.online.color
+                                  : tokens.textTertiary,
                             ),
                           ),
                         ),
@@ -247,7 +212,12 @@ class _GuideListTile extends StatelessWidget {
                             Expanded(
                               child: Text(
                                 guide.displayName,
-                                style: textTheme.titleLarge,
+                                style: AppFonts.plusJakarta(
+                                  fontSize: 15.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: tokens.textPrimary,
+                                  letterSpacing: -0.2,
+                                ),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
@@ -260,8 +230,11 @@ class _GuideListTile extends StatelessWidget {
                         if (guide.collegeName != null)
                           Text(
                             guide.collegeName!,
-                            style: textTheme.bodySmall
-                                ?.copyWith(color: AppTheme.gray600),
+                            style: AppFonts.plusJakarta(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w500,
+                              color: tokens.textSecondary,
+                            ),
                             overflow: TextOverflow.ellipsis,
                           ),
                         const SizedBox(height: 4),
@@ -281,13 +254,13 @@ class _GuideListTile extends StatelessWidget {
                     _MiniChip(
                       icon: Icons.star_rounded,
                       label: guide.stats.overallRating.toStringAsFixed(1),
-                      color: AppTheme.warningColor,
+                      color: const Color(0xFFF59E0B),
                     ),
                   if (priceLabel != null)
                     _MiniChip(
                       icon: Icons.payments_outlined,
                       label: priceLabel,
-                      color: AppTheme.primaryColor,
+                      color: primary,
                     ),
                 ],
               ),
@@ -295,7 +268,11 @@ class _GuideListTile extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   guide.languagesKnown.join(' · '),
-                  style: textTheme.bodySmall?.copyWith(color: AppTheme.gray600),
+                  style: AppFonts.plusJakarta(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w500,
+                    color: tokens.textSecondary,
+                  ),
                 ),
               ],
             ],
@@ -314,7 +291,7 @@ class _MiniChip extends StatelessWidget {
   const _MiniChip({
     required this.icon,
     required this.label,
-    this.color = AppTheme.gray600,
+    required this.color,
   });
 
   @override
@@ -323,7 +300,7 @@ class _MiniChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppSpacing.radiusXs),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

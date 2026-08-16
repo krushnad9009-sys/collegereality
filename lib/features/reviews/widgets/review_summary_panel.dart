@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/rating_parameters.dart';
+import '../../../core/widgets/status_badge.dart';
 import '../../colleges/models/college_model.dart';
 import 'star_rating_widget.dart';
 import 'rating_distribution_chart.dart';
@@ -13,6 +15,8 @@ class ReviewSummaryPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final primary = Theme.of(context).colorScheme.primary;
     final ratings = college.aggregatedRatings;
     final breakdown = RatingParameters.allKeys
         .map((key) => (RatingParameters.labelFor(key), ratings.ratingFor(key)))
@@ -21,11 +25,11 @@ class ReviewSummaryPanel extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: AppTheme.primaryColor.withValues(alpha: 0.04),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.12)),
+        color: tokens.surfaceElevated,
+        borderRadius: BorderRadius.circular(tokens.cardRadius),
+        border: Border.all(color: tokens.borderSubtle),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -41,7 +45,7 @@ class ReviewSummaryPanel extends StatelessWidget {
                     style: AppFonts.plusJakarta(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: AppTheme.gray600,
+                      color: tokens.textSecondary,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -50,7 +54,7 @@ class ReviewSummaryPanel extends StatelessWidget {
                     style: AppFonts.plusJakarta(
                       fontSize: 36,
                       fontWeight: FontWeight.w800,
-                      color: AppTheme.primaryColor,
+                      color: primary,
                     ),
                   ),
                   StarRatingDisplay(rating: ratings.overall, starSize: 16),
@@ -59,7 +63,7 @@ class ReviewSummaryPanel extends StatelessWidget {
                     '${college.reviewCount} verified review${college.reviewCount == 1 ? '' : 's'}',
                     style: AppFonts.plusJakarta(
                       fontSize: 11,
-                      color: AppTheme.gray600,
+                      color: tokens.textSecondary,
                     ),
                   ),
                 ],
@@ -74,7 +78,7 @@ class ReviewSummaryPanel extends StatelessWidget {
                       style: AppFonts.plusJakarta(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: AppTheme.gray600,
+                        color: tokens.textSecondary,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -93,6 +97,7 @@ class ReviewSummaryPanel extends StatelessWidget {
               style: AppFonts.plusJakarta(
                 fontWeight: FontWeight.w700,
                 fontSize: 13,
+                color: tokens.textPrimary,
               ),
             ),
             const SizedBox(height: 10),
@@ -110,6 +115,7 @@ class ReviewSummaryPanel extends StatelessWidget {
                           style: AppFonts.plusJakarta(
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
+                            color: tokens.textSecondary,
                           ),
                         ),
                         Text(
@@ -117,7 +123,7 @@ class ReviewSummaryPanel extends StatelessWidget {
                           style: AppFonts.plusJakarta(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
-                            color: AppTheme.primaryColor,
+                            color: primary,
                           ),
                         ),
                       ],
@@ -127,7 +133,7 @@ class ReviewSummaryPanel extends StatelessWidget {
                       value: item.$2 / 5,
                       minHeight: 6,
                       borderRadius: BorderRadius.circular(4),
-                      backgroundColor: AppTheme.gray200,
+                      backgroundColor: tokens.borderSubtle,
                       color: AppTheme.warningColor,
                     ),
                   ],
@@ -140,13 +146,13 @@ class ReviewSummaryPanel extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFF059669).withValues(alpha: 0.08),
+                color: AppTheme.accentColor.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Row(
                 children: [
                   const Icon(Icons.thumb_up_alt_outlined,
-                      color: Color(0xFF059669)),
+                      color: AppTheme.accentColor),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
@@ -154,6 +160,7 @@ class ReviewSummaryPanel extends StatelessWidget {
                       style: AppFonts.plusJakarta(
                         fontWeight: FontWeight.w600,
                         fontSize: 13,
+                        color: tokens.textPrimary,
                       ),
                     ),
                   ),
@@ -206,27 +213,13 @@ class _TrustChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return StatusBadge(
+      label: label,
+      icon: icon,
+      color: AppTheme.accentColor,
+      fontSize: 10,
+      iconSize: 12,
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: AppTheme.accentColor.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 12, color: AppTheme.accentColor),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: AppFonts.plusJakarta(
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              color: AppTheme.accentColor,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

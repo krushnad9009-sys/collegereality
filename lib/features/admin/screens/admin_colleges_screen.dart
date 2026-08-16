@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../config/theme/app_spacing.dart';
+import '../../../core/widgets/premium_components.dart';
+import '../../../core/widgets/premium_list_row.dart';
 import '../utils/admin_route_resolver.dart';
 import '../widgets/admin_shell_layout.dart';
 import '../../colleges/models/college_model.dart';
@@ -68,7 +70,7 @@ class _AdminCollegesScreenState extends ConsumerState<AdminCollegesScreen> {
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, 0),
             child: Align(
               alignment: Alignment.centerRight,
               child: FilledButton.icon(
@@ -79,7 +81,7 @@ class _AdminCollegesScreenState extends ConsumerState<AdminCollegesScreen> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppSpacing.lg),
             child: Row(
               children: [
                 Expanded(
@@ -90,13 +92,13 @@ class _AdminCollegesScreenState extends ConsumerState<AdminCollegesScreen> {
                       prefixIcon: const Icon(Icons.search),
                       filled: true,
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
                       ),
                     ),
                     onSubmitted: (_) => _search(),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacing.sm),
                 IconButton(
                   onPressed: _loading ? null : () => _search(),
                   icon: const Icon(Icons.refresh),
@@ -107,9 +109,10 @@ class _AdminCollegesScreenState extends ConsumerState<AdminCollegesScreen> {
           Expanded(
             child: _loading && _colleges.isEmpty
                 ? const Center(child: CircularProgressIndicator())
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                : ListView.separated(
+                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                     itemCount: _colleges.length + (_hasMore ? 1 : 0),
+                    separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
                     itemBuilder: (context, index) {
                       if (index == _colleges.length) {
                         return TextButton(
@@ -118,17 +121,13 @@ class _AdminCollegesScreenState extends ConsumerState<AdminCollegesScreen> {
                         );
                       }
                       final college = _colleges[index];
-                      return Card(
-                        child: ListTile(
-                          title: Text(
-                            college.name,
-                            style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-                          ),
-                          subtitle: Text(
-                            '${college.city}, ${college.state} · '
-                            '${college.isActive ? 'Active' : 'Inactive'}',
-                          ),
-                          trailing: const Icon(Icons.edit_outlined),
+                      return PremiumCard(
+                        padding: EdgeInsets.zero,
+                        child: PremiumListRow(
+                          leadingIcon: Icons.school_outlined,
+                          title: college.name,
+                          subtitle: '${college.city}, ${college.state} · '
+                              '${college.isActive ? 'Active' : 'Inactive'}',
                           onTap: () => context.go(
                             AdminRouteResolver.collegeEdit(context, college.id),
                           ),

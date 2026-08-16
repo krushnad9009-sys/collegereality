@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/rating_parameters.dart';
+import '../../../core/widgets/premium_components.dart';
+import '../../../core/widgets/status_badge.dart';
 import '../models/review_model.dart';
 import '../providers/review_provider.dart';
 import 'review_media_gallery.dart';
@@ -46,20 +49,18 @@ class _ReviewCardWidgetState extends ConsumerState<ReviewCardWidget> {
   Widget build(BuildContext context) {
     final review = widget.review;
     final theme = Theme.of(context);
+    final tokens = context.tokens;
+    final primary = theme.colorScheme.primary;
     final helpfulMarkedAsync = ref.watch(reviewHelpfulMarkedProvider(review.id));
     final optimisticMarked = ref.watch(optimisticHelpfulProvider).contains(review.id);
     final hasMarked = helpfulMarkedAsync.valueOrNull == true || optimisticMarked;
     final displayHelpfulCount =
         review.helpfulCount + (optimisticMarked ? 1 : 0);
 
-    return Card(
-      elevation: 0,
-      margin: const EdgeInsets.only(bottom: 14),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
-        side: BorderSide(color: AppTheme.gray200.withValues(alpha: 0.9)),
-      ),
-      child: Padding(
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: PremiumCard(
+        radius: tokens.cardRadius,
         padding: const EdgeInsets.all(18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -73,7 +74,7 @@ class _ReviewCardWidgetState extends ConsumerState<ReviewCardWidget> {
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        AppTheme.primaryColor.withValues(alpha: 0.15),
+                        primary.withValues(alpha: 0.15),
                         AppTheme.secondaryColor.withValues(alpha: 0.15),
                       ],
                     ),
@@ -81,7 +82,7 @@ class _ReviewCardWidgetState extends ConsumerState<ReviewCardWidget> {
                   ),
                   child: Icon(
                     review.isAnonymous ? Icons.visibility_off_outlined : Icons.school_outlined,
-                    color: AppTheme.primaryColor,
+                    color: primary,
                     size: 22,
                   ),
                 ),
@@ -116,7 +117,7 @@ class _ReviewCardWidgetState extends ConsumerState<ReviewCardWidget> {
                             ].join(' · '),
                             style: AppFonts.plusJakarta(
                               fontSize: 12,
-                              color: AppTheme.gray500,
+                              color: tokens.textTertiary,
                             ),
                           ),
                         ),
@@ -134,7 +135,7 @@ class _ReviewCardWidgetState extends ConsumerState<ReviewCardWidget> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryColor.withValues(alpha: 0.08),
+                  color: primary.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
@@ -142,7 +143,7 @@ class _ReviewCardWidgetState extends ConsumerState<ReviewCardWidget> {
                   style: AppFonts.plusJakarta(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: AppTheme.primaryColor,
+                    color: primary,
                   ),
                 ),
               ),
@@ -157,7 +158,7 @@ class _ReviewCardWidgetState extends ConsumerState<ReviewCardWidget> {
                 review.textReview,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   height: 1.55,
-                  color: AppTheme.gray700,
+                  color: tokens.textSecondary,
                 ),
               ),
             ],
@@ -198,7 +199,7 @@ class _ReviewCardWidgetState extends ConsumerState<ReviewCardWidget> {
                     style: AppFonts.plusJakarta(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: AppTheme.primaryColor,
+                      color: primary,
                     ),
                   ),
                   Icon(
@@ -206,7 +207,7 @@ class _ReviewCardWidgetState extends ConsumerState<ReviewCardWidget> {
                         ? Icons.keyboard_arrow_up
                         : Icons.keyboard_arrow_down,
                     size: 18,
-                    color: AppTheme.primaryColor,
+                    color: primary,
                   ),
                 ],
               ),
@@ -231,8 +232,8 @@ class _ReviewCardWidgetState extends ConsumerState<ReviewCardWidget> {
                         flex: 3,
                         child: LinearProgressIndicator(
                           value: value / 5,
-                          backgroundColor: AppTheme.gray200,
-                          color: AppTheme.primaryColor,
+                          backgroundColor: tokens.borderSubtle,
+                          color: primary,
                           minHeight: 6,
                           borderRadius: BorderRadius.circular(4),
                         ),
@@ -257,7 +258,7 @@ class _ReviewCardWidgetState extends ConsumerState<ReviewCardWidget> {
                   _formatDate(review.createdAt),
                   style: AppFonts.plusJakarta(
                     fontSize: 11,
-                    color: AppTheme.gray400,
+                    color: tokens.textTertiary,
                   ),
                 ),
                 const Spacer(),
@@ -267,7 +268,7 @@ class _ReviewCardWidgetState extends ConsumerState<ReviewCardWidget> {
                     icon: Icon(
                       hasMarked ? Icons.thumb_up : Icons.thumb_up_outlined,
                       size: 16,
-                      color: hasMarked ? AppTheme.primaryColor : null,
+                      color: hasMarked ? primary : null,
                     ),
                     label: Text(
                       hasMarked
@@ -342,27 +343,13 @@ class _VerifiedChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return StatusBadge(
+      label: label,
+      icon: Icons.verified,
+      color: AppTheme.accentColor,
+      fontSize: 10,
+      iconSize: 12,
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: AppTheme.accentColor.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.verified, size: 12, color: AppTheme.accentColor),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: AppFonts.plusJakarta(
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              color: AppTheme.accentColor,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -377,22 +364,14 @@ class _StatusChip extends StatelessWidget {
     final normalized = ReviewModel.normalizeStatus(status);
     Color color = AppTheme.warningColor;
     if (normalized == ReviewModel.statusRejected) color = AppTheme.errorColor;
-    if (normalized == ReviewModel.statusHidden) color = AppTheme.gray500;
+    if (normalized == ReviewModel.statusHidden) {
+      color = context.tokens.textTertiary;
+    }
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        normalized.toUpperCase(),
-        style: AppFonts.plusJakarta(
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
-          color: color,
-        ),
-      ),
+    return StatusBadge(
+      label: normalized.toUpperCase(),
+      color: color,
+      fontSize: 10,
     );
   }
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../core/widgets/index.dart';
 import '../models/consultation_rating_model.dart';
@@ -64,6 +66,7 @@ class _TwoWayRatingSheetState extends ConsumerState<TwoWayRatingSheet> {
   @override
   Widget build(BuildContext context) {
     final labels = ConsultationRatingLabels.forRole(widget.raterRole);
+    final tokens = context.tokens;
 
     return Padding(
       padding: EdgeInsets.only(
@@ -76,19 +79,43 @@ class _TwoWayRatingSheetState extends ConsumerState<TwoWayRatingSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Rate ${widget.rateeLabel}',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: tokens.borderStrong,
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+          ),
+          Text(
+            'Rate ${widget.rateeLabel}',
+            style: AppFonts.plusJakarta(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              color: tokens.textPrimary,
+              letterSpacing: -0.3,
+            ),
+          ),
           const SizedBox(height: 4),
           Text(
             'Your identity stays private — only aggregate ratings are shown publicly.',
-            style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+            style: AppFonts.plusJakarta(
+              color: tokens.textSecondary,
+              fontSize: 12.5,
+              fontWeight: FontWeight.w500,
+              height: 1.4,
+            ),
           ),
           const SizedBox(height: 16),
-          _starRow('Overall', _overall, (v) => setState(() => _overall = v)),
-          _starRow('Communication', _communication, (v) => setState(() => _communication = v)),
-          _starRow(labels.criterion2, _c2, (v) => setState(() => _c2 = v)),
-          _starRow(labels.criterion3, _c3, (v) => setState(() => _c3 = v)),
-          _starRow(labels.criterion4, _c4, (v) => setState(() => _c4 = v)),
+          _starRow(context, 'Overall', _overall, (v) => setState(() => _overall = v)),
+          _starRow(context, 'Communication', _communication,
+              (v) => setState(() => _communication = v)),
+          _starRow(context, labels.criterion2, _c2, (v) => setState(() => _c2 = v)),
+          _starRow(context, labels.criterion3, _c3, (v) => setState(() => _c3 = v)),
+          _starRow(context, labels.criterion4, _c4, (v) => setState(() => _c4 = v)),
           const SizedBox(height: 16),
           PrimaryButton(
             label: 'Submit rating',
@@ -100,12 +127,27 @@ class _TwoWayRatingSheetState extends ConsumerState<TwoWayRatingSheet> {
     );
   }
 
-  Widget _starRow(String label, int value, ValueChanged<int> onChanged) {
+  Widget _starRow(
+    BuildContext context,
+    String label,
+    int value,
+    ValueChanged<int> onChanged,
+  ) {
+    final tokens = context.tokens;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         children: [
-          Expanded(child: Text(label)),
+          Expanded(
+            child: Text(
+              label,
+              style: AppFonts.plusJakarta(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: tokens.textPrimary,
+              ),
+            ),
+          ),
           for (var i = 1; i <= 5; i++)
             IconButton(
               padding: EdgeInsets.zero,
@@ -113,7 +155,7 @@ class _TwoWayRatingSheetState extends ConsumerState<TwoWayRatingSheet> {
               iconSize: 20,
               icon: Icon(
                 i <= value ? Icons.star_rounded : Icons.star_outline_rounded,
-                color: Colors.amber,
+                color: const Color(0xFFF59E0B),
               ),
               onPressed: () => onChanged(i),
             ),

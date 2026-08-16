@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_fonts.dart';
 import '../models/admin_models.dart';
 
 class AdminLineChart extends StatelessWidget {
@@ -17,9 +19,15 @@ class AdminLineChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (points.isEmpty) {
+      final tokens = context.tokens;
       return SizedBox(
         height: 160,
-        child: Center(child: Text(emptyLabel)),
+        child: Center(
+          child: Text(
+            emptyLabel,
+            style: AppFonts.plusJakarta(fontSize: 13, fontWeight: FontWeight.w500, color: tokens.textTertiary),
+          ),
+        ),
       );
     }
 
@@ -99,9 +107,15 @@ class AdminBarChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (metrics.isEmpty) {
-      return const SizedBox(
+      final tokens = context.tokens;
+      return SizedBox(
         height: 180,
-        child: Center(child: Text('No ranking data yet')),
+        child: Center(
+          child: Text(
+            'No ranking data yet',
+            style: AppFonts.plusJakarta(fontSize: 13, fontWeight: FontWeight.w500, color: tokens.textTertiary),
+          ),
+        ),
       );
     }
 

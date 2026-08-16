@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../config/router/route_names.dart';
+import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_fonts.dart';
+import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/widgets/async_state_widgets.dart';
 import '../../colleges/models/college_model.dart';
@@ -58,6 +60,8 @@ class _CollegeQuestionsTabContentState
     final resultAsync = ref.watch(displayedCollegeQuestionsProvider(collegeId));
     final filterState = ref.watch(questionListFilterProvider(collegeId));
     final isWide = MediaQuery.of(context).size.width >= 600;
+    final tokens = context.tokens;
+    final primary = Theme.of(context).colorScheme.primary;
 
     return resultAsync.when(
       loading: () => const QuestionListShimmer(),
@@ -70,21 +74,21 @@ class _CollegeQuestionsTabContentState
         final questions = result.questions;
         return ListView(
           controller: _scrollController,
-          padding: EdgeInsets.all(isWide ? 24 : 16),
+          padding: EdgeInsets.all(isWide ? AppSpacing.xxl : AppSpacing.lg),
           children: [
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppSpacing.lg),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
                     AppTheme.secondaryColor.withValues(alpha: 0.12),
-                    AppTheme.primaryColor.withValues(alpha: 0.08),
+                    primary.withValues(alpha: 0.08),
                   ],
                 ),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(tokens.cardRadius),
                 border: Border.all(
-                  color: AppTheme.secondaryColor.withValues(alpha: 0.15),
+                  color: AppTheme.secondaryColor.withValues(alpha: 0.18),
                 ),
               ),
               child: Column(
@@ -92,17 +96,19 @@ class _CollegeQuestionsTabContentState
                 children: [
                   Text(
                     'Ask a Student',
-                    style: GoogleFonts.poppins(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
+                    style: AppFonts.plusJakarta(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                      color: tokens.textPrimary,
+                      letterSpacing: -0.3,
                     ),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     'Get honest answers from verified students and alumni of ${widget.college.name}.',
-                    style: GoogleFonts.poppins(
+                    style: AppFonts.plusJakarta(
                       fontSize: 13,
-                      color: AppTheme.gray600,
+                      color: tokens.textSecondary,
                       height: 1.4,
                     ),
                   ),
@@ -114,7 +120,7 @@ class _CollegeQuestionsTabContentState
                 ],
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             UnansweredQuestionsBanner(
               collegeId: collegeId,
               collegeName: widget.college.name,
@@ -139,12 +145,12 @@ class _CollegeQuestionsTabContentState
                   ..resetPagination();
               },
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             Text(
               '${result.totalFiltered} question${result.totalFiltered == 1 ? '' : 's'}',
-              style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.gray500),
+              style: AppFonts.plusJakarta(fontSize: 12, color: tokens.textTertiary),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
             if (questions.isEmpty)
               _EmptyState(
                 hasSearch: filterState.searchQuery.isNotEmpty ||
@@ -168,14 +174,17 @@ class _CollegeQuestionsTabContentState
               ),
             if (result.hasMore)
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
                 child: Center(
                   child: OutlinedButton.icon(
                     onPressed: () => ref
                         .read(questionListFilterProvider(collegeId).notifier)
                         .showMore(),
-                    icon: const Icon(Icons.expand_more),
-                    label: const Text('Load more questions'),
+                    icon: const Icon(Icons.expand_more_rounded, size: 18),
+                    label: Text(
+                      'Load more questions',
+                      style: AppFonts.plusJakarta(fontWeight: FontWeight.w600),
+                    ),
                   ),
                 ),
               ),
@@ -197,39 +206,24 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 48),
-      child: Column(
-        children: [
-          Icon(Icons.quiz_outlined, size: 56, color: AppTheme.gray300),
-          const SizedBox(height: 16),
-          Text(
-            hasSearch ? 'No matching questions' : 'No questions yet',
-            style: GoogleFonts.poppins(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            hasSearch
-                ? 'Try a different search, topic, or sort filter'
-                : 'Be the first to ask a verified student',
-            style: GoogleFonts.poppins(
-              fontSize: 13,
-              color: AppTheme.gray500,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          if (!hasSearch) ...[
-            const SizedBox(height: 16),
-            FilledButton.icon(
-              onPressed: onAsk,
-              icon: const Icon(Icons.question_answer_outlined),
-              label: const Text('Ask a Student'),
-            ),
-          ],
-        ],
+    return SizedBox(
+      height: 320,
+      child: AsyncEmptyView(
+        icon: Icons.quiz_outlined,
+        title: hasSearch ? 'No matching questions' : 'No questions yet',
+        subtitle: hasSearch
+            ? 'Try a different search, topic, or sort filter'
+            : 'Be the first to ask a verified student',
+        action: hasSearch
+            ? null
+            : FilledButton.icon(
+                onPressed: onAsk,
+                icon: const Icon(Icons.question_answer_outlined, size: 18),
+                label: Text(
+                  'Ask a Student',
+                  style: AppFonts.plusJakarta(fontWeight: FontWeight.w700),
+                ),
+              ),
       ),
     );
   }

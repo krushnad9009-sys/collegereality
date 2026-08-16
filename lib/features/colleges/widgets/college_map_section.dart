@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../../config/theme/app_theme.dart';
+import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_fonts.dart';
+import '../../../core/widgets/premium_components.dart';
 
 class CollegeMapSection extends StatelessWidget {
   final String mapsLink;
@@ -30,49 +31,61 @@ class CollegeMapSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
+    final tokens = context.tokens;
+    final primary = Theme.of(context).colorScheme.primary;
+
+    return PremiumCard(
+      radius: tokens.cardRadius,
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppTheme.gray100,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.gray200),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.map_outlined, color: AppTheme.primaryColor),
-              const SizedBox(width: 8),
-              Text(
-                'Location',
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 15,
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(tokens.buttonRadius * 0.7),
+                ),
+                child: Icon(Icons.map_outlined, color: primary, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Location',
+                      style: AppFonts.plusJakarta(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                        color: tokens.textPrimary,
+                      ),
+                    ),
+                    if (address != null && address!.trim().isNotEmpty)
+                      Text(
+                        address!,
+                        style: AppFonts.plusJakarta(
+                          fontSize: 13,
+                          color: tokens.textSecondary,
+                          height: 1.4,
+                        ),
+                      ),
+                  ],
                 ),
               ),
             ],
           ),
-          if (address != null && address!.trim().isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Text(
-              address!,
-              style: GoogleFonts.poppins(
-                fontSize: 13,
-                color: AppTheme.gray700,
-                height: 1.4,
-              ),
-            ),
-          ],
           if (latitude != null && longitude != null) ...[
-            const SizedBox(height: 6),
+            const SizedBox(height: 10),
             Text(
               '${latitude!.toStringAsFixed(5)}, ${longitude!.toStringAsFixed(5)}',
-              style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.gray500),
+              style: AppFonts.plusJakarta(fontSize: 12, color: tokens.textTertiary),
             ),
           ],
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(

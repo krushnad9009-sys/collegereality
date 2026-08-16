@@ -13,6 +13,7 @@ import '../../../core/utils/firestore_error_utils.dart';
 import '../../../core/services/search_history_service.dart';
 import '../../../core/widgets/async_state_widgets.dart';
 import '../../../core/widgets/premium_components.dart';
+import '../../../core/widgets/premium_list_row.dart';
 import '../../../core/widgets/searchable_text_form_field.dart';
 import '../../../core/widgets/skeleton_loader.dart';
 import '../../home/widgets/college_card_widget.dart';
@@ -386,13 +387,16 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
   /// loads, or nothing once every match has been paged in.
   Widget _buildPaginationFooter(AppDesignTokens tokens) {
     if (_isLoadingMore) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 20),
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 20),
         child: Center(
           child: SizedBox(
             width: 22,
             height: 22,
-            child: CircularProgressIndicator(strokeWidth: 2.4),
+            child: CircularProgressIndicator(
+              strokeWidth: 2.4,
+              color: Theme.of(context).colorScheme.primary,
+            ),
           ),
         ),
       );
@@ -404,7 +408,10 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
           child: TextButton.icon(
             onPressed: _loadMoreResults,
             icon: const Icon(Icons.expand_more_rounded, size: 18),
-            label: const Text('Load more colleges'),
+            label: Text(
+              'Load more colleges',
+              style: AppFonts.plusJakarta(fontWeight: FontWeight.w600),
+            ),
           ),
         ),
       );
@@ -483,21 +490,13 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
             ),
             child: countAsync.when(
               loading: () => const SizedBox.shrink(),
-              error: (_, _) => Text(
-                CollegeConstants.searchByNameLabel(),
-                style: AppFonts.plusJakarta(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: tokens.textTertiary,
-                ),
+              error: (_, _) => _IndexedCaption(
+                text: CollegeConstants.searchByNameLabel(),
+                tokens: tokens,
               ),
-              data: (liveTotal) => Text(
-                CollegeConstants.searchIndexedLabel(liveCount: liveTotal),
-                style: AppFonts.plusJakarta(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: tokens.textTertiary,
-                ),
+              data: (liveTotal) => _IndexedCaption(
+                text: CollegeConstants.searchIndexedLabel(liveCount: liveTotal),
+                tokens: tokens,
               ),
             ),
           ),
@@ -650,7 +649,7 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
             ),
           if (_hasActiveFilters)
             SizedBox(
-              height: 40,
+              height: 44,
               child: ListView(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
@@ -746,29 +745,25 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
                   constraints: const BoxConstraints(maxHeight: 220),
                   child: ListView.separated(
                     shrinkWrap: true,
+                    padding: const EdgeInsets.symmetric(vertical: 4),
                     itemCount: searchSuggestions.length,
                     separatorBuilder: (_, _) => Divider(
                       height: 1,
+                      indent: 52,
                       color: tokens.borderSubtle,
                     ),
                     itemBuilder: (context, index) {
                       final suggestion = searchSuggestions[index];
-                      return ListTile(
+                      return PremiumListRow(
                         dense: true,
-                        leading: Icon(
-                          Icons.search_rounded,
-                          size: 20,
-                          color: AppTheme.primaryColor.withValues(alpha: 0.8),
-                        ),
-                        title: Text(
-                          suggestion,
-                          style: AppFonts.plusJakarta(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: tokens.textPrimary,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        leadingIcon: Icons.search_rounded,
+                        iconColor: Theme.of(context).colorScheme.primary,
+                        title: suggestion,
+                        showChevron: false,
+                        trailing: Icon(
+                          Icons.north_west_rounded,
+                          size: 16,
+                          color: tokens.textTertiary,
                         ),
                         onTap: () {
                           _searchController.text = suggestion;
@@ -792,7 +787,10 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
                   radius: tokens.cardRadius,
                   padding: const EdgeInsets.all(AppSpacing.lg),
                   child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    const _FilterSectionLabel('Location'),
+                    const SizedBox(height: AppSpacing.sm),
                     statesAsync.when(
                       loading: () => const SizedBox.shrink(),
                       error: (_, _) => const SizedBox.shrink(),
@@ -839,7 +837,9 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
                       },
                       onSubmitted: (_) => _runSearch(),
                     ),
-                    const SizedBox(height: AppSpacing.md),
+                    const SizedBox(height: AppSpacing.lg),
+                    const _FilterSectionLabel('Institution'),
+                    const SizedBox(height: AppSpacing.sm),
                     SearchableTextFormField(
                       controller: _universityController,
                       decoration: _filterDecoration(context, 'University').copyWith(
@@ -855,7 +855,9 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
                       },
                       onSubmitted: (_) => _runSearch(),
                     ),
-                    const SizedBox(height: AppSpacing.md),
+                    const SizedBox(height: AppSpacing.lg),
+                    const _FilterSectionLabel('Program'),
+                    const SizedBox(height: AppSpacing.sm),
                     coursesAsync.when(
                       loading: () => const SizedBox.shrink(),
                       error: (_, _) => const SizedBox.shrink(),
@@ -941,12 +943,17 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
                         );
                       },
                     ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Divider(height: 1, color: tokens.borderSubtle),
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton.icon(
                         onPressed: _resetFilters,
                         icon: const Icon(Icons.restart_alt_rounded, size: 18),
-                        label: const Text('Reset Filters'),
+                        label: Text(
+                          'Reset Filters',
+                          style: AppFonts.plusJakarta(fontWeight: FontWeight.w600),
+                        ),
                       ),
                     ),
                   ],
@@ -1054,6 +1061,60 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
         ],
       ),
       bottomNavigationBar: const CompareBasketBar(),
+    );
+  }
+}
+
+/// Small uppercase group label used to visually cluster related fields
+/// inside the advanced-filter panel (Location / Institution / Program).
+class _FilterSectionLabel extends StatelessWidget {
+  final String label;
+
+  const _FilterSectionLabel(this.label);
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    return Text(
+      label.toUpperCase(),
+      style: AppFonts.plusJakarta(
+        fontSize: 11,
+        fontWeight: FontWeight.w700,
+        color: tokens.textTertiary,
+        letterSpacing: 0.8,
+      ),
+    );
+  }
+}
+
+/// Small "N colleges indexed" caption with a live-data indicator dot for
+/// clearer visual hierarchy above the search field.
+class _IndexedCaption extends StatelessWidget {
+  final String text;
+  final AppDesignTokens tokens;
+
+  const _IndexedCaption({required this.text, required this.tokens});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.dns_rounded, size: 13, color: tokens.textTertiary),
+        const SizedBox(width: 5),
+        Flexible(
+          child: Text(
+            text,
+            style: AppFonts.plusJakarta(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: tokens.textTertiary,
+              letterSpacing: 0.1,
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
     );
   }
 }

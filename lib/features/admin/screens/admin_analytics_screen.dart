@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 
+import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_theme.dart';
+import '../../../core/widgets/async_state_widgets.dart';
 import '../models/admin_models.dart';
 import '../providers/admin_dashboard_provider.dart';
 import '../providers/admin_provider.dart';
@@ -21,8 +23,8 @@ class AdminAnalyticsScreen extends ConsumerWidget {
       title: 'Analytics',
       isAdminUser: isAdminUser,
       child: analyticsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Failed to load analytics: $e')),
+        loading: () => const AsyncLoadingView(),
+        error: (e, _) => AsyncErrorView.fromError(e),
         data: (data) => RefreshIndicator(
           onRefresh: () async => ref.invalidate(adminAnalyticsDataProvider),
           child: ListView(
@@ -77,11 +79,12 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Text(
         title,
-        style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600),
+        style: AppFonts.plusJakarta(fontSize: 16, fontWeight: FontWeight.w700, color: tokens.textPrimary),
       ),
     );
   }
@@ -94,13 +97,20 @@ class _MetricList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (metrics.isEmpty) return const SizedBox.shrink();
+    final tokens = context.tokens;
     return Column(
       children: metrics.map((m) {
         return ListTile(
           dense: true,
           contentPadding: EdgeInsets.zero,
-          title: Text(m.collegeName, style: GoogleFonts.poppins(fontSize: 13)),
-          trailing: Text('${m.value}'),
+          title: Text(
+            m.collegeName,
+            style: AppFonts.plusJakarta(fontSize: 13, color: tokens.textPrimary),
+          ),
+          trailing: Text(
+            '${m.value}',
+            style: AppFonts.plusJakarta(fontSize: 13, fontWeight: FontWeight.w600, color: tokens.textSecondary),
+          ),
         );
       }).toList(),
     );
@@ -113,16 +123,26 @@ class _ContributorsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
     if (contributors.isEmpty) {
-      return Text('No contributor data yet.', style: GoogleFonts.poppins(color: AppTheme.gray600));
+      return Text('No contributor data yet.', style: AppFonts.plusJakarta(color: tokens.textSecondary));
     }
     return Column(
       children: contributors.map((c) {
         return ListTile(
           contentPadding: EdgeInsets.zero,
-          title: Text(c.displayName, style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-          subtitle: Text('${c.reviewCount} reviews · ${c.answerCount} answers · ${c.postCount} posts'),
-          trailing: Text('${c.totalActivity}'),
+          title: Text(
+            c.displayName,
+            style: AppFonts.plusJakarta(fontWeight: FontWeight.w600, color: tokens.textPrimary),
+          ),
+          subtitle: Text(
+            '${c.reviewCount} reviews · ${c.answerCount} answers · ${c.postCount} posts',
+            style: AppFonts.plusJakarta(fontSize: 12.5, color: tokens.textSecondary),
+          ),
+          trailing: Text(
+            '${c.totalActivity}',
+            style: AppFonts.plusJakarta(fontSize: 13, fontWeight: FontWeight.w600, color: tokens.textSecondary),
+          ),
         );
       }).toList(),
     );

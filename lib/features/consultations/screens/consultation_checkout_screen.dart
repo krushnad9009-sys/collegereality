@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../config/router/route_names.dart';
+import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_theme.dart';
@@ -130,6 +131,8 @@ class _ConsultationCheckoutScreenState
   Widget build(BuildContext context) {
     final guideAsync = ref.watch(publicGuideProvider(widget.guideId));
     final currentUser = ref.watch(currentUserProvider);
+    final tokens = context.tokens;
+    final primary = Theme.of(context).colorScheme.primary;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Book a consultation')),
@@ -177,8 +180,7 @@ class _ConsultationCheckoutScreenState
                     children: [
                       CircleAvatar(
                         radius: 24,
-                        backgroundColor:
-                            AppTheme.primaryColor.withValues(alpha: 0.15),
+                        backgroundColor: primary.withValues(alpha: 0.15),
                         backgroundImage: guide.photoURL != null
                             ? NetworkImage(guide.photoURL!)
                             : null,
@@ -189,7 +191,7 @@ class _ConsultationCheckoutScreenState
                                     : 'G',
                                 style: AppFonts.plusJakarta(
                                   fontWeight: FontWeight.w800,
-                                  color: AppTheme.primaryColor,
+                                  color: primary,
                                 ),
                               )
                             : null,
@@ -203,21 +205,26 @@ class _ConsultationCheckoutScreenState
                               Flexible(
                                 child: Text(
                                   guide.displayName,
-                                  style: Theme.of(context).textTheme.titleLarge,
+                                  style: AppFonts.plusJakarta(
+                                    fontSize: 16.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: tokens.textPrimary,
+                                    letterSpacing: -0.2,
+                                  ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                               const SizedBox(width: 6),
-                              const Icon(Icons.verified,
-                                  size: 16, color: Color(0xFF1D9BF0)),
+                              Icon(Icons.verified_rounded, size: 16, color: primary),
                             ]),
                             if (guide.collegeName != null)
                               Text(
                                 guide.collegeName!,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall
-                                    ?.copyWith(color: AppTheme.gray600),
+                                style: AppFonts.plusJakarta(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w500,
+                                  color: tokens.textSecondary,
+                                ),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             const SizedBox(height: 4),
@@ -239,17 +246,22 @@ class _ConsultationCheckoutScreenState
                   ),
                   const SizedBox(height: 10),
                 ],
+                if (_selected != null) ...[
+                  const SizedBox(height: 14),
+                  _CheckoutSummaryCard(option: _selected!, guideName: guide.displayName),
+                ],
                 if (_error != null) ...[
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 14),
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: AppTheme.errorColor.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                      border: Border.all(color: AppTheme.errorColor.withValues(alpha: 0.24)),
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.error_outline,
+                        Icon(Icons.error_outline_rounded,
                             size: 18, color: AppTheme.errorColor),
                         const SizedBox(width: 8),
                         Expanded(
@@ -293,6 +305,100 @@ class _ConsultationCheckoutScreenState
   }
 }
 
+/// A clear, card-based breakdown of what the student is about to pay for —
+/// shown once a consultation option is picked, before the Pay button.
+class _CheckoutSummaryCard extends StatelessWidget {
+  const _CheckoutSummaryCard({required this.option, required this.guideName});
+
+  final _PriceOption option;
+  final String guideName;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final primary = Theme.of(context).colorScheme.primary;
+    return PremiumCard(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      color: tokens.surfaceMuted,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Order summary',
+            style: AppFonts.plusJakarta(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: tokens.textTertiary,
+              letterSpacing: 0.2,
+            ),
+          ),
+          const SizedBox(height: 10),
+          _summaryRow(context, 'With', guideName),
+          const SizedBox(height: 8),
+          _summaryRow(context, 'Session', option.label),
+          const SizedBox(height: 8),
+          _summaryRow(context, 'Duration', '${option.minutes} minutes'),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Divider(height: 1, color: tokens.borderSubtle),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Total',
+                style: AppFonts.plusJakarta(
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w700,
+                  color: tokens.textPrimary,
+                ),
+              ),
+              Text(
+                '₹${(option.pricePaise / 100).toStringAsFixed(0)}',
+                style: AppFonts.plusJakarta(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: primary,
+                  letterSpacing: -0.3,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _summaryRow(BuildContext context, String label, String value) {
+    final tokens = context.tokens;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: AppFonts.plusJakarta(
+            fontSize: 13.5,
+            fontWeight: FontWeight.w500,
+            color: tokens.textSecondary,
+          ),
+        ),
+        Flexible(
+          child: Text(
+            value,
+            style: AppFonts.plusJakarta(
+              fontSize: 13.5,
+              fontWeight: FontWeight.w600,
+              color: tokens.textPrimary,
+            ),
+            textAlign: TextAlign.right,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _PriceOptionCard extends StatelessWidget {
   const _PriceOptionCard({
     required this.option,
@@ -306,20 +412,19 @@ class _PriceOptionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final tokens = context.tokens;
+    final primary = Theme.of(context).colorScheme.primary;
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(tokens.cardRadius),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: selected
-              ? AppTheme.primaryColor.withValues(alpha: 0.08)
-              : Theme.of(context).cardTheme.color,
-          borderRadius: BorderRadius.circular(16),
+          color: selected ? primary.withValues(alpha: 0.08) : tokens.surfaceElevated,
+          borderRadius: BorderRadius.circular(tokens.cardRadius),
           border: Border.all(
-            color: selected ? AppTheme.primaryColor : AppTheme.gray200,
+            color: selected ? primary : tokens.borderSubtle,
             width: selected ? 1.5 : 1,
           ),
         ),
@@ -327,19 +432,29 @@ class _PriceOptionCard extends StatelessWidget {
           children: [
             Icon(
               selected
-                  ? Icons.radio_button_checked
-                  : Icons.radio_button_unchecked,
-              color: selected ? AppTheme.primaryColor : AppTheme.gray400,
+                  ? Icons.radio_button_checked_rounded
+                  : Icons.radio_button_unchecked_rounded,
+              color: selected ? primary : tokens.textTertiary,
               size: 22,
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Text(option.label, style: textTheme.titleMedium),
+              child: Text(
+                option.label,
+                style: AppFonts.plusJakarta(
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w600,
+                  color: tokens.textPrimary,
+                ),
+              ),
             ),
             Text(
               '₹${(option.pricePaise / 100).toStringAsFixed(0)}',
-              style: textTheme.titleLarge?.copyWith(
-                color: selected ? AppTheme.primaryColor : null,
+              style: AppFonts.plusJakarta(
+                fontSize: 17,
+                fontWeight: FontWeight.w800,
+                color: selected ? primary : tokens.textPrimary,
+                letterSpacing: -0.2,
               ),
             ),
           ],

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../../config/theme/app_theme.dart';
+
+import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_fonts.dart';
+import '../../../core/widgets/status_badge.dart';
 import '../models/user_presence_model.dart';
 
 class PresenceIndicator extends StatelessWidget {
@@ -18,33 +20,17 @@ class PresenceIndicator extends StatelessWidget {
     if (presence == null) return const SizedBox.shrink();
 
     if (presence!.isOnline) {
-      return Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 8,
-            height: 8,
-            decoration: const BoxDecoration(
-              color: AppTheme.accentColor,
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 6),
-          Text(
-            'Online',
-            style: GoogleFonts.poppins(fontSize: 11, color: AppTheme.accentColor),
-          ),
-        ],
-      );
+      return const PresencePill(state: PresenceState.online);
     }
 
     if (!showLastSeen || presence!.lastSeenAt == null) {
       return const SizedBox.shrink();
     }
 
+    final tokens = context.tokens;
     return Text(
       'Last seen ${_formatLastSeen(presence!.lastSeenAt!)}',
-      style: GoogleFonts.poppins(fontSize: 11, color: AppTheme.gray500),
+      style: AppFonts.plusJakarta(fontSize: 11, color: tokens.textTertiary),
     );
   }
 

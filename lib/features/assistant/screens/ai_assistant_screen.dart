@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../config/theme/app_typography.dart';
@@ -91,15 +91,17 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
     final basket = ref.watch(compareBasketProvider);
     ref.listen(aiAssistantProvider, (_, _) => _scrollToBottom());
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final tokens = context.tokens;
 
     return Scaffold(
-      backgroundColor: isDark ? AppTheme.gray900 : const Color(0xFFF3F5FA),
+      backgroundColor: tokens.surfaceMuted,
       appBar: AppBar(
         title: Text(
           'AI College Assistant',
-          style: AppTypography.title('AI College Assistant'),
+          style: AppTypography.title(
+            'AI College Assistant',
+            color: tokens.textPrimary,
+          ),
         ),
         actions: [
           Padding(
@@ -131,7 +133,7 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
               icon: const Icon(Icons.compare, size: 18),
               label: Text(
                 'Compare (${basket.collegeIds.length})',
-                style: GoogleFonts.plusJakartaSans(
+                style: AppFonts.plusJakarta(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
@@ -144,7 +146,7 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
                 child: Chip(
                   label: Text(
                     '${state.contextCollegeIds.length} in compare',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: AppFonts.plusJakarta(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                     ),
@@ -199,7 +201,7 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
                   Expanded(
                     child: Text(
                       'Asking about ${widget.anchorCollegeName}',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: AppFonts.plusJakarta(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                         color: tokens.textPrimary,
@@ -232,83 +234,32 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
           ),
           if (state.isLoading)
             Padding(
-              padding: const EdgeInsets.all(AppSpacing.sm),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.5,
-                      color: AppTheme.primaryColor,
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Text(
-                    state.mode == AiAssistantMode.compare
-                        ? 'Comparing colleges from verified data...'
-                        : 'Searching verified database...',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: tokens.textSecondary,
-                    ),
-                  ),
-                ],
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                0,
+                AppSpacing.lg,
+                AppSpacing.sm,
+              ),
+              child: _ThinkingBubble(
+                label: state.mode == AiAssistantMode.compare
+                    ? 'Comparing colleges from verified data…'
+                    : 'Searching verified database…',
               ),
             ),
           if (state.error != null)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(AppSpacing.md),
-                decoration: BoxDecoration(
-                  color: AppTheme.errorColor.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-                  border: Border.all(
-                    color: AppTheme.errorColor.withValues(alpha: 0.25),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.error_outline_rounded,
-                      size: 18,
-                      color: AppTheme.errorColor,
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      child: Text(
-                        state.error!,
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: AppTheme.errorColor,
-                        ),
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: state.isLoading
-                          ? null
-                          : () => ref
-                              .read(aiAssistantProvider.notifier)
-                              .retryLastQuery(),
-                      style: TextButton.styleFrom(
-                        foregroundColor: AppTheme.errorColor,
-                        minimumSize: Size.zero,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.sm,
-                        ),
-                      ),
-                      child: const Text(
-                        'Retry',
-                        style: TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                    ),
-                  ],
-                ),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                0,
+                AppSpacing.lg,
+                AppSpacing.sm,
+              ),
+              child: _InlineErrorBanner(
+                message: state.error!,
+                onRetry: state.isLoading
+                    ? null
+                    : () =>
+                        ref.read(aiAssistantProvider.notifier).retryLastQuery(),
               ),
             ),
           _InputBar(
@@ -347,7 +298,7 @@ class _EmptyState extends StatelessWidget {
                     ? [
                         const Color(0xFF312E81),
                         const Color(0xFF1E3A5F),
-                        AppTheme.gray800,
+                        tokens.surfaceElevated,
                       ]
                     : [
                         AppTheme.primaryColor,
@@ -387,7 +338,7 @@ class _EmptyState extends StatelessWidget {
                     Expanded(
                       child: Text(
                         'India\'s Smartest AI Assistant',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: AppFonts.plusJakarta(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
                           letterSpacing: -0.35,
@@ -401,7 +352,7 @@ class _EmptyState extends StatelessWidget {
                 Text(
                   'Get answers from verified profiles, reviews, student Q&A, '
                   'and community posts — no guesses, only College Reality data.',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: AppFonts.plusJakarta(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                     height: 1.45,
@@ -417,7 +368,7 @@ class _EmptyState extends StatelessWidget {
           delayMs: 80,
           child: Text(
             'Try asking',
-            style: GoogleFonts.plusJakartaSans(
+            style: AppFonts.plusJakarta(
               fontSize: 16,
               fontWeight: FontWeight.w800,
               letterSpacing: -0.3,
@@ -444,6 +395,179 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
+/// Animated "AI is thinking" bubble, styled like an assistant chat bubble
+/// with three pulsing dots so the loading state reads as part of the
+/// conversation rather than a generic spinner.
+class _ThinkingBubble extends StatefulWidget {
+  final String label;
+
+  const _ThinkingBubble({required this.label});
+
+  @override
+  State<_ThinkingBubble> createState() => _ThinkingBubbleState();
+}
+
+class _ThinkingBubbleState extends State<_ThinkingBubble>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1200),
+  )..repeat();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.md,
+        ),
+        decoration: BoxDecoration(
+          color: tokens.surfaceElevated,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(18),
+            topRight: Radius.circular(18),
+            bottomLeft: Radius.circular(4),
+            bottomRight: Radius.circular(18),
+          ),
+          border: Border.all(color: tokens.borderSubtle.withValues(alpha: 0.8)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: 30,
+              height: 14,
+              child: AnimatedBuilder(
+                animation: _controller,
+                builder: (context, _) {
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: List.generate(3, (i) {
+                      final phase = (_controller.value + (i * 0.2)) % 1.0;
+                      final scale = 0.55 + 0.45 * (0.5 - (phase - 0.5).abs()) * 2;
+                      return Opacity(
+                        opacity: 0.4 + 0.6 * scale,
+                        child: Transform.scale(
+                          scale: 0.6 + 0.4 * scale,
+                          child: Container(
+                            width: 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.primary,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Flexible(
+              child: Text(
+                widget.label,
+                style: AppFonts.plusJakarta(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: tokens.textSecondary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Lightweight inline error banner for the chat flow — a compact,
+/// non-modal equivalent of [AsyncErrorView] that fits between messages
+/// and the composer instead of taking over the screen.
+class _InlineErrorBanner extends StatelessWidget {
+  final String message;
+  final VoidCallback? onRetry;
+
+  const _InlineErrorBanner({required this.message, this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppTheme.errorColor.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(tokens.buttonRadius),
+        border: Border.all(
+          color: AppTheme.errorColor.withValues(alpha: 0.25),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: AppTheme.errorColor.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.error_outline_rounded,
+              size: 16,
+              color: AppTheme.errorColor,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Text(
+              message,
+              style: AppFonts.plusJakarta(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: AppTheme.errorColor,
+              ),
+            ),
+          ),
+          if (onRetry != null)
+            TextButton(
+              onPressed: onRetry,
+              style: TextButton.styleFrom(
+                foregroundColor: AppTheme.errorColor,
+                minimumSize: Size.zero,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.sm,
+                ),
+              ),
+              child: const Text(
+                'Retry',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 class _MessageBubble extends StatelessWidget {
   final AiAssistantMessage message;
   final void Function(String collegeId) onAddToCompare;
@@ -456,7 +580,6 @@ class _MessageBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isUser = message.role == AiMessageRole.user;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final tokens = context.tokens;
 
     return Align(
@@ -484,9 +607,7 @@ class _MessageBubble extends StatelessWidget {
                         ],
                       )
                     : null,
-                color: isUser
-                    ? null
-                    : (isDark ? AppTheme.gray800 : tokens.surfaceElevated),
+                color: isUser ? null : tokens.surfaceElevated,
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(18),
                   topRight: const Radius.circular(18),
@@ -506,7 +627,7 @@ class _MessageBubble extends StatelessWidget {
                       ]
                     : [
                         BoxShadow(
-                          color: AppTheme.black.withValues(alpha: 0.04),
+                          color: Colors.black.withValues(alpha: 0.04),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -514,11 +635,11 @@ class _MessageBubble extends StatelessWidget {
               ),
               child: Text(
                 message.text,
-                style: GoogleFonts.plusJakartaSans(
+                style: AppFonts.plusJakarta(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                   height: 1.45,
-                  color: isUser ? AppTheme.white : tokens.textPrimary,
+                  color: isUser ? Colors.white : tokens.textPrimary,
                 ),
               ),
             ),
@@ -538,7 +659,7 @@ class _MessageBubble extends StatelessWidget {
                       message.sources.isNotEmpty
                           ? '${message.sources.length} verified source${message.sources.length == 1 ? '' : 's'}'
                           : 'Verified college data',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: AppFonts.plusJakarta(
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
                         color: AppTheme.accentColor,
@@ -588,7 +709,7 @@ class _InputBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return SafeArea(
       child: Container(
@@ -599,7 +720,7 @@ class _InputBar extends StatelessWidget {
           AppSpacing.md,
         ),
         decoration: BoxDecoration(
-          color: isDark ? AppTheme.gray900 : const Color(0xFFF3F5FA),
+          color: tokens.surfaceMuted,
           border: Border(
             top: BorderSide(color: tokens.borderSubtle.withValues(alpha: 0.7)),
           ),
@@ -609,14 +730,14 @@ class _InputBar extends StatelessWidget {
           children: [
             Expanded(
               child: PremiumCard(
-                radius: 28,
+                radius: AppSpacing.radius2xl,
                 padding: EdgeInsets.zero,
                 child: TextField(
                   controller: controller,
                   enabled: enabled,
                   minLines: 1,
                   maxLines: 3,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: AppFonts.plusJakarta(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                     color: tokens.textPrimary,
@@ -629,7 +750,7 @@ class _InputBar extends StatelessWidget {
                     filled: true,
                     fillColor: tokens.surfaceElevated,
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(28),
+                      borderRadius: BorderRadius.circular(AppSpacing.radius2xl),
                       borderSide: BorderSide.none,
                     ),
                     contentPadding: const EdgeInsets.symmetric(
@@ -642,19 +763,19 @@ class _InputBar extends StatelessWidget {
             ),
             const SizedBox(width: AppSpacing.sm),
             Material(
-              color: enabled ? AppTheme.primaryColor : AppTheme.gray300,
+              color: enabled ? colorScheme.primary : tokens.borderStrong,
               borderRadius: BorderRadius.circular(16),
               elevation: enabled ? 2 : 0,
-              shadowColor: AppTheme.primaryColor.withValues(alpha: 0.35),
+              shadowColor: colorScheme.primary.withValues(alpha: 0.35),
               child: InkWell(
                 onTap: enabled ? onSend : null,
                 borderRadius: BorderRadius.circular(16),
-                child: const SizedBox(
+                child: SizedBox(
                   width: 48,
                   height: 48,
                   child: Icon(
                     Icons.send_rounded,
-                    color: Colors.white,
+                    color: enabled ? colorScheme.onPrimary : tokens.textTertiary,
                     size: 22,
                   ),
                 ),

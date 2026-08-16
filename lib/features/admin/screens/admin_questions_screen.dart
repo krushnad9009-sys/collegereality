@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../utils/admin_route_resolver.dart';
-import '../../../config/theme/app_theme.dart';
+import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_fonts.dart';
+import '../../../config/theme/app_spacing.dart';
 import '../../../core/constants/question_constants.dart';
 import '../../../core/widgets/index.dart';
 import '../../questions/models/question_model.dart';
@@ -145,7 +146,7 @@ class _AdminQuestionsScreenState extends ConsumerState<AdminQuestionsScreen>
             children: [
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.sm),
                 child: Row(
                   children: [
                     _FilterChip(
@@ -178,27 +179,28 @@ class _AdminQuestionsScreenState extends ConsumerState<AdminQuestionsScreen>
                   error: (e, _) => Center(child: Text('Error: $e')),
                   data: (questions) {
                     if (questions.isEmpty) {
-                      return const Center(child: Text('No questions found'));
+                      final tokens = context.tokens;
+                      return Center(
+                        child: Text(
+                          'No questions found',
+                          style: AppFonts.plusJakarta(color: tokens.textSecondary),
+                        ),
+                      );
                     }
-                    return ListView.builder(
-                      padding: const EdgeInsets.all(16),
+                    return ListView.separated(
+                      padding: const EdgeInsets.all(AppSpacing.lg),
                       itemCount: questions.length,
+                      separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
                       itemBuilder: (context, index) {
                         final question = questions[index];
-                        return Card(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          child: ListTile(
-                            title: Text(
-                              question.title,
-                              style: GoogleFonts.poppins(
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            subtitle: Text(
-                              '${question.collegeName} · ${question.answerCount} answers · ${question.status}',
-                              style: GoogleFonts.poppins(fontSize: 12),
-                            ),
-                            isThreeLine: true,
+                        return PremiumCard(
+                          padding: EdgeInsets.zero,
+                          child: PremiumListRow(
+                            leadingIcon: Icons.quiz_outlined,
+                            title: question.title,
+                            subtitle:
+                                '${question.collegeName} · ${question.answerCount} answers · ${question.status}',
+                            showChevron: false,
                             trailing: PopupMenuButton<String>(
                               onSelected: (value) {
                                 if (value == 'hide') {
@@ -293,14 +295,14 @@ class _ReportsList extends StatelessWidget {
                   children: [
                     Text(
                       report['reason'] as String? ?? 'No reason provided',
-                      style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                      style: AppFonts.plusJakarta(fontWeight: FontWeight.w600),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       'Reporter: ${report['reporterId']} · ${report['createdAt']}',
-                      style: GoogleFonts.poppins(
+                      style: AppFonts.plusJakarta(
                         fontSize: 12,
-                        color: AppTheme.gray500,
+                        color: context.tokens.textTertiary,
                       ),
                     ),
                     const SizedBox(height: 12),

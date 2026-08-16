@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/engagement_constants.dart';
@@ -104,7 +104,12 @@ class _NotificationsCenterScreenState
         ),
         title: Text(
           'Notifications',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+          style: AppFonts.plusJakarta(
+            fontWeight: FontWeight.w800,
+            fontSize: 18,
+            letterSpacing: -0.3,
+            color: tokens.textPrimary,
+          ),
         ),
         actions: [
           IconButton(
@@ -136,13 +141,13 @@ class _NotificationsCenterScreenState
               radius: tokens.buttonRadius,
               padding: EdgeInsets.zero,
               child: TextField(
-                style: GoogleFonts.poppins(
+                style: AppFonts.plusJakarta(
                   fontSize: 14,
                   color: tokens.textPrimary,
                 ),
                 decoration: InputDecoration(
                   hintText: 'Search notifications...',
-                  hintStyle: GoogleFonts.poppins(
+                  hintStyle: AppFonts.plusJakarta(
                     fontSize: 14,
                     color: tokens.textTertiary,
                   ),
@@ -292,6 +297,43 @@ class _FilterChip extends StatelessWidget {
   }
 }
 
+/// Category -> accent color, cycling through the theme's semantic colors so
+/// each notification type reads as visually distinct at a glance.
+Color _colorForCategory(BuildContext context, String category) {
+  final scheme = Theme.of(context).colorScheme;
+  switch (category) {
+    case EngagementConstants.categoryReviews:
+    case EngagementConstants.categoryColleges:
+      return scheme.primary;
+    case EngagementConstants.categoryQuestions:
+    case EngagementConstants.categoryPlacements:
+    case EngagementConstants.categoryCareers:
+      return scheme.secondary;
+    case EngagementConstants.categoryChat:
+    case EngagementConstants.categoryScholarships:
+    case EngagementConstants.categoryCommunity:
+      return scheme.tertiary;
+    case EngagementConstants.categoryEvents:
+    case EngagementConstants.categoryAdmission:
+      return AppTheme.warningColor;
+    case EngagementConstants.categoryAdmin:
+      return scheme.error;
+    default:
+      return scheme.primary;
+  }
+}
+
+/// Short, human-friendly relative timestamp (e.g. "5m ago", "Yesterday").
+String _relativeTime(DateTime dt) {
+  final diff = DateTime.now().difference(dt);
+  if (diff.inSeconds < 45) return 'Just now';
+  if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+  if (diff.inHours < 24) return '${diff.inHours}h ago';
+  if (diff.inDays == 1) return 'Yesterday';
+  if (diff.inDays < 7) return '${diff.inDays}d ago';
+  return DateFormat('MMM d').format(dt);
+}
+
 class _NotificationTile extends ConsumerWidget {
   final UserNotificationModel notification;
 
@@ -300,7 +342,11 @@ class _NotificationTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tokens = context.tokens;
-    final dateFmt = DateFormat('MMM d, h:mm a');
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primary = Theme.of(context).colorScheme.primary;
+    final accent = _colorForCategory(context, notification.category);
+    final unread = !notification.isRead;
+
     return Dismissible(
       key: ValueKey(notification.id),
       direction: DismissDirection.endToStart,
@@ -320,9 +366,9 @@ class _NotificationTile extends ConsumerWidget {
       child: PremiumCard(
         radius: tokens.buttonRadius,
         padding: const EdgeInsets.all(AppSpacing.lg),
-        color: notification.isRead
-            ? tokens.surfaceElevated
-            : AppTheme.primaryColor.withValues(alpha: 0.05),
+        color: unread
+            ? primary.withValues(alpha: isDark ? 0.14 : 0.06)
+            : tokens.surfaceElevated,
         onTap: () async {
           if (!notification.isRead) {
             await ref
@@ -334,17 +380,28 @@ class _NotificationTile extends ConsumerWidget {
           }
         },
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Unread accent bar — invisible (but space-preserving) when read
+            // so every row stays aligned.
             Container(
-              padding: const EdgeInsets.all(8),
+              width: 3,
               decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                color: unread ? accent : Colors.transparent,
+                borderRadius: BorderRadius.circular(AppSpacing.xs),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: isDark ? 0.2 : 0.12),
                 borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
               ),
               child: Icon(
                 _iconForCategory(notification.category),
-                color: AppTheme.primaryColor,
+                color: accent,
                 size: 20,
               ),
             ),
@@ -355,9 +412,8 @@ class _NotificationTile extends ConsumerWidget {
                 children: [
                   Text(
                     notification.title,
-                    style: GoogleFonts.poppins(
-                      fontWeight:
-                          notification.isRead ? FontWeight.w500 : FontWeight.w700,
+                    style: AppFonts.plusJakarta(
+                      fontWeight: unread ? FontWeight.w700 : FontWeight.w500,
                       fontSize: 14,
                       color: tokens.textPrimary,
                       height: 1.3,
@@ -369,7 +425,7 @@ class _NotificationTile extends ConsumerWidget {
                     const SizedBox(height: 4),
                     Text(
                       notification.body,
-                      style: GoogleFonts.poppins(
+                      style: AppFonts.plusJakarta(
                         fontSize: 12,
                         color: tokens.textSecondary,
                         height: 1.45,
@@ -380,10 +436,10 @@ class _NotificationTile extends ConsumerWidget {
                   ],
                   const SizedBox(height: 6),
                   Text(
-                    '${EngagementConstants.notificationTypeLabel(notification.type)} · ${dateFmt.format(notification.createdAt)}',
-                    style: GoogleFonts.poppins(
+                    '${EngagementConstants.notificationTypeLabel(notification.type)} · ${_relativeTime(notification.createdAt)}',
+                    style: AppFonts.plusJakarta(
                       fontSize: 11,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w600,
                       color: tokens.textTertiary,
                     ),
                     maxLines: 1,
@@ -392,14 +448,14 @@ class _NotificationTile extends ConsumerWidget {
                 ],
               ),
             ),
-            if (!notification.isRead) ...[
+            if (unread) ...[
               const SizedBox(width: AppSpacing.sm),
               Container(
                 width: 8,
                 height: 8,
                 margin: const EdgeInsets.only(top: 6),
-                decoration: const BoxDecoration(
-                  color: AppTheme.primaryColor,
+                decoration: BoxDecoration(
+                  color: accent,
                   shape: BoxShape.circle,
                 ),
               ),

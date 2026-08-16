@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 import '../../../config/router/route_names.dart';
+import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_fonts.dart';
+import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_theme.dart';
+import '../../../core/widgets/async_state_widgets.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../engagement/providers/engagement_provider.dart';
 import '../../../core/constants/question_constants.dart';
@@ -33,14 +36,26 @@ class QuestionDetailScreen extends ConsumerWidget {
     final savedIds = ref.watch(savedQuestionIdsProvider).valueOrNull ?? {};
     final isSaved = savedIds.contains(questionId);
     final isWide = MediaQuery.of(context).size.width >= 600;
+    final tokens = context.tokens;
 
     return Scaffold(
+      backgroundColor: tokens.surfaceMuted,
       appBar: AppBar(
+        elevation: 0,
+        scrolledUnderElevation: 0.5,
+        backgroundColor: tokens.surfaceElevated,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
           onPressed: () => context.pop(),
         ),
-        title: const Text('Question'),
+        title: Text(
+          'Question',
+          style: AppFonts.plusJakarta(
+            fontWeight: FontWeight.w700,
+            fontSize: 17,
+            color: tokens.textPrimary,
+          ),
+        ),
         actions: [
           IconButton(
             icon: Icon(isSaved ? Icons.bookmark : Icons.bookmark_outline),
@@ -85,11 +100,15 @@ class QuestionDetailScreen extends ConsumerWidget {
         ],
       ),
       body: questionAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        loading: () => const AsyncLoadingView(),
+        error: (e, _) => AsyncErrorView.fromError(e),
         data: (question) {
           if (question == null) {
-            return const Center(child: Text('Question not found'));
+            return const AsyncEmptyView(
+              icon: Icons.help_outline_rounded,
+              title: 'Question not found',
+              subtitle: 'This question may have been removed.',
+            );
           }
 
           final canMarkHelpful = authUser != null && authUser.uid == question.authorId;
@@ -97,43 +116,44 @@ class QuestionDetailScreen extends ConsumerWidget {
           final canReply = canAnswerAsync.valueOrNull ?? false;
 
           return ListView(
-            padding: EdgeInsets.all(isWide ? 24 : 16),
+            padding: EdgeInsets.all(isWide ? AppSpacing.xxl : AppSpacing.lg),
             children: [
               if (question.category.isNotEmpty)
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Chip(
-                    label: Text(QuestionConstants.categoryLabel(question.category)),
-                  ),
+                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                  child: _CategoryChip(category: question.category),
                 ),
               Text(
                 question.title,
-                style: GoogleFonts.poppins(
+                style: AppFonts.plusJakarta(
                   fontSize: 20,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w800,
+                  color: tokens.textPrimary,
+                  letterSpacing: -0.3,
+                  height: 1.25,
                 ),
               ),
               if (question.body.isNotEmpty) ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.md),
                 QuestionRichTextUtils.buildRichText(
                   question.body,
-                  baseStyle: GoogleFonts.poppins(
+                  baseStyle: AppFonts.plusJakarta(
                     fontSize: 14,
-                    color: AppTheme.gray700,
-                    height: 1.5,
+                    color: tokens.textSecondary,
+                    height: 1.55,
                   ),
                 ),
               ],
               if (question.imageUrls.isNotEmpty) ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.md),
                 SizedBox(
                   height: 120,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     itemCount: question.imageUrls.length,
-                    separatorBuilder: (_, _) => const SizedBox(width: 8),
+                    separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.sm),
                     itemBuilder: (_, i) => ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(tokens.buttonRadius),
                       child: Image.network(
                         question.imageUrls[i],
                         width: 120,
@@ -144,7 +164,7 @@ class QuestionDetailScreen extends ConsumerWidget {
                   ),
                 ),
               ],
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.md),
               Row(
                 children: [
                   Icon(
@@ -152,7 +172,7 @@ class QuestionDetailScreen extends ConsumerWidget {
                         ? Icons.visibility_off_outlined
                         : Icons.person_outline,
                     size: 16,
-                    color: AppTheme.gray500,
+                    color: tokens.textTertiary,
                   ),
                   const SizedBox(width: 6),
                   if (!question.isAnonymous)
@@ -162,25 +182,26 @@ class QuestionDetailScreen extends ConsumerWidget {
                       ),
                       child: Text(
                         question.authorDisplayName,
-                        style: GoogleFonts.poppins(
+                        style: AppFonts.plusJakarta(
                           fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.primaryColor,
+                          fontWeight: FontWeight.w700,
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                       ),
                     )
                   else
                     Text(
                       question.authorDisplayName,
-                      style: GoogleFonts.poppins(
+                      style: AppFonts.plusJakarta(
                         fontSize: 13,
-                        color: AppTheme.gray600,
+                        fontWeight: FontWeight.w600,
+                        color: tokens.textSecondary,
                       ),
                     ),
                   if (question.isAuthorVerified) ...[
                     const SizedBox(width: 4),
-                    const Icon(
-                      Icons.verified,
+                    Icon(
+                      Icons.verified_rounded,
                       size: 14,
                       color: AppTheme.secondaryColor,
                     ),
@@ -188,82 +209,70 @@ class QuestionDetailScreen extends ConsumerWidget {
                   const Spacer(),
                   Text(
                     DateFormat('MMM d, yyyy').format(question.createdAt),
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: AppTheme.gray400,
-                    ),
+                    style: AppFonts.plusJakarta(fontSize: 12, color: tokens.textTertiary),
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: AppSpacing.xxl),
               Text(
                 'Answers',
-                style: GoogleFonts.poppins(
+                style: AppFonts.plusJakarta(
                   fontSize: 16,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w800,
+                  color: tokens.textPrimary,
+                  letterSpacing: -0.2,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.md),
               canAnswerAsync.when(
                 loading: () => const SizedBox.shrink(),
                 error: (_, _) => const SizedBox.shrink(),
                 data: (canAnswer) {
                   if (!canAnswer) {
                     return Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.only(bottom: AppSpacing.lg),
                       child: OutlinedButton.icon(
                         onPressed: () => context.go(RouteNames.verification),
-                        icon: const Icon(Icons.verified_user_outlined),
-                        label: const Text(
+                        icon: const Icon(Icons.verified_user_outlined, size: 18),
+                        label: Text(
                           'Verify as a student or alumni of this college to answer',
+                          style: AppFonts.plusJakarta(fontSize: 13, fontWeight: FontWeight.w600),
                         ),
                       ),
                     );
                   }
                   return Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
+                    padding: const EdgeInsets.only(bottom: AppSpacing.lg),
                     child: FilledButton.icon(
                       onPressed: () => showWriteAnswerSheet(
                         context: context,
                         ref: ref,
                         questionId: questionId,
                       ),
-                      icon: const Icon(Icons.edit_outlined),
+                      icon: const Icon(Icons.edit_outlined, size: 18),
                       label: Text(
                         'Write Answer',
-                        style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                        style: AppFonts.plusJakarta(fontWeight: FontWeight.w700),
                       ),
                     ),
                   );
                 },
               ),
               answersAsync.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (e, _) => Text('Error loading answers: $e'),
+                loading: () => const Padding(
+                  padding: EdgeInsets.symmetric(vertical: AppSpacing.xxl),
+                  child: AsyncLoadingView(),
+                ),
+                error: (e, _) => AsyncErrorView.fromError(e, compact: true),
                 data: (answers) {
                   if (answers.isEmpty) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 32),
-                      child: Column(
-                        children: [
-                          Icon(Icons.forum_outlined,
-                              size: 48, color: AppTheme.gray300),
-                          const SizedBox(height: 12),
-                          Text(
-                            'No answers yet',
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
+                    return SizedBox(
+                      height: 220,
+                      child: AsyncEmptyView(
+                        icon: Icons.forum_outlined,
+                        title: 'No answers yet',
+                        subtitle:
                             'Verified students and alumni can share their experience',
-                            style: GoogleFonts.poppins(
-                              fontSize: 13,
-                              color: AppTheme.gray500,
-                            ),
-                          ),
-                        ],
                       ),
                     );
                   }
@@ -302,6 +311,32 @@ class QuestionDetailScreen extends ConsumerWidget {
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+class _CategoryChip extends StatelessWidget {
+  final String category;
+
+  const _CategoryChip({required this.category});
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: primary.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        QuestionConstants.categoryLabel(category),
+        style: AppFonts.plusJakarta(
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          color: primary,
+        ),
       ),
     );
   }

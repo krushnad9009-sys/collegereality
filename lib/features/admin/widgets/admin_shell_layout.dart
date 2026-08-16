@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../config/router/route_names.dart';
-import '../../../config/theme/app_theme.dart';
+import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_fonts.dart';
+import '../../../config/theme/app_spacing.dart';
 import '../../auth/providers/auth_provider.dart';
 import 'super_admin_scope.dart';
 
@@ -63,6 +65,8 @@ class AdminShellLayout extends StatelessWidget {
     final width = MediaQuery.sizeOf(context).width;
     final isWide = width >= 960;
     final dashboardRoute = _dashboardRoute(context);
+    final isPanel = SuperAdminScope.maybeOf(context) != null;
+    final tokens = context.tokens;
 
     if (isWide) {
       return Scaffold(
@@ -74,7 +78,7 @@ class AdminShellLayout extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _TopBar(title: title, showBack: showBack, dashboardRoute: dashboardRoute),
+                  _TopBar(title: title, showBack: showBack, dashboardRoute: dashboardRoute, isPanel: isPanel),
                   Expanded(child: child),
                 ],
               ),
@@ -87,7 +91,12 @@ class AdminShellLayout extends StatelessWidget {
     return Scaffold(
       floatingActionButton: floatingActionButton,
       appBar: AppBar(
-        title: Text(title, style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+        title: Text(
+          title,
+          style: isPanel
+              ? GoogleFonts.inter(fontWeight: FontWeight.w600)
+              : AppFonts.plusJakarta(fontWeight: FontWeight.w700, color: tokens.textPrimary),
+        ),
         leading: showBack
             ? IconButton(
                 icon: const Icon(Icons.arrow_back_ios_new, size: 18),
@@ -107,19 +116,25 @@ class _TopBar extends StatelessWidget {
   final String title;
   final bool showBack;
   final String dashboardRoute;
+  final bool isPanel;
 
   const _TopBar({
     required this.title,
     required this.showBack,
     required this.dashboardRoute,
+    required this.isPanel,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      elevation: 0.5,
+    final tokens = context.tokens;
+    return Container(
+      decoration: BoxDecoration(
+        color: tokens.surfaceElevated,
+        border: Border(bottom: BorderSide(color: tokens.borderSubtle)),
+      ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: AppSpacing.lg),
         child: Row(
           children: [
             if (showBack)
@@ -129,7 +144,14 @@ class _TopBar extends StatelessWidget {
               ),
             Text(
               title,
-              style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.w700),
+              style: isPanel
+                  ? GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.w700, color: tokens.textPrimary)
+                  : AppFonts.plusJakarta(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.3,
+                      color: tokens.textPrimary,
+                    ),
             ),
           ],
         ),
@@ -156,32 +178,34 @@ class _Sidebar extends ConsumerWidget {
         : adminNavItems.where((i) => !i.adminOnly || isAdminUser).toList();
 
     final isPanel = panel != null;
-    final sidebarColor = isPanel ? const Color(0xFF0F172A) : (Theme.of(context).brightness == Brightness.dark ? AppTheme.gray900 : AppTheme.gray50);
-    final selectedColor = isPanel ? Colors.white : AppTheme.primaryColor;
+    final tokens = context.tokens;
+    final primary = Theme.of(context).colorScheme.primary;
+    final sidebarColor = isPanel ? const Color(0xFF0F172A) : tokens.surfaceMuted;
+    final selectedColor = isPanel ? Colors.white : primary;
     final textColor = isPanel ? const Color(0xFFCBD5E1) : null;
 
     return Container(
       width: 260,
       color: sidebarColor,
       child: ListView(
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
         children: [
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppSpacing.lg),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   panel?.brandTitle ?? 'College Reality',
-                  style: GoogleFonts.inter(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 16,
-                    color: isPanel ? Colors.white : AppTheme.primaryColor,
-                  ),
+                  style: isPanel
+                      ? GoogleFonts.inter(fontWeight: FontWeight.w800, fontSize: 16, color: Colors.white)
+                      : AppFonts.plusJakarta(fontWeight: FontWeight.w800, fontSize: 16, color: primary),
                 ),
                 Text(
                   panel?.brandSubtitle ?? 'Admin Console',
-                  style: GoogleFonts.inter(fontSize: 12, color: isPanel ? textColor : null),
+                  style: isPanel
+                      ? GoogleFonts.inter(fontSize: 12, color: textColor)
+                      : AppFonts.plusJakarta(fontSize: 12, color: tokens.textTertiary),
                 ),
               ],
             ),
@@ -191,26 +215,32 @@ class _Sidebar extends ConsumerWidget {
             return ListTile(
               leading: Icon(
                 item.icon,
-                color: selected ? selectedColor : (isPanel ? textColor?.withValues(alpha: 0.7) : null),
+                color: selected ? selectedColor : (isPanel ? textColor?.withValues(alpha: 0.7) : tokens.textSecondary),
               ),
               title: Text(
                 item.title,
-                style: GoogleFonts.inter(
-                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                  fontSize: 14,
-                  color: isPanel ? (selected ? Colors.white : textColor) : null,
-                ),
+                style: isPanel
+                    ? GoogleFonts.inter(
+                        fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                        fontSize: 14,
+                        color: selected ? Colors.white : textColor,
+                      )
+                    : AppFonts.plusJakarta(
+                        fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                        fontSize: 14,
+                        color: selected ? tokens.textPrimary : tokens.textSecondary,
+                      ),
               ),
               selected: selected,
-              selectedTileColor: isPanel ? AppTheme.primaryColor.withValues(alpha: 0.2) : null,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              selectedTileColor: isPanel ? primary.withValues(alpha: 0.2) : primary.withValues(alpha: 0.1),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSpacing.radiusXs)),
               onTap: () {
                 Navigator.of(context).maybePop();
                 context.go(item.route);
               },
             );
           }),
-          const Divider(color: Color(0xFF334155)),
+          Divider(color: isPanel ? const Color(0xFF334155) : tokens.borderSubtle),
           if (isPanel)
             ListTile(
               leading: Icon(Icons.logout, color: textColor),
@@ -222,8 +252,8 @@ class _Sidebar extends ConsumerWidget {
             )
           else
             ListTile(
-              leading: const Icon(Icons.home_outlined),
-              title: Text('Back to App', style: GoogleFonts.poppins(fontSize: 14)),
+              leading: Icon(Icons.home_outlined, color: tokens.textSecondary),
+              title: Text('Back to App', style: AppFonts.plusJakarta(fontSize: 14, color: tokens.textPrimary)),
               onTap: () => context.go(RouteNames.home),
             ),
         ],

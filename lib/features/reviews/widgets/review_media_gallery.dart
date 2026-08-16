@@ -1,7 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_fonts.dart';
 
 class ReviewMediaGallery extends StatelessWidget {
   final List<String> photoUrls;
@@ -16,6 +17,7 @@ class ReviewMediaGallery extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (photoUrls.isEmpty && videoUrls.isEmpty) return const SizedBox.shrink();
+    final tokens = context.tokens;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -23,7 +25,11 @@ class ReviewMediaGallery extends StatelessWidget {
         if (photoUrls.isNotEmpty) ...[
           Text(
             'Photos',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 12),
+            style: AppFonts.plusJakarta(
+              fontWeight: FontWeight.w700,
+              fontSize: 12,
+              color: tokens.textSecondary,
+            ),
           ),
           const SizedBox(height: 8),
           SizedBox(
@@ -48,7 +54,11 @@ class ReviewMediaGallery extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             'Videos',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 12),
+            style: AppFonts.plusJakarta(
+              fontWeight: FontWeight.w700,
+              fontSize: 12,
+              color: tokens.textSecondary,
+            ),
           ),
           const SizedBox(height: 8),
           ...videoUrls.map(

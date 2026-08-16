@@ -5,8 +5,11 @@ import '../../../config/theme/app_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../config/router/route_names.dart';
+import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/utils/indian_currency_formatter.dart';
+import '../../../core/widgets/premium_components.dart';
+import '../../../core/widgets/premium_list_row.dart';
 import '../../questions/widgets/ask_student_button.dart';
 import '../../reviews/widgets/review_summary_panel.dart';
 import '../../community_feed/providers/college_community_feed_provider.dart';
@@ -21,6 +24,7 @@ class CollegeProfileStatsStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final choosePercent = college.wouldChooseAgainPercent;
     final stats = <_StatItem>[
       _StatItem(
@@ -35,7 +39,7 @@ class CollegeProfileStatsStrip extends StatelessWidget {
         value: college.verifiedStudentCount > 0
             ? '${college.verifiedStudentCount}'
             : '—',
-        color: AppTheme.primaryColor,
+        color: colorScheme.primary,
       ),
       _StatItem(
         icon: Icons.school_outlined,
@@ -43,7 +47,7 @@ class CollegeProfileStatsStrip extends StatelessWidget {
         value: college.verifiedAlumniCount > 0
             ? '${college.verifiedAlumniCount}'
             : '—',
-        color: AppTheme.secondaryColor,
+        color: colorScheme.secondary,
       ),
       _StatItem(
         icon: Icons.quiz_outlined,
@@ -83,11 +87,12 @@ class CollegeProfileStatsStrip extends StatelessWidget {
           itemCount: stats.length,
           itemBuilder: (context, index) {
             final stat = stats[index];
+            final tokens = context.tokens;
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               decoration: BoxDecoration(
                 color: stat.color.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(tokens.buttonRadius * 0.7),
                 border: Border.all(color: stat.color.withValues(alpha: 0.2)),
               ),
               child: Row(
@@ -111,7 +116,7 @@ class CollegeProfileStatsStrip extends StatelessWidget {
                           stat.label,
                           style: AppFonts.plusJakarta(
                             fontSize: 10,
-                            color: AppTheme.gray600,
+                            color: tokens.textSecondary,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -197,15 +202,18 @@ class _FactTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final primary = Theme.of(context).colorScheme.primary;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppTheme.gray100,
-        borderRadius: BorderRadius.circular(10),
+        color: tokens.surfaceMuted,
+        borderRadius: BorderRadius.circular(tokens.buttonRadius * 0.7),
+        border: Border.all(color: tokens.borderSubtle),
       ),
       child: Row(
         children: [
-          Icon(icon, size: 20, color: AppTheme.primaryColor),
+          Icon(icon, size: 20, color: primary),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -215,7 +223,7 @@ class _FactTile extends StatelessWidget {
                   label,
                   style: AppFonts.plusJakarta(
                     fontSize: 11,
-                    color: AppTheme.gray500,
+                    color: tokens.textTertiary,
                   ),
                 ),
                 Text(
@@ -223,6 +231,7 @@ class _FactTile extends StatelessWidget {
                   style: AppFonts.plusJakarta(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
+                    color: tokens.textPrimary,
                   ),
                 ),
               ],
@@ -301,18 +310,16 @@ class _FacilityChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = available ? AppTheme.primaryColor : AppTheme.gray400;
+    final tokens = context.tokens;
+    final primary = Theme.of(context).colorScheme.primary;
+    final color = available ? primary : tokens.textTertiary;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: available
-            ? AppTheme.primaryColor.withValues(alpha: 0.1)
-            : AppTheme.gray100,
-        borderRadius: BorderRadius.circular(20),
+        color: available ? primary.withValues(alpha: 0.1) : tokens.surfaceMuted,
+        borderRadius: BorderRadius.circular(tokens.chipRadius),
         border: Border.all(
-          color: available
-              ? AppTheme.primaryColor.withValues(alpha: 0.25)
-              : AppTheme.gray200,
+          color: available ? primary.withValues(alpha: 0.25) : tokens.borderSubtle,
         ),
       ),
       child: Row(
@@ -330,7 +337,7 @@ class _FacilityChip extends StatelessWidget {
           ),
           if (!available) ...[
             const SizedBox(width: 4),
-            Icon(Icons.close, size: 14, color: AppTheme.gray400),
+            Icon(Icons.close, size: 14, color: tokens.textTertiary),
           ],
         ],
       ),
@@ -357,6 +364,7 @@ class CollegeProfileQuickCards extends StatelessWidget {
     final placements = college.placements;
     final fees = college.fees;
     final hostel = college.hostel;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -365,7 +373,7 @@ class CollegeProfileQuickCards extends StatelessWidget {
           _QuickCard(
             title: 'Placements',
             icon: Icons.work_outline,
-            color: AppTheme.primaryColor,
+            color: colorScheme.primary,
             lines: [
               if (placements.averagePackageLpa > 0)
                 'Avg ${placements.averagePackageLpa} LPA',
@@ -377,7 +385,7 @@ class CollegeProfileQuickCards extends StatelessWidget {
           _QuickCard(
             title: 'Hostel',
             icon: Icons.hotel_outlined,
-            color: AppTheme.accentColor,
+            color: colorScheme.tertiary,
             lines: [
               hostel.available ? 'Available' : 'Check details',
               if (hostel.annualFee > 0 || fees.hostelAnnual > 0)
@@ -390,7 +398,7 @@ class CollegeProfileQuickCards extends StatelessWidget {
           _QuickCard(
             title: 'Fees',
             icon: Icons.payments_outlined,
-            color: AppTheme.secondaryColor,
+            color: colorScheme.secondary,
             lines: [
               if (fees.tuitionMin > 0 || fees.tuitionMax > 0)
                 '${IndianCurrencyFormatter.format(fees.tuitionMin)} – ${IndianCurrencyFormatter.format(fees.tuitionMax)}',
@@ -445,17 +453,19 @@ class _QuickCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final radius = tokens.buttonRadius;
     return Material(
       color: color.withValues(alpha: 0.08),
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(radius),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(radius),
         child: Container(
           width: double.infinity,
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(radius),
             border: Border.all(color: color.withValues(alpha: 0.2)),
           ),
           child: Row(
@@ -471,6 +481,7 @@ class _QuickCard extends StatelessWidget {
                       style: AppFonts.plusJakarta(
                         fontWeight: FontWeight.w700,
                         fontSize: 14,
+                        color: tokens.textPrimary,
                       ),
                     ),
                     ...lines.map(
@@ -478,7 +489,7 @@ class _QuickCard extends StatelessWidget {
                         line,
                         style: AppFonts.plusJakarta(
                           fontSize: 12,
-                          color: AppTheme.gray600,
+                          color: tokens.textSecondary,
                         ),
                       ),
                     ),
@@ -515,23 +526,36 @@ class CollegeAdmissionLinksSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final links = college.displayAdmissionLinks;
     if (links.isEmpty) return const SizedBox.shrink();
+    final tokens = context.tokens;
+    final secondary = Theme.of(context).colorScheme.secondary;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Admission Links',
-          style: AppFonts.plusJakarta(fontWeight: FontWeight.w700, fontSize: 15),
+          style: AppFonts.plusJakarta(
+            fontWeight: FontWeight.w700,
+            fontSize: 15,
+            color: tokens.textPrimary,
+          ),
         ),
         const SizedBox(height: 8),
         ...links.map(
-          (link) => Card(
-            margin: const EdgeInsets.only(bottom: 8),
-            child: ListTile(
-              leading: const Icon(Icons.link, color: AppTheme.secondaryColor),
-              title: Text(link, style: AppFonts.plusJakarta(fontSize: 13)),
-              trailing: const Icon(Icons.open_in_new, size: 18),
-              onTap: () => _openUrl(context, link),
+          (link) => Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: PremiumCard(
+              radius: tokens.cardRadius,
+              padding: EdgeInsets.zero,
+              child: PremiumListRow(
+                leadingIcon: Icons.link,
+                iconColor: secondary,
+                title: link,
+                trailing: Icon(Icons.open_in_new,
+                    size: 18, color: tokens.textTertiary),
+                onTap: () => _openUrl(context, link),
+                showChevron: false,
+              ),
             ),
           ),
         ),
@@ -552,22 +576,22 @@ class CollegeCommunitySection extends ConsumerWidget {
         (collegeId: college.id, collegeName: college.name),
       ),
     );
+    final tokens = context.tokens;
+    final secondary = Theme.of(context).colorScheme.secondary;
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.secondaryColor.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppTheme.secondaryColor.withValues(alpha: 0.15),
-        ),
+        color: secondary.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(tokens.cardRadius),
+        border: Border.all(color: secondary.withValues(alpha: 0.15)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.groups_outlined, color: AppTheme.secondaryColor),
+              Icon(Icons.groups_outlined, color: secondary),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -575,6 +599,7 @@ class CollegeCommunitySection extends ConsumerWidget {
                   style: AppFonts.plusJakarta(
                     fontWeight: FontWeight.w700,
                     fontSize: 15,
+                    color: tokens.textPrimary,
                   ),
                 ),
               ),
@@ -589,53 +614,47 @@ class CollegeCommunitySection extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           feedAsync.when(
             loading: () => const Padding(
               padding: EdgeInsets.symmetric(vertical: 12),
               child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
             ),
-            error: (_, _) => Text(
-              'Join discussions with verified students at this college.',
-              style: AppFonts.plusJakarta(fontSize: 12, color: AppTheme.gray600),
+            error: (_, _) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Text(
+                'Join discussions with verified students at this college.',
+                style: AppFonts.plusJakarta(fontSize: 12, color: tokens.textSecondary),
+              ),
             ),
             data: (posts) {
               if (posts.isEmpty) {
-                return Text(
-                  'No community posts yet. Be the first to start a discussion!',
-                  style: AppFonts.plusJakarta(
-                    fontSize: 12,
-                    color: AppTheme.gray600,
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Text(
+                    'No community posts yet. Be the first to start a discussion!',
+                    style: AppFonts.plusJakarta(
+                      fontSize: 12,
+                      color: tokens.textSecondary,
+                    ),
                   ),
                 );
               }
               return Column(
                 children: posts
                     .map(
-                      (post) => ListTile(
-                        contentPadding: EdgeInsets.zero,
+                      (post) => PremiumListRow(
+                        dense: true,
                         leading: CircleAvatar(
                           radius: 18,
-                          backgroundColor:
-                              AppTheme.secondaryColor.withValues(alpha: 0.15),
-                          child: const Icon(Icons.chat_bubble_outline, size: 18),
+                          backgroundColor: secondary.withValues(alpha: 0.15),
+                          child: Icon(Icons.chat_bubble_outline,
+                              size: 18, color: secondary),
                         ),
-                        title: Text(
-                          post.isPoll ? post.pollQuestion : post.content,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppFonts.plusJakarta(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13,
-                          ),
-                        ),
-                        subtitle: Text(
-                          '${post.authorDisplayName} · ${post.likeCount} likes',
-                          style: AppFonts.plusJakarta(
-                            fontSize: 11,
-                            color: AppTheme.gray600,
-                          ),
-                        ),
+                        title: post.isPoll ? post.pollQuestion : post.content,
+                        subtitle:
+                            '${post.authorDisplayName} · ${post.likeCount} likes',
+                        showChevron: false,
                       ),
                     )
                     .toList(),

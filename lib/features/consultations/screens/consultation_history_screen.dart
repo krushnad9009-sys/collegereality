@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../config/router/route_names.dart';
+import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../core/constants/consultation_constants.dart';
 import '../../../core/widgets/index.dart';
@@ -103,54 +105,82 @@ class _ConsultationTile extends StatelessWidget {
   Color _statusColor() {
     switch (consultation.status) {
       case ConsultationConstants.statusCompleted:
-        return Colors.green;
+        return const Color(0xFF16A34A);
       case ConsultationConstants.statusCancelled:
       case ConsultationConstants.statusExpired:
-        return Colors.red;
+        return const Color(0xFFDC2626);
       case ConsultationConstants.statusActive:
-        return Colors.blue;
+        return const Color(0xFF2563EB);
       default:
-        return Colors.orange;
+        return const Color(0xFFD97706);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final primary = Theme.of(context).colorScheme.primary;
+    final statusColor = _statusColor();
     return PremiumCard(
       padding: const EdgeInsets.all(AppSpacing.md),
       onTap: () => context.push(RouteNames.consultationRoomPath(consultation.id)),
       child: Row(
         children: [
-          Icon(
-            consultation.type == ConsultationConstants.typeChat
-                ? Icons.chat_bubble_outline
-                : Icons.call_outlined,
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: primary.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+            ),
+            child: Icon(
+              consultation.type == ConsultationConstants.typeChat
+                  ? Icons.chat_bubble_outline_rounded
+                  : Icons.call_outlined,
+              size: 18,
+              color: primary,
+            ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   '${consultation.type[0].toUpperCase()}${consultation.type.substring(1)} · ${consultation.durationMinutes} min',
-                  style: const TextStyle(fontWeight: FontWeight.w600),
+                  style: AppFonts.plusJakarta(
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w600,
+                    color: tokens.textPrimary,
+                  ),
                 ),
+                const SizedBox(height: 2),
                 Text(
                   consultation.priceInfo.grossDisplay,
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                  style: AppFonts.plusJakarta(
+                    color: tokens.textSecondary,
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ],
             ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
-              color: _statusColor().withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(20),
+              color: statusColor.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: statusColor.withValues(alpha: 0.32)),
             ),
             child: Text(
               consultation.status.replaceAll('_', ' '),
-              style: TextStyle(color: _statusColor(), fontSize: 11, fontWeight: FontWeight.w700),
+              style: AppFonts.plusJakarta(
+                color: statusColor,
+                fontSize: 11.5,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.1,
+              ),
             ),
           ),
         ],

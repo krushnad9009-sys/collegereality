@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../../config/theme/app_fonts.dart';
 
 import '../../../config/router/route_names.dart';
+import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_theme.dart';
 
@@ -20,6 +21,8 @@ class _PremiumHomeSearchBarState extends State<PremiumHomeSearchBar> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final tokens = context.tokens;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return GestureDetector(
       onTapDown: (_) => setState(() => _pressed = true),
@@ -33,11 +36,7 @@ class _PremiumHomeSearchBarState extends State<PremiumHomeSearchBar> {
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
-            gradient: LinearGradient(
-              colors: isDark
-                  ? [AppTheme.gray800, AppTheme.gray800]
-                  : [AppTheme.white, AppTheme.white],
-            ),
+            color: tokens.surfaceElevated,
             boxShadow: isDark
                 ? [
                     BoxShadow(
@@ -48,7 +47,7 @@ class _PremiumHomeSearchBarState extends State<PremiumHomeSearchBar> {
                   ]
                 : [
                     BoxShadow(
-                      color: AppTheme.primaryColor.withValues(alpha: 0.12),
+                      color: colorScheme.primary.withValues(alpha: 0.12),
                       blurRadius: 32,
                       offset: const Offset(0, 10),
                     ),
@@ -60,8 +59,8 @@ class _PremiumHomeSearchBarState extends State<PremiumHomeSearchBar> {
                   ],
             border: Border.all(
               color: isDark
-                  ? AppTheme.gray700
-                  : AppTheme.primaryColor.withValues(alpha: 0.12),
+                  ? tokens.borderSubtle
+                  : colorScheme.primary.withValues(alpha: 0.12),
             ),
           ),
           child: Container(
@@ -73,10 +72,10 @@ class _PremiumHomeSearchBarState extends State<PremiumHomeSearchBar> {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: isDark
-                    ? [AppTheme.gray800, AppTheme.gray900]
+                    ? [tokens.surfaceElevated, tokens.surfaceMuted]
                     : [
-                        AppTheme.white,
-                        AppTheme.primaryColor.withValues(alpha: 0.03),
+                        tokens.surfaceElevated,
+                        colorScheme.primary.withValues(alpha: 0.03),
                       ],
               ),
             ),
@@ -85,13 +84,13 @@ class _PremiumHomeSearchBarState extends State<PremiumHomeSearchBar> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [AppTheme.primaryColor, AppTheme.secondaryColor],
+                    gradient: LinearGradient(
+                      colors: [colorScheme.primary, colorScheme.secondary],
                     ),
                     borderRadius: BorderRadius.circular(14),
                     boxShadow: [
                       BoxShadow(
-                        color: AppTheme.primaryColor.withValues(alpha: 0.35),
+                        color: colorScheme.primary.withValues(alpha: 0.35),
                         blurRadius: 12,
                         offset: const Offset(0, 4),
                       ),
@@ -114,7 +113,7 @@ class _PremiumHomeSearchBarState extends State<PremiumHomeSearchBar> {
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
                           letterSpacing: -0.2,
-                          color: isDark ? AppTheme.gray100 : AppTheme.gray900,
+                          color: tokens.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -123,7 +122,7 @@ class _PremiumHomeSearchBarState extends State<PremiumHomeSearchBar> {
                         style: AppFonts.plusJakarta(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
-                          color: AppTheme.gray500,
+                          color: tokens.textTertiary,
                         ),
                       ),
                     ],
@@ -132,12 +131,12 @@ class _PremiumHomeSearchBarState extends State<PremiumHomeSearchBar> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withValues(alpha: 0.08),
+                    color: colorScheme.primary.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     Icons.tune_rounded,
-                    color: AppTheme.primaryColor.withValues(alpha: 0.9),
+                    color: colorScheme.primary.withValues(alpha: 0.9),
                     size: 20,
                   ),
                 ),

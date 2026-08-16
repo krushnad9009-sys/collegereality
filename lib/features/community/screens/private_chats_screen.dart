@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_spacing.dart';
-import '../../../config/theme/app_theme.dart';
 import '../../../core/widgets/index.dart';
 import '../../auth/providers/user_provider.dart';
 import '../providers/community_provider.dart';
@@ -18,6 +17,7 @@ class PrivateChatsScreen extends ConsumerWidget {
     final chatsAsync = ref.watch(privateConversationsProvider);
     final tokens = context.tokens;
     final textTheme = Theme.of(context).textTheme;
+    final primary = Theme.of(context).colorScheme.primary;
 
     return Scaffold(
       backgroundColor: tokens.surfaceMuted,
@@ -78,11 +78,10 @@ class PrivateChatsScreen extends ConsumerWidget {
                   ),
                   leading: CircleAvatar(
                     radius: 24,
-                    backgroundColor:
-                        AppTheme.primaryColor.withValues(alpha: 0.12),
+                    backgroundColor: primary.withValues(alpha: 0.12),
                     child: Icon(
                       Icons.person_rounded,
-                      color: AppTheme.primaryColor,
+                      color: primary,
                       size: 22,
                     ),
                   ),

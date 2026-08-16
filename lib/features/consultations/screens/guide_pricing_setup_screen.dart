@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../core/widgets/index.dart';
 import '../../auth/providers/user_provider.dart';
@@ -195,49 +197,81 @@ class _GuidePricingSetupScreenState
     required List<int> durationOptions,
     required ValueChanged<int> onDurationChanged,
   }) {
-    return PremiumCard(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
-              ),
-              Switch(value: enabled, onChanged: onToggle),
-            ],
-          ),
-          if (enabled) ...[
-            const SizedBox(height: 8),
+    return Builder(builder: (context) {
+      final tokens = context.tokens;
+      final primary = Theme.of(context).colorScheme.primary;
+      return PremiumCard(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
             Row(
               children: [
                 Expanded(
-                  child: TextField(
-                    controller: priceController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      prefixText: '₹ ',
-                      labelText: 'Price',
-                      border: OutlineInputBorder(),
+                  child: Text(
+                    title,
+                    style: AppFonts.plusJakarta(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: tokens.textPrimary,
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                DropdownButton<int>(
-                  value: duration,
-                  items: durationOptions
-                      .map((m) => DropdownMenuItem(value: m, child: Text('$m min')))
-                      .toList(),
-                  onChanged: (v) {
-                    if (v != null) onDurationChanged(v);
-                  },
+                Switch(
+                  value: enabled,
+                  onChanged: onToggle,
+                  activeThumbColor: primary,
                 ),
               ],
             ),
+            if (enabled) ...[
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: priceController,
+                      keyboardType: TextInputType.number,
+                      style: AppFonts.plusJakarta(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: tokens.textPrimary,
+                      ),
+                      decoration: InputDecoration(
+                        prefixText: '₹ ',
+                        labelText: 'Price',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(tokens.buttonRadius),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  DropdownButton<int>(
+                    value: duration,
+                    items: durationOptions
+                        .map((m) => DropdownMenuItem(
+                              value: m,
+                              child: Text(
+                                '$m min',
+                                style: AppFonts.plusJakarta(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: tokens.textPrimary,
+                                ),
+                              ),
+                            ))
+                        .toList(),
+                    onChanged: (v) {
+                      if (v != null) onDurationChanged(v);
+                    },
+                  ),
+                ],
+              ),
+            ],
           ],
-        ],
-      ),
-    );
+        ),
+      );
+    });
   }
 }

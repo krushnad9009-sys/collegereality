@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 
-import '../../../config/theme/app_theme.dart';
+import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_fonts.dart';
 import '../../../core/constants/college_constants.dart';
 import '../../../core/widgets/index.dart';
 import '../../colleges/models/college_model.dart';
@@ -91,6 +91,7 @@ class _AdminAnnouncementsScreenState extends ConsumerState<AdminAnnouncementsScr
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
     final isAdminUser = ref.watch(isAdminUserProvider).maybeWhen(data: (v) => v, orElse: () => false);
     final userType = ref.watch(currentUserModelProvider).maybeWhen(data: (u) => u?.userType, orElse: () => null);
     final canBroadcast = AdminPermissions.canBroadcast(userType);
@@ -107,17 +108,20 @@ class _AdminAnnouncementsScreenState extends ConsumerState<AdminAnnouncementsScr
         padding: const EdgeInsets.all(20),
         children: [
           if (!canBroadcast)
-            const Card(
-              child: ListTile(
-                leading: Icon(Icons.lock_outline, color: Colors.orange),
-                title: Text('Admin access required'),
-                subtitle: Text('Only admins can send broadcast notifications.'),
+            PremiumCard(
+              padding: EdgeInsets.zero,
+              child: const PremiumListRow(
+                leadingIcon: Icons.lock_outline,
+                iconColor: Colors.orange,
+                title: 'Admin access required',
+                subtitle: 'Only admins can send broadcast notifications.',
+                showChevron: false,
               ),
             )
           else ...[
             Text(
               'Send push and in-app notifications to users.',
-              style: GoogleFonts.poppins(color: AppTheme.gray600),
+              style: AppFonts.plusJakarta(color: tokens.textSecondary),
             ),
             const SizedBox(height: 20),
             SegmentedButton<_BroadcastTarget>(

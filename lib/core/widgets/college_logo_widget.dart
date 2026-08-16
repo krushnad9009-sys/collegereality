@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:google_fonts/google_fonts.dart';
 
-import '../../config/theme/app_theme.dart';
+import '../../config/theme/app_design_tokens.dart';
+import '../../config/theme/app_fonts.dart';
 import '../utils/college_image_helper.dart';
 
 /// Cached circular logo for college cards and detail headers.
@@ -23,10 +23,11 @@ class CollegeLogoWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final resolved = CollegeImageHelper.resolveLogoUrl(logoUrl, collegeId: collegeId);
+    final tokens = context.tokens;
     if (resolved != null) {
       return CircleAvatar(
         radius: radius,
-        backgroundColor: AppTheme.gray100,
+        backgroundColor: tokens.surfaceMuted,
         child: ClipOval(
           child: CachedNetworkImage(
             imageUrl: resolved,
@@ -56,7 +57,7 @@ class CollegeLogoWidget extends StatelessWidget {
             : 'C';
     return Text(
       initials,
-      style: GoogleFonts.poppins(
+      style: AppFonts.plusJakarta(
         fontSize: radius * 0.75,
         fontWeight: FontWeight.w700,
         color: Colors.white,

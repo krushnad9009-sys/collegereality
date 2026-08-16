@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../config/router/route_names.dart';
+import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/communication_constants.dart';
 import '../../../core/widgets/index.dart';
@@ -148,8 +148,11 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
     if (user == null) {
       return Scaffold(
         backgroundColor: AppTheme.gray900,
-        body: const Center(
-          child: Text('Please log in', style: TextStyle(color: Colors.white70)),
+        body: Center(
+          child: Text(
+            'Please log in',
+            style: AppFonts.plusJakarta(color: Colors.white70, fontSize: 14),
+          ),
         ),
       );
     }
@@ -179,7 +182,7 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                 Text(
                   e.toString().replaceFirst('Exception: ', ''),
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.white70),
+                  style: AppFonts.plusJakarta(color: Colors.white70, fontSize: 14),
                 ),
               ],
             ),
@@ -194,9 +197,11 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
               backgroundColor: Colors.transparent,
               foregroundColor: Colors.white,
             ),
-            body: const Center(
-              child: Text('Call session not found',
-                  style: TextStyle(color: Colors.white70)),
+            body: Center(
+              child: Text(
+                'Call session not found',
+                style: AppFonts.plusJakarta(color: Colors.white70, fontSize: 14),
+              ),
             ),
           );
         }
@@ -243,18 +248,24 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                   const Spacer(),
                   if (session.isVideo)
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(24),
                       child: Stack(
                         alignment: Alignment.center,
                         children: [
                           Container(
                             width: double.infinity,
                             height: 220,
-                            color: AppTheme.gray700,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [AppTheme.gray800, AppTheme.gray700],
+                              ),
+                            ),
                             child: _cameraOff
-                                ? const Icon(Icons.videocam_off,
+                                ? const Icon(Icons.videocam_off_rounded,
                                     size: 64, color: Colors.white54)
-                                : Icon(Icons.person,
+                                : Icon(Icons.person_rounded,
                                     size: 80,
                                     color: Colors.white.withValues(alpha: 0.3)),
                           ),
@@ -263,10 +274,14 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                               width: double.infinity,
                               height: 220,
                               color: Colors.black.withValues(alpha: 0.2),
-                              child: const Center(
+                              child: Center(
                                 child: Text(
                                   'Background blurred',
-                                  style: TextStyle(color: Colors.white70),
+                                  style: AppFonts.plusJakarta(
+                                    color: Colors.white70,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
                               ),
                             ),
@@ -274,47 +289,72 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                       ),
                     )
                   else
-                    CircleAvatar(
-                      radius: 56,
-                      backgroundColor: AppTheme.primaryColor,
-                      child: Text(
-                        peerAlias.replaceAll('Guide #', '').substring(0, 2),
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.12),
+                          width: 2,
+                        ),
+                      ),
+                      child: CircleAvatar(
+                        radius: 56,
+                        backgroundColor: AppTheme.primaryColor,
+                        child: Text(
+                          peerAlias.replaceAll('Guide #', '').substring(0, 2),
+                          style: AppFonts.plusJakarta(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),
                   const SizedBox(height: 20),
                   Text(
                     peerAlias,
-                    style: GoogleFonts.plusJakartaSans(
+                    style: AppFonts.plusJakarta(
                       fontSize: 24,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w800,
                       color: Colors.white,
+                      letterSpacing: -0.4,
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    _statusLabel(session.status, needsAccept),
-                    style: GoogleFonts.plusJakartaSans(color: Colors.white70),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      _statusLabel(session.status, needsAccept),
+                      style: AppFonts.plusJakarta(
+                        color: Colors.white70,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                   if (session.status ==
                       CommunicationConstants.callStatusActive) ...[
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
                     Text(
                       formatCallDuration(_elapsedSeconds),
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 32,
+                      style: AppFonts.plusJakarta(
+                        fontSize: 36,
                         fontWeight: FontWeight.w300,
                         color: Colors.white,
+                        letterSpacing: 1,
                       ),
                     ),
+                    const SizedBox(height: 2),
                     Text(
                       'Max ${formatCallDuration(session.maxDurationSeconds)}',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: AppFonts.plusJakarta(
                         fontSize: 12,
+                        fontWeight: FontWeight.w500,
                         color: Colors.white54,
                       ),
                     ),
@@ -357,9 +397,13 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                   else if (session.status ==
                           CommunicationConstants.callStatusRequested &&
                       isCaller)
-                    const Text(
+                    Text(
                       'Waiting for guide to accept…',
-                      style: TextStyle(color: Colors.white70),
+                      style: AppFonts.plusJakarta(
+                        color: Colors.white70,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
                     )
                   else if (session.status ==
                       CommunicationConstants.callStatusActive)
@@ -456,17 +500,35 @@ class _CallActionButton extends StatelessWidget {
         Material(
           color: color,
           shape: const CircleBorder(),
+          elevation: 0,
           child: InkWell(
             customBorder: const CircleBorder(),
             onTap: onTap,
-            child: Padding(
+            child: Container(
               padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: color.withValues(alpha: 0.4),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
               child: Icon(icon, color: Colors.white, size: 28),
             ),
           ),
         ),
         const SizedBox(height: 8),
-        Text(label, style: const TextStyle(color: Colors.white70)),
+        Text(
+          label,
+          style: AppFonts.plusJakarta(
+            color: Colors.white70,
+            fontSize: 12.5,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ],
     );
   }
@@ -493,19 +555,36 @@ class _CallControl extends StatelessWidget {
         Material(
           color: (color ?? Colors.white24),
           shape: const CircleBorder(),
+          elevation: 0,
           child: InkWell(
             customBorder: const CircleBorder(),
             onTap: onTap,
-            child: Padding(
+            child: Container(
               padding: const EdgeInsets.all(14),
-              child: Icon(icon, color: Colors.white),
+              decoration: color == null
+                  ? null
+                  : BoxDecoration(
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: color!.withValues(alpha: 0.4),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+              child: Icon(icon, color: Colors.white, size: 22),
             ),
           ),
         ),
         const SizedBox(height: 4),
         Text(
           label,
-          style: const TextStyle(color: Colors.white70, fontSize: 11),
+          style: AppFonts.plusJakarta(
+            color: Colors.white70,
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ],
     );

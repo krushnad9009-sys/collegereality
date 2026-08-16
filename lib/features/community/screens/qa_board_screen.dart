@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../config/router/route_names.dart';
+import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_fonts.dart';
+import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/community_constants.dart';
 import '../../../core/widgets/index.dart';
@@ -21,12 +24,24 @@ class QaBoardScreen extends ConsumerStatefulWidget {
 class _QaBoardScreenState extends ConsumerState<QaBoardScreen> {
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
     final user = ref.watch(currentUserDetailProvider).valueOrNull;
     final threadsAsync = ref.watch(qaThreadsProvider);
 
     return Scaffold(
+      backgroundColor: tokens.surfaceMuted,
       appBar: AppBar(
-        title: const Text('Student Q&A'),
+        elevation: 0,
+        scrolledUnderElevation: 0.5,
+        backgroundColor: tokens.surfaceElevated,
+        title: Text(
+          'Student Q&A',
+          style: AppFonts.plusJakarta(
+            fontWeight: FontWeight.w700,
+            fontSize: 17,
+            color: tokens.textPrimary,
+          ),
+        ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
           onPressed: () => context.pop(),
@@ -69,9 +84,9 @@ class _QaBoardScreenState extends ConsumerState<QaBoardScreen> {
                   );
                 }
                 return ListView.separated(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(AppSpacing.lg),
                   itemCount: threads.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 10),
+                  separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
                   itemBuilder: (context, index) {
                     final thread = threads[index];
                     return CommunityThreadCard(
@@ -98,26 +113,9 @@ class _QaBoardScreenState extends ConsumerState<QaBoardScreen> {
 
     final ok = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Ask a Question'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: titleController,
-              decoration: const InputDecoration(labelText: 'Title'),
-            ),
-            TextField(
-              controller: bodyController,
-              decoration: const InputDecoration(labelText: 'Details'),
-              maxLines: 4,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Post')),
-        ],
+      builder: (ctx) => _AskQuestionDialog(
+        titleController: titleController,
+        bodyController: bodyController,
       ),
     );
 
@@ -146,5 +144,93 @@ class _QaBoardScreenState extends ConsumerState<QaBoardScreen> {
       if (!context.mounted) return;
       SnackBarHelper.showErrorSnackBar(context, message: e.message);
     }
+  }
+}
+
+/// Premium dialog shell for the "Ask a Question" prompt — tokens-based
+/// styling, rounded fields, consistent typography.
+class _AskQuestionDialog extends StatelessWidget {
+  final TextEditingController titleController;
+  final TextEditingController bodyController;
+
+  const _AskQuestionDialog({
+    required this.titleController,
+    required this.bodyController,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final primary = Theme.of(context).colorScheme.primary;
+    final fieldBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(tokens.buttonRadius),
+      borderSide: BorderSide(color: tokens.borderSubtle),
+    );
+
+    return AlertDialog(
+      backgroundColor: tokens.surfaceElevated,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(tokens.cardRadius),
+      ),
+      title: Text(
+        'Ask a Question',
+        style: AppFonts.plusJakarta(
+          fontWeight: FontWeight.w800,
+          fontSize: 17,
+          color: tokens.textPrimary,
+        ),
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: titleController,
+            style: AppFonts.plusJakarta(fontSize: 14, color: tokens.textPrimary),
+            decoration: InputDecoration(
+              labelText: 'Title',
+              labelStyle: AppFonts.plusJakarta(fontSize: 13, color: tokens.textTertiary),
+              border: fieldBorder,
+              enabledBorder: fieldBorder,
+              focusedBorder: fieldBorder.copyWith(
+                borderSide: BorderSide(color: primary, width: 1.5),
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          TextField(
+            controller: bodyController,
+            maxLines: 4,
+            style: AppFonts.plusJakarta(fontSize: 14, color: tokens.textPrimary),
+            decoration: InputDecoration(
+              labelText: 'Details',
+              labelStyle: AppFonts.plusJakarta(fontSize: 13, color: tokens.textTertiary),
+              border: fieldBorder,
+              enabledBorder: fieldBorder,
+              focusedBorder: fieldBorder.copyWith(
+                borderSide: BorderSide(color: primary, width: 1.5),
+              ),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: Text(
+            'Cancel',
+            style: AppFonts.plusJakarta(fontWeight: FontWeight.w600, color: tokens.textSecondary),
+          ),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, true),
+          style: FilledButton.styleFrom(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(tokens.buttonRadius),
+            ),
+          ),
+          child: Text('Post', style: AppFonts.plusJakarta(fontWeight: FontWeight.w700)),
+        ),
+      ],
+    );
   }
 }

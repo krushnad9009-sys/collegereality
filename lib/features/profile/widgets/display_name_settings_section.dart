@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../config/theme/app_fonts.dart';
 
-import '../../../config/theme/app_theme.dart';
+import '../../../config/theme/app_design_tokens.dart';
 import '../../../core/constants/display_name_constants.dart';
 import '../../../core/constants/verification_constants.dart';
 import '../../../core/utils/public_display_name_utils.dart';
@@ -111,6 +111,7 @@ class _DisplayNameSettingsSectionState
   @override
   Widget build(BuildContext context) {
     final userAsync = ref.watch(currentUserDetailProvider);
+    final tokens = context.tokens;
 
     return userAsync.when(
       loading: () => const SizedBox.shrink(),
@@ -129,10 +130,10 @@ class _DisplayNameSettingsSectionState
           verificationBadge: user.verificationBadge,
         );
 
-        return Card(
-          margin: const EdgeInsets.only(bottom: 16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          child: Padding(
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: PremiumCard(
+            radius: tokens.cardRadius,
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -141,7 +142,8 @@ class _DisplayNameSettingsSectionState
                   'Public Display Name',
                   style: AppFonts.plusJakarta(
                     fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
+                    color: tokens.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -149,7 +151,7 @@ class _DisplayNameSettingsSectionState
                   'Your verified identity (${user.verifiedRealName ?? user.displayName ?? 'not set'}) is stored securely and never shown publicly unless you choose Real Name.',
                   style: AppFonts.plusJakarta(
                     fontSize: 12,
-                    color: AppTheme.gray500,
+                    color: tokens.textTertiary,
                     height: 1.4,
                   ),
                 ),
@@ -203,7 +205,7 @@ class _DisplayNameSettingsSectionState
                       'Currently shown as: ',
                       style: AppFonts.plusJakarta(
                         fontSize: 13,
-                        color: AppTheme.gray500,
+                        color: tokens.textTertiary,
                       ),
                     ),
                     Text(
@@ -211,6 +213,7 @@ class _DisplayNameSettingsSectionState
                       style: AppFonts.plusJakarta(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
+                        color: tokens.textPrimary,
                       ),
                     ),
                     if (user.verificationBadge !=

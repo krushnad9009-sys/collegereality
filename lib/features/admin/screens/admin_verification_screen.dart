@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../utils/admin_route_resolver.dart';
+import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/verification_constants.dart';
 import '../../../core/widgets/index.dart';
@@ -36,15 +37,14 @@ class AdminVerificationScreen extends ConsumerWidget {
         ),
       ),
       body: queueAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        loading: () => const AsyncLoadingView(),
+        error: (e, _) => AsyncErrorView.fromError(e),
         data: (requests) {
           if (requests.isEmpty) {
-            return Center(
-              child: Text(
-                'No pending verification requests',
-                style: GoogleFonts.poppins(color: AppTheme.gray600),
-              ),
+            return AsyncEmptyView(
+              icon: Icons.verified_user_outlined,
+              title: 'No pending requests',
+              subtitle: 'All verification requests have been reviewed.',
             );
           }
 
@@ -70,113 +70,105 @@ class _VerificationReviewCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final userAsync = ref.watch(_adminUserLoaderProvider(request.userId));
+    final tokens = context.tokens;
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    VerificationConstants.documentLabel(request.documentType),
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 16,
-                    ),
+    return PremiumCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  VerificationConstants.documentLabel(request.documentType),
+                  style: AppFonts.plusJakarta(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                    color: tokens.textPrimary,
                   ),
                 ),
-                Chip(
-                  label: Text(
-                    VerificationConstants.roleLabel(request.verificationRole),
-                    style: const TextStyle(fontSize: 11),
+              ),
+              StatusBadge(
+                label: VerificationConstants.roleLabel(request.verificationRole),
+                color: AppTheme.secondaryColor,
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          userAsync.when(
+            loading: () => Text('User: ${request.userId}'),
+            error: (_, _) => Text('User: ${request.userId}'),
+            data: (user) => Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  user?.displayName ?? 'Unknown user',
+                  style: AppFonts.plusJakarta(fontWeight: FontWeight.w600, color: tokens.textPrimary),
+                ),
+                Text(
+                  user?.email ?? request.userId,
+                  style: AppFonts.plusJakarta(
+                    fontSize: 12,
+                    color: tokens.textSecondary,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 6),
-            userAsync.when(
-              loading: () => Text('User: ${request.userId}'),
-              error: (_, _) => Text('User: ${request.userId}'),
-              data: (user) => Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    user?.displayName ?? 'Unknown user',
-                    style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-                  ),
-                  Text(
-                    user?.email ?? request.userId,
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: AppTheme.gray600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (request.collegeName != null &&
-                request.collegeName!.isNotEmpty) ...[
-              const SizedBox(height: 6),
-              Text(
-                'College: ${request.collegeName}',
-                style: GoogleFonts.poppins(fontSize: 13),
-              ),
-            ],
+          ),
+          if (request.collegeName != null &&
+              request.collegeName!.isNotEmpty) ...[
             const SizedBox(height: 6),
             Text(
-              'Status: ${request.status}',
-              style: GoogleFonts.poppins(color: AppTheme.gray600),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              request.aiSummary,
-              style: GoogleFonts.poppins(fontSize: 13),
-            ),
-            if (request.aiFlags.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 6,
-                children: request.aiFlags
-                    .map(
-                      (f) => Chip(
-                        label: Text(f, style: const TextStyle(fontSize: 11)),
-                        backgroundColor:
-                            AppTheme.warningColor.withValues(alpha: 0.15),
-                      ),
-                    )
-                    .toList(),
-              ),
-            ],
-            const SizedBox(height: 12),
-            OutlinedButton.icon(
-              onPressed: () => _viewDocument(context),
-              icon: const Icon(Icons.visibility_outlined, size: 18),
-              label: const Text('View document'),
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                OutlinedButton(
-                  onPressed: () => _reject(context, ref),
-                  child: const Text('Reject'),
-                ),
-                OutlinedButton(
-                  onPressed: () => _requestResubmission(context, ref),
-                  child: const Text('Request resubmission'),
-                ),
-                ElevatedButton(
-                  onPressed: () => _approve(context, ref),
-                  child: const Text('Approve'),
-                ),
-              ],
+              'College: ${request.collegeName}',
+              style: AppFonts.plusJakarta(fontSize: 13, color: tokens.textPrimary),
             ),
           ],
-        ),
+          const SizedBox(height: 6),
+          Text(
+            'Status: ${request.status}',
+            style: AppFonts.plusJakarta(color: tokens.textSecondary),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            request.aiSummary,
+            style: AppFonts.plusJakarta(fontSize: 13, color: tokens.textPrimary),
+          ),
+          if (request.aiFlags.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              children: request.aiFlags
+                  .map((f) => StatusBadge(label: f, color: AppTheme.warningColor))
+                  .toList(),
+            ),
+          ],
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: () => _viewDocument(context),
+            icon: const Icon(Icons.visibility_outlined, size: 18),
+            label: const Text('View document'),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              OutlinedButton(
+                onPressed: () => _reject(context, ref),
+                child: const Text('Reject'),
+              ),
+              OutlinedButton(
+                onPressed: () => _requestResubmission(context, ref),
+                child: const Text('Request resubmission'),
+              ),
+              ElevatedButton(
+                onPressed: () => _approve(context, ref),
+                child: const Text('Approve'),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -223,7 +215,7 @@ class _VerificationReviewCard extends ConsumerWidget {
                 ? Text(
                     'PDF document uploaded (${bytes.length ~/ 1024} KB). '
                     'Download the file to review it.',
-                    style: GoogleFonts.poppins(fontSize: 13),
+                    style: AppFonts.plusJakarta(fontSize: 13),
                   )
                 : InteractiveViewer(
                     child: Image.memory(bytes, fit: BoxFit.contain),

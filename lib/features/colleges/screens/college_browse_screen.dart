@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../config/router/route_names.dart';
-import '../../../config/theme/app_theme.dart';
+import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_fonts.dart';
+import '../../../config/theme/app_spacing.dart';
 import '../../../core/constants/college_constants.dart';
+import '../../../core/widgets/async_state_widgets.dart';
+import '../../../core/widgets/premium_components.dart';
+import '../../../core/widgets/premium_list_row.dart';
 import '../../colleges/providers/college_provider.dart';
 
 class CollegeBrowseScreen extends ConsumerWidget {
@@ -28,46 +32,61 @@ class CollegeBrowseScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final tokens = context.tokens;
     final countsAsync = ref.watch(collegeCategoryCountsProvider);
     final totalAsync = ref.watch(collegeCountProvider);
 
     return Scaffold(
+      backgroundColor: tokens.surfaceMuted,
       appBar: AppBar(
         title: Text(
           'Browse Colleges',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+          style: AppFonts.plusJakarta(
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.3,
+          ),
         ),
         centerTitle: false,
       ),
       body: countsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Unable to load categories')),
+        loading: () => const ListSkeletonLoader(itemCount: 8),
+        error: (e, _) => AsyncErrorView.fromError(
+          e,
+          onRetry: () => ref.invalidate(collegeCategoryCountsProvider),
+        ),
         data: (counts) {
           return ListView(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.md,
+              AppSpacing.lg,
+              AppSpacing.xxl,
+            ),
             children: [
               totalAsync.when(
                 data: (total) => Text(
                   CollegeConstants.acrossIndiaLabel(liveCount: total),
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    color: AppTheme.gray600,
+                  style: AppFonts.plusJakarta(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: tokens.textTertiary,
                   ),
                 ),
                 loading: () => const SizedBox.shrink(),
                 error: (_, _) => Text(
                   CollegeConstants.acrossIndiaLabel(),
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    color: AppTheme.gray600,
+                  style: AppFonts.plusJakarta(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: tokens.textTertiary,
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: AppSpacing.lg),
               ..._categories.map((entry) {
                 final count = counts[entry.$1];
                 return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                   child: _CategoryTile(
                     label: entry.$1,
                     icon: entry.$2,
@@ -104,56 +123,16 @@ class _CategoryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
+    final tokens = context.tokens;
+    return PremiumCard(
+      radius: tokens.cardRadius,
+      padding: EdgeInsets.zero,
+      child: PremiumListRow(
+        leadingIcon: icon,
+        iconColor: color,
+        title: label,
+        subtitle: count != null && count! > 0 ? '$count colleges' : null,
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppTheme.gray200.withValues(alpha: 0.8)),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, color: color, size: 22),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      label,
-                      style: GoogleFonts.poppins(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    if (count != null && count! > 0)
-                      Text(
-                        '$count colleges',
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: AppTheme.gray500,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              Icon(Icons.chevron_right_rounded, color: AppTheme.gray400),
-            ],
-          ),
-        ),
       ),
     );
   }

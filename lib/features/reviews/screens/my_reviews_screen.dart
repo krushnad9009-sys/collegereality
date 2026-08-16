@@ -5,8 +5,8 @@ import '../../../config/theme/app_fonts.dart';
 
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_design_tokens.dart';
-import '../../../config/theme/app_theme.dart';
 import '../../../core/widgets/async_state_widgets.dart';
+import '../../../core/widgets/premium_components.dart';
 import '../../../core/widgets/skeleton_loader.dart';
 import '../providers/review_provider.dart';
 import '../widgets/review_card_widget.dart';
@@ -20,9 +20,7 @@ class MyReviewsScreen extends ConsumerWidget {
     final reviewsAsync = ref.watch(userReviewsProvider);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? AppTheme.gray900
-          : AppTheme.surfaceMuted,
+      backgroundColor: tokens.surfaceMuted,
       appBar: AppBar(
         title: Text(
           'My Reviews',
@@ -64,27 +62,13 @@ class MyReviewsScreen extends ConsumerWidget {
             );
           }
 
-          return ListView.separated(
+          return ListView.builder(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
             itemCount: reviews.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
               final review = reviews[index];
-              return AnimatedContainer(
-                duration: Duration(milliseconds: 220 + (index * 20).clamp(0, 120)),
-                curve: Curves.easeOutCubic,
-                decoration: BoxDecoration(
-                  color: tokens.surfaceElevated,
-                  borderRadius: BorderRadius.circular(tokens.cardRadius),
-                  border: Border.all(color: tokens.borderSubtle),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppTheme.black.withValues(alpha: 0.04),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
+              return FadeInSection(
+                delayMs: (index * 40).clamp(0, 240),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -93,7 +77,7 @@ class MyReviewsScreen extends ConsumerWidget {
                       showCollegeName: true,
                     ),
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                      padding: const EdgeInsets.only(bottom: 14, right: 4),
                       child: Align(
                         alignment: Alignment.centerRight,
                         child: TextButton.icon(

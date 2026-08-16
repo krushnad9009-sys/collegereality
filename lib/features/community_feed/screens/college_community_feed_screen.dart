@@ -3,10 +3,12 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
-import '../../../config/theme/app_theme.dart';
+import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_fonts.dart';
+import '../../../config/theme/app_spacing.dart';
 import '../../../core/constants/student_life_constants.dart';
+import '../../../core/widgets/async_state_widgets.dart';
 import '../../../core/widgets/dialog_helper.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/providers/user_provider.dart';
@@ -129,9 +131,15 @@ class _CollegeCommunityFeedScreenState
   Widget build(BuildContext context) {
     final verifiedAsync = ref.watch(isVerifiedCommunityPosterProvider);
     final wide = MediaQuery.sizeOf(context).width >= 700;
+    final tokens = context.tokens;
+    final primary = Theme.of(context).colorScheme.primary;
 
     return Scaffold(
+      backgroundColor: tokens.surfaceMuted,
       appBar: AppBar(
+        elevation: 0,
+        scrolledUnderElevation: 0.5,
+        backgroundColor: tokens.surfaceElevated,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
           onPressed: () => context.pop(),
@@ -141,11 +149,19 @@ class _CollegeCommunityFeedScreenState
           children: [
             Text(
               'Community',
-              style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 16),
+              style: AppFonts.plusJakarta(
+                fontWeight: FontWeight.w700,
+                fontSize: 16,
+                color: tokens.textPrimary,
+              ),
             ),
             Text(
               widget.collegeName,
-              style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.gray500),
+              style: AppFonts.plusJakarta(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: tokens.textTertiary,
+              ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -153,6 +169,12 @@ class _CollegeCommunityFeedScreenState
         ),
         bottom: TabBar(
           controller: _tabController,
+          labelColor: primary,
+          unselectedLabelColor: tokens.textTertiary,
+          labelStyle: AppFonts.plusJakarta(fontSize: 13.5, fontWeight: FontWeight.w700),
+          unselectedLabelStyle:
+              AppFonts.plusJakarta(fontSize: 13.5, fontWeight: FontWeight.w600),
+          indicatorColor: primary,
           tabs: const [
             Tab(text: 'Latest'),
             Tab(text: 'Trending'),
@@ -178,8 +200,10 @@ class _CollegeCommunityFeedScreenState
   }
 
   Widget _feedList() {
+    final tokens = context.tokens;
+
     if (_posts.isEmpty && _loading) {
-      return const Center(child: CircularProgressIndicator());
+      return const AsyncLoadingView();
     }
     if (_posts.isEmpty) {
       return RefreshIndicator(
@@ -188,29 +212,11 @@ class _CollegeCommunityFeedScreenState
           physics: const AlwaysScrollableScrollPhysics(),
           children: [
             SizedBox(
-              height: MediaQuery.sizeOf(context).height * 0.4,
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.forum_outlined,
-                        size: 64,
-                        color: AppTheme.primaryColor.withValues(alpha: 0.35)),
-                    const SizedBox(height: 12),
-                    Text(
-                      'No posts yet',
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 18,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Verified students and alumni can start the conversation.',
-                      style: GoogleFonts.poppins(color: AppTheme.gray500),
-                    ),
-                  ],
-                ),
+              height: MediaQuery.sizeOf(context).height * 0.55,
+              child: AsyncEmptyView(
+                icon: Icons.forum_outlined,
+                title: 'No posts yet',
+                subtitle: 'Verified students and alumni can start the conversation.',
               ),
             ),
           ],
@@ -221,7 +227,7 @@ class _CollegeCommunityFeedScreenState
     return RefreshIndicator(
       onRefresh: _refresh,
       child: ListView.builder(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         itemCount: _posts.length + (_hasMore ? 1 : 0),
         itemBuilder: (context, index) {
           if (index == _posts.length) {
@@ -229,17 +235,34 @@ class _CollegeCommunityFeedScreenState
               padding: const EdgeInsets.symmetric(vertical: 16),
               child: Center(
                 child: _loading
-                    ? const CircularProgressIndicator()
+                    ? SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.4,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      )
                     : OutlinedButton(
                         onPressed: _loadMore,
-                        child: const Text('Load more'),
+                        child: Text(
+                          'Load more',
+                          style: AppFonts.plusJakarta(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: tokens.textPrimary,
+                          ),
+                        ),
                       ),
               ),
             );
           }
-          return CollegeCommunityPostCard(
-            post: _posts[index],
-            onChanged: _refresh,
+          return Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.md),
+            child: CollegeCommunityPostCard(
+              post: _posts[index],
+              onChanged: _refresh,
+            ),
           );
         },
       ),
@@ -252,26 +275,38 @@ class _CollegeCommunityFeedScreenState
       error: (_, _) => const SizedBox.shrink(),
       data: (verified) {
         if (!verified) {
+          final tokens = context.tokens;
           return Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppSpacing.lg),
             decoration: BoxDecoration(
-              border: Border(top: BorderSide(color: AppTheme.gray200)),
+              color: tokens.surfaceElevated,
+              border: Border(top: BorderSide(color: tokens.borderSubtle)),
             ),
             child: Text(
               'Verify as a student or alumni to post in this community.',
-              style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.gray500),
+              style: AppFonts.plusJakarta(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w500,
+                color: tokens.textTertiary,
+              ),
               textAlign: TextAlign.center,
             ),
           );
         }
+        final tokens = context.tokens;
+        final primary = Theme.of(context).colorScheme.primary;
+        final inputBorder = OutlineInputBorder(
+          borderRadius: BorderRadius.circular(tokens.buttonRadius),
+          borderSide: BorderSide(color: tokens.borderSubtle),
+        );
         return Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(AppSpacing.md),
           decoration: BoxDecoration(
-            color: Theme.of(context).scaffoldBackgroundColor,
+            color: tokens.surfaceElevated,
             border: Border(
-              top: BorderSide(color: AppTheme.gray200),
-              right: BorderSide(color: AppTheme.gray200),
+              top: BorderSide(color: tokens.borderSubtle),
+              right: BorderSide(color: tokens.borderSubtle),
             ),
           ),
           child: Column(
@@ -280,15 +315,20 @@ class _CollegeCommunityFeedScreenState
             children: [
               Text(
                 'Create post',
-                style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+                style: AppFonts.plusJakarta(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
+                  color: tokens.textPrimary,
+                ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.sm),
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: [
                     ChoiceChip(
                       label: const Text('Text'),
+                      labelStyle: AppFonts.plusJakarta(fontSize: 12.5, fontWeight: FontWeight.w600),
                       selected: _postType == StudentLifeConstants.postDiscussion,
                       onSelected: (_) => setState(() =>
                           _postType = StudentLifeConstants.postDiscussion),
@@ -296,6 +336,7 @@ class _CollegeCommunityFeedScreenState
                     const SizedBox(width: 8),
                     ChoiceChip(
                       label: const Text('Poll'),
+                      labelStyle: AppFonts.plusJakarta(fontSize: 12.5, fontWeight: FontWeight.w600),
                       selected: _postType == StudentLifeConstants.postPoll,
                       onSelected: (_) => setState(
                           () => _postType = StudentLifeConstants.postPoll),
@@ -303,6 +344,7 @@ class _CollegeCommunityFeedScreenState
                     const SizedBox(width: 8),
                     ChoiceChip(
                       label: const Text('Announcement'),
+                      labelStyle: AppFonts.plusJakarta(fontSize: 12.5, fontWeight: FontWeight.w600),
                       selected:
                           _postType == StudentLifeConstants.postAnnouncement,
                       onSelected: (_) => setState(() =>
@@ -311,31 +353,37 @@ class _CollegeCommunityFeedScreenState
                   ],
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.sm),
               if (_postType == StudentLifeConstants.postPoll) ...[
                 TextField(
                   controller: _postController,
-                  decoration: const InputDecoration(
+                  style: AppFonts.plusJakarta(fontSize: 13.5, color: tokens.textPrimary),
+                  decoration: InputDecoration(
                     hintText: 'Poll question',
-                    border: OutlineInputBorder(),
+                    border: inputBorder,
+                    enabledBorder: inputBorder,
                     isDense: true,
                   ),
                 ),
                 const SizedBox(height: 8),
                 TextField(
                   controller: _pollOptionAController,
-                  decoration: const InputDecoration(
+                  style: AppFonts.plusJakarta(fontSize: 13.5, color: tokens.textPrimary),
+                  decoration: InputDecoration(
                     hintText: 'Option 1',
-                    border: OutlineInputBorder(),
+                    border: inputBorder,
+                    enabledBorder: inputBorder,
                     isDense: true,
                   ),
                 ),
                 const SizedBox(height: 8),
                 TextField(
                   controller: _pollOptionBController,
-                  decoration: const InputDecoration(
+                  style: AppFonts.plusJakarta(fontSize: 13.5, color: tokens.textPrimary),
+                  decoration: InputDecoration(
                     hintText: 'Option 2',
-                    border: OutlineInputBorder(),
+                    border: inputBorder,
+                    enabledBorder: inputBorder,
                     isDense: true,
                   ),
                 ),
@@ -343,9 +391,11 @@ class _CollegeCommunityFeedScreenState
                 TextField(
                   controller: _postController,
                   maxLines: 3,
-                  decoration: const InputDecoration(
+                  style: AppFonts.plusJakarta(fontSize: 13.5, color: tokens.textPrimary),
+                  decoration: InputDecoration(
                     hintText: 'Share something with your college community...',
-                    border: OutlineInputBorder(),
+                    border: inputBorder,
+                    enabledBorder: inputBorder,
                   ),
                 ),
               if (_pendingImageUrls.isNotEmpty) ...[
@@ -355,8 +405,10 @@ class _CollegeCommunityFeedScreenState
                   children: _pendingImageUrls
                       .map(
                         (url) => Chip(
-                          label: Text('Image attached',
-                              style: GoogleFonts.poppins(fontSize: 11)),
+                          label: Text(
+                            'Image attached',
+                            style: AppFonts.plusJakarta(fontSize: 11, fontWeight: FontWeight.w600),
+                          ),
                           onDeleted: () =>
                               setState(() => _pendingImageUrls.remove(url)),
                         ),
@@ -364,30 +416,38 @@ class _CollegeCommunityFeedScreenState
                       .toList(),
                 ),
               ],
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.sm),
               Row(
                 children: [
                   FilterChip(
                     label: const Text('Anonymous'),
+                    labelStyle: AppFonts.plusJakarta(fontSize: 12.5, fontWeight: FontWeight.w600),
                     selected: _postAnonymous,
                     onSelected: (v) => setState(() => _postAnonymous = v),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.image_outlined),
+                    icon: Icon(Icons.image_outlined, color: tokens.textSecondary),
                     tooltip: 'Add image',
                     onPressed: _uploading ? null : _pickImage,
                   ),
                   const Spacer(),
                   FilledButton.icon(
                     onPressed: _uploading ? null : _submitPost,
+                    style: FilledButton.styleFrom(backgroundColor: primary),
                     icon: _uploading
                         ? const SizedBox(
                             width: 16,
                             height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
                           )
-                        : const Icon(Icons.send, size: 18),
-                    label: const Text('Post'),
+                        : const Icon(Icons.send_rounded, size: 18),
+                    label: Text(
+                      'Post',
+                      style: AppFonts.plusJakarta(fontSize: 13.5, fontWeight: FontWeight.w700),
+                    ),
                   ),
                 ],
               ),

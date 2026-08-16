@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../config/router/route_names.dart';
+import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/widgets/premium_components.dart';
@@ -20,6 +21,8 @@ class AiSearchBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final tokens = context.tokens;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return PremiumCard(
       radius: AppSpacing.radiusXl,
@@ -72,7 +75,7 @@ class AiSearchBar extends StatelessWidget {
               ),
               child: const Icon(
                 Icons.auto_awesome_rounded,
-                color: AppTheme.white,
+                color: Colors.white,
                 size: 20,
               ),
             ),
@@ -83,20 +86,21 @@ class AiSearchBar extends StatelessWidget {
                 children: [
                   Text(
                     'AI Assistant',
-                    style: GoogleFonts.poppins(
+                    style: AppFonts.plusJakarta(
                       fontSize: compact ? 14 : 16,
                       fontWeight: FontWeight.w700,
                       letterSpacing: -0.2,
-                      color: isDark ? AppTheme.gray100 : AppTheme.gray900,
+                      color: tokens.textPrimary,
                     ),
                   ),
                   if (!compact) ...[
                     const SizedBox(height: 3),
                     Text(
                       'Find colleges, compare fees, placements & more',
-                      style: GoogleFonts.poppins(
+                      style: AppFonts.plusJakarta(
                         fontSize: 12,
-                        color: AppTheme.gray500,
+                        fontWeight: FontWeight.w500,
+                        color: tokens.textSecondary,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -108,12 +112,12 @@ class AiSearchBar extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                color: colorScheme.primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.arrow_forward_rounded,
-                color: AppTheme.primaryColor,
+                color: colorScheme.primary,
                 size: 18,
               ),
             ),

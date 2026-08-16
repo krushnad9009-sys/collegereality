@@ -17,6 +17,7 @@ abstract final class AppFonts {
     double? height,
     Color? color,
     TextDecoration? decoration,
+    FontStyle? fontStyle,
   }) {
     if (useSystemFallback) {
       return TextStyle(
@@ -26,6 +27,7 @@ abstract final class AppFonts {
         height: height,
         color: color,
         decoration: decoration,
+        fontStyle: fontStyle,
       );
     }
     return GoogleFonts.plusJakartaSans(
@@ -35,6 +37,7 @@ abstract final class AppFonts {
       height: height,
       color: color,
       decoration: decoration,
+      fontStyle: fontStyle,
     );
   }
 }

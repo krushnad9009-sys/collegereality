@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
-import '../../../config/theme/app_theme.dart';
+import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_fonts.dart';
 import '../utils/question_rich_text_utils.dart';
 
 class QuestionRichTextField extends StatefulWidget {
@@ -39,14 +39,15 @@ class _QuestionRichTextFieldState extends State<QuestionRichTextField> {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
           decoration: BoxDecoration(
-            color: AppTheme.gray50,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppTheme.gray200),
+            color: tokens.surfaceMuted,
+            borderRadius: BorderRadius.circular(tokens.buttonRadius),
+            border: Border.all(color: tokens.borderSubtle),
           ),
           child: Column(
             children: [
@@ -55,17 +56,17 @@ class _QuestionRichTextFieldState extends State<QuestionRichTextField> {
                 child: Row(
                   children: [
                     _ToolButton(
-                      icon: Icons.format_bold,
+                      icon: Icons.format_bold_rounded,
                       tooltip: 'Bold',
                       onTap: () => _wrapSelection(QuestionRichTextUtils.wrapBold),
                     ),
                     _ToolButton(
-                      icon: Icons.format_italic,
+                      icon: Icons.format_italic_rounded,
                       tooltip: 'Italic',
                       onTap: () => _wrapSelection(QuestionRichTextUtils.wrapItalic),
                     ),
                     _ToolButton(
-                      icon: Icons.format_list_bulleted,
+                      icon: Icons.format_list_bulleted_rounded,
                       tooltip: 'Bullet',
                       onTap: () {
                         final text = widget.controller.text;
@@ -81,8 +82,10 @@ class _QuestionRichTextFieldState extends State<QuestionRichTextField> {
                 controller: widget.controller,
                 maxLines: widget.maxLines,
                 maxLength: widget.maxLength,
+                style: AppFonts.plusJakarta(fontSize: 14, color: tokens.textPrimary),
                 decoration: InputDecoration(
                   hintText: widget.hint,
+                  hintStyle: AppFonts.plusJakarta(fontSize: 14, color: tokens.textTertiary),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.all(12),
                 ),
@@ -93,7 +96,7 @@ class _QuestionRichTextFieldState extends State<QuestionRichTextField> {
         const SizedBox(height: 4),
         Text(
           'Use **bold**, *italic*, and - bullets. Mentions: @[Name](userId)',
-          style: GoogleFonts.poppins(fontSize: 11, color: AppTheme.gray500),
+          style: AppFonts.plusJakarta(fontSize: 11, color: tokens.textTertiary),
         ),
       ],
     );
@@ -113,8 +116,9 @@ class _ToolButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
     return IconButton(
-      icon: Icon(icon, size: 18),
+      icon: Icon(icon, size: 18, color: tokens.textSecondary),
       tooltip: tooltip,
       visualDensity: VisualDensity.compact,
       onPressed: onTap,

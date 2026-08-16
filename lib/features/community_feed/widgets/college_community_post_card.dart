@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 import '../../../config/router/route_names.dart';
+import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_fonts.dart';
+import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/widgets/dialog_helper.dart';
+import '../../../core/widgets/premium_components.dart';
+import '../../../core/widgets/status_badge.dart';
 import '../../admin/providers/admin_provider.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/providers/user_provider.dart';
@@ -50,6 +54,8 @@ class _CollegeCommunityPostCardState
     final user = ref.watch(authStateProvider).valueOrNull;
     final isLiked = user != null && post.likedBy.contains(user.uid);
     final isAdminAsync = ref.watch(isAdminProvider);
+    final tokens = context.tokens;
+    final primary = Theme.of(context).colorScheme.primary;
     final typeLabel = post.isPoll
         ? 'Poll'
         : post.isAnnouncement
@@ -58,192 +64,210 @@ class _CollegeCommunityPostCardState
                 ? 'Photo'
                 : 'Discussion';
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (post.isPinned)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Row(
+    return PremiumCard(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (post.isPinned)
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+              child: StatusBadge(
+                label: 'Pinned',
+                icon: Icons.push_pin_rounded,
+                color: primary,
+                iconSize: 12,
+              ),
+            ),
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 18,
+                backgroundColor: primary.withValues(alpha: 0.12),
+                child: Text(
+                  post.authorDisplayName.isNotEmpty
+                      ? post.authorDisplayName[0].toUpperCase()
+                      : 'S',
+                  style: AppFonts.plusJakarta(
+                    fontWeight: FontWeight.w700,
+                    color: primary,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.push_pin, size: 14, color: AppTheme.primaryColor),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Pinned',
-                      style: GoogleFonts.poppins(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: AppTheme.primaryColor,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            Row(
-              children: [
-                CircleAvatar(
-                  radius: 18,
-                  backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.12),
-                  child: Text(
-                    post.authorDisplayName.isNotEmpty
-                        ? post.authorDisplayName[0].toUpperCase()
-                        : 'S',
-                    style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              post.authorDisplayName,
-                              style: GoogleFonts.poppins(
-                                fontWeight: FontWeight.w600,
-                              ),
-                              overflow: TextOverflow.ellipsis,
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            post.authorDisplayName,
+                            style: AppFonts.plusJakarta(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14,
+                              color: tokens.textPrimary,
                             ),
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          if (post.isVerifiedStudent) ...[
-                            const SizedBox(width: 4),
-                            Icon(Icons.verified,
-                                size: 14, color: AppTheme.secondaryColor),
-                          ],
-                        ],
-                      ),
-                      Text(
-                        '$typeLabel · ${dateFmt.format(post.createdAt)}',
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          color: AppTheme.gray500,
                         ),
+                        if (post.isVerifiedStudent) ...[
+                          const SizedBox(width: 4),
+                          Icon(Icons.verified_rounded,
+                              size: 14, color: AppTheme.secondaryColor),
+                        ],
+                      ],
+                    ),
+                    Text(
+                      '$typeLabel · ${dateFmt.format(post.createdAt)}',
+                      style: AppFonts.plusJakarta(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w500,
+                        color: tokens.textTertiary,
                       ),
-                    ],
-                  ),
-                ),
-                PopupMenuButton<String>(
-                  onSelected: (value) {
-                    switch (value) {
-                      case 'report':
-                        _reportPost();
-                      case 'pin':
-                        _pinPost(true);
-                      case 'unpin':
-                        _pinPost(false);
-                      case 'hide':
-                        _hidePost();
-                    }
-                  },
-                  itemBuilder: (context) => [
-                    const PopupMenuItem(value: 'report', child: Text('Report')),
-                    if (isAdminAsync.valueOrNull == true) ...[
-                      PopupMenuItem(
-                        value: post.isPinned ? 'unpin' : 'pin',
-                        child: Text(post.isPinned ? 'Unpin' : 'Pin post'),
-                      ),
-                      const PopupMenuItem(value: 'hide', child: Text('Hide post')),
-                    ],
+                    ),
                   ],
                 ),
-              ],
+              ),
+              PopupMenuButton<String>(
+                icon: Icon(Icons.more_vert_rounded, color: tokens.textTertiary),
+                onSelected: (value) {
+                  switch (value) {
+                    case 'report':
+                      _reportPost();
+                    case 'pin':
+                      _pinPost(true);
+                    case 'unpin':
+                      _pinPost(false);
+                    case 'hide':
+                      _hidePost();
+                  }
+                },
+                itemBuilder: (context) => [
+                  const PopupMenuItem(value: 'report', child: Text('Report')),
+                  if (isAdminAsync.valueOrNull == true) ...[
+                    PopupMenuItem(
+                      value: post.isPinned ? 'unpin' : 'pin',
+                      child: Text(post.isPinned ? 'Unpin' : 'Pin post'),
+                    ),
+                    const PopupMenuItem(value: 'hide', child: Text('Hide post')),
+                  ],
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          if (post.isPoll) ...[
+            Text(
+              post.pollQuestion,
+              style: AppFonts.plusJakarta(
+                fontWeight: FontWeight.w700,
+                fontSize: 15,
+                color: tokens.textPrimary,
+              ),
             ),
-            const SizedBox(height: 10),
-            if (post.isPoll) ...[
+            const SizedBox(height: 8),
+            ...post.pollOptions.map(
+              (opt) => _PollOptionTile(post: post, option: opt),
+            ),
+          ] else ...[
+            if (post.content.isNotEmpty)
               Text(
-                post.pollQuestion,
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 15,
+                post.content,
+                style: AppFonts.plusJakarta(
+                  fontSize: 14,
+                  height: 1.5,
+                  color: tokens.textPrimary,
                 ),
               ),
-              const SizedBox(height: 8),
-              ...post.pollOptions.map(
-                (opt) => _PollOptionTile(post: post, option: opt),
-              ),
-            ] else ...[
-              if (post.content.isNotEmpty)
-                Text(post.content, style: GoogleFonts.poppins(height: 1.5)),
-              if (post.hasImages) ...[
-                const SizedBox(height: 10),
-                ...post.imageUrls.map(
-                  (url) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: Image.network(
-                        url,
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                        errorBuilder: (_, _, _) => Container(
-                          height: 120,
-                          color: AppTheme.gray100,
-                          child: const Center(child: Icon(Icons.broken_image)),
+            if (post.hasImages) ...[
+              const SizedBox(height: 10),
+              ...post.imageUrls.map(
+                (url) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(tokens.buttonRadius),
+                    child: Image.network(
+                      url,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      errorBuilder: (_, _, _) => Container(
+                        height: 120,
+                        color: tokens.surfaceMuted,
+                        child: Center(
+                          child: Icon(Icons.broken_image_outlined,
+                              color: tokens.textTertiary),
                         ),
                       ),
                     ),
                   ),
                 ),
-              ],
+              ),
             ],
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                IconButton(
-                  icon: Icon(
-                    isLiked ? Icons.favorite : Icons.favorite_border,
-                    size: 20,
-                    color: isLiked ? AppTheme.errorColor : AppTheme.gray500,
-                  ),
-                  onPressed: user == null ? null : () => _toggleLike(user.uid),
-                ),
-                if (post.likeCount > 0)
-                  Text('${post.likeCount}',
-                      style: GoogleFonts.poppins(fontSize: 12)),
-                IconButton(
-                  icon: const Icon(Icons.chat_bubble_outline, size: 20),
-                  onPressed: () =>
-                      setState(() => _commentsExpanded = !_commentsExpanded),
-                ),
-                if (post.commentCount > 0)
-                  Text('${post.commentCount}',
-                      style: GoogleFonts.poppins(fontSize: 12)),
-                IconButton(
-                  icon: const Icon(Icons.share_outlined, size: 20),
-                  onPressed: _sharePost,
-                ),
-                if (post.shareCount > 0)
-                  Text('${post.shareCount}',
-                      style: GoogleFonts.poppins(fontSize: 12)),
-                const Spacer(),
-                if (post.engagementScore >= 5 && !post.isPinned)
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppTheme.warningColor.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      'Trending',
-                      style: GoogleFonts.poppins(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.warningColor,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            if (_commentsExpanded) _buildCommentsSection(user),
           ],
-        ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              IconButton(
+                icon: Icon(
+                  isLiked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                  size: 20,
+                  color: isLiked ? AppTheme.errorColor : tokens.textTertiary,
+                ),
+                onPressed: user == null ? null : () => _toggleLike(user.uid),
+              ),
+              if (post.likeCount > 0)
+                Text(
+                  '${post.likeCount}',
+                  style: AppFonts.plusJakarta(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: tokens.textSecondary,
+                  ),
+                ),
+              IconButton(
+                icon: Icon(Icons.chat_bubble_outline_rounded,
+                    size: 20, color: tokens.textTertiary),
+                onPressed: () =>
+                    setState(() => _commentsExpanded = !_commentsExpanded),
+              ),
+              if (post.commentCount > 0)
+                Text(
+                  '${post.commentCount}',
+                  style: AppFonts.plusJakarta(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: tokens.textSecondary,
+                  ),
+                ),
+              IconButton(
+                icon: Icon(Icons.share_outlined,
+                    size: 20, color: tokens.textTertiary),
+                onPressed: _sharePost,
+              ),
+              if (post.shareCount > 0)
+                Text(
+                  '${post.shareCount}',
+                  style: AppFonts.plusJakarta(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: tokens.textSecondary,
+                  ),
+                ),
+              const Spacer(),
+              if (post.engagementScore >= 5 && !post.isPinned)
+                StatusBadge(
+                  label: 'Trending',
+                  icon: Icons.local_fire_department_rounded,
+                  color: AppTheme.warningColor,
+                  iconSize: 12,
+                  fontSize: 10.5,
+                ),
+            ],
+          ),
+          if (_commentsExpanded) _buildCommentsSection(user),
+        ],
       ),
     );
   }
@@ -251,16 +275,31 @@ class _CollegeCommunityPostCardState
   Widget _buildCommentsSection(dynamic user) {
     final commentsAsync = ref.watch(collegeCommunityCommentsProvider(post.id));
     final verifiedAsync = ref.watch(isVerifiedCommunityPosterProvider);
+    final tokens = context.tokens;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+          child: Divider(height: 1, color: tokens.borderSubtle),
+        ),
         commentsAsync.when(
-          loading: () => const Padding(
-            padding: EdgeInsets.all(8),
-            child: CircularProgressIndicator(strokeWidth: 2),
+          loading: () => Padding(
+            padding: const EdgeInsets.all(8),
+            child: SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            ),
           ),
-          error: (e, _) => Text('$e'),
+          error: (e, _) => Text(
+            '$e',
+            style: AppFonts.plusJakarta(fontSize: 12, color: tokens.textTertiary),
+          ),
           data: (comments) {
             final topLevel =
                 comments.where((c) => !c.isReply).toList();
@@ -314,9 +353,10 @@ class _CollegeCommunityPostCardState
                       children: [
                         Text(
                           'Replying to comment',
-                          style: GoogleFonts.poppins(
+                          style: AppFonts.plusJakarta(
                             fontSize: 11,
-                            color: AppTheme.gray500,
+                            fontWeight: FontWeight.w500,
+                            color: tokens.textTertiary,
                           ),
                         ),
                         TextButton(
@@ -332,19 +372,31 @@ class _CollegeCommunityPostCardState
                     Expanded(
                       child: TextField(
                         controller: _commentController,
+                        style: AppFonts.plusJakarta(
+                          fontSize: 13,
+                          color: tokens.textPrimary,
+                        ),
                         decoration: InputDecoration(
                           hintText: _replyToCommentId != null
                               ? 'Write a reply...'
                               : 'Add a comment...',
+                          hintStyle: AppFonts.plusJakarta(
+                            fontSize: 13,
+                            color: tokens.textTertiary,
+                          ),
+                          filled: true,
+                          fillColor: tokens.surfaceMuted,
                           isDense: true,
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(tokens.buttonRadius),
+                            borderSide: BorderSide.none,
                           ),
                         ),
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.send, size: 18),
+                      icon: Icon(Icons.send_rounded,
+                          size: 18, color: Theme.of(context).colorScheme.primary),
                       onPressed: () => _submitComment(user.uid),
                     ),
                   ],
@@ -466,17 +518,25 @@ class _CommentTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
     return ListTile(
       dense: true,
       contentPadding: EdgeInsets.zero,
       title: Text(
         comment.authorDisplayName,
-        style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 13),
+        style: AppFonts.plusJakarta(
+          fontWeight: FontWeight.w700,
+          fontSize: 13,
+          color: tokens.textPrimary,
+        ),
       ),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(comment.content, style: GoogleFonts.poppins(fontSize: 12)),
+          Text(
+            comment.content,
+            style: AppFonts.plusJakarta(fontSize: 12.5, color: tokens.textSecondary),
+          ),
           if (!isReply && onReply != null)
             TextButton(
               onPressed: onReply,
@@ -486,7 +546,7 @@ class _CommentTile extends StatelessWidget {
       ),
       trailing: onReport != null
           ? IconButton(
-              icon: const Icon(Icons.flag_outlined, size: 16),
+              icon: Icon(Icons.flag_outlined, size: 16, color: tokens.textTertiary),
               onPressed: onReport,
             )
           : null,
@@ -504,6 +564,7 @@ class _PollOptionTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final pct = pollOptionPercent(option, post.pollOptions);
     final user = ref.watch(authStateProvider).valueOrNull;
+    final tokens = context.tokens;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
@@ -528,21 +589,32 @@ class _PollOptionTile extends ConsumerWidget {
                   }
                 }
               },
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(tokens.buttonRadius),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
-            border: Border.all(color: AppTheme.gray200),
-            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: tokens.borderSubtle),
+            borderRadius: BorderRadius.circular(tokens.buttonRadius),
           ),
           child: Row(
             children: [
               Expanded(
-                child: Text(option.label, style: GoogleFonts.poppins(fontSize: 13)),
+                child: Text(
+                  option.label,
+                  style: AppFonts.plusJakarta(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: tokens.textPrimary,
+                  ),
+                ),
               ),
               Text(
                 '${pct.toStringAsFixed(0)}%',
-                style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.gray500),
+                style: AppFonts.plusJakarta(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: tokens.textTertiary,
+                ),
               ),
             ],
           ),

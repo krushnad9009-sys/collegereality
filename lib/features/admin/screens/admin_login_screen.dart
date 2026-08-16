@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../config/router/route_names.dart';
+import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/widgets/index.dart';
 import '../../auth/providers/auth_provider.dart';
@@ -74,6 +75,7 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     final isWide = width >= 720;
+    final tokens = context.tokens;
 
     return Scaffold(
       body: Center(
@@ -89,13 +91,18 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                 Text(
                   'Admin Login',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.w700),
+                  style: AppFonts.plusJakarta(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.4,
+                    color: tokens.textPrimary,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'Secure access for admins and moderators only.',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(color: AppTheme.gray600),
+                  style: AppFonts.plusJakarta(color: tokens.textSecondary),
                 ),
                 const SizedBox(height: 32),
                 TextField(

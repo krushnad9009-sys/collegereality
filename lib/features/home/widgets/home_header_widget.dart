@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../config/theme/app_fonts.dart';
 
 import '../../../config/router/route_names.dart';
+import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/widgets/index.dart';
 import '../../admin/providers/admin_provider.dart';
@@ -75,6 +76,10 @@ class HomeHeaderActions extends ConsumerWidget {
   }
 
   void _showProfileMenu(BuildContext context, WidgetRef ref) {
+    final userDetail = ref.read(currentUserDetailProvider).valueOrNull;
+    final displayName =
+        userDetail?.effectivePublicDisplayName ?? user.displayName ?? 'Student';
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -83,56 +88,86 @@ class HomeHeaderActions extends ConsumerWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (context) {
+        final tokens = context.tokens;
         return SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
             child: Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppTheme.gray300,
-                    borderRadius: BorderRadius.circular(2),
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: tokens.borderStrong,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 20),
-                ListTile(
-                  leading: const Icon(Icons.person_outline_rounded),
-                  title: const Text('My Profile'),
+                const SizedBox(height: 18),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Text(
+                    displayName,
+                    style: AppFonts.plusJakarta(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                      color: tokens.textPrimary,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Text(
+                    'Your account',
+                    style: AppFonts.plusJakarta(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w500,
+                      color: tokens.textTertiary,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Divider(height: 1, color: tokens.borderSubtle),
+                const SizedBox(height: 4),
+                PremiumListRow(
+                  leadingIcon: Icons.person_outline_rounded,
+                  title: 'My Profile',
                   onTap: () {
                     Navigator.pop(context);
                     context.go(RouteNames.profile);
                   },
                 ),
-                ListTile(
-                  leading: const Icon(Icons.search_rounded),
-                  title: const Text('Search Colleges'),
+                PremiumListRow(
+                  leadingIcon: Icons.search_rounded,
+                  title: 'Search Colleges',
                   onTap: () {
                     Navigator.pop(context);
                     context.go(RouteNames.collegeSearch);
                   },
                 ),
-                ListTile(
-                  leading: const Icon(Icons.rate_review_outlined),
-                  title: const Text('My Reviews'),
+                PremiumListRow(
+                  leadingIcon: Icons.rate_review_outlined,
+                  title: 'My Reviews',
                   onTap: () {
                     Navigator.pop(context);
                     context.go(RouteNames.myReviews);
                   },
                 ),
-                ListTile(
-                  leading: const Icon(Icons.bookmark_outline_rounded),
-                  title: const Text('Bookmarks'),
+                PremiumListRow(
+                  leadingIcon: Icons.bookmark_outline_rounded,
+                  title: 'Bookmarks',
                   onTap: () {
                     Navigator.pop(context);
                     context.go(RouteNames.favorites);
                   },
                 ),
-                ListTile(
-                  leading: const Icon(Icons.notifications_outlined),
-                  title: const Text('Notifications'),
+                PremiumListRow(
+                  leadingIcon: Icons.notifications_outlined,
+                  title: 'Notifications',
                   onTap: () {
                     Navigator.pop(context);
                     context.go(RouteNames.notifications);
@@ -146,10 +181,9 @@ class HomeHeaderActions extends ConsumerWidget {
                       error: (_, _) => const SizedBox.shrink(),
                       data: (isAdmin) {
                         if (!isAdmin) return const SizedBox.shrink();
-                        return ListTile(
-                          leading:
-                              const Icon(Icons.admin_panel_settings_outlined),
-                          title: const Text('Admin Panel'),
+                        return PremiumListRow(
+                          leadingIcon: Icons.admin_panel_settings_outlined,
+                          title: 'Admin Panel',
                           onTap: () {
                             Navigator.pop(context);
                             context.go(RouteNames.admin);
@@ -159,14 +193,15 @@ class HomeHeaderActions extends ConsumerWidget {
                     );
                   },
                 ),
-                const Divider(height: 24),
-                ListTile(
-                  leading: const Icon(Icons.logout_rounded,
-                      color: AppTheme.errorColor),
-                  title: const Text(
-                    'Sign Out',
-                    style: TextStyle(color: AppTheme.errorColor),
-                  ),
+                const SizedBox(height: 8),
+                Divider(height: 1, color: tokens.borderSubtle),
+                const SizedBox(height: 8),
+                PremiumListRow(
+                  leadingIcon: Icons.logout_rounded,
+                  iconColor: AppTheme.errorColor,
+                  title: 'Sign Out',
+                  titleColor: AppTheme.errorColor,
+                  showChevron: false,
                   onTap: () {
                     Navigator.pop(context);
                     _showSignOutConfirmation(context, ref);

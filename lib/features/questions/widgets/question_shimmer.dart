@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../config/theme/app_theme.dart';
+import '../../../config/theme/app_design_tokens.dart';
 import '../../../core/widgets/skeleton_loader.dart';
 
 class QuestionListShimmer extends StatelessWidget {
@@ -8,6 +8,7 @@ class QuestionListShimmer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
     return ListView.separated(
       padding: const EdgeInsets.all(16),
       itemCount: 4,
@@ -15,9 +16,9 @@ class QuestionListShimmer extends StatelessWidget {
       itemBuilder: (_, _) => Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppTheme.gray200),
+          color: tokens.surfaceElevated,
+          borderRadius: BorderRadius.circular(tokens.cardRadius),
+          border: Border.all(color: tokens.borderSubtle),
         ),
         child: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,

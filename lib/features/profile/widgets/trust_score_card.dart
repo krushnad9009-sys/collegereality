@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+
+import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_fonts.dart';
-import '../../../config/theme/app_theme.dart';
+import '../../../config/theme/app_spacing.dart';
+import '../../../core/widgets/premium_components.dart';
 import '../models/student_trust_model.dart';
 
+/// Clean stat-card treatment for a student's trust score, consistent with
+/// [PremiumCard] elsewhere in the app.
 class TrustScoreCard extends StatelessWidget {
   final StudentTrustModel trust;
 
@@ -10,19 +15,13 @@ class TrustScoreCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppTheme.primaryColor.withValues(alpha: 0.12),
-            AppTheme.secondaryColor.withValues(alpha: 0.08),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.2)),
-      ),
+    final tokens = context.tokens;
+    final primary = Theme.of(context).colorScheme.primary;
+
+    return PremiumCard(
+      radius: tokens.cardRadius,
+      color: primary.withValues(alpha: 0.06),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -30,21 +29,34 @@ class TrustScoreCard extends StatelessWidget {
             'Trust Score',
             style: AppFonts.plusJakarta(
               fontWeight: FontWeight.w700,
-              fontSize: 14,
+              fontSize: 13.5,
+              letterSpacing: -0.1,
+              color: tokens.textSecondary,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
                 '${trust.trustScore}',
                 style: AppFonts.plusJakarta(
                   fontSize: 36,
                   fontWeight: FontWeight.w800,
-                  color: AppTheme.primaryColor,
+                  color: primary,
+                  height: 1,
                 ),
               ),
-              Text('/100', style: AppFonts.plusJakarta(color: AppTheme.gray600)),
+              Padding(
+                padding: const EdgeInsets.only(left: 2, bottom: 3),
+                child: Text(
+                  '/100',
+                  style: AppFonts.plusJakarta(
+                    fontWeight: FontWeight.w600,
+                    color: tokens.textTertiary,
+                  ),
+                ),
+              ),
               const Spacer(),
               _MiniStat(
                 label: 'Rating',
@@ -54,7 +66,9 @@ class TrustScoreCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
+          Divider(color: tokens.borderSubtle, height: 1),
+          const SizedBox(height: 14),
           Row(
             children: [
               Expanded(
@@ -85,19 +99,26 @@ class _MiniStat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           value,
           style: AppFonts.plusJakarta(
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w800,
             fontSize: 18,
+            color: tokens.textPrimary,
           ),
         ),
+        const SizedBox(height: 1),
         Text(
           label,
-          style: AppFonts.plusJakarta(fontSize: 11, color: AppTheme.gray600),
+          style: AppFonts.plusJakarta(
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+            color: tokens.textTertiary,
+          ),
         ),
       ],
     );

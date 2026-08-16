@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 
-import '../../../config/theme/app_theme.dart';
+import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_fonts.dart';
 import '../../../core/constants/role_constants.dart';
+import '../../../core/widgets/premium_components.dart';
+import '../../../core/widgets/premium_list_row.dart';
+import '../../../core/widgets/async_state_widgets.dart';
 import '../models/admin_models.dart';
 import '../providers/admin_dashboard_provider.dart';
 import '../providers/admin_provider.dart';
@@ -24,6 +27,7 @@ class AdminRolesScreen extends ConsumerWidget {
     final actor = ref.watch(currentUserModelProvider).valueOrNull;
     final canManage = AdminPermissions.canManageRoles(actor?.userType);
     final staffAsync = ref.watch(adminStaffUsersProvider);
+    final tokens = context.tokens;
 
     return AdminShellLayout(
       title: 'Roles & Permissions',
@@ -40,44 +44,56 @@ class AdminRolesScreen extends ConsumerWidget {
               children: [
                 Text(
                   'Staff directory',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: AppFonts.plusJakarta(
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
+                    color: tokens.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'Assign moderator, admin, or super admin roles. Every change is audit-logged.',
-                  style: GoogleFonts.plusJakartaSans(color: AppTheme.gray600),
+                  style: AppFonts.plusJakarta(color: tokens.textSecondary),
                 ),
                 const SizedBox(height: 16),
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Permission matrix',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontWeight: FontWeight.w700,
-                          ),
+                PremiumCard(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Permission matrix',
+                        style: AppFonts.plusJakarta(
+                          fontWeight: FontWeight.w700,
+                          color: tokens.textPrimary,
                         ),
-                        const SizedBox(height: 8),
-                        const Text('• Moderator — content moderation & analytics'),
-                        const Text('• Admin — colleges, users, verification, export, broadcasts'),
-                        const Text('• Super Admin — roles, ads, settings, merge colleges, review edits'),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '• Moderator — content moderation & analytics',
+                        style: AppFonts.plusJakarta(fontSize: 13, color: tokens.textSecondary),
+                      ),
+                      Text(
+                        '• Admin — colleges, users, verification, export, broadcasts',
+                        style: AppFonts.plusJakarta(fontSize: 13, color: tokens.textSecondary),
+                      ),
+                      Text(
+                        '• Super Admin — roles, ads, settings, merge colleges, review edits',
+                        style: AppFonts.plusJakarta(fontSize: 13, color: tokens.textSecondary),
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 16),
                 staffAsync.when(
-                  loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Text('Failed to load staff: $e'),
+                  loading: () => const AsyncLoadingView(),
+                  error: (e, _) => AsyncErrorView.fromError(e),
                   data: (users) {
                     if (users.isEmpty) {
-                      return const Text('No staff users found. Promote a user from User Management.');
+                      return Text(
+                        'No staff users found. Promote a user from User Management.',
+                        style: AppFonts.plusJakarta(color: tokens.textSecondary),
+                      );
                     }
                     return Column(
                       children: users
@@ -150,18 +166,19 @@ class _RoleCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        title: Text(
-          user.displayName ?? user.email,
-          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
-        ),
-        subtitle: Text('${user.email}\n${RoleConstants.label(user.userType)}'),
-        isThreeLine: true,
-        trailing: FilledButton.tonal(
-          onPressed: () => _changeRole(context, ref),
-          child: const Text('Change role'),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: PremiumCard(
+        padding: EdgeInsets.zero,
+        child: PremiumListRow(
+          leadingIcon: Icons.person_outline,
+          title: user.displayName ?? user.email,
+          subtitle: '${user.email}\n${RoleConstants.label(user.userType)}',
+          showChevron: false,
+          trailing: FilledButton.tonal(
+            onPressed: () => _changeRole(context, ref),
+            child: const Text('Change role'),
+          ),
         ),
       ),
     );

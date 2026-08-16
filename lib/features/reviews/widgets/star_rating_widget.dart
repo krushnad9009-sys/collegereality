@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_theme.dart';
 
@@ -61,6 +62,7 @@ class StarRatingDisplay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -71,6 +73,7 @@ class StarRatingDisplay extends StatelessWidget {
           style: AppFonts.plusJakarta(
             fontWeight: FontWeight.w700,
             fontSize: starSize * 0.85,
+            color: tokens.textPrimary,
           ),
         ),
         if (reviewCount != null) ...[
@@ -79,7 +82,7 @@ class StarRatingDisplay extends StatelessWidget {
             '($reviewCount)',
             style: AppFonts.plusJakarta(
               fontSize: starSize * 0.75,
-              color: AppTheme.gray500,
+              color: tokens.textTertiary,
             ),
           ),
         ],
@@ -106,6 +109,8 @@ class RatingInputRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasValue = value > 0;
     final sliderValue = hasValue ? value : 3.0;
+    final tokens = context.tokens;
+    final primary = Theme.of(context).colorScheme.primary;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
@@ -120,13 +125,14 @@ class RatingInputRow extends StatelessWidget {
                   style: AppFonts.plusJakarta(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
+                    color: tokens.textPrimary,
                   ),
                 ),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                  color: primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -134,7 +140,7 @@ class RatingInputRow extends StatelessWidget {
                   style: AppFonts.plusJakarta(
                     fontWeight: FontWeight.w700,
                     fontSize: 12,
-                    color: AppTheme.primaryColor,
+                    color: primary,
                   ),
                 ),
               ),
@@ -143,10 +149,10 @@ class RatingInputRow extends StatelessWidget {
           const SizedBox(height: 4),
           SliderTheme(
             data: SliderTheme.of(context).copyWith(
-              activeTrackColor: AppTheme.primaryColor,
-              inactiveTrackColor: AppTheme.gray200,
-              thumbColor: AppTheme.primaryColor,
-              overlayColor: AppTheme.primaryColor.withValues(alpha: 0.12),
+              activeTrackColor: primary,
+              inactiveTrackColor: tokens.borderSubtle,
+              thumbColor: primary,
+              overlayColor: primary.withValues(alpha: 0.12),
               trackHeight: 6,
             ),
             child: Slider(

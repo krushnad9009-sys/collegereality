@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../config/router/route_names.dart';
+import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_fonts.dart';
-import '../../../config/theme/app_theme.dart';
+import '../../../config/theme/app_spacing.dart';
 import '../../../core/constants/communication_constants.dart';
 import '../../../core/widgets/index.dart';
 import '../../auth/providers/auth_provider.dart';
@@ -193,6 +194,7 @@ class _GuidePublicProfileScreenState
   @override
   Widget build(BuildContext context) {
     final guideAsync = ref.watch(publicGuideProvider(widget.guideUid));
+    final tokens = context.tokens;
 
     return Scaffold(
       appBar: AppBar(
@@ -258,8 +260,7 @@ class _GuidePublicProfileScreenState
                 const SizedBox(height: 28),
                 Row(
                   children: [
-                    Icon(Icons.shield_outlined,
-                        size: 15, color: AppTheme.gray500),
+                    Icon(Icons.shield_outlined, size: 15, color: tokens.textTertiary),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
@@ -267,7 +268,7 @@ class _GuidePublicProfileScreenState
                         'never shared.',
                         style: AppFonts.plusJakarta(
                           fontSize: 12,
-                          color: AppTheme.gray500,
+                          color: tokens.textTertiary,
                         ),
                       ),
                     ),
@@ -321,7 +322,11 @@ class _GuideProfileHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final tokens = context.tokens;
+    final primary = Theme.of(context).colorScheme.primary;
+    final secondary = Theme.of(context).colorScheme.secondary;
+    final stats = guide.stats;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
@@ -330,12 +335,12 @@ class _GuideProfileHeader extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppTheme.primaryColor.withValues(alpha: 0.08),
-            AppTheme.secondaryColor.withValues(alpha: 0.05),
+            primary.withValues(alpha: 0.08),
+            secondary.withValues(alpha: 0.05),
           ],
         ),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppTheme.gray200),
+        borderRadius: BorderRadius.circular(tokens.cardRadius),
+        border: Border.all(color: tokens.borderSubtle),
       ),
       child: Column(
         children: [
@@ -344,7 +349,7 @@ class _GuideProfileHeader extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 44,
-                backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.15),
+                backgroundColor: primary.withValues(alpha: 0.15),
                 backgroundImage:
                     guide.photoURL != null ? NetworkImage(guide.photoURL!) : null,
                 child: guide.photoURL == null
@@ -355,7 +360,7 @@ class _GuideProfileHeader extends StatelessWidget {
                         style: AppFonts.plusJakarta(
                           fontSize: 32,
                           fontWeight: FontWeight.w800,
-                          color: AppTheme.primaryColor,
+                          color: primary,
                         ),
                       )
                     : null,
@@ -366,7 +371,7 @@ class _GuideProfileHeader extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(3),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).scaffoldBackgroundColor,
+                    color: tokens.surfaceElevated,
                     shape: BoxShape.circle,
                   ),
                   child: Container(
@@ -375,8 +380,8 @@ class _GuideProfileHeader extends StatelessWidget {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: guide.presence.isOnline
-                          ? AppTheme.accentColor
-                          : AppTheme.gray400,
+                          ? PresenceState.online.color
+                          : tokens.textTertiary,
                     ),
                   ),
                 ),
@@ -390,7 +395,12 @@ class _GuideProfileHeader extends StatelessWidget {
               Flexible(
                 child: Text(
                   guide.displayName,
-                  style: textTheme.headlineLarge,
+                  style: AppFonts.plusJakarta(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: tokens.textPrimary,
+                    letterSpacing: -0.4,
+                  ),
                   textAlign: TextAlign.center,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -407,13 +417,89 @@ class _GuideProfileHeader extends StatelessWidget {
                 if (guide.course != null) guide.course,
                 if (guide.batchYear != null) '${guide.batchYear}',
               ].join(' · '),
-              style: textTheme.bodyMedium?.copyWith(color: AppTheme.gray600),
+              style: AppFonts.plusJakarta(
+                fontSize: 13.5,
+                fontWeight: FontWeight.w500,
+                color: tokens.textSecondary,
+              ),
               textAlign: TextAlign.center,
             ),
           ],
-          const SizedBox(height: 10),
-          AvailabilityBadge(presence: guide.presence),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AvailabilityBadge(presence: guide.presence),
+              if (stats.totalRatings > 0) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.star_rounded, size: 13, color: Color(0xFFF59E0B)),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${stats.overallRating.toStringAsFixed(1)} (${stats.totalRatings})',
+                        style: AppFonts.plusJakarta(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFFB45309),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+          if (guide.settings.areasOfExpertise.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 6,
+              runSpacing: 6,
+              children: guide.settings.areasOfExpertise
+                  .take(4)
+                  .map((e) => _InlineTag(label: e))
+                  .toList(),
+            ),
+          ],
         ],
+      ),
+    );
+  }
+}
+
+/// Small non-interactive tag used inline in the profile header for a quick
+/// glance at expertise — visually consistent with [_ChipSection]'s tags.
+class _InlineTag extends StatelessWidget {
+  const _InlineTag({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final primary = Theme.of(context).colorScheme.primary;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: tokens.surfaceElevated,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: tokens.borderSubtle),
+      ),
+      child: Text(
+        label,
+        style: AppFonts.plusJakarta(
+          fontSize: 11.5,
+          fontWeight: FontWeight.w600,
+          color: primary,
+        ),
       ),
     );
   }
@@ -432,15 +518,23 @@ class _ChipSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final tokens = context.tokens;
+    final primary = Theme.of(context).colorScheme.primary;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Icon(icon, size: 16, color: AppTheme.gray600),
+            Icon(icon, size: 16, color: tokens.textSecondary),
             const SizedBox(width: 6),
-            Text(title, style: textTheme.titleMedium),
+            Text(
+              title,
+              style: AppFonts.plusJakarta(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: tokens.textPrimary,
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 10),
@@ -453,17 +547,16 @@ class _ChipSection extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: AppTheme.primaryColor.withValues(alpha: 0.18),
-                    ),
+                    color: primary.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
+                    border: Border.all(color: primary.withValues(alpha: 0.18)),
                   ),
                   child: Text(
                     v,
-                    style: textTheme.bodySmall?.copyWith(
-                      color: AppTheme.primaryDark,
+                    style: AppFonts.plusJakarta(
+                      fontSize: 12.5,
                       fontWeight: FontWeight.w600,
+                      color: primary,
                     ),
                   ),
                 ),

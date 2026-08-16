@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_spacing.dart';
-import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/profile_constants.dart';
 import '../../../core/constants/verification_constants.dart';
 import '../../../core/utils/firestore_error_utils.dart';
@@ -184,6 +183,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
     final authUser = ref.watch(currentUserProvider);
     final userDetailAsync = ref.watch(currentUserDetailProvider);
     if (authUser == null) {
@@ -208,9 +208,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
 
     return Scaffold(
-      backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? AppTheme.gray900
-          : AppTheme.surfaceMuted,
+      backgroundColor: tokens.surfaceMuted,
       appBar: AppBar(
         title: Text(
           'My Profile',
@@ -261,11 +259,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   const SizedBox(height: AppSpacing.lg),
                   if (userDetail != null)
                     TrustScoreCard(trust: StudentTrustModel.fromUser(userDetail)),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.xl),
                   const DisplayNameSettingsSection(),
-                  const SizedBox(height: 16),
                   const ProfileSettingsSection(),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.xl),
                   PremiumProfileEditSection(
                     user: userDetail ??
                         UserModel(
@@ -285,7 +282,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     onCoverUrlChanged: (url) =>
                         setState(() => _coverPhotoURL = url),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: AppSpacing.xl),
+                  SectionHeader(
+                    title: 'Verified Identity',
+                    subtitle: 'Your legal name and verified contact details',
+                  ),
                   CustomTextField(
                     label: 'Verified Real Name',
                     hint: 'Your verified identity (stored securely)',
@@ -311,193 +312,230 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       });
                     },
                   ),
-                  const SizedBox(height: 16),
-                  CollegeAutocompleteField(
-                    selectedCollegeId: _selectedCollegeId,
-                    selectedCollegeName: _selectedCollegeName,
-                    onChanged: (college) {
-                      setState(() {
-                        _selectedCollegeId = college?.id;
-                        _selectedCollegeName = college?.name;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  CustomTextField(
-                    label: 'Course',
-                    hint: 'e.g. B.Tech CSE',
-                    controller: _courseController,
-                    prefixIcon: Icons.menu_book_outlined,
-                  ),
-                  const SizedBox(height: 16),
-                  YearPickerField(
-                    label: 'Batch Year',
-                    value: _batchYear,
-                    onChanged: (year) => setState(() => _batchYear = year),
-                  ),
-                  const SizedBox(height: 16),
-                  LanguageMultiSelectField(
-                    selected: _languagesKnown,
-                    onChanged: (langs) =>
-                        setState(() => _languagesKnown = langs),
+                  const SizedBox(height: AppSpacing.sm),
+                  PremiumCard(
+                    radius: tokens.cardRadius,
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SectionHeader(
+                          title: 'Academic Details',
+                          subtitle: 'College, course, and languages you know',
+                        ),
+                        CollegeAutocompleteField(
+                          selectedCollegeId: _selectedCollegeId,
+                          selectedCollegeName: _selectedCollegeName,
+                          onChanged: (college) {
+                            setState(() {
+                              _selectedCollegeId = college?.id;
+                              _selectedCollegeName = college?.name;
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        CustomTextField(
+                          label: 'Course',
+                          hint: 'e.g. B.Tech CSE',
+                          controller: _courseController,
+                          prefixIcon: Icons.menu_book_outlined,
+                        ),
+                        const SizedBox(height: 16),
+                        YearPickerField(
+                          label: 'Batch Year',
+                          value: _batchYear,
+                          onChanged: (year) => setState(() => _batchYear = year),
+                        ),
+                        const SizedBox(height: 16),
+                        LanguageMultiSelectField(
+                          selected: _languagesKnown,
+                          onChanged: (langs) =>
+                              setState(() => _languagesKnown = langs),
+                        ),
+                      ],
+                    ),
                   ),
                   if (settings != null) ...[
-                    const SizedBox(height: AppSpacing.xxl),
-                    SectionHeader(
-                      title: 'Guide Settings',
-                      subtitle: 'Control how others can connect with you',
-                    ),
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('Allow public profile for student connect'),
-                      subtitle: const Text(
-                        'Other students can chat with you. Your phone number stays private.',
-                      ),
-                      value: settings.allowPublicProfile,
-                      onChanged: (value) {
-                        setState(() {
-                          _communicationSettings =
-                              settings.copyWith(allowPublicProfile: value);
-                        });
-                      },
-                    ),
-                    Builder(builder: (context) {
-                      // Mirrors guideAvailabilityRequiresVerification() in
-                      // firestore.rules — the UI gate here is convenience
-                      // only; the rule is what actually enforces this.
-                      final isEligibleGuide = userDetail != null &&
-                          (userDetail.verificationBadge ==
-                                  VerificationConstants.badgeVerifiedStudent ||
-                              userDetail.verificationBadge ==
-                                  VerificationConstants.badgeVerifiedAlumni) &&
-                          userDetail.verificationStatus ==
-                              VerificationConstants.statusApproved;
-                      return SwitchListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text('Available as a guide'),
-                        subtitle: isEligibleGuide
-                            ? null
-                            : const Text(
-                                'Only verified students/alumni can become a guide. Complete verification first.',
+                    const SizedBox(height: AppSpacing.xl),
+                    PremiumCard(
+                      radius: tokens.cardRadius,
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SectionHeader(
+                            title: 'Guide Settings',
+                            subtitle: 'Control how others can connect with you',
+                          ),
+                          SwitchListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: const Text('Allow public profile for student connect'),
+                            subtitle: const Text(
+                              'Other students can chat with you. Your phone number stays private.',
+                            ),
+                            value: settings.allowPublicProfile,
+                            onChanged: (value) {
+                              setState(() {
+                                _communicationSettings =
+                                    settings.copyWith(allowPublicProfile: value);
+                              });
+                            },
+                          ),
+                          Builder(builder: (context) {
+                            // Mirrors guideAvailabilityRequiresVerification() in
+                            // firestore.rules — the UI gate here is convenience
+                            // only; the rule is what actually enforces this.
+                            final isEligibleGuide = userDetail != null &&
+                                (userDetail.verificationBadge ==
+                                        VerificationConstants.badgeVerifiedStudent ||
+                                    userDetail.verificationBadge ==
+                                        VerificationConstants.badgeVerifiedAlumni) &&
+                                userDetail.verificationStatus ==
+                                    VerificationConstants.statusApproved;
+                            return SwitchListTile(
+                              contentPadding: EdgeInsets.zero,
+                              title: const Text('Available as a guide'),
+                              subtitle: isEligibleGuide
+                                  ? null
+                                  : const Text(
+                                      'Only verified students/alumni can become a guide. Complete verification first.',
+                                    ),
+                              value: settings.isGuideAvailable && isEligibleGuide,
+                              onChanged: isEligibleGuide
+                                  ? (value) {
+                                      setState(() {
+                                        _communicationSettings = settings
+                                            .copyWith(isGuideAvailable: value);
+                                      });
+                                    }
+                                  : null,
+                            );
+                          }),
+                          if ((_communicationSettings ?? settings).isGuideAvailable)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8),
+                              child: OutlinedButton.icon(
+                                onPressed: () =>
+                                    context.push(RouteNames.guidePricingSetup),
+                                icon: const Icon(Icons.sell_outlined),
+                                label: const Text('Set chat/call prices'),
                               ),
-                        value: settings.isGuideAvailable && isEligibleGuide,
-                        onChanged: isEligibleGuide
-                            ? (value) {
-                                setState(() {
-                                  _communicationSettings =
-                                      settings.copyWith(isGuideAvailable: value);
-                                });
-                              }
-                            : null,
-                      );
-                    }),
-                    if ((_communicationSettings ?? settings).isGuideAvailable)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: OutlinedButton.icon(
-                          onPressed: () =>
-                              context.push(RouteNames.guidePricingSetup),
-                          icon: const Icon(Icons.sell_outlined),
-                          label: const Text('Set chat/call prices'),
-                        ),
+                            ),
+                        ],
                       ),
-                  ],
-                  const SizedBox(height: 16),
-                  OutlinedButton.icon(
-                    onPressed: () => context.push(RouteNames.consultationHistory),
-                    icon: const Icon(Icons.forum_outlined),
-                    label: const Text('My consultations'),
-                  ),
-                  const SizedBox(height: 24),
-                  OutlinedButton.icon(
-                    onPressed: _confirmDeleteAccount,
-                    icon: const Icon(Icons.delete_forever_outlined, color: Colors.red),
-                    label: const Text(
-                      'Delete Account',
-                      style: TextStyle(color: Colors.red),
                     ),
-                  ),
-                  const SizedBox(height: 32),
+                  ],
+                  const SizedBox(height: AppSpacing.xxl),
                   PrimaryButton(
                     label: 'Save Profile',
                     isLoading: _isSaving,
                     onPressed: () => _saveProfile(authUser.uid),
                   ),
-                  const SizedBox(height: 12),
-                  OutlinedButton.icon(
-                    onPressed: () => context.push(
-                      RouteNames.studentProfilePath(authUser.uid),
+                  const SizedBox(height: AppSpacing.xxl),
+                  PremiumCard(
+                    radius: tokens.cardRadius,
+                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                    child: Column(
+                      children: _withDividers(context, [
+                        PremiumListRow(
+                          leadingIcon: Icons.visibility_outlined,
+                          title: 'View Public Profile',
+                          subtitle: 'See how students see your profile',
+                          onTap: () => context.push(
+                            RouteNames.studentProfilePath(authUser.uid),
+                          ),
+                        ),
+                        PremiumListRow(
+                          leadingIcon: Icons.forum_outlined,
+                          title: 'My Consultations',
+                          onTap: () =>
+                              context.push(RouteNames.consultationHistory),
+                        ),
+                        PremiumListRow(
+                          leadingIcon: Icons.verified_user_outlined,
+                          title: 'Student Verification',
+                          onTap: () => context.go(RouteNames.verification),
+                        ),
+                        PremiumListRow(
+                          leadingIcon: Icons.school_outlined,
+                          title: 'Faculty Verification',
+                          onTap: () =>
+                              context.push(RouteNames.facultyVerification),
+                        ),
+                        PremiumListRow(
+                          leadingIcon: Icons.biotech_outlined,
+                          title: 'Faculty Hub',
+                          onTap: () => context.push(RouteNames.facultyHub),
+                        ),
+                        PremiumListRow(
+                          leadingIcon: Icons.volunteer_activism_outlined,
+                          title: 'Alumni Mentorship',
+                          onTap: () =>
+                              context.push(RouteNames.alumniMentorship),
+                        ),
+                      ]),
                     ),
-                    icon: const Icon(Icons.visibility_outlined),
-                    label: const Text('View Public Profile'),
                   ),
-                  const SizedBox(height: 12),
-                  OutlinedButton.icon(
-                    onPressed: () => context.go(RouteNames.verification),
-                    icon: const Icon(Icons.verified_user_outlined),
-                    label: const Text('Student Verification'),
+                  const SizedBox(height: AppSpacing.xl),
+                  PremiumCard(
+                    radius: tokens.cardRadius,
+                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                    child: Column(
+                      children: _withDividers(context, [
+                        PremiumListRow(
+                          leadingIcon: Icons.dashboard_outlined,
+                          title: 'Official College Dashboard',
+                          onTap: () =>
+                              context.push(RouteNames.officialCollegeDashboard),
+                        ),
+                        PremiumListRow(
+                          leadingIcon: Icons.add_business_outlined,
+                          title: 'Add My College',
+                          onTap: () => context.push(RouteNames.requestCollege),
+                        ),
+                        PremiumListRow(
+                          leadingIcon: Icons.support_agent_outlined,
+                          title: 'Browse Guides',
+                          onTap: () => context.go(RouteNames.guidesDirectory),
+                        ),
+                        PremiumListRow(
+                          leadingIcon: Icons.rate_review_outlined,
+                          title: 'View My Reviews',
+                          onTap: () => context.go(RouteNames.myReviews),
+                        ),
+                        Consumer(
+                          builder: (context, ref, _) {
+                            final isAdminAsync = ref.watch(isAdminProvider);
+                            return isAdminAsync.when(
+                              loading: () => const SizedBox.shrink(),
+                              error: (e, _) => const SizedBox.shrink(),
+                              data: (isAdmin) {
+                                if (!isAdmin) return const SizedBox.shrink();
+                                return PremiumListRow(
+                                  leadingIcon:
+                                      Icons.admin_panel_settings_outlined,
+                                  title: 'Admin Panel',
+                                  onTap: () => context.go(RouteNames.admin),
+                                );
+                              },
+                            );
+                          },
+                        ),
+                      ]),
+                    ),
                   ),
-                  const SizedBox(height: 12),
-                  OutlinedButton.icon(
-                    onPressed: () => context.push(RouteNames.facultyVerification),
-                    icon: const Icon(Icons.school_outlined),
-                    label: const Text('Faculty Verification'),
-                  ),
-                  const SizedBox(height: 12),
-                  OutlinedButton.icon(
-                    onPressed: () => context.push(RouteNames.facultyHub),
-                    icon: const Icon(Icons.biotech_outlined),
-                    label: const Text('Faculty Hub'),
-                  ),
-                  const SizedBox(height: 12),
-                  OutlinedButton.icon(
-                    onPressed: () => context.push(RouteNames.alumniMentorship),
-                    icon: const Icon(Icons.volunteer_activism_outlined),
-                    label: const Text('Alumni Mentorship'),
-                  ),
-                  const SizedBox(height: 12),
-                  OutlinedButton.icon(
-                    onPressed: () => context.push(RouteNames.officialCollegeDashboard),
-                    icon: const Icon(Icons.dashboard_outlined),
-                    label: const Text('Official College Dashboard'),
-                  ),
-                  const SizedBox(height: 12),
-                  OutlinedButton.icon(
-                    onPressed: () => context.push(RouteNames.requestCollege),
-                    icon: const Icon(Icons.add_business_outlined),
-                    label: const Text('Add My College'),
-                  ),
-                  const SizedBox(height: 12),
-                  OutlinedButton.icon(
-                    onPressed: () => context.go(RouteNames.guidesDirectory),
-                    icon: const Icon(Icons.support_agent_outlined),
-                    label: const Text('Browse Guides'),
-                  ),
-                  const SizedBox(height: 12),
-                  OutlinedButton.icon(
-                    onPressed: () => context.go(RouteNames.myReviews),
-                    icon: const Icon(Icons.rate_review_outlined),
-                    label: const Text('View My Reviews'),
-                  ),
-                  Consumer(
-                    builder: (context, ref, _) {
-                      final isAdminAsync = ref.watch(isAdminProvider);
-                      return isAdminAsync.when(
-                        loading: () => const SizedBox.shrink(),
-                        error: (e, _) => const SizedBox.shrink(),
-                        data: (isAdmin) {
-                          if (!isAdmin) return const SizedBox.shrink();
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 12),
-                            child: OutlinedButton.icon(
-                              onPressed: () => context.go(RouteNames.admin),
-                              icon: const Icon(Icons.admin_panel_settings_outlined),
-                              label: const Text('Admin Panel'),
-                            ),
-                          );
-                        },
-                      );
-                    },
+                  const SizedBox(height: AppSpacing.xl),
+                  PremiumCard(
+                    radius: tokens.cardRadius,
+                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                    child: PremiumListRow(
+                      leadingIcon: Icons.delete_forever_outlined,
+                      iconColor: Colors.red,
+                      titleColor: Colors.red,
+                      title: 'Delete Account',
+                      showChevron: false,
+                      onTap: _confirmDeleteAccount,
+                    ),
                   ),
                 ],
               ),
@@ -507,6 +545,22 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       ),
     );
   }
+}
+
+/// Inserts a thin divider between rows inside a [PremiumCard]-wrapped list.
+List<Widget> _withDividers(BuildContext context, List<Widget> rows) {
+  final tokens = context.tokens;
+  final result = <Widget>[];
+  for (var i = 0; i < rows.length; i++) {
+    if (i > 0) {
+      result.add(Padding(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+        child: Divider(color: tokens.borderSubtle, height: 1),
+      ));
+    }
+    result.add(rows[i]);
+  }
+  return result;
 }
 
 class _ProfileHeaderSection extends StatelessWidget {
@@ -527,6 +581,7 @@ class _ProfileHeaderSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
+    final primary = Theme.of(context).colorScheme.primary;
     final textTheme = Theme.of(context).textTheme;
     final initial = displayName.isNotEmpty
         ? displayName[0].toUpperCase()
@@ -542,15 +597,15 @@ class _ProfileHeaderSection extends StatelessWidget {
               height: 140,
               width: double.infinity,
               decoration: BoxDecoration(
-                borderRadius: const BorderRadius.vertical(
-                  bottom: Radius.circular(AppSpacing.radiusLg),
+                borderRadius: BorderRadius.vertical(
+                  bottom: Radius.circular(tokens.cardRadius),
                 ),
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    AppTheme.primaryColor,
-                    AppTheme.primaryColor.withValues(alpha: 0.75),
+                    primary,
+                    primary.withValues(alpha: 0.75),
                   ],
                 ),
                 image: coverUrl != null
@@ -558,7 +613,7 @@ class _ProfileHeaderSection extends StatelessWidget {
                         image: NetworkImage(coverUrl!),
                         fit: BoxFit.cover,
                         colorFilter: ColorFilter.mode(
-                          AppTheme.primaryDark.withValues(alpha: 0.35),
+                          Colors.black.withValues(alpha: 0.35),
                           BlendMode.darken,
                         ),
                       )
@@ -574,7 +629,7 @@ class _ProfileHeaderSection extends StatelessWidget {
                   color: tokens.surfaceElevated,
                   boxShadow: [
                     BoxShadow(
-                      color: AppTheme.black.withValues(alpha: 0.1),
+                      color: Colors.black.withValues(alpha: 0.1),
                       blurRadius: 16,
                       offset: const Offset(0, 4),
                     ),
@@ -582,8 +637,7 @@ class _ProfileHeaderSection extends StatelessWidget {
                 ),
                 child: CircleAvatar(
                   radius: 48,
-                  backgroundColor:
-                      AppTheme.primaryColor.withValues(alpha: 0.15),
+                  backgroundColor: primary.withValues(alpha: 0.15),
                   backgroundImage:
                       photoUrl != null ? NetworkImage(photoUrl!) : null,
                   child: photoUrl == null
@@ -591,7 +645,7 @@ class _ProfileHeaderSection extends StatelessWidget {
                           initial,
                           style: textTheme.headlineMedium?.copyWith(
                             fontWeight: FontWeight.w700,
-                            color: AppTheme.primaryColor,
+                            color: primary,
                           ),
                         )
                       : null,

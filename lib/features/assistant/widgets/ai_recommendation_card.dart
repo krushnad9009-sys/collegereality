@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/widgets/college_image_widget.dart';
@@ -70,7 +70,7 @@ class AiRecommendationCard extends StatelessWidget {
                             ),
                             child: Text(
                               '#${recommendation.rank}',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: AppFonts.plusJakarta(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w800,
                                 color: AppTheme.primaryColor,
@@ -99,7 +99,7 @@ class AiRecommendationCard extends StatelessWidget {
                                   Text(
                                     college.aggregatedRatings.overall
                                         .toStringAsFixed(1),
-                                    style: GoogleFonts.plusJakartaSans(
+                                    style: AppFonts.plusJakarta(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w700,
                                       color: AppTheme.warningColor,
@@ -113,7 +113,7 @@ class AiRecommendationCard extends StatelessWidget {
                       const SizedBox(height: 6),
                       Text(
                         college.name,
-                        style: GoogleFonts.plusJakartaSans(
+                        style: AppFonts.plusJakarta(
                           fontSize: 15,
                           fontWeight: FontWeight.w800,
                           letterSpacing: -0.25,
@@ -126,7 +126,7 @@ class AiRecommendationCard extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         college.locationLabel,
-                        style: GoogleFonts.plusJakartaSans(
+                        style: AppFonts.plusJakarta(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                           color: tokens.textSecondary,
@@ -141,7 +141,7 @@ class AiRecommendationCard extends StatelessWidget {
               const SizedBox(height: AppSpacing.md),
               Text(
                 'WHY RECOMMENDED',
-                style: GoogleFonts.plusJakartaSans(
+                style: AppFonts.plusJakarta(
                   fontSize: 10,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 1,
@@ -164,7 +164,7 @@ class AiRecommendationCard extends StatelessWidget {
                           Expanded(
                             child: Text(
                               reason,
-                              style: GoogleFonts.plusJakartaSans(
+                              style: AppFonts.plusJakarta(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
                                 height: 1.35,
@@ -186,7 +186,7 @@ class AiRecommendationCard extends StatelessWidget {
                   icon: const Icon(Icons.compare_arrows_rounded, size: 16),
                   label: Text(
                     'Add to Compare',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: AppFonts.plusJakarta(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
                     ),

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/community_constants.dart';
@@ -41,9 +41,10 @@ class CommunityHubScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final tokens = context.tokens;
 
     return Scaffold(
-      backgroundColor: isDark ? AppTheme.gray900 : const Color(0xFFF3F5FA),
+      backgroundColor: tokens.surfaceMuted,
       body: SafeArea(
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(
@@ -111,7 +112,7 @@ class CommunityHubScreen extends ConsumerWidget {
                             Expanded(
                               child: Text(
                                 'Student Community',
-                                style: GoogleFonts.plusJakartaSans(
+                                style: AppFonts.plusJakarta(
                                   fontSize: 22,
                                   fontWeight: FontWeight.w800,
                                   letterSpacing: -0.45,
@@ -124,7 +125,7 @@ class CommunityHubScreen extends ConsumerWidget {
                         const SizedBox(height: AppSpacing.sm),
                         Text(
                           'Connect with students — free, private & verified',
-                          style: GoogleFonts.plusJakartaSans(
+                          style: AppFonts.plusJakarta(
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
                             height: 1.4,
@@ -263,7 +264,7 @@ class _HeroPill extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             label,
-            style: GoogleFonts.plusJakartaSans(
+            style: AppFonts.plusJakarta(
               fontSize: 11,
               fontWeight: FontWeight.w600,
               color: Colors.white.withValues(alpha: 0.92),
@@ -326,7 +327,7 @@ class _CommunityTile extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: GoogleFonts.plusJakartaSans(
+                    style: AppFonts.plusJakarta(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                       letterSpacing: -0.25,
@@ -336,7 +337,7 @@ class _CommunityTile extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     subtitle,
-                    style: GoogleFonts.plusJakartaSans(
+                    style: AppFonts.plusJakarta(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
                       height: 1.35,

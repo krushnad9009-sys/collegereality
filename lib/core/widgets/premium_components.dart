@@ -28,13 +28,23 @@ class PremiumCard extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final tokens = context.tokens;
     final bg = color ?? tokens.surfaceElevated;
+    final borderRadius = BorderRadius.circular(radius);
 
-    final card = AnimatedContainer(
+    // Every PremiumCard provides its own Material ancestor — not just when
+    // tappable — so widgets like ListTile/SwitchListTile/Chip that paint on
+    // the nearest Material (ink splashes, selection color) work correctly
+    // when nested inside, even without an onTap on the card itself.
+    final content = Padding(
+      padding: padding ?? EdgeInsets.zero,
+      child: child,
+    );
+
+    return AnimatedContainer(
       duration: AppMotion.fast,
       curve: AppMotion.easeOut,
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(radius),
+        borderRadius: borderRadius,
         boxShadow: isDark ? AppElevation.none : AppElevation.soft(AppTheme.primaryDark),
         border: Border.all(
           color: isDark
@@ -42,17 +52,13 @@ class PremiumCard extends StatelessWidget {
               : tokens.borderSubtle.withValues(alpha: 0.85),
         ),
       ),
-      padding: padding,
-      child: child,
-    );
-
-    if (onTap == null) return card;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(radius),
-        child: card,
+      child: Material(
+        type: MaterialType.transparency,
+        borderRadius: borderRadius,
+        clipBehavior: onTap != null ? Clip.antiAlias : Clip.none,
+        child: onTap == null
+            ? content
+            : InkWell(onTap: onTap, borderRadius: borderRadius, child: content),
       ),
     );
   }
@@ -74,6 +80,8 @@ class SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final primary = Theme.of(context).colorScheme.primary;
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.md),
       child: Row(
@@ -86,20 +94,21 @@ class SectionHeader extends StatelessWidget {
                 Text(
                   title,
                   style: AppFonts.plusJakarta(
-                    fontSize: 22,
+                    fontSize: 21,
                     fontWeight: FontWeight.w800,
-                    letterSpacing: -0.45,
+                    letterSpacing: -0.4,
                     height: 1.15,
+                    color: tokens.textPrimary,
                   ),
                 ),
                 if (subtitle != null) ...[
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 4),
                   Text(
                     subtitle!,
                     style: AppFonts.plusJakarta(
-                      fontSize: 14,
+                      fontSize: 13.5,
                       fontWeight: FontWeight.w500,
-                      color: AppTheme.gray500,
+                      color: tokens.textTertiary,
                       height: 1.35,
                     ),
                   ),
@@ -115,13 +124,20 @@ class SectionHeader extends StatelessWidget {
                 minimumSize: Size.zero,
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
-              child: Text(
-                actionLabel!,
-                style: AppFonts.plusJakarta(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.primaryColor,
-                ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    actionLabel!,
+                    style: AppFonts.plusJakarta(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: primary,
+                    ),
+                  ),
+                  const SizedBox(width: 2),
+                  Icon(Icons.arrow_forward_rounded, size: 14, color: primary),
+                ],
               ),
             ),
         ],
@@ -147,23 +163,23 @@ class PremiumChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final tokens = context.tokens;
+    final colorScheme = Theme.of(context).colorScheme;
+    final onSelected = isDark ? AppTheme.gray900 : AppTheme.white;
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
+        borderRadius: BorderRadius.circular(tokens.chipRadius),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
+          duration: AppMotion.fast,
+          curve: AppMotion.easeOut,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: BoxDecoration(
-            color: selected
-                ? AppTheme.primaryColor
-                : (isDark ? AppTheme.gray800 : AppTheme.white),
-            borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
+            color: selected ? colorScheme.primary : tokens.surfaceElevated,
+            borderRadius: BorderRadius.circular(tokens.chipRadius),
             border: Border.all(
-              color: selected
-                  ? AppTheme.primaryColor
-                  : AppTheme.gray200.withValues(alpha: 0.9),
+              color: selected ? colorScheme.primary : tokens.borderSubtle,
             ),
             boxShadow: selected || isDark
                 ? null
@@ -182,7 +198,7 @@ class PremiumChip extends StatelessWidget {
                 Icon(
                   icon,
                   size: 16,
-                  color: selected ? AppTheme.white : AppTheme.primaryColor,
+                  color: selected ? onSelected : colorScheme.primary,
                 ),
                 const SizedBox(width: 6),
               ],
@@ -191,9 +207,7 @@ class PremiumChip extends StatelessWidget {
                 style: AppFonts.plusJakarta(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: selected
-                      ? AppTheme.white
-                      : (isDark ? AppTheme.gray200 : AppTheme.gray800),
+                  color: selected ? onSelected : tokens.textPrimary,
                 ),
               ),
             ],

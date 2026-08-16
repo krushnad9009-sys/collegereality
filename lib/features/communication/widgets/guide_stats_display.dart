@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../../config/theme/app_theme.dart';
+
+import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_fonts.dart';
+import '../../../config/theme/app_spacing.dart';
 import '../../verification/widgets/verification_badge_widget.dart';
 import '../models/guide_stats_model.dart';
 import '../utils/communication_formatters.dart';
@@ -18,6 +20,7 @@ class GuideStatsDisplay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -37,13 +40,13 @@ class GuideStatsDisplay extends StatelessWidget {
               value: stats.totalRatings > 0
                   ? stats.overallRating.toStringAsFixed(1)
                   : 'New',
-              icon: Icons.star,
+              icon: Icons.star_rounded,
             ),
             const SizedBox(width: 8),
             _StatBox(
               label: 'Chats',
               value: '${stats.totalChats}',
-              icon: Icons.chat_bubble_outline,
+              icon: Icons.chat_bubble_outline_rounded,
             ),
             const SizedBox(width: 8),
             _StatBox(
@@ -56,12 +59,20 @@ class GuideStatsDisplay extends StatelessWidget {
         const SizedBox(height: 12),
         Text(
           formatGuideResponseTime(stats.avgResponseTimeMinutes),
-          style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.gray600),
+          style: AppFonts.plusJakarta(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: tokens.textSecondary,
+          ),
         ),
         const SizedBox(height: 4),
         Text(
           formatLastActive(stats.lastActiveAt),
-          style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.gray600),
+          style: AppFonts.plusJakarta(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: tokens.textSecondary,
+          ),
         ),
       ],
     );
@@ -81,27 +92,37 @@ class _StatBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final primary = Theme.of(context).colorScheme.primary;
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
         decoration: BoxDecoration(
-          color: AppTheme.gray100,
-          borderRadius: BorderRadius.circular(12),
+          color: tokens.surfaceMuted,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+          border: Border.all(color: tokens.borderSubtle),
         ),
         child: Column(
           children: [
-            Icon(icon, size: 18, color: AppTheme.primaryColor),
-            const SizedBox(height: 4),
+            Icon(icon, size: 18, color: primary),
+            const SizedBox(height: 6),
             Text(
               value,
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w700,
+              style: AppFonts.plusJakarta(
+                fontWeight: FontWeight.w800,
                 fontSize: 16,
+                color: tokens.textPrimary,
+                letterSpacing: -0.3,
               ),
             ),
+            const SizedBox(height: 1),
             Text(
               label,
-              style: GoogleFonts.poppins(fontSize: 11, color: AppTheme.gray600),
+              style: AppFonts.plusJakarta(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: tokens.textTertiary,
+              ),
             ),
           ],
         ),

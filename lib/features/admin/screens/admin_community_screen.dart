@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../utils/admin_route_resolver.dart';
-import '../../../config/theme/app_theme.dart';
+import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_fonts.dart';
+import '../../../config/theme/app_spacing.dart';
 import '../../../core/constants/community_constants.dart';
 import '../../../core/widgets/index.dart';
 import '../../community/providers/community_provider.dart';
@@ -73,78 +74,87 @@ class _ReportsTab extends ConsumerWidget {
       error: (e, _) => Center(child: Text('$e')),
       data: (reports) {
         if (reports.isEmpty) {
+          final tokens = context.tokens;
           return Center(
             child: Text(
               'No open community reports',
-              style: GoogleFonts.poppins(color: AppTheme.gray600),
+              style: AppFonts.plusJakarta(color: tokens.textSecondary),
             ),
           );
         }
+        final tokens = context.tokens;
         return ListView.separated(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpacing.lg),
           itemCount: reports.length,
-          separatorBuilder: (_, _) => const SizedBox(height: 8),
+          separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
           itemBuilder: (context, index) {
             final report = reports[index];
-            return Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+            return PremiumCard(
+              radius: tokens.cardRadius,
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    report['reason']?.toString() ?? 'Report',
+                    style: AppFonts.plusJakarta(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                      color: tokens.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'User: ${report['reportedId']}',
+                    style: AppFonts.plusJakarta(fontSize: 13, color: tokens.textSecondary),
+                  ),
+                  if (report['messageId'] != null)
                     Text(
-                      report['reason']?.toString() ?? 'Report',
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16,
-                      ),
+                      'Message: ${report['messageId']}',
+                      style: AppFonts.plusJakarta(fontSize: 13, color: tokens.textSecondary),
                     ),
-                    Text('User: ${report['reportedId']}'),
-                    if (report['messageId'] != null)
-                      Text('Message: ${report['messageId']}'),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        OutlinedButton(
-                          onPressed: () async {
-                            await ref
-                                .read(communityServiceProvider)
-                                .updateCommunityReportStatus(
-                                  report['id'] as String,
-                                  CommunityConstants.reportStatusReviewed,
-                                );
-                            ref.invalidate(communityReportsAdminProvider);
-                          },
-                          child: const Text('Reviewed'),
-                        ),
-                        const SizedBox(width: 8),
-                        ElevatedButton(
-                          onPressed: () async {
-                            await ref
-                                .read(communityServiceProvider)
-                                .updateCommunityReportStatus(
-                                  report['id'] as String,
-                                  CommunityConstants.reportStatusActionTaken,
-                                );
-                            if (report['messageId'] != null) {
-                              await ref
-                                  .read(communityServiceProvider)
-                                  .deleteMessage(report['messageId'] as String);
-                            }
-                            ref.invalidate(communityReportsAdminProvider);
-                            if (context.mounted) {
-                              SnackBarHelper.showSuccessSnackBar(
-                                context,
-                                message: 'Action taken',
+                  const SizedBox(height: AppSpacing.md),
+                  Row(
+                    children: [
+                      OutlinedButton(
+                        onPressed: () async {
+                          await ref
+                              .read(communityServiceProvider)
+                              .updateCommunityReportStatus(
+                                report['id'] as String,
+                                CommunityConstants.reportStatusReviewed,
                               );
-                            }
-                          },
-                          child: const Text('Remove & Close'),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                          ref.invalidate(communityReportsAdminProvider);
+                        },
+                        child: const Text('Reviewed'),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      ElevatedButton(
+                        onPressed: () async {
+                          await ref
+                              .read(communityServiceProvider)
+                              .updateCommunityReportStatus(
+                                report['id'] as String,
+                                CommunityConstants.reportStatusActionTaken,
+                              );
+                          if (report['messageId'] != null) {
+                            await ref
+                                .read(communityServiceProvider)
+                                .deleteMessage(report['messageId'] as String);
+                          }
+                          ref.invalidate(communityReportsAdminProvider);
+                          if (context.mounted) {
+                            SnackBarHelper.showSuccessSnackBar(
+                              context,
+                              message: 'Action taken',
+                            );
+                          }
+                        },
+                        child: const Text('Remove & Close'),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             );
           },
@@ -163,23 +173,27 @@ class _AutoHiddenTab extends ConsumerWidget {
       error: (e, _) => Center(child: Text('$e')),
       data: (items) {
         if (items.isEmpty) {
+          final tokens = context.tokens;
           return Center(
             child: Text(
               'No auto-hidden messages',
-              style: GoogleFonts.poppins(color: AppTheme.gray600),
+              style: AppFonts.plusJakarta(color: tokens.textSecondary),
             ),
           );
         }
         return ListView.separated(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpacing.lg),
           itemCount: items.length,
-          separatorBuilder: (_, _) => const SizedBox(height: 8),
+          separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
           itemBuilder: (context, index) {
             final item = items[index];
-            return Card(
-              child: ListTile(
-                title: Text(item['text']?.toString() ?? 'Message'),
-                subtitle: Text('Reports: ${item['reportCount'] ?? 0}'),
+            return PremiumCard(
+              padding: EdgeInsets.zero,
+              child: PremiumListRow(
+                leadingIcon: Icons.visibility_off_outlined,
+                title: item['text']?.toString() ?? 'Message',
+                subtitle: 'Reports: ${item['reportCount'] ?? 0}',
+                showChevron: false,
                 trailing: TextButton(
                   onPressed: () async {
                     await ref
@@ -207,23 +221,28 @@ class _SpamTab extends ConsumerWidget {
       error: (e, _) => Center(child: Text('$e')),
       data: (items) {
         if (items.isEmpty) {
+          final tokens = context.tokens;
           return Center(
             child: Text(
               'No spam-flagged messages',
-              style: GoogleFonts.poppins(color: AppTheme.gray600),
+              style: AppFonts.plusJakarta(color: tokens.textSecondary),
             ),
           );
         }
         return ListView.separated(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpacing.lg),
           itemCount: items.length,
-          separatorBuilder: (_, _) => const SizedBox(height: 8),
+          separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
           itemBuilder: (context, index) {
             final item = items[index];
-            return Card(
-              child: ListTile(
-                title: Text(item['text']?.toString() ?? 'Message'),
-                subtitle: const Text('Flagged as spam'),
+            return PremiumCard(
+              padding: EdgeInsets.zero,
+              child: PremiumListRow(
+                leadingIcon: Icons.report_gmailerrorred_outlined,
+                iconColor: Colors.redAccent,
+                title: item['text']?.toString() ?? 'Message',
+                subtitle: 'Flagged as spam',
+                showChevron: false,
                 trailing: IconButton(
                   icon: const Icon(Icons.delete_outline),
                   onPressed: () async {

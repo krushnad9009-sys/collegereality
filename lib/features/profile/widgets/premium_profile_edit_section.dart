@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../config/theme/app_fonts.dart';
 
-import '../../../config/theme/app_theme.dart';
+import '../../../config/theme/app_design_tokens.dart';
 import '../../../core/constants/profile_constants.dart';
+import '../../../core/widgets/premium_components.dart';
 import '../../auth/models/user_model.dart';
 import '../services/profile_storage_service.dart';
 
@@ -88,95 +89,101 @@ class _PremiumProfileEditSectionState
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Premium Profile',
-          style: AppFonts.plusJakarta(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
+    final tokens = context.tokens;
+
+    return PremiumCard(
+      radius: tokens.cardRadius,
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SectionHeader(
+            title: 'Premium Profile',
+            subtitle: 'Photos, branch, and how others find you',
           ),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: _isUploading ? null : () => _pickImage(isCover: false),
-                icon: const Icon(Icons.person_outline),
-                label: const Text('Profile Photo'),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed:
+                      _isUploading ? null : () => _pickImage(isCover: false),
+                  icon: const Icon(Icons.person_outline),
+                  label: const Text('Profile Photo'),
+                ),
               ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: _isUploading ? null : () => _pickImage(isCover: true),
-                icon: const Icon(Icons.image_outlined),
-                label: const Text('Cover Photo'),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed:
+                      _isUploading ? null : () => _pickImage(isCover: true),
+                  icon: const Icon(Icons.image_outlined),
+                  label: const Text('Cover Photo'),
+                ),
               ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: widget.branchController,
+            decoration: const InputDecoration(
+              labelText: 'Branch',
+              hintText: 'e.g. Computer Science',
             ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        TextField(
-          controller: widget.branchController,
-          decoration: InputDecoration(
-            labelText: 'Branch',
-            hintText: 'e.g. Computer Science',
-            filled: true,
-            fillColor: AppTheme.gray100,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           ),
-        ),
-        const SizedBox(height: 16),
-        TextField(
-          controller: widget.aboutController,
-          maxLines: 4,
-          decoration: InputDecoration(
-            labelText: 'About Me',
-            hintText: 'Tell students about yourself...',
-            filled: true,
-            fillColor: AppTheme.gray100,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          const SizedBox(height: 16),
+          TextField(
+            controller: widget.aboutController,
+            maxLines: 4,
+            decoration: const InputDecoration(
+              labelText: 'About Me',
+              hintText: 'Tell students about yourself...',
+            ),
           ),
-        ),
-        const SizedBox(height: 16),
-        Text(
-          'Availability',
-          style: AppFonts.plusJakarta(fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          children: ProfileConstants.availabilityOptions.map((option) {
-            final selected = widget.availabilityStatus == option['id'];
-            return ChoiceChip(
-              label: Text(option['label']!),
-              selected: selected,
-              onSelected: (_) => widget.onAvailabilityChanged(option['id']!),
-            );
-          }).toList(),
-        ),
-        const SizedBox(height: 16),
-        Text(
-          'Interests (up to 8)',
-          style: AppFonts.plusJakarta(fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: ProfileConstants.suggestedInterests.map((interest) {
-            final selected = widget.interests.contains(interest);
-            return FilterChip(
-              label: Text(interest),
-              selected: selected,
-              onSelected: (_) => _toggleInterest(interest),
-            );
-          }).toList(),
-        ),
-      ],
+          const SizedBox(height: 16),
+          Text(
+            'Availability',
+            style: AppFonts.plusJakarta(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: tokens.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            children: ProfileConstants.availabilityOptions.map((option) {
+              final selected = widget.availabilityStatus == option['id'];
+              return ChoiceChip(
+                label: Text(option['label']!),
+                selected: selected,
+                onSelected: (_) => widget.onAvailabilityChanged(option['id']!),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Interests (up to 8)',
+            style: AppFonts.plusJakarta(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: tokens.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: ProfileConstants.suggestedInterests.map((interest) {
+              final selected = widget.interests.contains(interest);
+              return FilterChip(
+                label: Text(interest),
+                selected: selected,
+                onSelected: (_) => _toggleInterest(interest),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
     );
   }
 }

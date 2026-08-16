@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../config/router/route_names.dart';
+import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../widgets/ask_question_sheet.dart';
@@ -68,7 +68,7 @@ class AskStudentButton extends ConsumerWidget {
         icon: const Icon(Icons.question_answer_outlined, size: 18),
         label: Text(
           'Ask a Student',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+          style: AppFonts.plusJakarta(fontWeight: FontWeight.w700),
         ),
       );
     }
@@ -78,7 +78,7 @@ class AskStudentButton extends ConsumerWidget {
       icon: const Icon(Icons.question_answer_outlined, size: 18),
       label: Text(
         'Ask a Student',
-        style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+        style: AppFonts.plusJakarta(fontWeight: FontWeight.w700),
       ),
       style: FilledButton.styleFrom(
         backgroundColor: AppTheme.secondaryColor,

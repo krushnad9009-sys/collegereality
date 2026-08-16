@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_spacing.dart';
+import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/consultation_constants.dart';
 import '../../../core/widgets/index.dart';
 import '../../auth/providers/auth_provider.dart';
@@ -111,6 +114,7 @@ class _CallRoomBodyState extends ConsumerState<_CallRoomBody> {
   @override
   Widget build(BuildContext context) {
     final c = widget.consultation;
+    final tokens = context.tokens;
     final peerId = c.peerIdFor(widget.uid);
     final peerAsync = ref.watch(publicProfileByUidProvider(peerId));
 
@@ -122,7 +126,12 @@ class _CallRoomBodyState extends ConsumerState<_CallRoomBody> {
           peerAsync.when(
             data: (peer) => Text(
               peer?.displayName ?? peer?.anonymousGuideAlias ?? 'Consultation',
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+              style: AppFonts.plusJakarta(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                color: tokens.textPrimary,
+                letterSpacing: -0.3,
+              ),
             ),
             loading: () => const SizedBox(height: 24),
             error: (_, _) => const SizedBox.shrink(),
@@ -131,7 +140,14 @@ class _CallRoomBodyState extends ConsumerState<_CallRoomBody> {
           _StatusStepper(status: c.status),
           const SizedBox(height: 20),
           if (_error != null) ...[
-            Text(_error!, style: const TextStyle(color: Colors.red)),
+            Text(
+              _error!,
+              style: AppFonts.plusJakarta(
+                color: AppTheme.errorColor,
+                fontSize: 13.5,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             const SizedBox(height: 12),
           ],
           if (c.status == ConsultationConstants.statusRequested ||
@@ -159,11 +175,19 @@ class _CallRoomBodyState extends ConsumerState<_CallRoomBody> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Row(
+                    Row(
                       children: [
-                        Icon(Icons.lock_open_outlined, color: Colors.green),
-                        SizedBox(width: 8),
-                        Text('Call access granted', style: TextStyle(fontWeight: FontWeight.w700)),
+                        const Icon(Icons.lock_open_rounded,
+                            color: Color(0xFF16A34A), size: 20),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Call access granted',
+                          style: AppFonts.plusJakarta(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14.5,
+                            color: tokens.textPrimary,
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 6),
@@ -172,7 +196,12 @@ class _CallRoomBodyState extends ConsumerState<_CallRoomBody> {
                       '"${_token!.channelName}". Live audio/video isn\'t wired up in this '
                       'build yet — see functions/README.md for what\'s left (a real-time '
                       'media SDK needs an actual Agora project).',
-                      style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                      style: AppFonts.plusJakarta(
+                        color: tokens.textSecondary,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        height: 1.4,
+                      ),
                     ),
                   ],
                 ),
@@ -218,20 +247,22 @@ class _StatusStepper extends StatelessWidget {
         status != ConsultationConstants.statusCompleted) {
       return const SizedBox.shrink();
     }
+    final tokens = context.tokens;
+    final primary = Theme.of(context).colorScheme.primary;
     final currentIndex = _steps.indexOf(status).clamp(0, _steps.length - 1);
     return Row(
       children: [
         for (var i = 0; i < _steps.length; i++) ...[
           Icon(
-            i <= currentIndex ? Icons.check_circle : Icons.circle_outlined,
+            i <= currentIndex ? Icons.check_circle_rounded : Icons.circle_outlined,
             size: 16,
-            color: i <= currentIndex ? Colors.green : Colors.grey,
+            color: i <= currentIndex ? primary : tokens.textTertiary,
           ),
           if (i != _steps.length - 1)
             Expanded(
               child: Container(
                 height: 2,
-                color: i < currentIndex ? Colors.green : Colors.grey.shade300,
+                color: i < currentIndex ? primary : tokens.borderSubtle,
               ),
             ),
         ],

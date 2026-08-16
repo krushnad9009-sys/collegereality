@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../config/router/route_names.dart';
-import '../../../config/theme/app_theme.dart';
+import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_fonts.dart';
 import '../../../core/constants/student_life_constants.dart';
+import '../../../core/widgets/async_state_widgets.dart';
+import '../../../core/widgets/premium_components.dart';
 import '../../student_life/providers/student_life_provider.dart';
 
 class AdminStudentLifeScreen extends ConsumerWidget {
@@ -30,8 +32,8 @@ class AdminStudentLifeScreen extends ConsumerWidget {
         body: TabBarView(
           children: [
             postReportsAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('$e')),
+              loading: () => const AsyncLoadingView(),
+              error: (e, _) => AsyncErrorView.fromError(e),
               data: (reports) => _reportsList(
                 context,
                 ref,
@@ -40,8 +42,8 @@ class AdminStudentLifeScreen extends ConsumerWidget {
               ),
             ),
             commentReportsAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('$e')),
+              loading: () => const AsyncLoadingView(),
+              error: (e, _) => AsyncErrorView.fromError(e),
               data: (reports) => _reportsList(
                 context,
                 ref,
@@ -62,11 +64,10 @@ class AdminStudentLifeScreen extends ConsumerWidget {
     required bool isPost,
   }) {
     if (reports.isEmpty) {
-      return Center(
-        child: Text(
-          'No open reports',
-          style: GoogleFonts.poppins(color: AppTheme.gray600),
-        ),
+      return const AsyncEmptyView(
+        icon: Icons.flag_outlined,
+        title: 'No open reports',
+        subtitle: 'Nothing to moderate right now.',
       );
     }
 
@@ -76,36 +77,50 @@ class AdminStudentLifeScreen extends ConsumerWidget {
       separatorBuilder: (_, _) => const SizedBox(height: 8),
       itemBuilder: (context, index) {
         final report = reports[index];
-        return Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+        final tokens = context.tokens;
+        return PremiumCard(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                report['reason']?.toString() ?? 'Report',
+                style: AppFonts.plusJakarta(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                  color: tokens.textPrimary,
+                ),
+              ),
+              Text(
+                'Reporter: ${report['reporterId']}',
+                style: AppFonts.plusJakarta(fontSize: 13, color: tokens.textSecondary),
+              ),
+              if (isPost)
                 Text(
-                  report['reason']?.toString() ?? 'Report',
-                  style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 16),
+                  'Post: ${report['postId']}',
+                  style: AppFonts.plusJakarta(fontSize: 13, color: tokens.textSecondary),
                 ),
-                Text('Reporter: ${report['reporterId']}'),
-                if (isPost) Text('Post: ${report['postId']}'),
-                if (!isPost) Text('Comment: ${report['commentId']}'),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    OutlinedButton(
-                      onPressed: () => _updateStatus(ref, report['id'] as String, isPost,
-                          StudentLifeConstants.reportStatusReviewed),
-                      child: const Text('Reviewed'),
-                    ),
-                    const SizedBox(width: 8),
-                    ElevatedButton(
-                      onPressed: () => _takeAction(ref, report, isPost),
-                      child: const Text('Hide Content'),
-                    ),
-                  ],
+              if (!isPost)
+                Text(
+                  'Comment: ${report['commentId']}',
+                  style: AppFonts.plusJakarta(fontSize: 13, color: tokens.textSecondary),
                 ),
-              ],
-            ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  OutlinedButton(
+                    onPressed: () => _updateStatus(ref, report['id'] as String, isPost,
+                        StudentLifeConstants.reportStatusReviewed),
+                    child: const Text('Reviewed'),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: () => _takeAction(ref, report, isPost),
+                    child: const Text('Hide Content'),
+                  ),
+                ],
+              ),
+            ],
           ),
         );
       },

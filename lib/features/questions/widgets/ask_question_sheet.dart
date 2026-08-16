@@ -2,10 +2,10 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../config/router/route_names.dart';
-import '../../../config/theme/app_theme.dart';
+import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_fonts.dart';
 import '../../../core/constants/question_constants.dart';
 import '../../../core/widgets/index.dart';
 import '../../auth/providers/auth_provider.dart';
@@ -13,6 +13,23 @@ import '../../auth/providers/user_provider.dart';
 import '../models/question_model.dart';
 import '../providers/question_provider.dart';
 import 'question_rich_text_field.dart';
+
+/// A small centered drag handle shown at the top of the ask/answer sheets,
+/// consistent with the rest of the app's modal-sheet chrome.
+Widget _sheetHandle(BuildContext context) {
+  final tokens = context.tokens;
+  return Center(
+    child: Container(
+      width: 36,
+      height: 4,
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: tokens.borderStrong,
+        borderRadius: BorderRadius.circular(999),
+      ),
+    ),
+  );
+}
 
 Future<QuestionModel?> showAskQuestionSheet({
   required BuildContext context,
@@ -45,11 +62,12 @@ Future<QuestionModel?> showAskQuestionSheet({
     builder: (sheetContext) {
       return StatefulBuilder(
         builder: (context, setState) {
+          final tokens = context.tokens;
           return Padding(
             padding: EdgeInsets.only(
               left: 20,
               right: 20,
-              top: 20,
+              top: 12,
               bottom: MediaQuery.of(context).viewInsets.bottom + 20,
             ),
             child: SingleChildScrollView(
@@ -57,30 +75,35 @@ Future<QuestionModel?> showAskQuestionSheet({
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  _sheetHandle(context),
                   Text(
                     'Ask a Student',
-                    style: GoogleFonts.poppins(
+                    style: AppFonts.plusJakarta(
                       fontSize: 18,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w800,
+                      color: tokens.textPrimary,
+                      letterSpacing: -0.3,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     'About $collegeName',
-                    style: GoogleFonts.poppins(
+                    style: AppFonts.plusJakarta(
                       fontSize: 13,
-                      color: AppTheme.gray500,
+                      fontWeight: FontWeight.w500,
+                      color: tokens.textTertiary,
                     ),
                   ),
                   const SizedBox(height: 16),
                   TextField(
                     controller: titleController,
                     maxLength: QuestionConstants.maxTitleLength,
+                    style: AppFonts.plusJakarta(fontSize: 14, color: tokens.textPrimary),
                     decoration: InputDecoration(
                       labelText: 'Question title',
                       hintText: 'What do you want to know?',
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(tokens.buttonRadius),
                       ),
                     ),
                   ),
@@ -90,7 +113,7 @@ Future<QuestionModel?> showAskQuestionSheet({
                     decoration: InputDecoration(
                       labelText: 'Topic',
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(tokens.buttonRadius),
                       ),
                     ),
                     items: QuestionConstants.allCategories
@@ -156,9 +179,10 @@ Future<QuestionModel?> showAskQuestionSheet({
                   const SizedBox(height: 8),
                   Text(
                     'Your public display name from profile settings will be shown with your verification badge.',
-                    style: GoogleFonts.poppins(
+                    style: AppFonts.plusJakarta(
                       fontSize: 12,
-                      color: AppTheme.gray500,
+                      fontWeight: FontWeight.w500,
+                      color: tokens.textTertiary,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -212,8 +236,8 @@ Future<QuestionModel?> showAskQuestionSheet({
                             )
                           : Text(
                               'Ask a Student',
-                              style: GoogleFonts.poppins(
-                                fontWeight: FontWeight.w600,
+                              style: AppFonts.plusJakarta(
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
                     ),
@@ -267,7 +291,7 @@ Future<void> showWriteAnswerSheet({
                 children: [
                   Text(
                     'Write an Answer',
-                    style: GoogleFonts.poppins(
+                    style: AppFonts.plusJakarta(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
                     ),
@@ -315,9 +339,9 @@ Future<void> showWriteAnswerSheet({
                   const SizedBox(height: 8),
                   Text(
                     'Your public display name from profile settings will be shown with your verification badge.',
-                    style: GoogleFonts.poppins(
+                    style: AppFonts.plusJakarta(
                       fontSize: 12,
-                      color: AppTheme.gray500,
+                      color: context.tokens.textTertiary,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -369,7 +393,7 @@ Future<void> showWriteAnswerSheet({
                             )
                           : Text(
                               'Post Answer',
-                              style: GoogleFonts.poppins(
+                              style: AppFonts.plusJakarta(
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -399,7 +423,7 @@ Future<void> showReportContentDialog({
     context: context,
     builder: (dialogContext) {
       return AlertDialog(
-        title: Text(title, style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+        title: Text(title, style: AppFonts.plusJakarta(fontWeight: FontWeight.w600)),
         content: TextField(
           controller: reasonController,
           maxLines: 3,

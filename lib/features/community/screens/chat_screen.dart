@@ -8,7 +8,6 @@ import 'package:go_router/go_router.dart';
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_spacing.dart';
-import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/community_constants.dart';
 import '../../../core/widgets/index.dart';
 import '../../auth/models/user_model.dart';
@@ -275,7 +274,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(tokens.buttonRadius),
-                        borderSide: const BorderSide(color: AppTheme.primaryColor),
+                        borderSide: BorderSide(
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
                       ),
                       isDense: true,
                       contentPadding: const EdgeInsets.symmetric(

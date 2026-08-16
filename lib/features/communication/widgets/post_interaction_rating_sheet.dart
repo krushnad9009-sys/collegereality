@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../../config/theme/app_theme.dart';
+import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_fonts.dart';
 import '../models/interaction_rating_model.dart';
 
 class PostInteractionRatingSheet extends StatefulWidget {
@@ -27,6 +27,8 @@ class _PostInteractionRatingSheetState extends State<PostInteractionRatingSheet>
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final primary = Theme.of(context).colorScheme.primary;
     return Padding(
       padding: EdgeInsets.fromLTRB(
         20,
@@ -38,17 +40,34 @@ class _PostInteractionRatingSheetState extends State<PostInteractionRatingSheet>
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: tokens.borderStrong,
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+          ),
           Text(
             'Rate your experience',
-            style: GoogleFonts.poppins(
+            style: AppFonts.plusJakarta(
               fontSize: 20,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w800,
+              color: tokens.textPrimary,
+              letterSpacing: -0.3,
             ),
           ),
           const SizedBox(height: 6),
           Text(
             'How was your session with ${widget.peerAlias}?',
-            style: GoogleFonts.poppins(color: AppTheme.gray600),
+            style: AppFonts.plusJakarta(
+              color: tokens.textSecondary,
+              fontSize: 13.5,
+              fontWeight: FontWeight.w500,
+            ),
           ),
           const SizedBox(height: 16),
           Row(
@@ -58,32 +77,68 @@ class _PostInteractionRatingSheetState extends State<PostInteractionRatingSheet>
               return IconButton(
                 onPressed: () => setState(() => _stars = star),
                 icon: Icon(
-                  star <= _stars ? Icons.star : Icons.star_border,
-                  color: AppTheme.warningColor,
+                  star <= _stars ? Icons.star_rounded : Icons.star_outline_rounded,
+                  color: const Color(0xFFF59E0B),
                   size: 36,
                 ),
               );
             }),
           ),
           SwitchListTile(
-            title: const Text('Was this guide helpful?'),
+            contentPadding: EdgeInsets.zero,
+            activeThumbColor: primary,
+            title: Text(
+              'Was this guide helpful?',
+              style: AppFonts.plusJakarta(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: tokens.textPrimary,
+              ),
+            ),
             value: _helpful,
             onChanged: (v) => setState(() => _helpful = v),
           ),
           SwitchListTile(
-            title: const Text('Was the interaction respectful?'),
+            contentPadding: EdgeInsets.zero,
+            activeThumbColor: primary,
+            title: Text(
+              'Was the interaction respectful?',
+              style: AppFonts.plusJakarta(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: tokens.textPrimary,
+              ),
+            ),
             value: _respectful,
             onChanged: (v) => setState(() => _respectful = v),
           ),
           SwitchListTile(
-            title: const Text('Would you recommend this guide?'),
+            contentPadding: EdgeInsets.zero,
+            activeThumbColor: primary,
+            title: Text(
+              'Would you recommend this guide?',
+              style: AppFonts.plusJakarta(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: tokens.textPrimary,
+              ),
+            ),
             value: _recommend,
             onChanged: (v) => setState(() => _recommend = v),
           ),
           const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
+            height: 50,
             child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(tokens.buttonRadius),
+                ),
+                elevation: 0,
+              ),
               onPressed: _isSubmitting
                   ? null
                   : () async {
@@ -113,9 +168,19 @@ class _PostInteractionRatingSheetState extends State<PostInteractionRatingSheet>
                   ? const SizedBox(
                       width: 20,
                       height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
                     )
-                  : const Text('Submit Rating'),
+                  : Text(
+                      'Submit Rating',
+                      style: AppFonts.plusJakarta(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
             ),
           ),
         ],

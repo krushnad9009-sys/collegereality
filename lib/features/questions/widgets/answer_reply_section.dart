@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 
-import '../../../config/theme/app_theme.dart';
+import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_fonts.dart';
 import '../../../core/widgets/index.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/providers/user_provider.dart';
@@ -77,6 +77,8 @@ class _AnswerReplySectionState extends ConsumerState<AnswerReplySection> {
         answerId: widget.answer.id,
       )),
     );
+    final tokens = context.tokens;
+    final primary = Theme.of(context).colorScheme.primary;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -88,17 +90,17 @@ class _AnswerReplySectionState extends ConsumerState<AnswerReplySection> {
             child: Row(
               children: [
                 Icon(
-                  _expanded ? Icons.expand_less : Icons.expand_more,
+                  _expanded ? Icons.expand_less_rounded : Icons.expand_more_rounded,
                   size: 18,
-                  color: AppTheme.primaryColor,
+                  color: primary,
                 ),
                 const SizedBox(width: 4),
                 Text(
                   '${widget.answer.replyCount} repl${widget.answer.replyCount == 1 ? 'y' : 'ies'}',
-                  style: GoogleFonts.poppins(
+                  style: AppFonts.plusJakarta(
                     fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.primaryColor,
+                    fontWeight: FontWeight.w700,
+                    color: primary,
                   ),
                 ),
               ],
@@ -107,12 +109,12 @@ class _AnswerReplySectionState extends ConsumerState<AnswerReplySection> {
         ),
         if (_expanded) ...[
           repliesAsync.when(
-            loading: () => const Padding(
-              padding: EdgeInsets.all(8),
+            loading: () => Padding(
+              padding: const EdgeInsets.all(8),
               child: SizedBox(
                 height: 20,
                 width: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
+                child: CircularProgressIndicator(strokeWidth: 2, color: primary),
               ),
             ),
             error: (_, _) => const SizedBox.shrink(),
@@ -123,8 +125,8 @@ class _AnswerReplySectionState extends ConsumerState<AnswerReplySection> {
                     margin: const EdgeInsets.only(left: 12, bottom: 8),
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: AppTheme.gray50,
-                      borderRadius: BorderRadius.circular(10),
+                      color: tokens.surfaceMuted,
+                      borderRadius: BorderRadius.circular(tokens.buttonRadius * 0.65),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -134,9 +136,10 @@ class _AnswerReplySectionState extends ConsumerState<AnswerReplySection> {
                             Expanded(
                               child: Text(
                                 reply.authorDisplayName,
-                                style: GoogleFonts.poppins(
+                                style: AppFonts.plusJakarta(
                                   fontSize: 12,
-                                  fontWeight: FontWeight.w600,
+                                  fontWeight: FontWeight.w700,
+                                  color: tokens.textPrimary,
                                 ),
                               ),
                             ),
@@ -150,7 +153,14 @@ class _AnswerReplySectionState extends ConsumerState<AnswerReplySection> {
                           ],
                         ),
                         const SizedBox(height: 4),
-                        QuestionRichTextUtils.buildRichText(reply.body),
+                        QuestionRichTextUtils.buildRichText(
+                          reply.body,
+                          baseStyle: AppFonts.plusJakarta(
+                            fontSize: 13,
+                            color: tokens.textSecondary,
+                            height: 1.4,
+                          ),
+                        ),
                       ],
                     ),
                   );
@@ -166,23 +176,32 @@ class _AnswerReplySectionState extends ConsumerState<AnswerReplySection> {
                   child: TextField(
                     controller: _replyController,
                     maxLines: 2,
+                    style: AppFonts.plusJakarta(fontSize: 13, color: tokens.textPrimary),
                     decoration: InputDecoration(
                       hintText: 'Write a reply...',
+                      hintStyle: AppFonts.plusJakarta(fontSize: 13, color: tokens.textTertiary),
+                      filled: true,
+                      fillColor: tokens.surfaceMuted,
                       isDense: true,
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(tokens.buttonRadius * 0.65),
+                        borderSide: BorderSide.none,
                       ),
                     ),
                   ),
                 ),
                 const SizedBox(width: 8),
                 IconButton.filled(
+                  style: IconButton.styleFrom(backgroundColor: primary),
                   onPressed: _submitting ? null : _submit,
                   icon: _submitting
                       ? const SizedBox(
                           width: 16,
                           height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
                         )
                       : const Icon(Icons.send_rounded, size: 18),
                 ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_fonts.dart';
 
 import '../../../config/theme/app_theme.dart';
@@ -18,6 +19,7 @@ class ReviewYesNoPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final entries = answers.entries.toList();
     if (entries.isEmpty) return const SizedBox.shrink();
+    final tokens = context.tokens;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -27,7 +29,7 @@ class ReviewYesNoPanel extends StatelessWidget {
           style: AppFonts.plusJakarta(
             fontSize: compact ? 12 : 13,
             fontWeight: FontWeight.w700,
-            color: AppTheme.gray700,
+            color: tokens.textPrimary,
           ),
         ),
         const SizedBox(height: 8),
@@ -42,7 +44,7 @@ class ReviewYesNoPanel extends StatelessWidget {
                     ReviewYesNoQuestions.labelFor(entry.key),
                     style: AppFonts.plusJakarta(
                       fontSize: compact ? 11 : 12,
-                      color: AppTheme.gray600,
+                      color: tokens.textSecondary,
                     ),
                   ),
                 ),

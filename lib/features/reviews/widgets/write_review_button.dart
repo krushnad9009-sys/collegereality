@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import '../../../config/theme/app_fonts.dart';
 
 import '../../../config/router/route_names.dart';
-import '../../../config/theme/app_theme.dart';
 import '../../auth/providers/auth_provider.dart';
 
 /// Navigates to the write-review flow for a college.
@@ -64,7 +63,7 @@ class WriteReviewButton extends ConsumerWidget {
         style: AppFonts.plusJakarta(fontWeight: FontWeight.w600),
       ),
       style: FilledButton.styleFrom(
-        backgroundColor: AppTheme.primaryColor,
+        backgroundColor: Theme.of(context).colorScheme.primary,
         foregroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       ),

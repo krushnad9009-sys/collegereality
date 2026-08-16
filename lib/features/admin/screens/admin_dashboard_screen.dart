@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_spacing.dart';
+import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/widgets/premium_components.dart';
+import '../../../core/widgets/premium_list_row.dart';
 import '../../../core/widgets/skeleton_loader.dart';
 import '../providers/admin_dashboard_provider.dart';
 import '../providers/admin_provider.dart';
@@ -39,7 +40,7 @@ class AdminDashboardScreen extends ConsumerWidget {
           children: [
             Text(
               'College Reality Admin',
-              style: GoogleFonts.poppins(
+              style: AppFonts.plusJakarta(
                 fontSize: 22,
                 fontWeight: FontWeight.w700,
                 letterSpacing: -0.3,
@@ -49,7 +50,7 @@ class AdminDashboardScreen extends ConsumerWidget {
             const SizedBox(height: AppSpacing.sm),
             Text(
               'Platform overview and moderation tools.',
-              style: GoogleFonts.poppins(
+              style: AppFonts.plusJakarta(
                 fontSize: 14,
                 color: tokens.textSecondary,
               ),
@@ -59,7 +60,7 @@ class AdminDashboardScreen extends ConsumerWidget {
               loading: () => const DashboardSkeleton(),
               error: (e, _) => Text(
                 'Failed to load stats: $e',
-                style: GoogleFonts.poppins(color: tokens.textSecondary),
+                style: AppFonts.plusJakarta(color: tokens.textSecondary),
               ),
               data: (stats) => GridView.count(
                 crossAxisCount: crossAxisCount,
@@ -85,7 +86,7 @@ class AdminDashboardScreen extends ConsumerWidget {
             const SizedBox(height: AppSpacing.section),
             Text(
               'Quick Actions',
-              style: GoogleFonts.poppins(
+              style: AppFonts.plusJakarta(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
                 color: tokens.textPrimary,
@@ -216,7 +217,7 @@ class _StatTile extends StatelessWidget {
           const Spacer(),
           Text(
             value,
-            style: GoogleFonts.poppins(
+            style: AppFonts.plusJakarta(
               fontSize: 24,
               fontWeight: FontWeight.w700,
               letterSpacing: -0.5,
@@ -228,7 +229,7 @@ class _StatTile extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             label,
-            style: GoogleFonts.poppins(
+            style: AppFonts.plusJakarta(
               fontSize: 12,
               fontWeight: FontWeight.w500,
               color: tokens.textSecondary,
@@ -257,14 +258,19 @@ class _AdminMenuTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        leading: Icon(icon, color: AppTheme.primaryColor),
-        title: Text(title, style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-        subtitle: Text(subtitle),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: onTap,
+    final tokens = context.tokens;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: PremiumCard(
+        radius: tokens.buttonRadius,
+        padding: EdgeInsets.zero,
+        child: PremiumListRow(
+          leadingIcon: icon,
+          iconColor: AppTheme.primaryColor,
+          title: title,
+          subtitle: subtitle,
+          onTap: onTap,
+        ),
       ),
     );
   }

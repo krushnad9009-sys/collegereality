@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../config/theme/app_fonts.dart';
 import '../../config/theme/app_theme.dart';
 
 class DialogHelper {
@@ -19,7 +19,7 @@ class DialogHelper {
               : AppTheme.white,
           title: Text(
             title,
-            style: GoogleFonts.poppins(
+            style: AppFonts.plusJakarta(
               fontSize: 18,
               fontWeight: FontWeight.w600,
               color: AppTheme.errorColor,
@@ -27,7 +27,7 @@ class DialogHelper {
           ),
           content: Text(
             message,
-            style: GoogleFonts.poppins(
+            style: AppFonts.plusJakarta(
               fontSize: 14,
               fontWeight: FontWeight.w500,
               color: Theme.of(context).brightness == Brightness.dark
@@ -43,7 +43,7 @@ class DialogHelper {
               },
               child: Text(
                 buttonText,
-                style: GoogleFonts.poppins(
+                style: AppFonts.plusJakarta(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: AppTheme.errorColor,
@@ -72,7 +72,7 @@ class DialogHelper {
               : AppTheme.white,
           title: Text(
             title,
-            style: GoogleFonts.poppins(
+            style: AppFonts.plusJakarta(
               fontSize: 18,
               fontWeight: FontWeight.w600,
               color: AppTheme.accentColor,
@@ -80,7 +80,7 @@ class DialogHelper {
           ),
           content: Text(
             message,
-            style: GoogleFonts.poppins(
+            style: AppFonts.plusJakarta(
               fontSize: 14,
               fontWeight: FontWeight.w500,
               color: Theme.of(context).brightness == Brightness.dark
@@ -96,7 +96,7 @@ class DialogHelper {
               },
               child: Text(
                 buttonText,
-                style: GoogleFonts.poppins(
+                style: AppFonts.plusJakarta(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: AppTheme.accentColor,
@@ -125,14 +125,14 @@ class DialogHelper {
               : AppTheme.white,
           title: Text(
             title,
-            style: GoogleFonts.poppins(
+            style: AppFonts.plusJakarta(
               fontSize: 18,
               fontWeight: FontWeight.w600,
             ),
           ),
           content: Text(
             message,
-            style: GoogleFonts.poppins(
+            style: AppFonts.plusJakarta(
               fontSize: 14,
               fontWeight: FontWeight.w500,
               color: Theme.of(context).brightness == Brightness.dark
@@ -145,7 +145,7 @@ class DialogHelper {
               onPressed: () => Navigator.of(context).pop(false),
               child: Text(
                 cancelText,
-                style: GoogleFonts.poppins(
+                style: AppFonts.plusJakarta(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: AppTheme.gray500,
@@ -156,7 +156,7 @@ class DialogHelper {
               onPressed: () => Navigator.of(context).pop(true),
               child: Text(
                 confirmText,
-                style: GoogleFonts.poppins(
+                style: AppFonts.plusJakarta(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: AppTheme.primaryColor,
@@ -186,7 +186,7 @@ class SnackBarHelper {
             Expanded(
               child: Text(
                 message,
-                style: GoogleFonts.poppins(
+                style: AppFonts.plusJakarta(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                   color: AppTheme.white,
@@ -220,7 +220,7 @@ class SnackBarHelper {
             Expanded(
               child: Text(
                 message,
-                style: GoogleFonts.poppins(
+                style: AppFonts.plusJakarta(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                   color: AppTheme.white,
@@ -254,7 +254,7 @@ class SnackBarHelper {
             Expanded(
               child: Text(
                 message,
-                style: GoogleFonts.poppins(
+                style: AppFonts.plusJakarta(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                   color: AppTheme.white,

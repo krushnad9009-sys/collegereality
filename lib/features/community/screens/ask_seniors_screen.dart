@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../config/router/route_names.dart';
+import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_fonts.dart';
+import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/community_constants.dart';
 import '../../../core/widgets/index.dart';
@@ -21,12 +24,24 @@ class AskSeniorsScreen extends ConsumerStatefulWidget {
 class _AskSeniorsScreenState extends ConsumerState<AskSeniorsScreen> {
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
     final user = ref.watch(currentUserDetailProvider).valueOrNull;
     final threadsAsync = ref.watch(askSeniorsThreadsProvider);
 
     return Scaffold(
+      backgroundColor: tokens.surfaceMuted,
       appBar: AppBar(
-        title: const Text('Ask Seniors'),
+        elevation: 0,
+        scrolledUnderElevation: 0.5,
+        backgroundColor: tokens.surfaceElevated,
+        title: Text(
+          'Ask Seniors',
+          style: AppFonts.plusJakarta(
+            fontWeight: FontWeight.w700,
+            fontSize: 17,
+            color: tokens.textPrimary,
+          ),
+        ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
           onPressed: () => context.pop(),
@@ -69,9 +84,9 @@ class _AskSeniorsScreenState extends ConsumerState<AskSeniorsScreen> {
                   );
                 }
                 return ListView.separated(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(AppSpacing.lg),
                   itemCount: threads.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 10),
+                  separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
                   itemBuilder: (context, index) {
                     final thread = threads[index];
                     return CommunityThreadCard(
@@ -98,26 +113,12 @@ class _AskSeniorsScreenState extends ConsumerState<AskSeniorsScreen> {
 
     final ok = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Ask a Senior'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: titleController,
-              decoration: const InputDecoration(labelText: 'Subject'),
-            ),
-            TextField(
-              controller: bodyController,
-              decoration: const InputDecoration(labelText: 'Your question'),
-              maxLines: 4,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Post')),
-        ],
+      builder: (ctx) => _AskDialog(
+        title: 'Ask a Senior',
+        titleController: titleController,
+        bodyController: bodyController,
+        titleHint: 'Subject',
+        bodyHint: 'Your question',
       ),
     );
 
@@ -146,5 +147,99 @@ class _AskSeniorsScreenState extends ConsumerState<AskSeniorsScreen> {
       if (!context.mounted) return;
       SnackBarHelper.showErrorSnackBar(context, message: e.message);
     }
+  }
+}
+
+/// Shared premium dialog shell for the Ask Seniors / Q&A "start a thread"
+/// prompts — tokens-based styling, rounded fields, consistent typography.
+class _AskDialog extends StatelessWidget {
+  final String title;
+  final TextEditingController titleController;
+  final TextEditingController bodyController;
+  final String titleHint;
+  final String bodyHint;
+
+  const _AskDialog({
+    required this.title,
+    required this.titleController,
+    required this.bodyController,
+    required this.titleHint,
+    required this.bodyHint,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final primary = Theme.of(context).colorScheme.primary;
+    final fieldBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(tokens.buttonRadius),
+      borderSide: BorderSide(color: tokens.borderSubtle),
+    );
+
+    return AlertDialog(
+      backgroundColor: tokens.surfaceElevated,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(tokens.cardRadius),
+      ),
+      title: Text(
+        title,
+        style: AppFonts.plusJakarta(
+          fontWeight: FontWeight.w800,
+          fontSize: 17,
+          color: tokens.textPrimary,
+        ),
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: titleController,
+            style: AppFonts.plusJakarta(fontSize: 14, color: tokens.textPrimary),
+            decoration: InputDecoration(
+              labelText: titleHint,
+              labelStyle: AppFonts.plusJakarta(fontSize: 13, color: tokens.textTertiary),
+              border: fieldBorder,
+              enabledBorder: fieldBorder,
+              focusedBorder: fieldBorder.copyWith(
+                borderSide: BorderSide(color: primary, width: 1.5),
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          TextField(
+            controller: bodyController,
+            maxLines: 4,
+            style: AppFonts.plusJakarta(fontSize: 14, color: tokens.textPrimary),
+            decoration: InputDecoration(
+              labelText: bodyHint,
+              labelStyle: AppFonts.plusJakarta(fontSize: 13, color: tokens.textTertiary),
+              border: fieldBorder,
+              enabledBorder: fieldBorder,
+              focusedBorder: fieldBorder.copyWith(
+                borderSide: BorderSide(color: primary, width: 1.5),
+              ),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: Text(
+            'Cancel',
+            style: AppFonts.plusJakarta(fontWeight: FontWeight.w600, color: tokens.textSecondary),
+          ),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, true),
+          style: FilledButton.styleFrom(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(tokens.buttonRadius),
+            ),
+          ),
+          child: Text('Post', style: AppFonts.plusJakarta(fontWeight: FontWeight.w700)),
+        ),
+      ],
+    );
   }
 }

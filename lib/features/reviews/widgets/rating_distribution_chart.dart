@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_theme.dart';
 import '../models/review_page_model.dart';
@@ -10,13 +11,14 @@ class RatingDistributionChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
     final parsed = RatingDistribution.fromJson(distribution);
     final total = parsed.total;
 
     if (total == 0) {
       return Text(
         'No ratings yet',
-        style: AppFonts.plusJakarta(fontSize: 12, color: AppTheme.gray500),
+        style: AppFonts.plusJakarta(fontSize: 12, color: tokens.textTertiary),
       );
     }
 
@@ -37,6 +39,7 @@ class RatingDistributionChart extends StatelessWidget {
                   style: AppFonts.plusJakarta(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
+                    color: tokens.textPrimary,
                   ),
                 ),
               ),
@@ -46,7 +49,7 @@ class RatingDistributionChart extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: fraction,
                     minHeight: 8,
-                    backgroundColor: AppTheme.gray200,
+                    backgroundColor: tokens.borderSubtle,
                     color: AppTheme.warningColor,
                   ),
                 ),
@@ -56,7 +59,7 @@ class RatingDistributionChart extends StatelessWidget {
                 width: 32,
                 child: Text(
                   '$count',
-                  style: AppFonts.plusJakarta(fontSize: 11, color: AppTheme.gray600),
+                  style: AppFonts.plusJakarta(fontSize: 11, color: tokens.textSecondary),
                   textAlign: TextAlign.right,
                 ),
               ),

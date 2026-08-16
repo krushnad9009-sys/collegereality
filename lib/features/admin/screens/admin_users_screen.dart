@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../../config/theme/app_theme.dart';
+import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_fonts.dart';
+import '../../../config/theme/app_spacing.dart';
 import '../../../core/constants/admin_constants.dart';
 import '../../../core/constants/verification_constants.dart';
+import '../../../core/widgets/premium_components.dart';
+import '../../../core/widgets/status_badge.dart';
 import '../models/admin_models.dart';
 import '../providers/admin_dashboard_provider.dart';
 import '../providers/admin_provider.dart';
@@ -32,6 +35,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
     final usersAsync = ref.watch(adminUserSearchProvider(_query));
     final isAdminUser = ref.watch(isAdminUserProvider).maybeWhen(data: (v) => v, orElse: () => false);
 
@@ -41,7 +45,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppSpacing.lg),
             child: Row(
               children: [
                 Expanded(
@@ -55,7 +59,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                     onSubmitted: (_) => _search(),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacing.sm),
                 FilledButton(onPressed: _search, child: const Text('Search')),
               ],
             ),
@@ -65,20 +69,30 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                 ? Center(
                     child: Text(
                       'Enter an email or name to search users',
-                      style: GoogleFonts.poppins(color: AppTheme.gray600),
+                      style: AppFonts.plusJakarta(color: tokens.textSecondary),
                     ),
                   )
                 : usersAsync.when(
                     loading: () => const Center(child: CircularProgressIndicator()),
-                    error: (e, _) => Center(child: Text('Search failed: $e')),
+                    error: (e, _) => Center(
+                      child: Text(
+                        'Search failed: $e',
+                        style: AppFonts.plusJakarta(color: tokens.textSecondary),
+                      ),
+                    ),
                     data: (users) {
                       if (users.isEmpty) {
-                        return const Center(child: Text('No users found'));
+                        return Center(
+                          child: Text(
+                            'No users found',
+                            style: AppFonts.plusJakarta(color: tokens.textSecondary),
+                          ),
+                        );
                       }
                       return ListView.separated(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                         itemCount: users.length,
-                        separatorBuilder: (_, _) => const SizedBox(height: 8),
+                        separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
                         itemBuilder: (context, index) => _UserCard(
                           user: users[index],
                           onChanged: () => ref.invalidate(adminUserSearchProvider(_query)),
@@ -166,35 +180,37 @@ class _UserCard extends ConsumerWidget {
         statusColor = Colors.green;
     }
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              user.displayName ?? user.email,
-              style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-            ),
-            Text(user.email, style: GoogleFonts.poppins(fontSize: 12)),
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                Chip(
-                  label: Text(status, style: const TextStyle(fontSize: 11)),
-                  backgroundColor: statusColor.withValues(alpha: 0.15),
-                ),
-                if (isVerified)
-                  const Chip(
-                    label: Text('Verified', style: TextStyle(fontSize: 11)),
-                  ),
+    final tokens = context.tokens;
+    return PremiumCard(
+      radius: tokens.cardRadius,
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            user.displayName ?? user.email,
+            style: AppFonts.plusJakarta(fontWeight: FontWeight.w700, color: tokens.textPrimary),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            user.email,
+            style: AppFonts.plusJakarta(fontSize: 12, color: tokens.textTertiary),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Row(
+            children: [
+              StatusBadge(label: status, color: statusColor),
+              if (isVerified) ...[
+                const SizedBox(width: 6),
+                const StatusBadge(label: 'Verified', color: Colors.green, icon: Icons.verified_user),
               ],
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 4,
-              runSpacing: 4,
-              children: [
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Wrap(
+            spacing: 4,
+            runSpacing: 4,
+            children: [
                 ActionChip(
                   avatar: const Icon(Icons.warning_amber_outlined, size: 16),
                   label: const Text('Warn'),
@@ -245,7 +261,8 @@ class _UserCard extends ConsumerWidget {
             ),
           ],
         ),
-      ),
     );
   }
 }
+
+

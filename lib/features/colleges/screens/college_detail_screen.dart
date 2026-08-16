@@ -13,6 +13,8 @@ import '../../../config/theme/app_theme.dart';
 import '../../../core/widgets/async_state_widgets.dart';
 import '../../../core/widgets/college_image_widget.dart';
 import '../../../core/widgets/college_logo_widget.dart';
+import '../../../core/widgets/premium_components.dart';
+import '../../../core/widgets/premium_list_row.dart';
 import '../../../core/widgets/skeleton_loader.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../engagement/providers/engagement_provider.dart';
@@ -338,9 +340,9 @@ class _CollegeDetailScreenState extends ConsumerState<CollegeDetailScreen>
                     TabBar(
                       controller: _tabController,
                       isScrollable: true,
-                      labelColor: AppTheme.primaryColor,
-                      unselectedLabelColor: AppTheme.gray500,
-                      indicatorColor: AppTheme.primaryColor,
+                      labelColor: Theme.of(context).colorScheme.primary,
+                      unselectedLabelColor: context.tokens.textTertiary,
+                      indicatorColor: Theme.of(context).colorScheme.primary,
                       tabs: const [
                         Tab(text: 'Overview'),
                         Tab(text: 'Placements'),
@@ -378,6 +380,7 @@ class _CollegeHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
+    final primary = Theme.of(context).colorScheme.primary;
 
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.lg),
@@ -434,7 +437,7 @@ class _CollegeHeader extends StatelessWidget {
                         Icon(
                           Icons.location_on_outlined,
                           size: 16,
-                          color: AppTheme.primaryColor.withValues(alpha: 0.85),
+                          color: primary.withValues(alpha: 0.85),
                         ),
                         const SizedBox(width: 4),
                         Expanded(
@@ -550,9 +553,14 @@ class _CollegeHeader extends StatelessWidget {
             children: college.displayCourses.take(8)
                 .map(
                   (c) => Chip(
-                    label: Text(c, style: AppFonts.plusJakarta(fontSize: 12)),
-                    backgroundColor:
-                        AppTheme.primaryColor.withValues(alpha: 0.1),
+                    label: Text(
+                      c,
+                      style: AppFonts.plusJakarta(
+                        fontSize: 12,
+                        color: tokens.textPrimary,
+                      ),
+                    ),
+                    backgroundColor: primary.withValues(alpha: 0.1),
                   ),
                 )
                 .toList(),
@@ -616,14 +624,18 @@ class _OverviewTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return LayoutBuilder(
       builder: (context, constraints) {
+        final tokens = context.tokens;
+        final colorScheme = Theme.of(context).colorScheme;
+        final sectionTitleStyle = AppFonts.plusJakarta(
+          fontWeight: FontWeight.w700,
+          fontSize: 15,
+          color: tokens.textPrimary,
+        );
         final wide = constraints.maxWidth >= 900;
         final leftColumn = <Widget>[
           CrScoreCardWidget(college: college),
           const SizedBox(height: 20),
-          Text(
-            'About',
-            style: AppFonts.plusJakarta(fontWeight: FontWeight.w700, fontSize: 15),
-          ),
+          Text('About', style: sectionTitleStyle),
           const SizedBox(height: 10),
           CollegeProfileFactsGrid(college: college),
           const SizedBox(height: 20),
@@ -641,17 +653,11 @@ class _OverviewTab extends ConsumerWidget {
           ),
         ];
         final rightColumn = <Widget>[
-          Text(
-            'Gallery',
-            style: AppFonts.plusJakarta(fontWeight: FontWeight.w700, fontSize: 15),
-          ),
+          Text('Gallery', style: sectionTitleStyle),
           const SizedBox(height: 10),
           CollegeGalleryWidget(photoUrls: college.photoUrls),
           const SizedBox(height: 20),
-          Text(
-            'Accreditation & Affiliation',
-            style: AppFonts.plusJakarta(fontWeight: FontWeight.w700, fontSize: 15),
-          ),
+          Text('Accreditation & Affiliation', style: sectionTitleStyle),
           const SizedBox(height: 10),
           AccreditationBadges(
             accreditation: college.accreditation,
@@ -671,56 +677,73 @@ class _OverviewTab extends ConsumerWidget {
             icon: Icons.place_outlined,
           ),
           if (college.website != null && college.website!.trim().isNotEmpty)
-            Card(
-              margin: const EdgeInsets.only(bottom: 12),
-              child: ListTile(
-                leading: const Icon(Icons.language, color: AppTheme.primaryColor),
-                title: Text('Website',
-                    style: AppFonts.plusJakarta(fontWeight: FontWeight.w600)),
-                subtitle: Text(college.website!),
-                trailing: const Icon(Icons.open_in_new, size: 18),
-                onTap: () => _openUrl(context, college.website!),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: PremiumCard(
+                radius: tokens.cardRadius,
+                padding: EdgeInsets.zero,
+                child: PremiumListRow(
+                  leadingIcon: Icons.language,
+                  iconColor: colorScheme.primary,
+                  title: 'Website',
+                  subtitle: college.website!,
+                  trailing: Icon(Icons.open_in_new,
+                      size: 18, color: tokens.textTertiary),
+                  onTap: () => _openUrl(context, college.website!),
+                  showChevron: false,
+                ),
               ),
             ),
           if (college.phone != null && college.phone!.trim().isNotEmpty)
-            Card(
-              margin: const EdgeInsets.only(bottom: 12),
-              child: ListTile(
-                leading:
-                    const Icon(Icons.phone_outlined, color: AppTheme.primaryColor),
-                title: Text('Phone',
-                    style: AppFonts.plusJakarta(fontWeight: FontWeight.w600)),
-                subtitle: Text(college.phone!),
-                onTap: () => _openPhone(context, college.phone!),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: PremiumCard(
+                radius: tokens.cardRadius,
+                padding: EdgeInsets.zero,
+                child: PremiumListRow(
+                  leadingIcon: Icons.phone_outlined,
+                  iconColor: colorScheme.primary,
+                  title: 'Phone',
+                  subtitle: college.phone!,
+                  onTap: () => _openPhone(context, college.phone!),
+                  showChevron: false,
+                ),
               ),
             ),
           if (college.email != null && college.email!.trim().isNotEmpty)
-            Card(
-              margin: const EdgeInsets.only(bottom: 12),
-              child: ListTile(
-                leading:
-                    const Icon(Icons.email_outlined, color: AppTheme.primaryColor),
-                title: Text('Email',
-                    style: AppFonts.plusJakarta(fontWeight: FontWeight.w600)),
-                subtitle: Text(college.email!),
-                onTap: () => _openEmail(context, college.email!),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: PremiumCard(
+                radius: tokens.cardRadius,
+                padding: EdgeInsets.zero,
+                child: PremiumListRow(
+                  leadingIcon: Icons.email_outlined,
+                  iconColor: colorScheme.primary,
+                  title: 'Email',
+                  subtitle: college.email!,
+                  onTap: () => _openEmail(context, college.email!),
+                  showChevron: false,
+                ),
               ),
             ),
           if (college.officialLinks.isNotEmpty) ...[
-            Text(
-              'Official Links',
-              style:
-                  AppFonts.plusJakarta(fontWeight: FontWeight.w700, fontSize: 15),
-            ),
+            Text('Official Links', style: sectionTitleStyle),
             const SizedBox(height: 8),
             ...college.officialLinks.map(
-              (link) => Card(
-                margin: const EdgeInsets.only(bottom: 8),
-                child: ListTile(
-                  leading: const Icon(Icons.link, color: AppTheme.secondaryColor),
-                  title: Text(link, style: AppFonts.plusJakarta(fontSize: 13)),
-                  trailing: const Icon(Icons.open_in_new, size: 18),
-                  onTap: () => _openUrl(context, link),
+              (link) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: PremiumCard(
+                  radius: tokens.cardRadius,
+                  padding: EdgeInsets.zero,
+                  child: PremiumListRow(
+                    leadingIcon: Icons.link,
+                    iconColor: colorScheme.secondary,
+                    title: link,
+                    trailing: Icon(Icons.open_in_new,
+                        size: 18, color: tokens.textTertiary),
+                    onTap: () => _openUrl(context, link),
+                    showChevron: false,
+                  ),
                 ),
               ),
             ),
@@ -729,26 +752,25 @@ class _OverviewTab extends ConsumerWidget {
           OfficialCollegeContentSection(collegeId: college.id),
           const SizedBox(height: 20),
           if (college.coursesDetailed.isNotEmpty) ...[
-            Text(
-              'Courses',
-              style:
-                  AppFonts.plusJakarta(fontWeight: FontWeight.w700, fontSize: 15),
-            ),
+            Text('Courses', style: sectionTitleStyle),
             const SizedBox(height: 8),
             ...college.coursesDetailed.map(
-              (c) => Card(
-                margin: const EdgeInsets.only(bottom: 8),
-                child: ListTile(
-                  title: Text(c.name,
-                      style: AppFonts.plusJakarta(fontWeight: FontWeight.w600)),
-                  subtitle: Text(
-                    [
+              (c) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: PremiumCard(
+                  radius: tokens.cardRadius,
+                  padding: EdgeInsets.zero,
+                  child: PremiumListRow(
+                    leadingIcon: Icons.menu_book_outlined,
+                    title: c.name,
+                    subtitle: [
                       if (c.degree.isNotEmpty) c.degree,
                       if (c.duration.isNotEmpty) c.duration,
                       if (c.seats > 0) '${c.seats} seats',
                       if (c.annualFees != null)
                         IndianCurrencyFormatter.format(c.annualFees!),
                     ].join(' · '),
+                    showChevron: false,
                   ),
                 ),
               ),
@@ -856,7 +878,7 @@ class _HostelTab extends StatelessWidget {
             label: 'Hostel Fee (Annual)',
             value: IndianCurrencyFormatter.format(annualFee),
             icon: Icons.hotel_outlined,
-            color: AppTheme.accentColor,
+            color: Theme.of(context).colorScheme.tertiary,
           ),
           const SizedBox(height: 12),
         ],
@@ -1000,19 +1022,24 @@ class _ReviewsTabState extends ConsumerState<_ReviewsTab> {
                     children: [
                       Icon(Icons.rate_review_outlined,
                           size: 64,
-                          color: AppTheme.primaryColor.withValues(alpha: 0.4)),
+                          color: Theme.of(context)
+                              .colorScheme
+                              .primary
+                              .withValues(alpha: 0.4)),
                       const SizedBox(height: 16),
                       Text(
                         'No reviews yet',
                         style: AppFonts.plusJakarta(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
+                          color: context.tokens.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         'Only verified students and alumni can write reviews.',
-                        style: AppFonts.plusJakarta(color: AppTheme.gray500),
+                        style: AppFonts.plusJakarta(
+                            color: context.tokens.textTertiary),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 20),
@@ -1149,20 +1176,23 @@ class _SectionRatingHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppTheme.primaryColor.withValues(alpha: 0.1),
-            AppTheme.secondaryColor.withValues(alpha: 0.05),
+            colorScheme.primary.withValues(alpha: 0.1),
+            colorScheme.secondary.withValues(alpha: 0.05),
           ],
         ),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(tokens.cardRadius),
+        border: Border.all(color: tokens.borderSubtle),
       ),
       child: Row(
         children: [
-          Icon(icon, color: AppTheme.primaryColor, size: 32),
+          Icon(icon, color: colorScheme.primary, size: 32),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
@@ -1170,6 +1200,7 @@ class _SectionRatingHeader extends StatelessWidget {
               style: AppFonts.plusJakarta(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
+                color: tokens.textPrimary,
               ),
             ),
           ),
@@ -1188,6 +1219,7 @@ class _RatingBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Column(
@@ -1196,12 +1228,18 @@ class _RatingBar extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(label, style: AppFonts.plusJakarta(fontWeight: FontWeight.w600)),
+              Text(
+                label,
+                style: AppFonts.plusJakarta(
+                  fontWeight: FontWeight.w600,
+                  color: tokens.textPrimary,
+                ),
+              ),
               Text(
                 value > 0 ? '${value.toStringAsFixed(1)}/5' : 'N/A',
                 style: AppFonts.plusJakarta(
                   fontWeight: FontWeight.w700,
-                  color: AppTheme.primaryColor,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               ),
             ],
@@ -1211,7 +1249,7 @@ class _RatingBar extends StatelessWidget {
             value: value > 0 ? value / 5 : 0,
             minHeight: 8,
             borderRadius: BorderRadius.circular(4),
-            backgroundColor: AppTheme.gray200,
+            backgroundColor: tokens.surfaceMuted,
             color: AppTheme.warningColor,
           ),
         ],
@@ -1289,6 +1327,8 @@ class _RatingsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final primary = Theme.of(context).colorScheme.primary;
     final ratings = college.aggregatedRatings;
     final items = RatingParameters.allKeys
         .map((key) => (RatingParameters.labelFor(key), ratings.ratingFor(key)))
@@ -1311,7 +1351,7 @@ class _RatingsTab extends StatelessWidget {
           Center(
             child: Text(
               'No verified ratings yet',
-              style: AppFonts.plusJakarta(color: AppTheme.gray500),
+              style: AppFonts.plusJakarta(color: tokens.textTertiary),
             ),
           ),
         ],
@@ -1336,6 +1376,7 @@ class _RatingsTab extends StatelessWidget {
           style: AppFonts.plusJakarta(
             fontWeight: FontWeight.w700,
             fontSize: 16,
+            color: tokens.textPrimary,
           ),
         ),
         const SizedBox(height: 12),
@@ -1350,13 +1391,16 @@ class _RatingsTab extends StatelessWidget {
                   children: [
                     Text(
                       item.$1,
-                      style: AppFonts.plusJakarta(fontWeight: FontWeight.w600),
+                      style: AppFonts.plusJakarta(
+                        fontWeight: FontWeight.w600,
+                        color: tokens.textPrimary,
+                      ),
                     ),
                     Text(
                       '${item.$2}/5',
                       style: AppFonts.plusJakarta(
                         fontWeight: FontWeight.w700,
-                        color: AppTheme.primaryColor,
+                        color: primary,
                       ),
                     ),
                   ],
@@ -1366,7 +1410,7 @@ class _RatingsTab extends StatelessWidget {
                   value: item.$2 / 5,
                   minHeight: 8,
                   borderRadius: BorderRadius.circular(4),
-                  backgroundColor: AppTheme.gray200,
+                  backgroundColor: tokens.surfaceMuted,
                   color: AppTheme.warningColor,
                 ),
               ],
@@ -1385,6 +1429,8 @@ class _FeesTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final colorScheme = Theme.of(context).colorScheme;
     final fees = college.fees;
     final hasAnyFee = fees.tuitionMin > 0 ||
         fees.tuitionMax > 0 ||
@@ -1407,7 +1453,7 @@ class _FeesTab extends StatelessWidget {
             label: 'Tuition (Min)',
             value: IndianCurrencyFormatter.format(fees.tuitionMin),
             icon: Icons.payments_outlined,
-            color: AppTheme.primaryColor,
+            color: colorScheme.primary,
           ),
           const SizedBox(height: 12),
         ],
@@ -1416,7 +1462,7 @@ class _FeesTab extends StatelessWidget {
             label: 'Tuition (Max)',
             value: IndianCurrencyFormatter.format(fees.tuitionMax),
             icon: Icons.payments_outlined,
-            color: AppTheme.secondaryColor,
+            color: colorScheme.secondary,
           ),
           const SizedBox(height: 12),
         ],
@@ -1425,7 +1471,7 @@ class _FeesTab extends StatelessWidget {
             label: 'Hostel (Annual)',
             value: IndianCurrencyFormatter.format(fees.hostelAnnual),
             icon: Icons.hotel_outlined,
-            color: AppTheme.accentColor,
+            color: colorScheme.tertiary,
           ),
           const SizedBox(height: 12),
         ],
@@ -1436,17 +1482,22 @@ class _FeesTab extends StatelessWidget {
             style: AppFonts.plusJakarta(
               fontSize: 16,
               fontWeight: FontWeight.w700,
+              color: tokens.textPrimary,
             ),
           ),
           const SizedBox(height: 12),
           ...college.scholarships.map(
-            (s) => Card(
-              margin: const EdgeInsets.only(bottom: 8),
-              child: ListTile(
-                leading: const Icon(Icons.school_outlined),
-                title: Text(s.name, style: AppFonts.plusJakarta(fontWeight: FontWeight.w600)),
-                subtitle: Text('${s.eligibility}\n${s.amount}'),
-                isThreeLine: true,
+            (s) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: PremiumCard(
+                radius: tokens.cardRadius,
+                padding: EdgeInsets.zero,
+                child: PremiumListRow(
+                  leadingIcon: Icons.school_outlined,
+                  title: s.name,
+                  subtitle: '${s.eligibility} · ${s.amount}',
+                  showChevron: false,
+                ),
               ),
             ),
           ),
@@ -1469,14 +1520,25 @@ class _InfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
+    final tokens = context.tokens;
+    final primary = Theme.of(context).colorScheme.primary;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: PremiumCard(
+        radius: tokens.cardRadius,
         padding: const EdgeInsets.all(16),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, color: AppTheme.primaryColor),
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(tokens.buttonRadius * 0.7),
+              ),
+              child: Icon(icon, color: primary, size: 20),
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -1484,14 +1546,18 @@ class _InfoCard extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: AppFonts.plusJakarta(fontWeight: FontWeight.w700),
+                    style: AppFonts.plusJakarta(
+                      fontWeight: FontWeight.w700,
+                      color: tokens.textPrimary,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     content,
                     style: AppFonts.plusJakarta(
                       fontSize: 13,
-                      color: AppTheme.gray600,
+                      color: tokens.textSecondary,
+                      height: 1.4,
                     ),
                   ),
                 ],
@@ -1519,16 +1585,21 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final tokens = context.tokens;
+    return PremiumCard(
+      radius: tokens.cardRadius,
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
       child: Row(
         children: [
-          Icon(icon, color: color),
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(tokens.buttonRadius),
+            ),
+            child: Icon(icon, color: color),
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -1538,9 +1609,10 @@ class _StatCard extends StatelessWidget {
                   label,
                   style: AppFonts.plusJakarta(
                     fontSize: 12,
-                    color: AppTheme.gray600,
+                    color: tokens.textSecondary,
                   ),
                 ),
+                const SizedBox(height: 2),
                 Text(
                   value,
                   style: AppFonts.plusJakarta(
@@ -1565,12 +1637,14 @@ class _TypeChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final primary = Theme.of(context).colorScheme.primary;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: AppTheme.primaryColor.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.15)),
+        color: primary.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(tokens.chipRadius),
+        border: Border.all(color: primary.withValues(alpha: 0.18)),
       ),
       child: Text(
         label.toUpperCase(),
@@ -1578,7 +1652,7 @@ class _TypeChip extends StatelessWidget {
           fontSize: 10,
           fontWeight: FontWeight.w800,
           letterSpacing: 0.4,
-          color: AppTheme.primaryColor,
+          color: primary,
         ),
       ),
     );

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../utils/admin_route_resolver.dart';
+import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_fonts.dart';
+import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/widgets/index.dart';
 import '../../reviews/models/review_model.dart';
@@ -127,7 +129,7 @@ class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
         children: [
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.sm),
             child: Row(
               children: [
                 _FilterChip(
@@ -176,15 +178,16 @@ class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
               ),
               data: (reviews) {
                 if (reviews.isEmpty) {
+                  final tokens = context.tokens;
                   return Center(
                     child: Text(
                       'No reviews in this category',
-                      style: GoogleFonts.poppins(color: AppTheme.gray500),
+                      style: AppFonts.plusJakarta(color: tokens.textTertiary),
                     ),
                   );
                 }
                 return ListView.builder(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(AppSpacing.lg),
                   itemCount: reviews.length,
                   itemBuilder: (context, index) {
                     final review = reviews[index];
@@ -251,7 +254,7 @@ class _FilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(right: 8),
+      padding: const EdgeInsets.only(right: AppSpacing.sm),
       child: FilterChip(
         label: Text(label),
         selected: selected,
