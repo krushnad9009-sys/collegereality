@@ -154,55 +154,55 @@ class PremiumConsultationHomeCard extends StatelessWidget {
       color: Colors.transparent,
       borderRadius: BorderRadius.circular(20),
       child: InkWell(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(18),
         onTap: () => context.go(RouteNames.guidesDirectory),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(18),
+          padding: const EdgeInsets.all(15),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [colorScheme.primary, colorScheme.secondary],
             ),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(18),
           ),
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.18),
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(13),
                 ),
                 child: const Icon(
                   Icons.support_agent_rounded,
                   color: Colors.white,
-                  size: 26,
+                  size: 22,
                 ),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Talk to a Verified Student or Alumni',
+                      'Talk to a Verified Student',
                       style: AppFonts.plusJakarta(
-                        fontSize: 15,
+                        fontSize: 14.5,
                         fontWeight: FontWeight.w800,
                         color: Colors.white,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 3),
                     Text(
-                      'Book a private 1:1 call — real answers on admissions, hostel & placements',
+                      'Get real answers before you choose a college.',
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: AppFonts.plusJakarta(
-                        fontSize: 12,
+                        fontSize: 11.5,
                         color: Colors.white.withValues(alpha: 0.9),
-                        height: 1.35,
+                        height: 1.3,
                       ),
                     ),
                   ],
@@ -212,7 +212,7 @@ class PremiumConsultationHomeCard extends StatelessWidget {
               const Icon(
                 Icons.arrow_forward_ios_rounded,
                 color: Colors.white,
-                size: 16,
+                size: 15,
               ),
             ],
           ),
@@ -236,62 +236,76 @@ class CompareCollegesHomeCard extends StatelessWidget {
       color: Colors.transparent,
       borderRadius: BorderRadius.circular(20),
       child: InkWell(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(18),
         onTap: () => context.go(RouteNames.compare),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(18),
+          padding: const EdgeInsets.all(15),
           decoration: BoxDecoration(
             color: tokens.surfaceElevated,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(18),
             border: Border.all(color: tokens.borderSubtle),
           ),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: primary.withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Icon(
-                  Icons.compare_arrows_rounded,
-                  color: primary,
-                  size: 26,
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Compare Colleges',
-                      style: AppFonts.plusJakarta(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                        color: tokens.textPrimary,
-                      ),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: primary.withValues(alpha: 0.10),
+                      borderRadius: BorderRadius.circular(13),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Fees, placements, hostel & ratings — side by side',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppFonts.plusJakarta(
-                        fontSize: 12,
-                        color: tokens.textSecondary,
-                        height: 1.35,
-                      ),
+                    child: Icon(
+                      Icons.compare_arrows_rounded,
+                      color: primary,
+                      size: 22,
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Compare Colleges',
+                          style: AppFonts.plusJakarta(
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w800,
+                            color: tokens.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Compare before you decide',
+                          style: AppFonts.plusJakarta(
+                            fontSize: 11.5,
+                            color: tokens.textSecondary,
+                            height: 1.3,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    color: tokens.textSecondary,
+                    size: 15,
+                  ),
+                ],
               ),
-              const SizedBox(width: 8),
-              Icon(
-                Icons.arrow_forward_ios_rounded,
-                color: tokens.textSecondary,
-                size: 16,
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: const [
+                  _CompareDimensionChip(label: 'Fees'),
+                  _CompareDimensionChip(label: 'Placements'),
+                  _CompareDimensionChip(label: 'CR Score'),
+                  _CompareDimensionChip(label: 'Student Experience'),
+                ],
               ),
             ],
           ),
@@ -301,107 +315,29 @@ class CompareCollegesHomeCard extends StatelessWidget {
   }
 }
 
-class PopularCitiesSection extends StatelessWidget {
-  static const _cities = [
-    ('Mumbai', 'Maharashtra'),
-    ('Delhi', 'Delhi'),
-    ('Bangalore', 'Karnataka'),
-    ('Pune', 'Maharashtra'),
-    ('Hyderabad', 'Telangana'),
-    ('Chennai', 'Tamil Nadu'),
-    ('Kolkata', 'West Bengal'),
-    ('Ahmedabad', 'Gujarat'),
-  ];
+class _CompareDimensionChip extends StatelessWidget {
+  final String label;
 
-  const PopularCitiesSection({super.key});
+  const _CompareDimensionChip({required this.label});
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 10,
-      runSpacing: 10,
-      children: _cities.map((entry) {
-        return PremiumChip(
-          label: entry.$1,
-          icon: Icons.location_city_rounded,
-          onTap: () => context.go(
-            '${RouteNames.collegeSearch}?city=${Uri.encodeComponent(entry.$1)}&state=${Uri.encodeComponent(entry.$2)}',
-          ),
-        );
-      }).toList(),
-    );
-  }
-}
-
-class TopBranchesSection extends StatelessWidget {
-  static const _branches = [
-    'B.Tech',
-    'MBA',
-    'MBBS',
-    'BBA',
-    'B.Com',
-    'LLB',
-    'B.Arch',
-    'MCA',
-  ];
-
-  const TopBranchesSection({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 10,
-      runSpacing: 10,
-      children: _branches.map((course) {
-        return PremiumChip(
-          label: course,
-          icon: Icons.menu_book_rounded,
-          onTap: () => context.go(
-            '${RouteNames.collegeSearch}?course=${Uri.encodeComponent(course)}',
-          ),
-        );
-      }).toList(),
-    );
-  }
-}
-
-class BrowseByCategorySection extends ConsumerWidget {
-  const BrowseByCategorySection({super.key});
-
-  static const _categories = [
-    ('Engineering', Icons.precision_manufacturing_rounded),
-    ('Medical', Icons.local_hospital_rounded),
-    ('MBA', Icons.business_center_rounded),
-    ('Law', Icons.gavel_rounded),
-    ('Pharmacy', Icons.medication_rounded),
-    ('Commerce', Icons.account_balance_rounded),
-  ];
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: _categories.map((entry) {
-            return PremiumChip(
-              label: entry.$1,
-              icon: entry.$2,
-              onTap: () => context.go(
-                '${RouteNames.collegeSearch}?category=${Uri.encodeComponent(entry.$1)}',
-              ),
-            );
-          }).toList(),
+    final tokens = context.tokens;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: tokens.surfaceMuted,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: tokens.borderSubtle),
+      ),
+      child: Text(
+        label,
+        style: AppFonts.plusJakarta(
+          fontSize: 10.5,
+          fontWeight: FontWeight.w600,
+          color: tokens.textSecondary,
         ),
-        const SizedBox(height: 12),
-        TextButton.icon(
-          onPressed: () => context.go(RouteNames.collegeBrowse),
-          icon: const Icon(Icons.grid_view_rounded, size: 18),
-          label: const Text('View all categories'),
-        ),
-      ],
+      ),
     );
   }
 }
@@ -501,13 +437,24 @@ class _ReviewCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      review.anonymousAlias,
-                      style: AppFonts.plusJakarta(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: tokens.textPrimary,
-                      ),
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            review.anonymousAlias,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppFonts.plusJakarta(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: tokens.textPrimary,
+                            ),
+                          ),
+                        ),
+                        if (review.isVerifiedStudent) ...[
+                          const SizedBox(width: 4),
+                          const Icon(Icons.verified_rounded, size: 13, color: Color(0xFF059669)),
+                        ],
+                      ],
                     ),
                     Text(
                       review.collegeName,

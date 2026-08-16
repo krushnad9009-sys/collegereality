@@ -1,5 +1,5 @@
 import 'package:college_reality_india/core/constants/college_constants.dart';
-import 'package:college_reality_india/features/home/widgets/home_hero_banner.dart';
+import 'package:college_reality_india/features/home/widgets/premium_home_header.dart';
 import 'package:college_reality_india/features/home/widgets/premium_home_search_bar.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -8,12 +8,13 @@ import '../helpers/test_harness.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('HomeHeroBanner shows guest greeting', (tester) async {
+  testWidgets('PremiumHomeHeader shows guest greeting', (tester) async {
     await pumpScreen(
       tester,
       overrides: testAuthOverrides(),
-      child: HomeHeroBanner(
-        greeting: 'Find your dream college',
+      child: PremiumHomeHeader(
+        user: null,
+        displayName: 'Student',
         subtitle: CollegeConstants.homeExploreLabel(),
       ),
     );

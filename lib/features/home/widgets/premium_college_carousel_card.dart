@@ -10,6 +10,7 @@ import '../../../core/widgets/college_image_widget.dart';
 import '../../../core/widgets/college_logo_widget.dart';
 import '../../colleges/models/college_model.dart';
 import '../../ranking/utils/cr_score_engine.dart';
+import 'home_college_image_fallback.dart';
 
 /// Premium horizontal college card for home carousels.
 class PremiumCollegeCarouselCard extends StatefulWidget {
@@ -90,12 +91,20 @@ class _PremiumCollegeCarouselCardState
                 width: cardWidth,
                 child: Stack(
                   children: [
-                    CollegeImageWidget(
-                      collegeId: widget.college.id,
-                      imageUrl: widget.college.coverPhotoUrl,
-                      height: imageHeight,
-                      width: cardWidth,
-                    ),
+                    (widget.college.coverPhotoUrl ?? '').isEmpty
+                        ? CompactCollegeFallback(
+                            initial: widget.college.name.isNotEmpty
+                                ? widget.college.name[0].toUpperCase()
+                                : 'C',
+                            height: imageHeight,
+                            width: cardWidth,
+                          )
+                        : CollegeImageWidget(
+                            collegeId: widget.college.id,
+                            imageUrl: widget.college.coverPhotoUrl,
+                            height: imageHeight,
+                            width: cardWidth,
+                          ),
                   Positioned.fill(
                     child: DecoratedBox(
                       decoration: BoxDecoration(

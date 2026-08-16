@@ -10,7 +10,6 @@ import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/bootstrap/startup_bootstrap.dart';
-import '../../../core/constants/college_constants.dart';
 import '../../../core/cache/college_session_cache.dart';
 import '../../../core/cache/firestore_quota_guard.dart';
 import '../../../core/providers/firestore_quota_provider.dart';
@@ -22,10 +21,16 @@ import '../../admin/providers/platform_settings_provider.dart';
 import '../../admin/services/admin_ads_service.dart';
 import '../providers/home_content_provider.dart';
 import '../widgets/deferred_incoming_call_banner.dart';
-import '../widgets/featured_colleges_section.dart';
-import '../widgets/home_header_widget.dart';
-import '../widgets/home_hero_banner.dart';
+import '../widgets/explore_by_city_section.dart';
+import '../widgets/explore_category_section.dart';
+import '../widgets/home_action_grid.dart';
+import '../widgets/home_discovery_chips.dart';
+import '../widgets/home_final_cta.dart';
+import '../widgets/home_insights_strip.dart';
+import '../widgets/home_reality_check_section.dart';
 import '../widgets/home_sections.dart';
+import '../widgets/premium_featured_college_card.dart';
+import '../widgets/premium_home_header.dart';
 import '../widgets/premium_home_search_bar.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -71,16 +76,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final currentUser = authState.user ?? FirebaseAuth.instance.currentUser;
     final userDetail = ref.watch(currentUserDetailProvider).valueOrNull;
 
-    final greeting = currentUser != null
-        ? 'Hi, ${userDetail?.effectivePublicDisplayName ?? currentUser.displayName ?? 'Student'} 👋'
-        : 'Find your dream college';
+    final displayName = userDetail?.effectivePublicDisplayName ??
+        currentUser?.displayName ??
+        'Student';
 
-    final countAsync = ref.watch(collegeCountProvider);
-    final guestSubtitle = countAsync.when(
-      data: (total) => CollegeConstants.homeExploreLabel(liveCount: total),
-      loading: () => CollegeConstants.homeExploreLabel(),
-      error: (_, _) => CollegeConstants.homeExploreLabel(),
-    );
+    final headerSubtitle = currentUser != null
+        ? 'Real reviews & verified CR Scores, personalized for you'
+        : 'Find the right college with real student information';
 
     return Scaffold(
       backgroundColor: context.tokens.surfaceMuted,
@@ -95,54 +97,38 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
             slivers: [
               SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    isMobile ? AppSpacing.lg : AppSpacing.xxl,
-                    AppSpacing.md,
-                    isMobile ? AppSpacing.lg : AppSpacing.xxl,
-                    0,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: AppSpacing.maxContentWidth),
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        isMobile ? AppSpacing.lg : AppSpacing.xxl,
+                        AppSpacing.md,
+                        isMobile ? AppSpacing.lg : AppSpacing.xxl,
+                        0,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                      // ── 1–2. Hero header + dominant search ──────────────
                       FadeInSection(
                         delayMs: 0,
-                        child: HomeHeroBanner(
-                          greeting: greeting,
-                          subtitle: currentUser != null
-                              ? 'Personalized recommendations, verified reviews & CR Scores'
-                              : guestSubtitle,
-                          trailing: currentUser != null
-                              ? HomeHeaderActions(user: currentUser)
-                              : TextButton(
-                                  onPressed: () =>
-                                      context.go(RouteNames.login),
-                                  style: TextButton.styleFrom(
-                                    foregroundColor: Colors.white,
-                                    backgroundColor:
-                                        Colors.white.withValues(alpha: 0.16),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 10,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      side: BorderSide(
-                                        color: Colors.white
-                                            .withValues(alpha: 0.25),
-                                      ),
-                                    ),
-                                  ),
-                                  child: const Text('Sign in'),
-                                ),
+                        child: PremiumHomeHeader(
+                          user: currentUser,
+                          displayName: displayName,
+                          subtitle: headerSubtitle,
                         ),
                       ),
-                      Transform.translate(
-                        offset: const Offset(0, -18),
-                        child: FadeInSection(
-                          delayMs: 60,
-                          child: const PremiumHomeSearchBar(),
-                        ),
+                      const SizedBox(height: AppSpacing.lg),
+                      FadeInSection(
+                        delayMs: 40,
+                        child: const PremiumHomeSearchBar(),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      // ── 3. Quick discovery chips ─────────────────────────
+                      FadeInSection(
+                        delayMs: 60,
+                        child: const HomeDiscoveryChips(),
                       ),
                       const DeferredIncomingCallBanner(),
                       if (quotaBlocked) ...[
@@ -151,33 +137,115 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ],
                       const _PlatformAnnouncementBanner(),
                       const _HomePromoAdsStrip(),
-                      const SizedBox(height: AppSpacing.lg),
-                      FadeInSection(
-                        delayMs: 80,
-                        child: const FeaturedCollegesSection(),
-                      ),
-                      const SizedBox(height: AppSpacing.lg),
+                      const SizedBox(height: AppSpacing.section),
+                      // ── 4. "What are you looking for?" action grid ──────
                       FadeInSection(
                         delayMs: 90,
-                        child: const PremiumConsultationHomeCard(),
+                        child: const SectionHeader(
+                          title: 'What are you looking for?',
+                          subtitle: 'Jump straight to what matters',
+                        ),
+                      ),
+                      FadeInSection(
+                        delayMs: 100,
+                        child: const HomeActionGrid(),
                       ),
                       const SizedBox(height: AppSpacing.section),
                       FadeInSection(
-                        delayMs: 100,
+                        delayMs: 110,
+                        child: SectionHeader(
+                          title: 'Explore Colleges',
+                          subtitle: 'Pick a stream to get started',
+                          actionLabel: 'All categories',
+                          onAction: () => context.go(RouteNames.collegeBrowse),
+                        ),
+                      ),
+                      FadeInSection(
+                        delayMs: 120,
+                        child: const ExploreCategoryGrid(),
+                      ),
+                      const SizedBox(height: AppSpacing.section),
+                      // ── 5. Featured / Trending colleges ─────────────────
+                      FadeInSection(
+                        delayMs: 160,
+                        child: SectionHeader(
+                          title: 'Featured Colleges',
+                          subtitle: 'Hand-picked campuses with verified ratings',
+                          actionLabel: 'View all',
+                          onAction: () => context.go(RouteNames.collegeSearch),
+                        ),
+                      ),
+                      FadeInSection(
+                        delayMs: 180,
+                        child: const FeaturedCollegesCarousel(),
+                      ),
+                      const SizedBox(height: AppSpacing.section),
+                      FadeInSection(
+                        delayMs: 220,
                         child: SectionHeader(
                           title: 'Trending Colleges',
-                          subtitle: 'Most explored this week',
+                          subtitle: 'Colleges students are exploring',
                           actionLabel: 'See all',
                           onAction: () => context.go(RouteNames.collegeSearch),
                         ),
                       ),
                       FadeInSection(
-                        delayMs: 120,
+                        delayMs: 240,
                         child: const TrendingCollegesCarousel(),
                       ),
                       const SizedBox(height: AppSpacing.section),
+                      // ── 6. "Reality Check" differentiation ──────────────
                       FadeInSection(
-                        delayMs: 160,
+                        delayMs: 260,
+                        child: const HomeRealityCheckSection(),
+                      ),
+                      const SizedBox(height: AppSpacing.section),
+                      FadeInSection(
+                        delayMs: 280,
+                        child: const SectionHeader(
+                          title: 'Explore by City',
+                          subtitle: 'Find colleges near you',
+                        ),
+                      ),
+                      FadeInSection(
+                        delayMs: 290,
+                        child: const ExploreCityCarousel(),
+                      ),
+                      const SizedBox(height: AppSpacing.section),
+                      // ── 7–8. Compare + Verified Student CTAs ────────────
+                      FadeInSection(
+                        delayMs: 300,
+                        child: const PremiumConsultationHomeCard(),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      FadeInSection(
+                        delayMs: 320,
+                        child: const CompareCollegesHomeCard(),
+                      ),
+                      const SizedBox(height: AppSpacing.section),
+                      // ── 9. Verified reviews preview ─────────────────────
+                      FadeInSection(
+                        delayMs: 340,
+                        child: SectionHeader(
+                          title: 'Verified Reviews',
+                          subtitle: 'Real experiences from verified students',
+                          actionLabel: 'More',
+                          onAction: () => context.go(RouteNames.community),
+                        ),
+                      ),
+                      FadeInSection(
+                        delayMs: 350,
+                        child: const StudentReviewsSection(),
+                      ),
+                      const SizedBox(height: AppSpacing.section),
+                      // ── 10. CR Score / placement insights ───────────────
+                      FadeInSection(
+                        delayMs: 360,
+                        child: const HomeInsightsStrip(),
+                      ),
+                      const SizedBox(height: AppSpacing.section),
+                      FadeInSection(
+                        delayMs: 380,
                         child: SectionHeader(
                           title: 'Top Rated',
                           subtitle: 'Highest CR Scores & student ratings',
@@ -186,69 +254,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ),
                       ),
                       FadeInSection(
-                        delayMs: 180,
+                        delayMs: 390,
                         child: const TopRatedCollegesSection(),
                       ),
                       const SizedBox(height: AppSpacing.section),
                       FadeInSection(
-                        delayMs: 220,
+                        delayMs: 400,
                         child: const SectionHeader(
                           title: 'AI Assistant',
                           subtitle: 'Personalized college recommendations',
                         ),
                       ),
                       FadeInSection(
-                        delayMs: 240,
+                        delayMs: 410,
                         child: const AiAssistantHomeCard(),
-                      ),
-                      const SizedBox(height: AppSpacing.section),
-                      FadeInSection(
-                        delayMs: 250,
-                        child: const CompareCollegesHomeCard(),
-                      ),
-                      const SizedBox(height: AppSpacing.section),
-                      FadeInSection(
-                        delayMs: 280,
-                        child: const SectionHeader(
-                          title: 'Popular Cities',
-                          subtitle: 'Explore colleges by location',
-                        ),
-                      ),
-                      FadeInSection(
-                        delayMs: 300,
-                        child: const PopularCitiesSection(),
-                      ),
-                      const SizedBox(height: AppSpacing.section),
-                      FadeInSection(
-                        delayMs: 380,
-                        child: SectionHeader(
-                          title: 'Browse by Category',
-                          subtitle: 'Engineering, Medical, MBA and more',
-                          actionLabel: 'All',
-                          onAction: () => context.go(RouteNames.collegeBrowse),
-                        ),
-                      ),
-                      FadeInSection(
-                        delayMs: 400,
-                        child: const BrowseByCategorySection(),
-                      ),
-                      const SizedBox(height: AppSpacing.section),
-                      FadeInSection(
-                        delayMs: 420,
-                        child: SectionHeader(
-                          title: 'Student Reviews',
-                          subtitle: 'Real experiences from verified students',
-                          actionLabel: 'More',
-                          onAction: () => context.go(RouteNames.community),
-                        ),
-                      ),
-                      FadeInSection(
-                        delayMs: 440,
-                        child: const StudentReviewsSection(),
                       ),
                       const SizedBox(height: AppSpacing.md),
                       FadeInSection(
-                        delayMs: 450,
+                        delayMs: 420,
                         child: Align(
                           alignment: Alignment.centerLeft,
                           child: OutlinedButton.icon(
@@ -261,7 +284,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                       const SizedBox(height: AppSpacing.section),
                       FadeInSection(
-                        delayMs: 460,
+                        delayMs: 430,
                         child: SectionHeader(
                           title: 'Alumni Stories',
                           subtitle: 'Where graduates are today',
@@ -270,25 +293,33 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ),
                       ),
                       FadeInSection(
-                        delayMs: 480,
+                        delayMs: 440,
                         child: const AlumniStoriesSection(),
                       ),
                       const SizedBox(height: AppSpacing.section),
                       FadeInSection(
-                        delayMs: 520,
+                        delayMs: 450,
                         child: const SectionHeader(
                           title: 'Placement Highlights',
                           subtitle: 'Top packages & placement rates',
                         ),
                       ),
                       FadeInSection(
-                        delayMs: 540,
+                        delayMs: 460,
                         child: const PlacementHighlightsSection(),
+                      ),
+                      const SizedBox(height: AppSpacing.section),
+                      // ── 11. Closing CTA ──────────────────────────────────
+                      FadeInSection(
+                        delayMs: 480,
+                        child: const HomeFinalCta(),
                       ),
                       SizedBox(
                         height: MediaQuery.of(context).padding.bottom + 96,
                       ),
-                    ],
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),

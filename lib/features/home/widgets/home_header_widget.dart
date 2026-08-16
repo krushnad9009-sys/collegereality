@@ -13,11 +13,16 @@ import '../../auth/providers/auth_provider.dart';
 import '../../auth/providers/user_provider.dart';
 import '../../engagement/providers/engagement_provider.dart';
 
-/// Compact profile + notification actions for the home hero.
+/// Compact profile + notification actions for the home header.
+///
+/// [onDark] controls whether the bell/avatar chrome is styled for a dark or
+/// gradient background (translucent white glass) or for a light surface
+/// (tokens-based tint) — the menu content/logic is identical either way.
 class HomeHeaderActions extends ConsumerWidget {
   final User user;
+  final bool onDark;
 
-  const HomeHeaderActions({required this.user, super.key});
+  const HomeHeaderActions({required this.user, this.onDark = true, super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -27,34 +32,44 @@ class HomeHeaderActions extends ConsumerWidget {
         'Student';
     final firstLetter =
         displayName.isNotEmpty ? displayName[0].toUpperCase() : 'S';
+    final primary = Theme.of(context).colorScheme.primary;
+
+    final chipBg = onDark
+        ? Colors.white.withValues(alpha: 0.2)
+        : primary.withValues(alpha: 0.1);
+    final chipBorder = onDark
+        ? Colors.white.withValues(alpha: 0.35)
+        : primary.withValues(alpha: 0.16);
+    final letterColor = onDark ? Colors.white : primary;
 
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _NotificationBell(userId: user.uid),
-        const SizedBox(width: 6),
+        _NotificationBell(userId: user.uid, onDark: onDark),
+        const SizedBox(width: 8),
         Material(
           color: Colors.transparent,
           child: InkWell(
             onTap: () => _showProfileMenu(context, ref),
             borderRadius: BorderRadius.circular(50),
             child: Container(
-              width: 44,
-              height: 44,
+              width: 42,
+              height: 42,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.2),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.35)),
+                color: chipBg,
+                border: Border.all(color: chipBorder),
               ),
               child: user.photoURL != null
                   ? ClipOval(
                       child: Image.network(
                         user.photoURL!,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, _, _) => _avatarLetter(firstLetter),
+                        errorBuilder: (_, _, _) =>
+                            _avatarLetter(firstLetter, letterColor),
                       ),
                     )
-                  : _avatarLetter(firstLetter),
+                  : _avatarLetter(firstLetter, letterColor),
             ),
           ),
         ),
@@ -62,14 +77,14 @@ class HomeHeaderActions extends ConsumerWidget {
     );
   }
 
-  Widget _avatarLetter(String letter) {
+  Widget _avatarLetter(String letter, Color color) {
     return Center(
       child: Text(
         letter,
         style: AppFonts.plusJakarta(
-          fontSize: 17,
+          fontSize: 16,
           fontWeight: FontWeight.w700,
-          color: Colors.white,
+          color: color,
         ),
       ),
     );
@@ -246,8 +261,9 @@ class HomeHeaderWidget extends ConsumerWidget {
 
 class _NotificationBell extends ConsumerWidget {
   final String userId;
+  final bool onDark;
 
-  const _NotificationBell({required this.userId});
+  const _NotificationBell({required this.userId, this.onDark = true});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -261,27 +277,31 @@ class _NotificationBell extends ConsumerWidget {
   }
 
   Widget _bellButton(BuildContext context, int count, {required bool showBadge}) {
+    final primary = Theme.of(context).colorScheme.primary;
+    final bg = onDark ? Colors.white.withValues(alpha: 0.16) : primary.withValues(alpha: 0.1);
+    final border = onDark ? Colors.white.withValues(alpha: 0.22) : primary.withValues(alpha: 0.16);
+    final iconColor = onDark ? Colors.white : primary;
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: () => context.go(RouteNames.notifications),
         borderRadius: BorderRadius.circular(14),
         child: Container(
-          width: 44,
-          height: 44,
+          width: 42,
+          height: 42,
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.16),
+            color: bg,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
+            border: Border.all(color: border),
           ),
           child: Stack(
             alignment: Alignment.center,
             clipBehavior: Clip.none,
             children: [
-              const Icon(
+              Icon(
                 Icons.notifications_outlined,
-                color: Colors.white,
-                size: 22,
+                color: iconColor,
+                size: 21,
               ),
               if (showBadge)
                 Positioned(
