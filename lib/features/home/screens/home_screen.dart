@@ -89,8 +89,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ? 'Real reviews & verified CR Scores, personalized for you'
         : 'Find the right college with real student information';
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    // A touch cooler than the shared surfaceMuted token — Home specifically
+    // wanted the page to read as a tinted surface rather than flat white,
+    // without changing the app-wide token other screens rely on.
+    final homeBackground = isDark
+        ? context.tokens.surfaceMuted
+        : Color.alphaBlend(
+            Theme.of(context).colorScheme.primary.withValues(alpha: 0.035),
+            context.tokens.surfaceMuted,
+          );
+
     return Scaffold(
-      backgroundColor: context.tokens.surfaceMuted,
+      backgroundColor: homeBackground,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _onRefresh,

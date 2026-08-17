@@ -33,14 +33,25 @@ class HomeTrustSection extends ConsumerWidget {
         ? placements.map((c) => c.placements.averagePackageLpa).reduce((a, b) => a > b ? a : b)
         : null;
     final topReview = (reviews != null && reviews.isNotEmpty) ? reviews.first : null;
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        color: tokens.surfaceElevated,
-        border: Border.all(color: tokens.borderSubtle),
+        // College Reality's core value proposition gets the one deliberately
+        // tinted panel on the page — everything else stays white/neutral.
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            colorScheme.primary.withValues(alpha: isDark ? 0.16 : 0.09),
+            colorScheme.secondary.withValues(alpha: isDark ? 0.10 : 0.05),
+          ],
+        ),
+        border: Border.all(color: colorScheme.primary.withValues(alpha: 0.16)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -105,7 +116,7 @@ class _TrustMetric extends StatelessWidget {
     final tokens = context.tokens;
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
-      decoration: BoxDecoration(color: tokens.surfaceMuted, borderRadius: BorderRadius.circular(16)),
+      decoration: BoxDecoration(color: tokens.surfaceElevated, borderRadius: BorderRadius.circular(16)),
       child: Row(
         children: [
           Icon(icon, color: color, size: 20),
@@ -138,7 +149,7 @@ class _ReviewExcerpt extends StatelessWidget {
       onTap: () => context.go(RouteNames.collegeDetailsPath(review.collegeId)),
       child: Container(
         padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(color: tokens.surfaceMuted, borderRadius: BorderRadius.circular(16)),
+        decoration: BoxDecoration(color: tokens.surfaceElevated, borderRadius: BorderRadius.circular(16)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

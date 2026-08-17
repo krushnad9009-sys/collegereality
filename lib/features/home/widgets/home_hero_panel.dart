@@ -34,13 +34,13 @@ class HomeHeroPanel extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(26),
         color: tokens.surfaceElevated,
-        border: Border.all(color: tokens.borderSubtle),
+        border: Border.all(color: colorScheme.primary.withValues(alpha: 0.12)),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            colorScheme.primary.withValues(alpha: 0.05),
-            tokens.surfaceElevated,
+            colorScheme.primary.withValues(alpha: 0.08),
+            colorScheme.secondary.withValues(alpha: 0.03),
           ],
         ),
       ),

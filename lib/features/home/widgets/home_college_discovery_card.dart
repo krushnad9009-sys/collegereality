@@ -135,7 +135,9 @@ class _HomeCollegeDiscoveryCardState extends ConsumerState<HomeCollegeDiscoveryC
           decoration: BoxDecoration(
             color: tokens.surfaceElevated,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: tokens.borderSubtle.withValues(alpha: isDark ? 0.5 : 0.9)),
+            border: Border.all(
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: isDark ? 0.18 : 0.1),
+            ),
             boxShadow: isDark
                 ? null
                 : [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 16, offset: const Offset(0, 6))],
@@ -259,8 +261,11 @@ class _DataFirstMedia extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
+    final primary = Theme.of(context).colorScheme.primary;
     return Container(
-      color: tokens.surfaceMuted,
+      // A soft brand tint, not a fake photo — this is the honest,
+      // data-forward placeholder for colleges without a verified image.
+      color: Color.alphaBlend(primary.withValues(alpha: 0.05), tokens.surfaceMuted),
       child: Stack(
         children: [
           Center(
@@ -271,7 +276,7 @@ class _DataFirstMedia extends StatelessWidget {
               decoration: BoxDecoration(
                 color: tokens.surfaceElevated,
                 shape: BoxShape.circle,
-                border: Border.all(color: tokens.borderSubtle),
+                border: Border.all(color: primary.withValues(alpha: 0.15)),
               ),
               child: CollegeLogoWidget(
                 collegeId: college.id,

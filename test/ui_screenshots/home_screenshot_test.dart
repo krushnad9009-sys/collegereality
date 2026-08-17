@@ -53,7 +53,10 @@ void main() {
           builder: (context) {
             final tokens = context.tokens;
             return Scaffold(
-              backgroundColor: tokens.surfaceMuted,
+              backgroundColor: Color.alphaBlend(
+                Theme.of(context).colorScheme.primary.withValues(alpha: 0.035),
+                tokens.surfaceMuted,
+              ),
               body: SafeArea(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(AppSpacing.lg),

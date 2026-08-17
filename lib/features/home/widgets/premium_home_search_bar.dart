@@ -35,9 +35,15 @@ class _PremiumHomeSearchBarState extends State<PremiumHomeSearchBar> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
           decoration: BoxDecoration(
-            color: tokens.surfaceMuted,
+            // White, so the search field pops as a card floating on the
+            // hero panel's tinted surface behind it, per the "search should
+            // feel premium and prominent" direction.
+            color: tokens.surfaceElevated,
             borderRadius: BorderRadius.circular(18),
             border: Border.all(color: tokens.borderSubtle),
+            boxShadow: [
+              BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 3)),
+            ],
           ),
           child: Row(
             children: [
