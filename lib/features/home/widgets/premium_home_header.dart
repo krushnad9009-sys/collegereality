@@ -34,70 +34,56 @@ class PremiumHomeHeader extends StatelessWidget {
             ? 'Good afternoon'
             : 'Good evening';
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(4, 4, 4, 0),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            colorScheme.primary.withValues(alpha: 0.05),
-            Colors.transparent,
-          ],
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  user != null ? timeGreeting : 'Welcome',
-                  style: AppFonts.plusJakarta(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w600,
-                    color: tokens.textTertiary,
-                    letterSpacing: 0.1,
-                  ),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                user != null ? timeGreeting : 'Welcome',
+                style: AppFonts.plusJakarta(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: tokens.textTertiary,
+                  letterSpacing: 0.1,
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  user != null ? displayName : 'Find your dream college',
-                  style: AppFonts.plusJakarta(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.4,
-                    height: 1.15,
-                    color: tokens.textPrimary,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 3),
+              Text(
+                user != null ? displayName : 'Find your dream college',
+                style: AppFonts.plusJakarta(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.5,
+                  height: 1.15,
+                  color: tokens.textPrimary,
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: AppFonts.plusJakarta(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w500,
-                    color: tokens.textSecondary,
-                    height: 1.3,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 5),
+              Text(
+                subtitle,
+                style: AppFonts.plusJakarta(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w500,
+                  color: tokens.textSecondary,
+                  height: 1.3,
                 ),
-              ],
-            ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
           ),
-          const SizedBox(width: AppSpacing.md),
-          if (user != null)
-            HomeHeaderActions(user: user!, onDark: false)
-          else
-            _SignInChip(colorScheme: colorScheme),
-        ],
-      ),
+        ),
+        const SizedBox(width: AppSpacing.md),
+        if (user != null)
+          HomeHeaderActions(user: user!, onDark: false)
+        else
+          _SignInChip(colorScheme: colorScheme),
+      ],
     );
   }
 }

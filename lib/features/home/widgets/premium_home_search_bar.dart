@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../../config/theme/app_fonts.dart';
 
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_design_tokens.dart';
-import '../../../config/theme/app_spacing.dart';
-import '../../../config/theme/app_theme.dart';
+import '../../../config/theme/app_fonts.dart';
 
-/// Primary home search entry with gradient accent.
+/// The single dominant search affordance on Home — lives inside
+/// [HomeHeroPanel]'s one elevated surface, so it carries no card chrome of
+/// its own (no nested "card inside a card"), just a tappable content row.
 class PremiumHomeSearchBar extends StatefulWidget {
   const PremiumHomeSearchBar({super.key});
 
@@ -20,7 +20,6 @@ class _PremiumHomeSearchBarState extends State<PremiumHomeSearchBar> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final tokens = context.tokens;
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -34,114 +33,52 @@ class _PremiumHomeSearchBarState extends State<PremiumHomeSearchBar> {
         duration: const Duration(milliseconds: 120),
         curve: Curves.easeOutCubic,
         child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
-            color: tokens.surfaceElevated,
-            boxShadow: isDark
-                ? [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.3),
-                      blurRadius: 24,
-                      offset: const Offset(0, 10),
+            color: tokens.surfaceMuted,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: tokens.borderSubtle),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [colorScheme.primary, colorScheme.secondary],
+                  ),
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: const Icon(Icons.search_rounded, color: Colors.white, size: 20),
+              ),
+              const SizedBox(width: 13),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Find the right college',
+                      style: AppFonts.plusJakarta(
+                        fontSize: 15.5,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.2,
+                        color: tokens.textPrimary,
+                      ),
                     ),
-                  ]
-                : [
-                    BoxShadow(
-                      color: colorScheme.primary.withValues(alpha: 0.12),
-                      blurRadius: 32,
-                      offset: const Offset(0, 10),
-                    ),
-                    BoxShadow(
-                      color: AppTheme.black.withValues(alpha: 0.05),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
+                    const SizedBox(height: 2),
+                    Text(
+                      'College, city, course or exam',
+                      style: AppFonts.plusJakarta(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: tokens.textTertiary,
+                      ),
                     ),
                   ],
-            border: Border.all(
-              color: isDark
-                  ? tokens.borderSubtle
-                  : colorScheme.primary.withValues(alpha: 0.12),
-            ),
-          ),
-          child: Container(
-            margin: const EdgeInsets.all(1.5),
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppSpacing.radiusXl - 2),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: isDark
-                    ? [tokens.surfaceElevated, tokens.surfaceMuted]
-                    : [
-                        tokens.surfaceElevated,
-                        colorScheme.primary.withValues(alpha: 0.03),
-                      ],
+                ),
               ),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [colorScheme.primary, colorScheme.secondary],
-                    ),
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(
-                        color: colorScheme.primary.withValues(alpha: 0.35),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.search_rounded,
-                    color: Colors.white,
-                    size: 22,
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Where do you want to study?',
-                        style: AppFonts.plusJakarta(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: -0.2,
-                          color: tokens.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Search colleges, cities, courses & more',
-                        style: AppFonts.plusJakarta(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: tokens.textTertiary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: colorScheme.primary.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    Icons.tune_rounded,
-                    color: colorScheme.primary.withValues(alpha: 0.9),
-                    size: 20,
-                  ),
-                ),
-              ],
-            ),
+              Icon(Icons.tune_rounded, color: tokens.textTertiary, size: 20),
+            ],
           ),
         ),
       ),

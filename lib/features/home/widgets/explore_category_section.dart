@@ -5,167 +5,102 @@ import 'package:go_router/go_router.dart';
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_fonts.dart';
-import '../../../core/constants/college_constants.dart';
 import '../../colleges/providers/college_provider.dart';
 
 class _CategoryDef {
   final String label;
   final IconData icon;
-  final Color color;
 
-  const _CategoryDef(this.label, this.icon, this.color);
+  const _CategoryDef(this.label, this.icon);
 }
 
-/// "Explore Colleges" — a strong grid of category tiles. Each tile is an
-/// image-led "spotlight" card (tinted background, large icon, decorative
-/// mark, real per-category college count) rather than a plain icon+text
-/// row, so the grid reads as a deliberate product surface instead of a
-/// generic settings-style list.
+/// "Explore Colleges" — compact stream tiles sized to their content, one
+/// restrained brand-teal color family throughout (differentiated by icon
+/// and label only, never by a different hue per tile).
 class ExploreCategoryGrid extends ConsumerWidget {
   const ExploreCategoryGrid({super.key});
 
   static const _categories = [
-    _CategoryDef('Engineering', Icons.precision_manufacturing_rounded, Color(0xFF1E3A5F)),
-    _CategoryDef('Medical', Icons.local_hospital_rounded, Color(0xFFB91C1C)),
-    _CategoryDef('MBA', Icons.business_center_rounded, Color(0xFF0F766E)),
-    _CategoryDef('Law', Icons.gavel_rounded, Color(0xFF5B21B6)),
-    _CategoryDef('Pharmacy', Icons.medication_rounded, Color(0xFF0369A1)),
-    _CategoryDef('Arts', Icons.palette_rounded, Color(0xFFBE185D)),
-    _CategoryDef('Commerce', Icons.account_balance_rounded, Color(0xFFB45309)),
-    _CategoryDef('Nursing', Icons.health_and_safety_rounded, Color(0xFF15803D)),
+    _CategoryDef('Engineering', Icons.precision_manufacturing_rounded),
+    _CategoryDef('Medical', Icons.local_hospital_rounded),
+    _CategoryDef('MBA', Icons.business_center_rounded),
+    _CategoryDef('Law', Icons.gavel_rounded),
+    _CategoryDef('Pharmacy', Icons.medication_rounded),
+    _CategoryDef('Arts', Icons.palette_rounded),
+    _CategoryDef('Commerce', Icons.account_balance_rounded),
+    _CategoryDef('Nursing', Icons.health_and_safety_rounded),
   ];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final countsAsync = ref.watch(collegeCategoryCountsProvider);
+    final primary = Theme.of(context).colorScheme.primary;
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final columns = constraints.maxWidth >= 560 ? 4 : 2;
-        return GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: _categories.length,
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: columns,
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-            childAspectRatio: columns == 4 ? 1.05 : 1.35,
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      children: _categories.map((cat) {
+        final count = countsAsync.valueOrNull?[cat.label];
+        return _CategoryTile(
+          def: cat,
+          color: primary,
+          count: count,
+          onTap: () => context.go(
+            '${RouteNames.collegeSearch}?category=${Uri.encodeComponent(cat.label)}',
           ),
-          itemBuilder: (context, index) {
-            final cat = _categories[index];
-            final count = countsAsync.valueOrNull?[cat.label];
-            return _CategoryCard(
-              def: cat,
-              countLabel: count != null && count > 0
-                  ? '${CollegeConstants.formatCollegeCount(count)}+ colleges'
-                  : 'Explore now',
-              onTap: () => context.go(
-                '${RouteNames.collegeSearch}?category=${Uri.encodeComponent(cat.label)}',
-              ),
-            );
-          },
         );
-      },
+      }).toList(),
     );
   }
 }
 
-class _CategoryCard extends StatelessWidget {
+class _CategoryTile extends StatelessWidget {
   final _CategoryDef def;
-  final String countLabel;
+  final Color color;
+  final int? count;
   final VoidCallback onTap;
 
-  const _CategoryCard({required this.def, required this.countLabel, required this.onTap});
+  const _CategoryTile({required this.def, required this.color, required this.count, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final tint = isDark ? def.color.withValues(alpha: 0.22) : def.color.withValues(alpha: 0.08);
-
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(tokens.cardRadius),
-        child: Ink(
+        borderRadius: BorderRadius.circular(999),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(10, 9, 16, 9),
           decoration: BoxDecoration(
             color: tokens.surfaceElevated,
-            borderRadius: BorderRadius.circular(tokens.cardRadius),
-            border: Border.all(color: def.color.withValues(alpha: isDark ? 0.28 : 0.16)),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: color.withValues(alpha: 0.22)),
           ),
-          child: Stack(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Positioned.fill(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(tokens.cardRadius),
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [tint, Colors.transparent],
-                    ),
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(color: color.withValues(alpha: 0.12), shape: BoxShape.circle),
+                child: Icon(def.icon, size: 17, color: color),
+              ),
+              const SizedBox(width: 10),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    def.label,
+                    style: AppFonts.plusJakarta(fontSize: 14, fontWeight: FontWeight.w700, color: tokens.textPrimary),
                   ),
-                ),
-              ),
-              Positioned(
-                right: -14,
-                bottom: -14,
-                child: Icon(def.icon, size: 78, color: def.color.withValues(alpha: isDark ? 0.14 : 0.09)),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      width: 42,
-                      height: 42,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [def.color, Color.lerp(def.color, Colors.black, 0.18) ?? def.color],
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(color: def.color.withValues(alpha: 0.35), blurRadius: 10, offset: const Offset(0, 4)),
-                        ],
-                      ),
-                      child: Icon(def.icon, color: Colors.white, size: 21),
+                  if (count != null && count! > 0)
+                    Text(
+                      '${count! >= 1000 ? '${(count! / 1000).toStringAsFixed(1)}k' : count} colleges',
+                      style: AppFonts.plusJakarta(fontSize: 11.5, fontWeight: FontWeight.w500, color: tokens.textTertiary),
                     ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          def.label,
-                          style: AppFonts.plusJakarta(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -0.2,
-                            color: tokens.textPrimary,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          countLabel,
-                          style: AppFonts.plusJakarta(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: def.color,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                ],
               ),
             ],
           ),

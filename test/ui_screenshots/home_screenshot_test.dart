@@ -8,15 +8,11 @@ import 'package:college_reality_india/config/theme/app_spacing.dart';
 import 'package:college_reality_india/core/widgets/premium_components.dart';
 import 'package:college_reality_india/features/home/widgets/explore_by_city_section.dart';
 import 'package:college_reality_india/features/home/widgets/explore_category_section.dart';
-import 'package:college_reality_india/features/home/widgets/home_action_grid.dart';
-import 'package:college_reality_india/features/home/widgets/home_discovery_chips.dart';
-import 'package:college_reality_india/features/home/widgets/home_final_cta.dart';
-import 'package:college_reality_india/features/home/widgets/home_insights_strip.dart';
-import 'package:college_reality_india/features/home/widgets/home_reality_check_section.dart';
-import 'package:college_reality_india/features/home/widgets/home_sections.dart';
-import 'package:college_reality_india/features/home/widgets/premium_featured_college_card.dart';
-import 'package:college_reality_india/features/home/widgets/premium_home_header.dart';
-import 'package:college_reality_india/features/home/widgets/premium_home_search_bar.dart';
+import 'package:college_reality_india/features/home/widgets/home_college_discovery_card.dart';
+import 'package:college_reality_india/features/home/widgets/home_compare_section.dart';
+import 'package:college_reality_india/features/home/widgets/home_hero_panel.dart';
+import 'package:college_reality_india/features/home/widgets/home_more_section.dart';
+import 'package:college_reality_india/features/home/widgets/home_trust_section.dart';
 import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -24,7 +20,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers/test_harness.dart';
 
-/// Renders the *actual production widgets* that compose the new Home
+/// Renders the *actual production widgets* that compose the new lean Home
 /// screen — without going through `HomeScreen`'s `initState` (which fires
 /// app-startup side effects that need a real Firebase app and aren't
 /// testable in isolation). This keeps the screenshot a faithful, real
@@ -34,7 +30,7 @@ void main() {
 
   testWidgets('capture home screen screenshot', (tester) async {
     AppFonts.useSystemFallback = true;
-    await tester.binding.setSurfaceSize(const Size(390, 3400));
+    await tester.binding.setSurfaceSize(const Size(390, 2600));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     final mockUser = MockUser(
@@ -64,22 +60,12 @@ void main() {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      PremiumHomeHeader(
+                      HomeHeroPanel(
                         user: mockUser,
                         displayName: 'Aisha Verma',
                         subtitle: 'Real reviews & verified CR Scores, personalized for you',
                       ),
-                      const SizedBox(height: AppSpacing.lg),
-                      const PremiumHomeSearchBar(),
-                      const SizedBox(height: AppSpacing.md),
-                      const HomeDiscoveryChips(),
-                      const SizedBox(height: AppSpacing.section),
-                      const SectionHeader(
-                        title: 'What are you looking for?',
-                        subtitle: 'Jump straight to what matters',
-                      ),
-                      const HomeActionGrid(),
-                      const SizedBox(height: AppSpacing.section),
+                      const SizedBox(height: AppSpacing.sectionLg),
                       SectionHeader(
                         title: 'Explore Colleges',
                         subtitle: 'Pick a stream to get started',
@@ -87,38 +73,30 @@ void main() {
                         onAction: () {},
                       ),
                       const ExploreCategoryGrid(),
-                      const SizedBox(height: AppSpacing.section),
+                      const SizedBox(height: AppSpacing.sectionLg),
                       SectionHeader(
-                        title: 'Featured Colleges',
-                        subtitle: 'Hand-picked campuses with verified ratings',
+                        title: 'Recommended for You',
+                        subtitle: 'Real colleges, real ratings — picked for you',
                         actionLabel: 'View all',
                         onAction: () {},
                       ),
-                      const FeaturedCollegesCarousel(),
-                      const SizedBox(height: AppSpacing.section),
-                      SectionHeader(
-                        title: 'Trending Colleges',
-                        subtitle: 'Colleges students are exploring',
-                        actionLabel: 'See all',
-                        onAction: () {},
-                      ),
-                      const TrendingCollegesCarousel(),
-                      const SizedBox(height: AppSpacing.section),
-                      const HomeRealityCheckSection(),
-                      const SizedBox(height: AppSpacing.section),
+                      const FeaturedCollegesSection(),
+                      const SizedBox(height: AppSpacing.sectionLg),
+                      const HomeTrustSection(),
+                      const SizedBox(height: AppSpacing.sectionLg),
+                      const HomeCompareSection(),
+                      const SizedBox(height: AppSpacing.sectionLg),
                       const SectionHeader(
                         title: 'Explore by City',
                         subtitle: 'Find colleges near you',
                       ),
                       const ExploreCityCarousel(),
-                      const SizedBox(height: AppSpacing.section),
-                      const PremiumConsultationHomeCard(),
-                      const SizedBox(height: AppSpacing.md),
-                      const CompareCollegesHomeCard(),
-                      const SizedBox(height: AppSpacing.section),
-                      const HomeInsightsStrip(),
-                      const SizedBox(height: AppSpacing.section),
-                      const HomeFinalCta(),
+                      const SizedBox(height: AppSpacing.sectionLg),
+                      const SectionHeader(
+                        title: 'More to Explore',
+                        subtitle: 'A few other ways to use College Reality',
+                      ),
+                      const HomeMoreSection(),
                     ],
                   ),
                 ),

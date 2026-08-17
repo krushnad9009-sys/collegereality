@@ -34,7 +34,7 @@ void main() {
     );
 
     expect(
-      find.text('Search colleges, cities, courses & more'),
+      find.text('College, city, course or exam'),
       findsOneWidget,
     );
   });

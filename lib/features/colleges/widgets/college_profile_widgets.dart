@@ -15,6 +15,7 @@ import '../../reviews/widgets/review_summary_panel.dart';
 import '../../community_feed/providers/college_community_feed_provider.dart';
 import '../models/college_model.dart';
 import 'connect_students_section.dart';
+import 'talk_to_verified_student_card.dart';
 
 /// Trust & activity stats shown under the college header.
 class CollegeProfileStatsStrip extends StatelessWidget {
@@ -722,6 +723,8 @@ class CollegeProfileOverviewSections extends StatelessWidget {
         CollegeFacilitiesSection(college: college),
         const SizedBox(height: 20),
         CollegeAdmissionLinksSection(college: college),
+        const SizedBox(height: 20),
+        TalkToVerifiedStudentCard(collegeName: college.name),
         const SizedBox(height: 20),
         ConnectStudentsSection(
           collegeId: college.id,
