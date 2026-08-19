@@ -213,10 +213,13 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
             ),
           Expanded(
             child: state.messages.isEmpty
-                ? _EmptyState(onExampleTap: (q) {
-                    _controller.text = q;
-                    _send();
-                  })
+                ? _EmptyState(
+                    anchorCollegeName: widget.anchorCollegeName,
+                    onExampleTap: (q) {
+                      _controller.text = q;
+                      _send();
+                    },
+                  )
                 : ListView.builder(
                     controller: _scrollController,
                     padding: const EdgeInsets.all(16),
@@ -275,13 +278,18 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
 
 class _EmptyState extends StatelessWidget {
   final void Function(String query) onExampleTap;
+  final String? anchorCollegeName;
 
-  const _EmptyState({required this.onExampleTap});
+  const _EmptyState({required this.onExampleTap, this.anchorCollegeName});
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final anchor = anchorCollegeName;
+    final exampleQueries = (anchor != null && anchor.isNotEmpty)
+        ? AiAssistantConstants.collegeExampleQueries(anchor)
+        : AiAssistantConstants.exampleQueries;
 
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.lg),
@@ -377,7 +385,7 @@ class _EmptyState extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppSpacing.md),
-        ...AiAssistantConstants.exampleQueries.asMap().entries.map(
+        ...exampleQueries.asMap().entries.map(
               (entry) => FadeInSection(
                 delayMs: 100 + (entry.key * 40),
                 child: Padding(

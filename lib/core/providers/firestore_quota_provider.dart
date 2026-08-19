@@ -13,8 +13,9 @@ final firestoreQuotaBlockedProvider = StateProvider<bool>((ref) {
 /// Watch from HomeScreen only — do not watch from providers it invalidates.
 final firestoreQuotaCoordinatorProvider = Provider<void>((ref) {
   FirestoreQuotaGuard.instance.setProbe(() async {
-    if (FirestoreQuotaGuard.instance.shouldBlockRequest()) return;
-
+    // This IS the recovery mechanism — it must run regardless of
+    // shouldBlockRequest(), which stays true until markRecovered() fires
+    // below. Gating on it here was a deadlock: nothing could ever recover.
     final repository = ref.read(collegeRepositoryProvider);
     await repository.getCollegeCount();
     FirestoreQuotaGuard.instance.markRecovered();

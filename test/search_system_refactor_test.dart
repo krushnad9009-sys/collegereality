@@ -35,6 +35,35 @@ void main() {
       expect(intent.course, 'B.Tech');
       expect(intent.retrievalQuery, isNull);
     });
+
+    test('compound Engineering Maharashtra promotes category and state '
+        '(regression: used to return 0 results)', () {
+      final intent = CollegeSearchUtils.resolveSearchIntent(
+        query: 'Engineering Maharashtra',
+      );
+      expect(intent.category, 'Engineering');
+      expect(intent.state, 'Maharashtra');
+      expect(
+        intent.retrievalQuery,
+        isNull,
+        reason:
+            'once category+state are fully resolved from the query text, '
+            'the lossy free-text token path must not run',
+      );
+    });
+
+    test('queryTokens spreads the token budget across every query word', () {
+      final tokens =
+          CollegeSearchUtils.queryTokens('engineering maharashtra');
+      expect(tokens, contains('engineering'));
+      expect(
+        tokens,
+        contains('maharashtra'),
+        reason:
+            'a single long first word must not crowd out later words '
+            'within the shared 10-token budget',
+      );
+    });
   });
 
   group('bundled search against complete dataset', () {

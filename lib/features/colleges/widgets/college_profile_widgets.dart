@@ -10,11 +10,9 @@ import '../../../config/theme/app_theme.dart';
 import '../../../core/utils/indian_currency_formatter.dart';
 import '../../../core/widgets/premium_components.dart';
 import '../../../core/widgets/premium_list_row.dart';
-import '../../questions/widgets/ask_student_button.dart';
 import '../../reviews/widgets/review_summary_panel.dart';
 import '../../community_feed/providers/college_community_feed_provider.dart';
 import '../models/college_model.dart';
-import 'connect_students_section.dart';
 import 'talk_to_verified_student_card.dart';
 
 /// Trust & activity stats shown under the college header.
@@ -724,18 +722,11 @@ class CollegeProfileOverviewSections extends StatelessWidget {
         const SizedBox(height: 20),
         CollegeAdmissionLinksSection(college: college),
         const SizedBox(height: 20),
+        // The single primary "talk to someone about this college" CTA.
+        // (Peer chat via ConnectStudentsSection and the public-Q&A
+        // AskStudentButton used to also appear here — removed as
+        // duplicates; Ask-a-Question still lives in its own Questions tab.)
         TalkToVerifiedStudentCard(collegeName: college.name),
-        const SizedBox(height: 20),
-        ConnectStudentsSection(
-          collegeId: college.id,
-          collegeName: college.name,
-        ),
-        const SizedBox(height: 12),
-        AskStudentButton(
-          collegeId: college.id,
-          collegeName: college.name,
-          outlined: true,
-        ),
         const SizedBox(height: 20),
         CollegeCommunitySection(college: college),
       ],

@@ -1,12 +1,24 @@
-/// Parsed tokens from compound queries like "B.Tech Pune" or "Pune B.Tech".
+/// Parsed tokens from compound queries like "B.Tech Pune" or
+/// "Engineering Maharashtra".
 class ParsedSearchQuery {
   final String? city;
   final String? course;
+
+  /// A recognized college-category label (e.g. "Engineering") found as a
+  /// distinct segment of the query — not necessarily the whole query.
+  final String? category;
+
+  /// A recognized Indian state label (e.g. "Maharashtra") found as a
+  /// distinct segment of the query — not necessarily the whole query.
+  final String? state;
+
   final List<String> remainingTokens;
 
   const ParsedSearchQuery({
     this.city,
     this.course,
+    this.category,
+    this.state,
     this.remainingTokens = const [],
   });
 }
@@ -261,6 +273,31 @@ class CollegeSearchUtils {
       }
     }
 
+    // Category and state can each appear as their own segment of a compound
+    // query (e.g. "Engineering Maharashtra") even though neither matches the
+    // whole query string — detect them the same way city/course are above.
+    String? category;
+    for (final label in _categoryLabels) {
+      final pattern = RegExp(
+        r'(^|[\s,.]+)' + RegExp.escape(label.toLowerCase()) + r'($|[\s,.]+)',
+      );
+      if (pattern.hasMatch(' $query ')) {
+        category = label;
+        break;
+      }
+    }
+
+    String? state;
+    for (final label in _stateLabels) {
+      final pattern = RegExp(
+        r'(^|[\s,.]+)' + RegExp.escape(label.toLowerCase()) + r'($|[\s,.]+)',
+      );
+      if (pattern.hasMatch(' $query ')) {
+        state = label;
+        break;
+      }
+    }
+
     final words = extractSearchWords(query);
     final remaining = words.where((word) {
       if (city != null && (word == city || city.contains(word))) return false;
@@ -269,12 +306,22 @@ class CollegeSearchUtils {
         final courseCompact = course.replaceAll('.', '');
         if (compact == courseCompact) return false;
       }
+      if (category != null &&
+          category.toLowerCase().split(RegExp(r'\s+')).contains(word)) {
+        return false;
+      }
+      if (state != null &&
+          state.toLowerCase().split(RegExp(r'\s+')).contains(word)) {
+        return false;
+      }
       return true;
     }).toList();
 
     return ParsedSearchQuery(
       city: city,
       course: course,
+      category: category,
+      state: state,
       remainingTokens: remaining,
     );
   }
@@ -305,35 +352,48 @@ class CollegeSearchUtils {
     final effectiveType = _firstNonEmpty(type) ??
         _ownershipToType(_firstNonEmpty(ownership));
 
+    // Whole-query exact match first (e.g. query is just "Engineering"),
+    // then per-segment detection (e.g. "Engineering Maharashtra") — this is
+    // the fix for compound category+state (or any mix of city/course/
+    // category/state) queries returning 0 results: without this, a
+    // two-field query like "Engineering Maharashtra" never gets promoted to
+    // structured Firestore filters and falls into the free-text token path,
+    // whose retrieval window is too small to reliably contain a match for
+    // more than one criterion at once.
     if (effectiveCategory == null && trimmed.isNotEmpty) {
-      effectiveCategory = matchCategoryLabel(trimmed);
+      effectiveCategory = matchCategoryLabel(trimmed) ?? parsed.category;
     }
     if (effectiveState == null && trimmed.isNotEmpty) {
-      effectiveState = matchStateLabel(trimmed);
+      effectiveState = matchStateLabel(trimmed) ?? parsed.state;
     }
 
     String? retrievalQuery = trimmed.isEmpty ? null : trimmed;
-    final cityOnlyFreeText = parsed.city != null &&
-        parsed.course == null &&
-        parsed.remainingTokens.isEmpty &&
-        _firstNonEmpty(city) == null;
-    final categoryOnlyFreeText = effectiveCategory != null &&
-        normalizeName(trimmed) == normalizeName(effectiveCategory) &&
-        parsed.city == null &&
-        parsed.course == null;
-    final stateOnlyFreeText = effectiveState != null &&
-        normalizeState(trimmed) == normalizeState(effectiveState) &&
-        parsed.city == null &&
-        parsed.course == null &&
-        effectiveCategory == null;
 
-    if (cityOnlyFreeText || categoryOnlyFreeText || stateOnlyFreeText) {
-      retrievalQuery = null;
-    } else if (parsed.city != null &&
-        parsed.course != null &&
+    // Whether each parsed segment was cleanly promoted into a structured
+    // filter (i.e. not already independently set by an explicit filter
+    // field, which would mean the query text's copy of it is redundant but
+    // not necessarily exhaustive).
+    final consumedByCity = parsed.city != null && _firstNonEmpty(city) == null;
+    final consumedByCourse =
+        parsed.course != null && _firstNonEmpty(course) == null;
+    final consumedByCategory =
+        parsed.category != null && _firstNonEmpty(category) == null;
+    final consumedByState = parsed.state != null && _firstNonEmpty(state) == null;
+
+    // True once every recognizable segment of the query text has been
+    // promoted to a structured filter and nothing free-text-worthy remains
+    // — a free-text retrieval pass at that point would be redundant.
+    final fullyConsumed = (consumedByCity ||
+            consumedByCourse ||
+            consumedByCategory ||
+            consumedByState) &&
         parsed.remainingTokens.isEmpty &&
-        _firstNonEmpty(city) == null &&
-        _firstNonEmpty(course) == null) {
+        (parsed.city == null || consumedByCity) &&
+        (parsed.course == null || consumedByCourse) &&
+        (parsed.category == null || consumedByCategory) &&
+        (parsed.state == null || consumedByState);
+
+    if (fullyConsumed) {
       retrievalQuery = null;
     }
 
@@ -364,25 +424,66 @@ class CollegeSearchUtils {
     return map[key] ?? key;
   }
 
+  static const List<String> _categoryLabels = [
+    'Engineering',
+    'Medical',
+    'MBA',
+    'Law',
+    'Pharmacy',
+    'Arts',
+    'Commerce',
+    'Science',
+    'General',
+    'Polytechnic',
+    'Nursing',
+    'Agriculture',
+    'Architecture',
+    'Fashion',
+  ];
+
+  static const List<String> _stateLabels = [
+    'Andaman and Nicobar Islands',
+    'Andhra Pradesh',
+    'Arunachal Pradesh',
+    'Assam',
+    'Bihar',
+    'Chandigarh',
+    'Chhattisgarh',
+    'Dadra and Nagar Haveli and Daman and Diu',
+    'Delhi',
+    'Goa',
+    'Gujarat',
+    'Haryana',
+    'Himachal Pradesh',
+    'Jammu and Kashmir',
+    'Jharkhand',
+    'Karnataka',
+    'Kerala',
+    'Ladakh',
+    'Lakshadweep',
+    'Madhya Pradesh',
+    'Maharashtra',
+    'Manipur',
+    'Meghalaya',
+    'Mizoram',
+    'Nagaland',
+    'Odisha',
+    'Puducherry',
+    'Punjab',
+    'Rajasthan',
+    'Sikkim',
+    'Tamil Nadu',
+    'Telangana',
+    'Tripura',
+    'Uttar Pradesh',
+    'Uttarakhand',
+    'West Bengal',
+  ];
+
   static String? matchCategoryLabel(String raw) {
     final needle = normalizeName(raw);
     if (needle.isEmpty) return null;
-    for (final category in const [
-      'Engineering',
-      'Medical',
-      'MBA',
-      'Law',
-      'Pharmacy',
-      'Arts',
-      'Commerce',
-      'Science',
-      'General',
-      'Polytechnic',
-      'Nursing',
-      'Agriculture',
-      'Architecture',
-      'Fashion',
-    ]) {
+    for (final category in _categoryLabels) {
       if (normalizeName(category) == needle) return category;
     }
     return null;
@@ -391,44 +492,7 @@ class CollegeSearchUtils {
   static String? matchStateLabel(String raw) {
     final needle = normalizeState(raw);
     if (needle.isEmpty) return null;
-    for (final state in const [
-      'Andaman and Nicobar Islands',
-      'Andhra Pradesh',
-      'Arunachal Pradesh',
-      'Assam',
-      'Bihar',
-      'Chandigarh',
-      'Chhattisgarh',
-      'Dadra and Nagar Haveli and Daman and Diu',
-      'Delhi',
-      'Goa',
-      'Gujarat',
-      'Haryana',
-      'Himachal Pradesh',
-      'Jammu and Kashmir',
-      'Jharkhand',
-      'Karnataka',
-      'Kerala',
-      'Ladakh',
-      'Lakshadweep',
-      'Madhya Pradesh',
-      'Maharashtra',
-      'Manipur',
-      'Meghalaya',
-      'Mizoram',
-      'Nagaland',
-      'Odisha',
-      'Puducherry',
-      'Punjab',
-      'Rajasthan',
-      'Sikkim',
-      'Tamil Nadu',
-      'Telangana',
-      'Tripura',
-      'Uttar Pradesh',
-      'Uttarakhand',
-      'West Bengal',
-    ]) {
+    for (final state in _stateLabels) {
       if (normalizeState(state) == needle) return state;
     }
     return null;
@@ -534,14 +598,39 @@ class CollegeSearchUtils {
   }
 
   /// Tokenizes query words for array-contains-any Firestore lookup.
+  ///
+  /// Allocates the 10-token budget round-robin across query words instead
+  /// of filling it sequentially word-by-word — a single long word (e.g.
+  /// "engineering", which alone generates 9 prefix tokens) would otherwise
+  /// consume nearly the whole budget and crowd out every other word in a
+  /// compound query (e.g. "maharashtra" in "engineering maharashtra"),
+  /// leaving Firestore's arrayContainsAny retrieval with almost nothing to
+  /// match the second term against.
   static List<String> queryTokens(String query) {
-    final tokens = <String>{};
-    for (final word in query.toLowerCase().split(RegExp(r'\W+'))) {
-      if (word.length < 2) continue;
-      tokens.add(word);
+    final words = query
+        .toLowerCase()
+        .split(RegExp(r'\W+'))
+        .where((word) => word.length >= 2)
+        .toList();
+    if (words.isEmpty) return const [];
+
+    final perWordTokens = words.map((word) {
+      final list = <String>[word];
       for (var len = 3; len <= word.length && len <= 12; len++) {
-        tokens.add(word.substring(0, len));
+        list.add(word.substring(0, len));
       }
+      return list;
+    }).toList();
+
+    final tokens = <String>{};
+    var round = 0;
+    while (tokens.length < 10 &&
+        perWordTokens.any((list) => round < list.length)) {
+      for (final list in perWordTokens) {
+        if (round < list.length) tokens.add(list[round]);
+        if (tokens.length >= 10) break;
+      }
+      round++;
     }
     return tokens.take(10).toList();
   }

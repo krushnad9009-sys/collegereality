@@ -89,8 +89,13 @@ class _CollegeCompareScreenState extends ConsumerState<CollegeCompareScreen> {
     final tokens = context.tokens;
     final basket = ref.watch(compareBasketProvider);
     final ids = basket.collegeIds.take(CompareConstants.maxColleges).toList();
-    final cached = CompareSessionCache.get(ids);
-    final comparisonAsync = ref.watch(compareCollegesProvider(ids));
+    // Canonical (sorted) key — must match exactly what compareCollegesProvider
+    // uses internally, both so the session-cache lookup below actually hits
+    // and so this same-content list resolves to the same family provider
+    // instance across rebuilds instead of refetching every time.
+    final idsKey = compareIdsKey(ids);
+    final cached = CompareSessionCache.get(ids.toList()..sort());
+    final comparisonAsync = ref.watch(compareCollegesProvider(idsKey));
     final isWide = MediaQuery.sizeOf(context).width >= 900;
 
     return Scaffold(
@@ -188,7 +193,7 @@ class _CollegeCompareScreenState extends ConsumerState<CollegeCompareScreen> {
           }
           return AsyncErrorView(
             message: e.toString(),
-            onRetry: () => ref.invalidate(compareCollegesProvider(ids)),
+            onRetry: () => ref.invalidate(compareCollegesProvider(idsKey)),
           );
         },
         data: (result) {

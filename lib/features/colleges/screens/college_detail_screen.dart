@@ -23,7 +23,6 @@ import '../../reviews/providers/review_provider.dart';
 import '../../reviews/widgets/review_card_widget.dart';
 import '../../reviews/widgets/review_summary_panel.dart';
 import '../../reviews/widgets/star_rating_widget.dart';
-import '../../questions/widgets/ask_student_button.dart';
 import '../../reviews/widgets/write_review_button.dart';
 import '../../compare/providers/compare_basket_provider.dart';
 import '../../compare/widgets/compare_basket_bar.dart';
@@ -36,7 +35,6 @@ import '../../ranking/utils/cr_score_engine.dart';
 import '../widgets/accreditation_badges.dart';
 import '../widgets/college_gallery_widget.dart';
 import '../widgets/college_map_section.dart';
-import '../widgets/connect_students_section.dart';
 import '../../ecosystem/widgets/college_ecosystem_menu.dart';
 import '../../ecosystem/widgets/official_college_content_section.dart';
 import '../widgets/college_profile_widgets.dart';
@@ -182,24 +180,15 @@ class _CollegeDetailScreenState extends ConsumerState<CollegeDetailScreen>
         _ensureTabController();
 
         return Scaffold(
+            // Ask-a-Question now lives only in the Questions tab (was
+            // duplicated here as a FAB) — Write Review remains the one
+            // persistent floating action.
             floatingActionButton: Padding(
               padding: const EdgeInsets.only(bottom: 8),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  AskStudentButton(
-                    collegeId: college.id,
-                    collegeName: college.name,
-                    fab: true,
-                  ),
-                  const SizedBox(height: 12),
-                  WriteReviewButton(
-                    collegeId: college.id,
-                    collegeName: college.name,
-                    extended: true,
-                  ),
-                ],
+              child: WriteReviewButton(
+                collegeId: college.id,
+                collegeName: college.name,
+                extended: true,
               ),
             ),
             body: NestedScrollView(
@@ -529,11 +518,10 @@ class _CollegeHeader extends StatelessWidget {
             spacing: 10,
             runSpacing: 10,
             children: [
-              AskStudentButton(
-                collegeId: college.id,
-                collegeName: college.name,
-                outlined: true,
-              ),
+              // Ask-a-Question lives in the Questions tab; this row's
+              // primary CTA is now the college-scoped verified-student card
+              // further down the Overview tab, so only Write Review stays
+              // here at the header level.
               WriteReviewButton(
                 collegeId: college.id,
                 collegeName: college.name,
@@ -1011,10 +999,6 @@ class _ReviewsTabState extends ConsumerState<_ReviewsTab> {
                 ),
               ),
               const SizedBox(height: 8),
-              ConnectStudentsSection(
-                collegeId: _collegeId,
-                collegeName: widget.college.name,
-              ),
               Center(
                 child: Padding(
                   padding: const EdgeInsets.all(24),
@@ -1057,7 +1041,7 @@ class _ReviewsTabState extends ConsumerState<_ReviewsTab> {
 
         return ListView.builder(
           padding: const EdgeInsets.all(16),
-          itemCount: reviews.length + 3 + (_hasMore ? 1 : 0),
+          itemCount: reviews.length + 2 + (_hasMore ? 1 : 0),
           itemBuilder: (context, index) {
             if (index == 0) {
               return Column(
@@ -1073,16 +1057,9 @@ class _ReviewsTabState extends ConsumerState<_ReviewsTab> {
                 ],
               );
             }
+            // "Talk to a Verified Student" already lives once on the
+            // Overview tab — no duplicate peer-chat CTA here anymore.
             if (index == 1) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: ConnectStudentsSection(
-                  collegeId: _collegeId,
-                  collegeName: widget.college.name,
-                ),
-              );
-            }
-            if (index == 2) {
               return Padding(
                 padding: const EdgeInsets.only(bottom: 12, top: 4),
                 child: Text(
@@ -1095,7 +1072,7 @@ class _ReviewsTabState extends ConsumerState<_ReviewsTab> {
               );
             }
 
-            final reviewIndex = index - 3;
+            final reviewIndex = index - 2;
             if (reviewIndex == reviews.length) {
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 12),

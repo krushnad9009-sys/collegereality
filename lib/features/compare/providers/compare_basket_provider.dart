@@ -91,13 +91,26 @@ final compareBasketProvider =
   return CompareBasketNotifier();
 });
 
-final compareCollegesProvider =
-    FutureProvider.family<CollegeComparisonResult?, List<String>>(
-        (ref, collegeIds) async {
-  if (collegeIds.length < CompareConstants.minCollegesToCompare) return null;
+/// Canonical, order-independent cache/family key for a set of college ids —
+/// sorted so the same set of colleges always produces the same key
+/// regardless of selection order, and joined into a single `String` (rather
+/// than kept as a `List<String>`) because `List` has no value equality:
+/// a fresh `.toList()` built on every widget rebuild would otherwise be
+/// treated as a brand-new, never-seen `.family` argument each time,
+/// re-triggering the whole fetch instead of reusing the cached result —
+/// this was the actual cause of Compare taking minutes / never settling.
+String compareIdsKey(List<String> ids) =>
+    (ids.take(CompareConstants.maxColleges).toList()..sort()).join(',');
 
+final compareCollegesProvider =
+    FutureProvider.family<CollegeComparisonResult?, String>(
+        (ref, idsKey) async {
   final normalizedIds =
-      collegeIds.take(CompareConstants.maxColleges).toList()..sort();
+      idsKey.isEmpty ? const <String>[] : idsKey.split(',');
+  if (normalizedIds.length < CompareConstants.minCollegesToCompare) {
+    return null;
+  }
+
   final cached = CompareSessionCache.get(normalizedIds);
   if (cached != null) return cached;
 

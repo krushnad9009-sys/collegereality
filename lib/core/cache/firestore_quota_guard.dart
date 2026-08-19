@@ -94,13 +94,21 @@ class FirestoreQuotaGuard {
     try {
       await probe();
     } catch (_) {
-      // Probe failure re-blocks via markQuotaExceeded in repository.
+      // The probe (or the repository call inside it) may already have
+      // called markQuotaExceeded() for a resource-exhausted error, but
+      // ANY other failure (network blip, timeout, unavailable...) must
+      // still reassert the block and schedule another backoff retry —
+      // otherwise the guard gets stuck blocked forever with no retry
+      // timer pending, and the only way out was killing the app.
+      markQuotaExceeded();
     }
   }
 
-  /// Manual retry from UI — only runs if cooldown elapsed.
+  /// Manual retry from UI (e.g. pull-to-refresh) — always attempts a probe
+  /// immediately, even while still in cooldown. This is the explicit
+  /// "try again now" escape hatch, so it must not gate on the same
+  /// shouldBlockRequest() check other Firestore calls use.
   Future<void> retryNowIfAllowed() async {
-    if (shouldBlockRequest()) return;
     await _runProbe();
   }
 }

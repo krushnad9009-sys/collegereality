@@ -2,9 +2,37 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:college_reality_india/core/constants/compare_constants.dart';
 import 'package:college_reality_india/features/colleges/models/college_model.dart';
+import 'package:college_reality_india/features/compare/providers/compare_basket_provider.dart';
 import 'package:college_reality_india/features/compare/services/college_comparison_service.dart';
 
 void main() {
+  group('compareIdsKey', () {
+    // Regression test for the bug where CollegeCompareScreen rebuilt a new
+    // List<String> on every build(), which — since List has no value
+    // equality — meant Riverpod's compareCollegesProvider.family never
+    // recognized two "same" selections as the same provider instance and
+    // refetched forever. compareIdsKey collapses a selection into a stable,
+    // order-independent String so equal selections always match.
+    test('is order-independent for the same set of ids', () {
+      expect(
+        compareIdsKey(['b', 'a']),
+        compareIdsKey(['a', 'b']),
+      );
+    });
+
+    test('two separately-built lists with equal content produce equal keys',
+        () {
+      final first = ['c1', 'c2'].take(CompareConstants.maxColleges).toList();
+      final second = ['c1', 'c2'].take(CompareConstants.maxColleges).toList();
+      expect(identical(first, second), isFalse);
+      expect(compareIdsKey(first), compareIdsKey(second));
+    });
+
+    test('differs when the id set actually differs', () {
+      expect(compareIdsKey(['a', 'b']), isNot(compareIdsKey(['a', 'c'])));
+    });
+  });
+
   group('CollegeComparisonService', () {
     final service = CollegeComparisonService();
 

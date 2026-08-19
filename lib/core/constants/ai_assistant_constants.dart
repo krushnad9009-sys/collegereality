@@ -24,6 +24,19 @@ class AiAssistantConstants {
     'Best engineering colleges in Pune under ₹5 lakh',
   ];
 
+  /// "Try asking" prompts scoped to a specific college — used when the
+  /// assistant is opened from a College Detail page (`anchorCollegeName`
+  /// set). Every question routes through the same real, Firestore-grounded
+  /// query pipeline as [exampleQueries]; only the displayed prompt text is
+  /// templated with the real college name.
+  static List<String> collegeExampleQueries(String collegeName) => [
+        'Is $collegeName good for CSE?',
+        'How are placements at $collegeName?',
+        'What is the hostel experience at $collegeName?',
+        'What do verified students say about $collegeName?',
+        'What is the average package at $collegeName?',
+      ];
+
   static const List<String> exampleQueriesHi = [
     'Pune mein best engineering colleges',
     '₹5 lakh ke andar MBA colleges',
