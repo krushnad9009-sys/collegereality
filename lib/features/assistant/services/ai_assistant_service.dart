@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import '../../../core/constants/ai_assistant_constants.dart';
 import '../../../core/constants/ranking_constants.dart';
 import '../../colleges/models/college_model.dart';
@@ -28,6 +30,10 @@ class AiAssistantService {
   final AiExplanationBuilder _explanationBuilder = AiExplanationBuilder();
   final AiComparisonService _comparisonService = AiComparisonService();
   final AiSuggestionService _suggestionService = AiSuggestionService();
+
+  static void _log(String message) {
+    if (kDebugMode) debugPrint('[AiAssistantService] $message');
+  }
   final AiTopicDetector _topicDetector = AiTopicDetector();
   final AiGroundedAnswerBuilder _groundedBuilder = AiGroundedAnswerBuilder();
 
@@ -192,16 +198,25 @@ class AiAssistantService {
     }
 
     final topic = _topicDetector.detectTopic(question);
+    _log('detected topic=$topic for question="$question"');
+    _log('START fetchBundle(collegeId=${college.id})');
     final bundle = await _collegeDataService.fetchBundle(college.id);
     if (bundle == null) {
+      _log('fetchBundle returned null -- no college doc found for ${college.id}');
       return _textReply('Could not load verified data for ${college.name}.');
     }
+    _log(
+      'SUCCESS fetchBundle -- reviews=${bundle.reviews.length} '
+      'verifiedAnswers=${bundle.verifiedAnswers.length} '
+      'communityPosts=${bundle.communityPosts.length}',
+    );
 
     final grounded = _groundedBuilder.build(
       bundle: bundle,
       topic: topic,
       query: question,
     );
+    _log('SUCCESS build grounded answer, sources=${grounded.sources.length}');
 
     return AiAssistantMessage(
       id: DateTime.now().millisecondsSinceEpoch.toString(),

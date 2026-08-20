@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../../core/constants/ai_assistant_constants.dart';
@@ -30,6 +31,17 @@ class AiCollegeDataService {
     if (kDebugMode) debugPrint('[AiCollegeDataService] $message');
   }
 
+  /// Formats an exception with its exact Firebase error code when it has
+  /// one, so a "FAILED" log line always shows the real, actionable cause
+  /// (e.g. `failed-precondition` = missing composite index,
+  /// `permission-denied` = security rules) instead of a vague message.
+  static String _describe(Object e) {
+    if (e is FirebaseException) {
+      return 'FirebaseException(code: ${e.code}, plugin: ${e.plugin}, message: ${e.message})';
+    }
+    return '${e.runtimeType}: $e';
+  }
+
   Future<AiCollegeDataBundle?> fetchBundle(String collegeId) async {
     if (collegeId.isEmpty) return null;
     final cached = _cache[collegeId];
@@ -40,40 +52,45 @@ class AiCollegeDataService {
       return cached;
     }
 
-    _log('fetching bundle for collegeId=$collegeId');
+    _log('START fetchBundle collegeId=$collegeId');
+
+    _log('START getCollegeById($collegeId)');
     final college = await _colleges.getCollegeById(collegeId);
     if (college == null) {
-      _log('no college found for collegeId=$collegeId — cannot ground an answer');
+      _log('SUCCESS getCollegeById -- returned null (not found/inaccessible) for collegeId=$collegeId');
       return null;
     }
+    _log('SUCCESS getCollegeById -- "${college.name}"');
 
     // Every user-generated-content source below is independently resilient:
     // a failure fetching one (e.g. a missing Firestore index, a transient
     // permission/network error) degrades that source to an empty list
-    // instead of failing the whole bundle — the assistant should still be
+    // instead of failing the whole bundle -- the assistant should still be
     // able to answer from whatever real data IS available, and the grounded
     // answer builder already renders "not enough verified data yet" when a
     // topic has nothing to say.
     List<ReviewModel> reviews = const [];
     try {
+      _log('START getReviewsPage(collegeId=$collegeId)');
       final reviewPage = await _reviews.getReviewsPage(
         collegeId,
         limit: AiAssistantConstants.maxReviewsPerFetch,
       );
       reviews = reviewPage.reviews.where((r) => r.isPublicVisible).toList();
-      _log('fetched ${reviews.length} public reviews');
+      _log('SUCCESS getReviewsPage -- ${reviews.length} public reviews');
     } catch (e, st) {
-      _log('review fetch failed: $e');
+      _log('FAILED getReviewsPage: ${_describe(e)}');
       if (kDebugMode) debugPrintStack(stackTrace: st, label: '[AiCollegeDataService] reviews');
     }
 
     final snippets = <AiAnswerSnippet>[];
     try {
+      _log('START getQuestionsByCollege(collegeId=$collegeId)');
       final questions = await _questions.getQuestionsByCollege(
         collegeId,
         limit: AiAssistantConstants.maxQuestionsPerFetch,
       );
-      _log('fetched ${questions.length} published questions');
+      _log('SUCCESS getQuestionsByCollege -- ${questions.length} published questions');
       for (final question
           in questions.take(AiAssistantConstants.maxQuestionsPerFetch)) {
         try {
@@ -85,26 +102,27 @@ class AiCollegeDataService {
             snippets.add(AiAnswerSnippet(answer: answer, question: question));
           }
         } catch (e) {
-          _log('answer fetch failed for questionId=${question.id}: $e');
+          _log('FAILED getAnswersForQuestion(questionId=${question.id}): ${_describe(e)}');
         }
         if (snippets.length >= AiAssistantConstants.maxVerifiedAnswersTotal) break;
       }
     } catch (e, st) {
-      _log('question fetch failed: $e');
+      _log('FAILED getQuestionsByCollege: ${_describe(e)}');
       if (kDebugMode) debugPrintStack(stackTrace: st, label: '[AiCollegeDataService] questions');
     }
 
     List<StudentCommunityPostModel> posts = [];
     try {
+      _log('START fetchFeedPage(collegeId=$collegeId)');
       final page = await _communityFeed.fetchFeedPage(
         collegeId: collegeId,
         mode: StudentLifeConstants.feedLatest,
         limit: AiAssistantConstants.maxCommunityPostsPerFetch,
       );
       posts = page.items;
-      _log('fetched ${posts.length} community posts');
+      _log('SUCCESS fetchFeedPage -- ${posts.length} community posts');
     } catch (e) {
-      _log('community feed fetch failed: $e');
+      _log('FAILED fetchFeedPage: ${_describe(e)}');
       posts = [];
     }
 
@@ -116,6 +134,7 @@ class AiCollegeDataService {
       fetchedAt: DateTime.now(),
     );
     _cache[collegeId] = bundle;
+    _log('SUCCESS fetchBundle collegeId=$collegeId');
     return bundle;
   }
 
