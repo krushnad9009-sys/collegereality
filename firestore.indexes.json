@@ -855,7 +855,8 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "isActive", "order": "ASCENDING" },
-        { "fieldPath": "stateLower", "order": "ASCENDING" }
+        { "fieldPath": "stateLower", "order": "ASCENDING" },
+        { "fieldPath": "nameLower", "order": "ASCENDING" }
       ]
     },
     {
