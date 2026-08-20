@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/ai_assistant_constants.dart';
@@ -141,6 +144,12 @@ class AiAssistantNotifier extends StateNotifier<AiAssistantState> {
     await _runQuery(trimmed, addUserMessage: true);
   }
 
+  static const _queryTimeout = Duration(seconds: 20);
+
+  static void _log(String message) {
+    if (kDebugMode) debugPrint('[AiAssistant] $message');
+  }
+
   Future<void> _runQuery(String trimmed, {required bool addUserMessage}) async {
     _lastQuery = trimmed;
     final userMessage = AiAssistantMessage(
@@ -157,43 +166,55 @@ class AiAssistantNotifier extends StateNotifier<AiAssistantState> {
       clearError: true,
     );
 
+    _log(
+      'query started — collegeId=${state.anchorCollegeId ?? '(none)'} '
+      'question="$trimmed" mode=${state.mode}',
+    );
+
     try {
-      final user = await _ref.read(currentUserDetailProvider.future);
+      // Personalization only (the user's own college, for city/state
+      // ranking bias) — must never take down the whole request. A user
+      // whose own collegeId points at a since-removed/inaccessible
+      // document used to fail the ENTIRE query here, even though this
+      // data has nothing to do with the college actually being asked
+      // about.
       String? userCity;
       String? userState;
-      if (user?.collegeId != null) {
-        final college = await _ref.read(
-          collegeByIdProvider(user!.collegeId!).future,
-        );
-        userCity = college?.city;
-        userState = college?.state;
+      try {
+        final user = await _ref.read(currentUserDetailProvider.future);
+        if (user?.collegeId != null) {
+          final college = await _ref.read(
+            collegeByIdProvider(user!.collegeId!).future,
+          );
+          userCity = college?.city;
+          userState = college?.state;
+        }
+      } catch (e) {
+        _log('personalization lookup failed (ignored, non-fatal): $e');
       }
 
-      AiAssistantMessage response;
-      if (state.anchorCollegeId != null) {
-        final anchor = await _ref.read(
-          collegeByIdProvider(state.anchorCollegeId!).future,
-        );
-        if (anchor != null) {
-          response = await _service.askAboutCollege(
-            college: anchor,
-            question: trimmed,
-            contextCollegeIds: state.contextCollegeIds,
-            userCity: userCity,
-            userState: userState,
-            mode: state.mode,
+      Future<AiAssistantMessage> runPipeline() async {
+        if (state.anchorCollegeId != null) {
+          final anchor = await _ref.read(
+            collegeByIdProvider(state.anchorCollegeId!).future,
           );
-        } else {
-          response = await _service.processQuery(
-            query: trimmed,
-            contextCollegeIds: state.contextCollegeIds,
-            userCity: userCity,
-            userState: userState,
-            mode: state.mode,
+          _log(
+            anchor == null
+                ? 'anchor college ${state.anchorCollegeId} not found — falling back to general query'
+                : 'anchor college resolved: ${anchor.name}',
           );
+          if (anchor != null) {
+            return _service.askAboutCollege(
+              college: anchor,
+              question: trimmed,
+              contextCollegeIds: state.contextCollegeIds,
+              userCity: userCity,
+              userState: userState,
+              mode: state.mode,
+            );
+          }
         }
-      } else {
-        response = await _service.processQuery(
+        return _service.processQuery(
           query: trimmed,
           contextCollegeIds: state.contextCollegeIds,
           userCity: userCity,
@@ -201,6 +222,9 @@ class AiAssistantNotifier extends StateNotifier<AiAssistantState> {
           mode: state.mode,
         );
       }
+
+      final response = await runPipeline().timeout(_queryTimeout);
+      _log('query succeeded, dataGrounded=${response.dataGrounded}');
 
       final newContextIds = <String>{
         ...state.contextCollegeIds,
@@ -215,10 +239,19 @@ class AiAssistantNotifier extends StateNotifier<AiAssistantState> {
         contextCollegeIds: newContextIds,
       );
       await _persistHistory();
-    } catch (e) {
+    } catch (e, st) {
+      // Log the RAW error before it gets sanitized for display — this is
+      // what actually explains a "Something went wrong" on screen. Never
+      // logs secrets/tokens; Firebase/Firestore exceptions don't carry any.
+      _log('query FAILED: ${e.runtimeType}: $e');
+      if (kDebugMode) debugPrintStack(stackTrace: st, label: '[AiAssistant] _runQuery');
+
+      final isTimeout = e is TimeoutException;
       state = state.copyWith(
         isLoading: false,
-        error: FirestoreErrorUtils.userMessage(e),
+        error: isTimeout
+            ? 'That took too long to answer. Please try again.'
+            : FirestoreErrorUtils.userMessage(e),
       );
     }
   }
