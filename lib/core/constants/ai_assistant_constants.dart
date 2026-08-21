@@ -23,21 +23,23 @@ class AiAssistantConstants {
     'Best engineering colleges in Pune under ₹5 lakh',
   ];
 
-  /// "Try asking" prompts scoped to a specific college — used when the
-  /// assistant is opened from a College Detail page (`anchorCollegeName`
-  /// set). Deliberately simple and general (not overly specific numeric
-  /// questions like exact average/highest package) so the assistant isn't
-  /// guessing what detail the user wants -- they can ask that themselves.
-  /// Every question routes through the same real, Firestore-grounded query
-  /// pipeline as [exampleQueries]; only the displayed prompt text is
-  /// templated with the real college name.
-  static List<String> collegeExampleQueries(String collegeName) => [
-        'Is $collegeName a good college?',
-        'How are the placements at $collegeName?',
-        'How is the campus at $collegeName?',
-        'How is the hostel at $collegeName?',
-        'Is $collegeName good for CSE?',
-      ];
+  /// "Try asking" prompts shown when the assistant is opened from a
+  /// College Detail page (`anchorCollegeId` set). This is a fixed,
+  /// hand-written list -- NOT generated from the college's data, NOT
+  /// derived from any AI response, and NOT computed per-college (no
+  /// college-name templating, no CTC/package/placement-number questions).
+  /// Tapping one still runs the real Firestore-grounded pipeline scoped to
+  /// whichever college is currently anchored, same as typing it manually;
+  /// only the displayed prompt TEXT is a static constant.
+  static const List<String> collegeExampleQueries = [
+    'Is this college good?',
+    'How are the placements?',
+    'How is student life?',
+    'How is the campus?',
+    'What do students say about this college?',
+    'How is the hostel?',
+    'Is this college good for CSE?',
+  ];
 
   static const List<String> exampleQueriesHi = [
     'Pune mein best engineering colleges',

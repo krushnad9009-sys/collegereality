@@ -288,7 +288,7 @@ class _EmptyState extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final anchor = anchorCollegeName;
     final exampleQueries = (anchor != null && anchor.isNotEmpty)
-        ? AiAssistantConstants.collegeExampleQueries(anchor)
+        ? AiAssistantConstants.collegeExampleQueries
         : AiAssistantConstants.exampleQueries;
 
     return ListView(
