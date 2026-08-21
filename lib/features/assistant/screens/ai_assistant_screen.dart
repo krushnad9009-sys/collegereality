@@ -7,7 +7,6 @@ import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../config/theme/app_typography.dart';
-import '../../../core/constants/ai_assistant_constants.dart';
 import '../../../core/widgets/premium_components.dart';
 import '../../compare/providers/compare_basket_provider.dart';
 import '../models/ai_assistant_message.dart';
@@ -213,13 +212,7 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
             ),
           Expanded(
             child: state.messages.isEmpty
-                ? _EmptyState(
-                    anchorCollegeName: widget.anchorCollegeName,
-                    onExampleTap: (q) {
-                      _controller.text = q;
-                      _send();
-                    },
-                  )
+                ? const _EmptyState()
                 : ListView.builder(
                     controller: _scrollController,
                     padding: const EdgeInsets.all(16),
@@ -276,20 +269,17 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
   }
 }
 
+/// Shown when the conversation has no messages yet. Intentionally contains
+/// no automatically generated or predefined "Try asking" suggestions --
+/// only an intro card explaining what the assistant can do. The user
+/// decides what to ask via the input bar below; nothing is pre-populated.
 class _EmptyState extends StatelessWidget {
-  final void Function(String query) onExampleTap;
-  final String? anchorCollegeName;
-
-  const _EmptyState({required this.onExampleTap, this.anchorCollegeName});
+  const _EmptyState();
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final anchor = anchorCollegeName;
-    final exampleQueries = (anchor != null && anchor.isNotEmpty)
-        ? AiAssistantConstants.collegeExampleQueries
-        : AiAssistantConstants.exampleQueries;
 
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.lg),
@@ -371,33 +361,6 @@ class _EmptyState extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: AppSpacing.section),
-        FadeInSection(
-          delayMs: 80,
-          child: Text(
-            'Try asking',
-            style: AppFonts.plusJakarta(
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.3,
-              color: tokens.textPrimary,
-            ),
-          ),
-        ),
-        const SizedBox(height: AppSpacing.md),
-        ...exampleQueries.asMap().entries.map(
-              (entry) => FadeInSection(
-                delayMs: 100 + (entry.key * 40),
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                  child: PremiumChip(
-                    label: entry.value,
-                    icon: Icons.auto_awesome_rounded,
-                    onTap: () => onExampleTap(entry.value),
-                  ),
-                ),
-              ),
-            ),
       ],
     );
   }
