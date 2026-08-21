@@ -4,6 +4,7 @@ import '../../../core/constants/ai_assistant_constants.dart';
 import '../../../core/constants/ranking_constants.dart';
 import '../../colleges/models/college_model.dart';
 import '../../colleges/repositories/college_repository.dart';
+import '../../colleges/utils/college_search_utils.dart';
 import '../../ranking/models/ranking_models.dart';
 import '../../ranking/utils/smart_recommendation_engine.dart';
 import '../models/ai_assistant_message.dart';
@@ -81,7 +82,14 @@ class AiAssistantService {
       );
     }
 
-    final resolvedCollege = await _resolveCollegeFromQuery(query);
+    // A query naming an explicit city/state (e.g. "best engineering college
+    // in Mumbai") is a list/ranking request, never a lookup for one
+    // specific named college -- skip the single-college resolver entirely
+    // so it can't hijack a location-scoped question into an answer about
+    // one arbitrary (and possibly wrong-city) college.
+    final hasExplicitLocation = intent.city != null || intent.state != null;
+    final resolvedCollege =
+        hasExplicitLocation ? null : await _resolveCollegeFromQuery(query);
     if (resolvedCollege != null && _isCollegeSpecificQuestion(query, topic)) {
       return _answerAboutCollege(
         college: resolvedCollege,
@@ -393,7 +401,12 @@ class AiAssistantService {
       firestoreCourse = null;
     }
 
-    if (intent.city != null || intent.state != null || firestoreCourse != null) {
+    // An explicit city/state in the question is a hard constraint, not a
+    // ranking preference -- it must never be silently dropped in favour of
+    // an unrelated-location fallback below.
+    final hasExplicitLocation = intent.city != null || intent.state != null;
+
+    if (hasExplicitLocation || firestoreCourse != null) {
       final page = await _collegeRepository.searchColleges(
         city: intent.city,
         state: intent.state,
@@ -401,6 +414,35 @@ class AiAssistantService {
         limit: limit,
       );
       if (page.colleges.isNotEmpty) return page.colleges;
+
+      // The course was too narrow for this location (e.g. a real city with
+      // colleges, just none tagged with the exact course token) -- retry
+      // keeping the location and dropping only the course, so a genuine
+      // "engineering colleges in <real city>" still returns that city's
+      // colleges instead of nothing.
+      if (hasExplicitLocation && firestoreCourse != null) {
+        final locationOnly = await _collegeRepository.searchColleges(
+          city: intent.city,
+          state: intent.state,
+          limit: limit,
+        );
+        if (locationOnly.colleges.isNotEmpty) return locationOnly.colleges;
+      }
+    }
+
+    // Location was explicitly requested but nothing matched it, even after
+    // relaxing the course. Do NOT fall through to featured/global/name-hint
+    // results below -- those ignore location entirely and are exactly how
+    // "best engineering college in Mumbai" used to come back with Kanpur/
+    // Bangalore/Pune colleges. Returning empty here means the caller
+    // reports "no colleges match ... in Mumbai" instead.
+    if (hasExplicitLocation) {
+      _log(
+        'no candidates matched explicit location city=${intent.city} '
+        'state=${intent.state} -- returning empty rather than an '
+        'unrelated-location fallback',
+      );
+      return const [];
     }
 
     if (intent.sortBy == AiSortPriority.placements ||
@@ -430,6 +472,24 @@ class AiAssistantService {
     AiQueryIntent intent,
   ) {
     return colleges.where((c) {
+      // Defense in depth: an explicit city/state must hold regardless of
+      // which path fetched these candidates (Firestore query, featured
+      // list, autocomplete hints...) -- reuses the same city-alias
+      // matching (Mumbai/Bombay, Mumbai City, Greater Mumbai, etc. all
+      // contain "mumbai") the rest of college search already relies on,
+      // no new normalization logic and no data changes.
+      if (intent.city != null &&
+          !CollegeSearchUtils.cityMatchesCollege(
+            cityLower: c.cityLower,
+            districtLower: c.districtLower,
+            cityFilter: intent.city!,
+          )) {
+        return false;
+      }
+      if (intent.state != null &&
+          c.stateLower != CollegeSearchUtils.normalizeState(intent.state!)) {
+        return false;
+      }
       if (intent.collegeType != null &&
           c.type.toLowerCase() != intent.collegeType!.toLowerCase()) {
         return false;

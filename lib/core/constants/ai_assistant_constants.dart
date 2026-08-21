@@ -17,7 +17,6 @@ class AiAssistantConstants {
     'Is this college good for CSE?',
     'How are placements?',
     'Hostel review?',
-    'Average package?',
     'Is ragging reported?',
     'Compare two colleges',
     'Best colleges under my CET percentile 92',
@@ -26,15 +25,18 @@ class AiAssistantConstants {
 
   /// "Try asking" prompts scoped to a specific college — used when the
   /// assistant is opened from a College Detail page (`anchorCollegeName`
-  /// set). Every question routes through the same real, Firestore-grounded
-  /// query pipeline as [exampleQueries]; only the displayed prompt text is
+  /// set). Deliberately simple and general (not overly specific numeric
+  /// questions like exact average/highest package) so the assistant isn't
+  /// guessing what detail the user wants -- they can ask that themselves.
+  /// Every question routes through the same real, Firestore-grounded query
+  /// pipeline as [exampleQueries]; only the displayed prompt text is
   /// templated with the real college name.
   static List<String> collegeExampleQueries(String collegeName) => [
+        'Is $collegeName a good college?',
+        'How are the placements at $collegeName?',
+        'How is the campus at $collegeName?',
+        'How is the hostel at $collegeName?',
         'Is $collegeName good for CSE?',
-        'How are placements at $collegeName?',
-        'What is the hostel experience at $collegeName?',
-        'What do verified students say about $collegeName?',
-        'What is the average package at $collegeName?',
       ];
 
   static const List<String> exampleQueriesHi = [
