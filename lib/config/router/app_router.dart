@@ -1,6 +1,8 @@
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
+import 'package:flutter/foundation.dart';
 import '../../core/services/analytics_service.dart';
 import 'go_router_refresh_stream.dart';
 import '../../features/auth/screens/splash_screen.dart';
@@ -109,6 +111,145 @@ import 'route_names.dart';
 import '../../core/widgets/app_shell.dart';
 import '../../core/widgets/page_transitions.dart';
 
+void _routerLog(String message) {
+  if (kDebugMode) debugPrint('[AppRouter] $message');
+}
+
+/// The pre-Flutter HTML splash graphic (`index.html`'s `#splash` element,
+/// preserved by `FlutterNativeSplash.preserve()` in `main()`) used to be
+/// removed only from inside `SplashScreen`'s `initState`. On a Flutter Web
+/// hard refresh (or a pasted deep link) landing directly on any route other
+/// than the splash path (`/`) -- e.g. `/college-details/<id>` --
+/// `SplashScreen` is never built at all, so that removal call never fired
+/// and the HTML splash graphic stayed on screen forever, fully covering
+/// whatever the app had actually rendered underneath it. Removing it here
+/// instead -- once per app lifetime, right when the first redirect
+/// resolution completes for whichever route the browser actually opened --
+/// covers every entry route, not just the splash one, without making
+/// routing wait on anything beyond the same auth/session checks the
+/// redirect already performs.
+bool _nativeSplashRemoved = false;
+void _removeNativeSplashOnce() {
+  if (_nativeSplashRemoved) return;
+  _nativeSplashRemoved = true;
+  _routerLog('removing native HTML splash (first redirect resolved)');
+  FlutterNativeSplash.remove();
+}
+
+Future<String?> _resolveRedirect(
+  Ref ref,
+  FirebaseAuth firebaseAuth,
+  GoRouterRefreshStream authRefresh,
+  GoRouterState state,
+) async {
+  final path = state.uri.path;
+
+  // Never block splash — it handles its own navigation.
+  if (path == RouteNames.splash) return null;
+
+  // On first load (including a Flutter Web hard refresh), wait for
+  // Firebase Auth to finish restoring any persisted session before
+  // trusting `currentUser`. Otherwise an already-logged-in user briefly
+  // reads as logged-out and gets bounced to /login for a flash on every
+  // refresh of a protected route. Bounded so a genuinely logged-out
+  // user (or a slow/broken auth SDK) is never stuck waiting.
+  try {
+    await authRefresh.firstEvent.timeout(const Duration(seconds: 4));
+  } catch (_) {
+    // Timed out — proceed with whatever currentUser currently reads.
+  }
+
+  final isLoggedIn = firebaseAuth.currentUser != null;
+  final isCollegeDetailPublic = RegExp(
+    r'^/college-details/[^/]+/?$',
+  ).hasMatch(path);
+  final isPublicRoute =
+      path == RouteNames.onboarding ||
+      path == RouteNames.login ||
+      path == RouteNames.adminLogin ||
+      path == RouteNames.signup ||
+      path == RouteNames.forgotPassword ||
+      path == RouteNames.home ||
+      path == RouteNames.collegeSearch ||
+      path == RouteNames.collegeBrowse ||
+      path == RouteNames.privacyPolicy ||
+      path == RouteNames.termsOfService ||
+      isCollegeDetailPublic;
+
+  if (!isLoggedIn && !isPublicRoute) {
+    if (path.startsWith('/admin') && path != RouteNames.adminLogin) {
+      return RouteNames.adminLogin;
+    }
+    final intended = state.uri.toString();
+    return RouteNames.loginWithReturn(intended);
+  }
+
+  Future<UserModel?> userDetail() async {
+    try {
+      return await ref
+          .read(currentUserDetailProvider.future)
+          .timeout(const Duration(seconds: 8));
+    } catch (_) {
+      return null;
+    }
+  }
+
+  if (isLoggedIn &&
+      (path == RouteNames.login ||
+          path == RouteNames.signup ||
+          path == RouteNames.onboarding ||
+          path == RouteNames.forgotPassword)) {
+    final user = await userDetail();
+    if (user != null && !user.displayNameSetupComplete) {
+      final from = state.uri.queryParameters['from'];
+      return RouteNames.displayNameSetupWithReturn(from);
+    }
+    if (path == RouteNames.login || path == RouteNames.signup) {
+      final returnTo = RouteNames.safeReturnPath(
+        state.uri.queryParameters['from'],
+      );
+      if (returnTo != null) return returnTo;
+    }
+    return RouteNames.home;
+  }
+
+  if (isLoggedIn && path != RouteNames.displayNameSetup) {
+    final user = await userDetail();
+    if (user != null && !user.displayNameSetupComplete) {
+      final intended = state.uri.toString();
+      return RouteNames.displayNameSetupWithReturn(intended);
+    }
+  }
+
+  if (path == RouteNames.adminLogin) {
+    if (isLoggedIn) {
+      try {
+        final isStaff = await ref
+            .read(isStaffProvider.future)
+            .timeout(const Duration(seconds: 8));
+        if (isStaff) return RouteNames.admin;
+      } catch (_) {
+        return RouteNames.home;
+      }
+    }
+    return null;
+  }
+
+  final isAdminRoute = path.startsWith('/admin');
+  if (isAdminRoute && isLoggedIn) {
+    try {
+      final isStaff = await ref
+          .read(isStaffProvider.future)
+          .timeout(const Duration(seconds: 8));
+      if (!isStaff) return RouteNames.home;
+    } catch (_) {
+      return RouteNames.home;
+    }
+  }
+
+  return null;
+}
+
 final appRouterProvider = Provider<GoRouter>((ref) {
   final firebaseAuth = FirebaseAuth.instance;
   final authRefresh = GoRouterRefreshStream(firebaseAuth.authStateChanges());
@@ -122,105 +263,22 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     observers: [AnalyticsService.observer],
     redirect: (context, state) async {
       final path = state.uri.path;
-
-      // Never block splash — it handles its own navigation.
-      if (path == RouteNames.splash) return null;
-
-      // On first load (including a Flutter Web hard refresh), wait for
-      // Firebase Auth to finish restoring any persisted session before
-      // trusting `currentUser`. Otherwise an already-logged-in user briefly
-      // reads as logged-out and gets bounced to /login for a flash on every
-      // refresh of a protected route. Bounded so a genuinely logged-out
-      // user (or a slow/broken auth SDK) is never stuck waiting.
-      try {
-        await authRefresh.firstEvent.timeout(const Duration(seconds: 4));
-      } catch (_) {
-        // Timed out — proceed with whatever currentUser currently reads.
-      }
-
-      final isLoggedIn = firebaseAuth.currentUser != null;
-      final isCollegeDetailPublic = RegExp(r'^/college-details/[^/]+/?$')
-          .hasMatch(path);
-      final isPublicRoute = path == RouteNames.onboarding ||
-          path == RouteNames.login ||
-          path == RouteNames.adminLogin ||
-          path == RouteNames.signup ||
-          path == RouteNames.forgotPassword ||
-          path == RouteNames.home ||
-          path == RouteNames.collegeSearch ||
-          path == RouteNames.collegeBrowse ||
-          path == RouteNames.privacyPolicy ||
-          path == RouteNames.termsOfService ||
-          isCollegeDetailPublic;
-
-      if (!isLoggedIn && !isPublicRoute) {
-        if (path.startsWith('/admin') && path != RouteNames.adminLogin) {
-          return RouteNames.adminLogin;
-        }
-        final intended = state.uri.toString();
-        return RouteNames.loginWithReturn(intended);
-      }
-
-      Future<UserModel?> userDetail() async {
-        try {
-          return await ref
-              .read(currentUserDetailProvider.future)
-              .timeout(const Duration(seconds: 8));
-        } catch (_) {
-          return null;
-        }
-      }
-
-      if (isLoggedIn &&
-          (path == RouteNames.login ||
-              path == RouteNames.signup ||
-              path == RouteNames.onboarding ||
-              path == RouteNames.forgotPassword)) {
-        final user = await userDetail();
-        if (user != null && !user.displayNameSetupComplete) {
-          final from = state.uri.queryParameters['from'];
-          return RouteNames.displayNameSetupWithReturn(from);
-        }
-        if (path == RouteNames.login || path == RouteNames.signup) {
-          final returnTo = RouteNames.safeReturnPath(
-            state.uri.queryParameters['from'],
-          );
-          if (returnTo != null) return returnTo;
-        }
-        return RouteNames.home;
-      }
-
-      if (isLoggedIn && path != RouteNames.displayNameSetup) {
-        final user = await userDetail();
-        if (user != null && !user.displayNameSetupComplete) {
-          final intended = state.uri.toString();
-          return RouteNames.displayNameSetupWithReturn(intended);
-        }
-      }
-
-      if (path == RouteNames.adminLogin) {
-        if (isLoggedIn) {
-          try {
-            final isStaff = await ref.read(isStaffProvider.future);
-            if (isStaff) return RouteNames.admin;
-          } catch (_) {
-            return RouteNames.home;
-          }
-        }
-        return null;
-      }
-
-      final isAdminRoute = path.startsWith('/admin');
-      if (isAdminRoute && isLoggedIn) {
-        try {
-          final isStaff = await ref.read(isStaffProvider.future);
-          if (!isStaff) return RouteNames.home;
-        } catch (_) {
-          return RouteNames.home;
-        }
-      }
-
-      return null;
+      _routerLog('START redirect path=$path');
+      final result = await _resolveRedirect(
+        ref,
+        firebaseAuth,
+        authRefresh,
+        state,
+      );
+      _routerLog(
+        result == null
+            ? 'END redirect path=$path -- rendering as-is'
+            : 'REDIRECT path=$path -> $result',
+      );
+      // See _removeNativeSplashOnce's doc comment: this must fire for every
+      // entry route, not only the splash one.
+      _removeNativeSplashOnce();
+      return result;
     },
     routes: [
       GoRoute(
@@ -345,7 +403,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final collegeId = state.pathParameters['collegeId']!;
           final name = state.uri.queryParameters['name'] ?? 'College';
-          return ReportCollegeDataScreen(collegeId: collegeId, collegeName: name);
+          return ReportCollegeDataScreen(
+            collegeId: collegeId,
+            collegeName: name,
+          );
         },
       ),
       GoRoute(
@@ -491,10 +552,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final id = state.pathParameters['id']!;
           final collegeName = state.uri.queryParameters['name'] ?? 'College';
-          return SubmitPlacementScreen(
-            collegeId: id,
-            collegeName: collegeName,
-          );
+          return SubmitPlacementScreen(collegeId: id, collegeName: collegeName);
         },
       ),
       GoRoute(
