@@ -43,6 +43,8 @@ class AiAssistantService {
     List<String> contextCollegeIds = const [],
     String? userCity,
     String? userState,
+    String? conversationCity,
+    String? conversationState,
     CollegeModel? anchorCollege,
     AiAssistantMode mode = AiAssistantMode.chat,
   }) async {
@@ -58,6 +60,8 @@ class AiAssistantService {
       contextCollegeIds: contextCollegeIds,
       userCity: userCity,
       userState: userState,
+      conversationCity: conversationCity,
+      conversationState: conversationState,
     );
 
     if (mode == AiAssistantMode.compare ||
@@ -157,6 +161,12 @@ class AiAssistantService {
       createdAt: DateTime.now(),
       dataGrounded: true,
       mode: mode,
+      // Only stamped when this reply actually matched something for that
+      // location -- a zero-result "no colleges match X" reply must not
+      // poison the next follow-up into silently reusing a location that
+      // just proved to have no verified data.
+      resolvedCity: dedupedRecommendations.isNotEmpty ? intent.city : null,
+      resolvedState: dedupedRecommendations.isNotEmpty ? intent.state : null,
     );
   }
 

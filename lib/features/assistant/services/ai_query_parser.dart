@@ -141,11 +141,19 @@ class AiQueryParser {
     List<String> contextCollegeIds = const [],
     String? userCity,
     String? userState,
+    String? conversationCity,
+    String? conversationState,
   }) {
     final normalized = _normalize(rawQuery);
     final languages = _detectLanguages(rawQuery);
     final type = _detectQueryType(normalized, contextCollegeIds);
+    // conversationCity/State carry forward the location the CURRENT chat
+    // was just discussing (e.g. "best colleges in Pune" -> "what about
+    // CSE?" should stay scoped to Pune without the user repeating it).
+    // They only apply when this message names no location of its own --
+    // an explicit city/state in the text always wins.
     final city = _extractCity(normalized) ??
+        conversationCity ??
         (normalized.contains('near me') ||
                 normalized.contains('mere paas') ||
                 normalized.contains('mera paas') ||
@@ -154,7 +162,7 @@ class AiQueryParser {
                 normalized.contains('पास')
             ? userCity
             : null);
-    final state = _extractState(normalized) ?? userState;
+    final state = _extractState(normalized) ?? conversationState ?? userState;
     final course = _extractCourse(normalized);
     final collegeType = _extractCollegeType(normalized);
     final naacGrade = _extractNaacGrade(normalized);

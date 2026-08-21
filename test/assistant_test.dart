@@ -63,6 +63,26 @@ void main() {
       expect(intent.nearMe, isTrue);
       expect(intent.city, 'Pune');
     });
+
+    test('follow-up with no location inherits conversation city/state', () {
+      final intent = parser.parse(
+        'What about CSE?',
+        conversationCity: 'Pune',
+        conversationState: 'Maharashtra',
+      );
+      expect(intent.city, 'Pune');
+      expect(intent.state, 'Maharashtra');
+      expect(intent.course, 'Computer Engineering');
+    });
+
+    test('an explicit new location always overrides conversation memory', () {
+      final intent = parser.parse(
+        'Best colleges in Nagpur',
+        conversationCity: 'Pune',
+        conversationState: 'Maharashtra',
+      );
+      expect(intent.city, 'Nagpur');
+    });
   });
 
   group('AiCollegeRanker', () {

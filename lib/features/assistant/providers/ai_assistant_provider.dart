@@ -85,6 +85,16 @@ class AiAssistantNotifier extends StateNotifier<AiAssistantState> {
   final Ref _ref;
   String? _lastQuery;
 
+  // Conversation-scoped location memory for the general (non-anchored)
+  // explore chat -- e.g. "best colleges in Pune" then "what about CSE?"
+  // should stay scoped to Pune without the user repeating it. Updated only
+  // from a reply that actually matched something for that location (see
+  // AiAssistantService.processQuery), and reset on clearConversation().
+  // Irrelevant in college-anchored mode, which already stays scoped via
+  // anchorCollegeId for every message.
+  String? _lastResolvedCity;
+  String? _lastResolvedState;
+
   Future<void> _loadHistory() async {
     final saved = await AiConversationStore.load();
     if (saved.isNotEmpty) {
@@ -128,6 +138,8 @@ class AiAssistantNotifier extends StateNotifier<AiAssistantState> {
       mode: state.mode,
       historyLoaded: true,
     );
+    _lastResolvedCity = null;
+    _lastResolvedState = null;
     await AiConversationStore.clear();
   }
 
@@ -225,12 +237,18 @@ class AiAssistantNotifier extends StateNotifier<AiAssistantState> {
             return result;
           }
         }
-        _log('START processQuery (no anchor college)');
+        _log(
+          'START processQuery (no anchor college) -- '
+          'conversationCity=${_lastResolvedCity ?? "(none)"} '
+          'conversationState=${_lastResolvedState ?? "(none)"}',
+        );
         final result = await _service.processQuery(
           query: trimmed,
           contextCollegeIds: state.contextCollegeIds,
           userCity: userCity,
           userState: userState,
+          conversationCity: _lastResolvedCity,
+          conversationState: _lastResolvedState,
           mode: state.mode,
         );
         _log('SUCCESS processQuery');
@@ -239,6 +257,19 @@ class AiAssistantNotifier extends StateNotifier<AiAssistantState> {
 
       final response = await runPipeline().timeout(_queryTimeout);
       _log('SUCCESS query -- dataGrounded=${response.dataGrounded}');
+
+      // Only a genuinely anchor-free reply updates conversation location
+      // memory -- college-anchored replies never set resolvedCity/State
+      // (they stay scoped via anchorCollegeId instead), and a reply must
+      // have actually found something to be worth remembering.
+      if (state.anchorCollegeId == null) {
+        if (response.resolvedCity != null) {
+          _lastResolvedCity = response.resolvedCity;
+        }
+        if (response.resolvedState != null) {
+          _lastResolvedState = response.resolvedState;
+        }
+      }
 
       final newContextIds = <String>{
         ...state.contextCollegeIds,

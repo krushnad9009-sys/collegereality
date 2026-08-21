@@ -18,6 +18,16 @@ class AiAssistantMessage {
   final DateTime createdAt;
   final bool dataGrounded;
 
+  /// The city/state this reply's answer was actually scoped to, when it
+  /// came from a general (non-college-anchored) location search -- e.g.
+  /// "best colleges in Pune" resolves to city="Pune". Carried forward
+  /// in-memory only (not persisted) so a same-session follow-up like "what
+  /// about CSE?" can stay scoped to the same place without the user
+  /// repeating it. Null whenever the reply had no location of its own
+  /// (college-anchored answers, off-topic replies, comparisons, etc).
+  final String? resolvedCity;
+  final String? resolvedState;
+
   const AiAssistantMessage({
     required this.id,
     required this.role,
@@ -29,6 +39,8 @@ class AiAssistantMessage {
     this.mode = AiAssistantMode.chat,
     required this.createdAt,
     this.dataGrounded = true,
+    this.resolvedCity,
+    this.resolvedState,
   });
 
   factory AiAssistantMessage.fromJson(Map<String, dynamic> json) {

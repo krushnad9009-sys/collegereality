@@ -69,6 +69,7 @@ void main() {
       // The manual input path must still be fully present and enabled.
       expect(find.byType(TextField), findsOneWidget);
       expect(find.byIcon(Icons.send_rounded), findsOneWidget);
+      expect(find.text('Ask anything about colleges...'), findsOneWidget);
 
       await tester.enterText(
         find.byType(TextField),
@@ -94,6 +95,16 @@ void main() {
       expect(find.textContaining('Is this college good'), findsNothing);
       expect(find.textContaining('How is the hostel'), findsNothing);
       expect(find.byType(TextField), findsOneWidget);
+
+      // College context banner + contextual placeholder.
+      expect(
+        find.text('Asking about Test Engineering College'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Ask anything about this college...'),
+        findsOneWidget,
+      );
     },
   );
 }

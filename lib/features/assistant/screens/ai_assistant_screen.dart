@@ -262,6 +262,7 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
             controller: _controller,
             onSend: _send,
             enabled: !state.isLoading,
+            hasAnchorCollege: widget.anchorCollegeName != null,
           ),
         ],
       ),
@@ -670,11 +671,13 @@ class _InputBar extends StatelessWidget {
   final TextEditingController controller;
   final VoidCallback onSend;
   final bool enabled;
+  final bool hasAnchorCollege;
 
   const _InputBar({
     required this.controller,
     required this.onSend,
     required this.enabled,
+    this.hasAnchorCollege = false,
   });
 
   @override
@@ -716,7 +719,9 @@ class _InputBar extends StatelessWidget {
                   textInputAction: TextInputAction.send,
                   onSubmitted: enabled ? (_) => onSend() : null,
                   decoration: InputDecoration(
-                    hintText: 'Ask anything about colleges...',
+                    hintText: hasAnchorCollege
+                        ? 'Ask anything about this college...'
+                        : 'Ask anything about colleges...',
                     hintStyle: AppTypography.searchHint(''),
                     filled: true,
                     fillColor: tokens.surfaceElevated,
