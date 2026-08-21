@@ -31,7 +31,9 @@ class AppTheme {
   static const Color gray800 = Color(0xFF1E293B);
   static const Color gray900 = Color(0xFF0F172A);
 
-  static const Color surfaceMuted = Color(0xFFF4F7F8);
+  // Near-white, slightly warm neutral — matches AppDesignTokens.light so
+  // the scaffold background and the token consumers agree on one base.
+  static const Color surfaceMuted = Color(0xFFFAFAF9);
 
   static ThemeData get lightTheme => _buildTheme(
         brightness: Brightness.light,

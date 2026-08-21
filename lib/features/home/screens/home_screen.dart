@@ -89,19 +89,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ? 'Real reviews & verified CR Scores, personalized for you'
         : 'Find the right college with real student information';
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    // A touch cooler than the shared surfaceMuted token — Home specifically
-    // wanted the page to read as a tinted surface rather than flat white,
-    // without changing the app-wide token other screens rely on.
-    final homeBackground = isDark
-        ? context.tokens.surfaceMuted
-        : Color.alphaBlend(
-            Theme.of(context).colorScheme.primary.withValues(alpha: 0.035),
-            context.tokens.surfaceMuted,
-          );
-
+    // Near-white / soft neutral base, no colour wash — a tinted background
+    // was the #1 complaint ("looks unfinished"); depth now comes from the
+    // hero panel's one deliberately tinted surface and card elevation
+    // instead of tinting the whole page.
     return Scaffold(
-      backgroundColor: homeBackground,
+      backgroundColor: context.tokens.surfaceMuted,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _onRefresh,

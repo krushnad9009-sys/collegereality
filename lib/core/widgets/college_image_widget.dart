@@ -12,6 +12,11 @@ class CollegeImageWidget extends StatelessWidget {
   final BoxFit fit;
   final BorderRadius? borderRadius;
 
+  /// Threaded through to [BrandedCampusFallback] so its no-photo/loading/
+  /// error placeholder can render this college's own initials instead of a
+  /// generic mark. Optional — omitted call sites keep the generic fallback.
+  final String? collegeName;
+
   const CollegeImageWidget({
     required this.collegeId,
     this.imageUrl,
@@ -19,6 +24,7 @@ class CollegeImageWidget extends StatelessWidget {
     this.width,
     this.fit = BoxFit.cover,
     this.borderRadius,
+    this.collegeName,
     super.key,
   });
 
@@ -32,6 +38,7 @@ class CollegeImageWidget extends StatelessWidget {
     if (resolvedUrl == null) {
       return BrandedCampusFallback(
         collegeId: collegeId,
+        collegeName: collegeName,
         height: height,
         width: width,
         borderRadius: borderRadius,
@@ -52,12 +59,14 @@ class CollegeImageWidget extends StatelessWidget {
       filterQuality: FilterQuality.medium,
       placeholder: (_, _) => BrandedCampusFallback(
         collegeId: collegeId,
+        collegeName: collegeName,
         height: height,
         width: width,
         borderRadius: borderRadius,
       ),
       errorWidget: (_, _, _) => BrandedCampusFallback(
         collegeId: collegeId,
+        collegeName: collegeName,
         height: height,
         width: width,
         borderRadius: borderRadius,

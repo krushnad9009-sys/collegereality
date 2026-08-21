@@ -17,8 +17,9 @@ import '../../engagement/providers/engagement_provider.dart';
 import '../../ranking/utils/cr_score_engine.dart';
 
 const double _kCardWidth = 250;
-const double _kCardHeight = 300;
-const double _kMediaHeight = 168;
+const double _kCardHeight = 316;
+// A true 16:9 cover, as specified, rather than the old ~1.5:1 crop.
+const double _kMediaHeight = _kCardWidth / 16 * 9;
 
 /// "Featured / Recommended Colleges" — the ONE college-discovery carousel
 /// on Home (replaces the old Featured/Trending/Top-Rated/Placement-highlight
@@ -75,9 +76,10 @@ class FeaturedCollegesSection extends ConsumerWidget {
   }
 }
 
-/// A single college card that honestly reflects whether a verified photo
-/// exists: image-dominant when it does, a compact honest data card when it
-/// doesn't — never a fake gradient pretending to be a campus photo.
+/// A single college discovery card: a real 16:9 cover photo when one exists,
+/// or a graceful deterministic gradient (generated from the college itself,
+/// carrying its own initials) when it doesn't — never a plain flat circle
+/// standing in for a photo, and never a fake image pretending to be one.
 class HomeCollegeDiscoveryCard extends ConsumerStatefulWidget {
   final CollegeModel college;
 
@@ -109,16 +111,10 @@ class _HomeCollegeDiscoveryCardState extends ConsumerState<HomeCollegeDiscoveryC
     final tokens = context.tokens;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final college = widget.college;
-    final hasPhoto = (college.coverPhotoUrl ?? '').isNotEmpty;
     final crScore = CrScoreEngine.effectiveScore(college);
     final isVerified = college.verifiedStudentCount > 0 || college.reviewCount >= 3;
     final favoriteIds = ref.watch(favoriteCollegeIdsProvider).valueOrNull ?? {};
     final isSaved = favoriteIds.contains(college.id);
-    final supportingFact = college.placements.averagePackageLpa > 0
-        ? '₹${college.placements.averagePackageLpa.toStringAsFixed(1)}L avg. package'
-        : college.reviewCount > 0
-            ? '${college.reviewCount} student reviews'
-            : 'New on College Reality';
 
     return GestureDetector(
       onTapDown: (_) => setState(() => _pressed = true),
@@ -135,106 +131,137 @@ class _HomeCollegeDiscoveryCardState extends ConsumerState<HomeCollegeDiscoveryC
           decoration: BoxDecoration(
             color: tokens.surfaceElevated,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: Theme.of(context).colorScheme.primary.withValues(alpha: isDark ? 0.18 : 0.1),
-            ),
+            border: Border.all(color: tokens.borderSubtle),
             boxShadow: isDark
                 ? null
                 : [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 16, offset: const Offset(0, 6))],
           ),
-          clipBehavior: Clip.antiAlias,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          clipBehavior: Clip.none,
+          child: Stack(
+            clipBehavior: Clip.none,
             children: [
-              SizedBox(
-                height: _kMediaHeight,
-                width: _kCardWidth,
-                child: hasPhoto
-                    ? Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          CollegeImageWidget(
-                            collegeId: college.id,
-                            imageUrl: college.coverPhotoUrl,
-                            height: _kMediaHeight,
-                            width: _kCardWidth,
-                          ),
-                          Positioned(
-                            top: 8,
-                            right: 8,
-                            child: _BookmarkButton(isSaved: isSaved, onTap: _toggleSave),
-                          ),
-                        ],
-                      )
-                    : _DataFirstMedia(college: college, isSaved: isSaved, onBookmark: _toggleSave),
-              ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(13, 10, 13, 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            college.name,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: AppFonts.plusJakarta(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w800,
-                              height: 1.2,
-                              letterSpacing: -0.2,
-                              color: tokens.textPrimary,
+              Positioned(
+                left: 0,
+                right: 0,
+                top: 0,
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                  child: SizedBox(
+                    height: _kMediaHeight,
+                    width: _kCardWidth,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        CollegeImageWidget(
+                          collegeId: college.id,
+                          imageUrl: college.coverPhotoUrl,
+                          collegeName: college.name,
+                          height: _kMediaHeight,
+                          width: _kCardWidth,
+                        ),
+                        // Subtle dark gradient at the foot of the cover so a
+                        // name (or the logo badge below) always reads
+                        // cleanly against the photo, whatever its colours.
+                        Positioned(
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          child: Container(
+                            height: _kMediaHeight * 0.42,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Colors.transparent,
+                                  Colors.black.withValues(alpha: 0.34),
+                                ],
+                              ),
                             ),
                           ),
-                          const SizedBox(height: 3),
-                          Text(
-                            '${college.city} · ${college.category}',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: AppFonts.plusJakarta(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w500,
-                              color: tokens.textTertiary,
+                        ),
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: _BookmarkButton(isSaved: isSaved, onTap: _toggleSave),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              // Circular initials badge overlapping the cover/body seam,
+              // with a white ring so it reads clearly over any photo.
+              Positioned(
+                left: 12,
+                top: _kMediaHeight - 30,
+                child: Container(
+                  padding: const EdgeInsets.all(3),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                  child: CollegeLogoWidget(
+                    collegeId: college.id,
+                    collegeName: college.name,
+                    logoUrl: college.logoUrl,
+                    radius: 19,
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 0,
+                right: 0,
+                top: _kMediaHeight,
+                bottom: 0,
+                child: Padding(
+                  // Extra top padding clears the initials badge, which
+                  // overlaps ~14px below the cover image at this point.
+                  padding: const EdgeInsets.fromLTRB(13, 22, 13, 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        college.name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppFonts.plusJakarta(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          height: 1.2,
+                          letterSpacing: -0.2,
+                          color: tokens.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Row(
+                        children: [
+                          if (isVerified) ...[
+                            const Icon(Icons.verified_rounded, size: 13, color: Color(0xFF0F766E)),
+                            const SizedBox(width: 3),
+                          ],
+                          Expanded(
+                            child: Text(
+                              '${college.city} · ${college.category}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppFonts.plusJakarta(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w500,
+                                color: tokens.textTertiary,
+                              ),
                             ),
                           ),
                         ],
                       ),
-                      Row(
+                      const Spacer(),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
                         children: [
-                          if (isVerified) ...[
-                            const Icon(Icons.verified_rounded, size: 14, color: Color(0xFF0F766E)),
-                            const SizedBox(width: 3),
-                          ],
-                          if (crScore > 0) ...[
-                            Icon(Icons.star_rounded, size: 14, color: const Color(0xFFD97706)),
-                            const SizedBox(width: 2),
-                            Text(
-                              college.aggregatedRatings.overall > 0
-                                  ? college.aggregatedRatings.overall.toStringAsFixed(1)
-                                  : crScore.toStringAsFixed(0),
-                              style: AppFonts.plusJakarta(fontSize: 12.5, fontWeight: FontWeight.w700, color: tokens.textPrimary),
-                            ),
-                            const SizedBox(width: 6),
-                            Text('·', style: AppFonts.plusJakarta(fontSize: 12.5, color: tokens.textTertiary)),
-                            const SizedBox(width: 6),
-                          ],
-                          Expanded(
-                            child: Text(
-                              supportingFact,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: AppFonts.plusJakarta(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFF15803D),
-                              ),
-                            ),
-                          ),
+                          if (crScore > 0) HomeCrScoreBadge(score: crScore),
+                          ..._metricChips(college),
                         ],
                       ),
                     ],
@@ -247,46 +274,70 @@ class _HomeCollegeDiscoveryCardState extends ConsumerState<HomeCollegeDiscoveryC
       ),
     );
   }
+
+  /// Up to two compact metric chips, in priority order — whichever real
+  /// signals actually exist for this college. Never fabricated; a college
+  /// with none of these simply shows the CR Score badge alone.
+  List<Widget> _metricChips(CollegeModel college) {
+    final chips = <Widget>[];
+    if (college.placements.placementPercentage > 0) {
+      chips.add(_MetricChip(
+        icon: Icons.trending_up_rounded,
+        label: '${college.placements.placementPercentage.toStringAsFixed(0)}% placed',
+        color: const Color(0xFF15803D),
+      ));
+    } else if (college.placements.averagePackageLpa > 0) {
+      chips.add(_MetricChip(
+        icon: Icons.trending_up_rounded,
+        label: '₹${college.placements.averagePackageLpa.toStringAsFixed(1)}L avg',
+        color: const Color(0xFF15803D),
+      ));
+    }
+    if (chips.length < 2 && college.fees.tuitionMin > 0) {
+      final lakh = college.fees.tuitionMin / 100000;
+      chips.add(_MetricChip(
+        icon: Icons.account_balance_wallet_outlined,
+        label: lakh >= 1
+            ? '₹${lakh.toStringAsFixed(1)}L/yr'
+            : '₹${(college.fees.tuitionMin / 1000).toStringAsFixed(0)}k/yr',
+        color: const Color(0xFF0369A1),
+      ));
+    }
+    if (chips.isEmpty && college.reviewCount > 0) {
+      chips.add(_MetricChip(
+        icon: Icons.forum_outlined,
+        label: '${college.reviewCount} reviews',
+        color: const Color(0xFF64748B),
+      ));
+    }
+    return chips;
+  }
 }
 
-/// Honest no-photo state — a small real (or initials) logo on a neutral
-/// tinted panel, never a gradient standing in for a campus photo.
-class _DataFirstMedia extends StatelessWidget {
-  final CollegeModel college;
-  final bool isSaved;
-  final VoidCallback onBookmark;
+class _MetricChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
 
-  const _DataFirstMedia({required this.college, required this.isSaved, required this.onBookmark});
+  const _MetricChip({required this.icon, required this.label, required this.color});
 
   @override
   Widget build(BuildContext context) {
-    final tokens = context.tokens;
-    final primary = Theme.of(context).colorScheme.primary;
     return Container(
-      // A soft brand tint, not a fake photo — this is the honest,
-      // data-forward placeholder for colleges without a verified image.
-      color: Color.alphaBlend(primary.withValues(alpha: 0.05), tokens.surfaceMuted),
-      child: Stack(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Center(
-            child: Container(
-              width: 64,
-              height: 64,
-              padding: const EdgeInsets.all(3),
-              decoration: BoxDecoration(
-                color: tokens.surfaceElevated,
-                shape: BoxShape.circle,
-                border: Border.all(color: primary.withValues(alpha: 0.15)),
-              ),
-              child: CollegeLogoWidget(
-                collegeId: college.id,
-                collegeName: college.name,
-                logoUrl: college.logoUrl,
-                radius: 29,
-              ),
-            ),
+          Icon(icon, size: 11, color: color),
+          const SizedBox(width: 3),
+          Text(
+            label,
+            style: AppFonts.plusJakarta(fontSize: 11, fontWeight: FontWeight.w700, color: color),
           ),
-          Positioned(top: 8, right: 8, child: _BookmarkButton(isSaved: isSaved, onTap: onBookmark)),
         ],
       ),
     );
@@ -337,9 +388,19 @@ class HomeCrScoreBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(color: color.withValues(alpha: 0.14), borderRadius: BorderRadius.circular(999)),
-      child: Text(
-        'CR ${score.toStringAsFixed(0)}',
-        style: AppFonts.plusJakarta(fontSize: 11, fontWeight: FontWeight.w800, color: color),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // The one warm accent on the page — a star reads as "rating" most
+          // clearly in its conventional gold, kept separate from the
+          // badge's own tiered good/ok/low colour underneath.
+          Icon(Icons.star_rounded, size: 12, color: context.tokens.accentWarm),
+          const SizedBox(width: 3),
+          Text(
+            'CR ${score.toStringAsFixed(0)}',
+            style: AppFonts.plusJakarta(fontSize: 11, fontWeight: FontWeight.w800, color: color),
+          ),
+        ],
       ),
     );
   }

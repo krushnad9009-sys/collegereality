@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_fonts.dart';
+import '../../../core/widgets/skeleton_loader.dart';
 import '../../reviews/models/review_model.dart';
 import '../../reviews/widgets/star_rating_widget.dart';
 import '../providers/home_content_provider.dart';
@@ -22,9 +23,12 @@ class HomeTrustSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tokens = context.tokens;
-    final topRated = ref.watch(topRatedCollegesProvider).valueOrNull;
-    final placements = ref.watch(homePlacementHighlightsProvider).valueOrNull;
+    final topRatedAsync = ref.watch(topRatedCollegesProvider);
+    final placementsAsync = ref.watch(homePlacementHighlightsProvider);
     final reviews = ref.watch(homeRecentReviewsProvider).valueOrNull;
+
+    final topRated = topRatedAsync.valueOrNull;
+    final placements = placementsAsync.valueOrNull;
 
     final topCrScore = (topRated != null && topRated.isNotEmpty)
         ? topRated.map(CrScoreEngine.effectiveScore).reduce((a, b) => a > b ? a : b)
@@ -35,6 +39,11 @@ class HomeTrustSection extends ConsumerWidget {
     final topReview = (reviews != null && reviews.isNotEmpty) ? reviews.first : null;
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // Loading (no cached value yet) gets a shimmer, not a bare dash;
+    // settled-but-empty gets a short explanatory line instead of "—".
+    final crScoreLoading = topRatedAsync.isLoading && topRated == null;
+    final packageLoading = placementsAsync.isLoading && placements == null;
 
     return Container(
       width: double.infinity,
@@ -72,26 +81,33 @@ class HomeTrustSection extends ConsumerWidget {
             style: AppFonts.plusJakarta(fontSize: 13.5, fontWeight: FontWeight.w500, color: tokens.textSecondary, height: 1.4),
           ),
           const SizedBox(height: 18),
-          Row(
-            children: [
-              Expanded(
-                child: _TrustMetric(
-                  icon: Icons.insights_rounded,
-                  color: const Color(0xFF0369A1),
-                  value: topCrScore != null && topCrScore > 0 ? topCrScore.toStringAsFixed(0) : '—',
-                  label: 'Top CR Score',
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: _TrustMetric(
+                    icon: Icons.insights_rounded,
+                    color: const Color(0xFF0369A1),
+                    value: topCrScore != null && topCrScore > 0 ? topCrScore.toStringAsFixed(0) : null,
+                    label: 'Top CR Score',
+                    emptyText: 'Not enough verified data yet',
+                    isLoading: crScoreLoading,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _TrustMetric(
-                  icon: Icons.trending_up_rounded,
-                  color: const Color(0xFF059669),
-                  value: bestPackage != null && bestPackage > 0 ? '₹${bestPackage.toStringAsFixed(1)}L' : '—',
-                  label: 'Best package',
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _TrustMetric(
+                    icon: Icons.trending_up_rounded,
+                    color: const Color(0xFF059669),
+                    value: bestPackage != null && bestPackage > 0 ? '₹${bestPackage.toStringAsFixed(1)}L' : null,
+                    label: 'Best package',
+                    emptyText: 'Not enough verified data yet',
+                    isLoading: packageLoading,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           if (topReview != null) ...[
             const SizedBox(height: 16),
@@ -103,13 +119,25 @@ class HomeTrustSection extends ConsumerWidget {
   }
 }
 
+/// A single trust stat with a real empty-state design: a shimmer while the
+/// provider is still loading (never a flash of "—"), and a short honest
+/// explanatory line — never a bare dash — once settled with no data.
 class _TrustMetric extends StatelessWidget {
   final IconData icon;
   final Color color;
-  final String value;
+  final String? value;
   final String label;
+  final String emptyText;
+  final bool isLoading;
 
-  const _TrustMetric({required this.icon, required this.color, required this.value, required this.label});
+  const _TrustMetric({
+    required this.icon,
+    required this.color,
+    required this.value,
+    required this.label,
+    required this.emptyText,
+    required this.isLoading,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -118,6 +146,7 @@ class _TrustMetric extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
       decoration: BoxDecoration(color: tokens.surfaceElevated, borderRadius: BorderRadius.circular(16)),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(icon, color: color, size: 20),
           const SizedBox(width: 8),
@@ -126,7 +155,20 @@ class _TrustMetric extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(value, style: AppFonts.plusJakarta(fontSize: 16, fontWeight: FontWeight.w800, color: tokens.textPrimary)),
+                if (isLoading)
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 2),
+                    child: SkeletonBox(height: 18, width: 44),
+                  )
+                else if (value != null)
+                  Text(value!, style: AppFonts.plusJakarta(fontSize: 16, fontWeight: FontWeight.w800, color: tokens.textPrimary))
+                else
+                  Text(
+                    emptyText,
+                    maxLines: 2,
+                    style: AppFonts.plusJakarta(fontSize: 12, fontWeight: FontWeight.w600, color: tokens.textTertiary, height: 1.25),
+                  ),
+                const SizedBox(height: 1),
                 Text(label, style: AppFonts.plusJakarta(fontSize: 11.5, fontWeight: FontWeight.w500, color: tokens.textTertiary)),
               ],
             ),

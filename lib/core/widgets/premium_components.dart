@@ -250,9 +250,17 @@ class _FadeInSectionState extends State<FadeInSection>
       begin: const Offset(0, 0.04),
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
-    Future.delayed(Duration(milliseconds: widget.delayMs), () {
-      if (mounted) _controller.forward();
-    });
+
+    // Respect the platform's reduce-motion setting (Flutter's equivalent of
+    // prefers-reduced-motion) -- jump straight to the settled state instead
+    // of animating.
+    if (WidgetsBinding.instance.platformDispatcher.accessibilityFeatures.disableAnimations) {
+      _controller.value = 1;
+    } else {
+      Future.delayed(Duration(milliseconds: widget.delayMs), () {
+        if (mounted) _controller.forward();
+      });
+    }
   }
 
   @override

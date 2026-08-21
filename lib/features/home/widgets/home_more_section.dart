@@ -24,6 +24,7 @@ class HomeMoreSection extends StatelessWidget {
         children: [
           PremiumListRow(
             leadingIcon: Icons.auto_awesome_rounded,
+            iconColor: const Color(0xFF0369A1),
             title: 'AI Assistant',
             subtitle: 'Get personalized college recommendations',
             onTap: () => context.go(RouteNames.assistant),
@@ -31,6 +32,7 @@ class HomeMoreSection extends StatelessWidget {
           Divider(height: 1, color: tokens.borderSubtle),
           PremiumListRow(
             leadingIcon: Icons.groups_rounded,
+            iconColor: const Color(0xFF7B2D26),
             title: 'Alumni Stories',
             subtitle: 'Where graduates are today',
             onTap: () => context.go(RouteNames.careersAlumni),
@@ -38,6 +40,7 @@ class HomeMoreSection extends StatelessWidget {
           Divider(height: 1, color: tokens.borderSubtle),
           PremiumListRow(
             leadingIcon: Icons.add_circle_outline_rounded,
+            iconColor: const Color(0xFF15803D),
             title: 'Add Your College',
             subtitle: 'Not listed yet? Help us add it',
             onTap: () => context.go(RouteNames.requestCollege),

@@ -11,17 +11,34 @@ class BrandedCampusFallback extends StatelessWidget {
   final double? width;
   final BorderRadius? borderRadius;
 
+  /// Full college name, used to render a real initials watermark (e.g. "GT")
+  /// instead of a generic school icon, so every fallback is visually
+  /// distinct per college rather than identical branding. Optional so
+  /// existing call sites that only have a collegeId keep working.
+  final String? collegeName;
+
   const BrandedCampusFallback({
     required this.collegeId,
     required this.height,
     this.width,
     this.borderRadius,
+    this.collegeName,
     super.key,
   });
+
+  String get _initials {
+    final name = collegeName?.trim() ?? '';
+    if (name.isEmpty) return '';
+    final parts = name.split(RegExp(r'\s+'));
+    return parts.length >= 2
+        ? '${parts.first[0]}${parts[1][0]}'.toUpperCase()
+        : name[0].toUpperCase();
+  }
 
   @override
   Widget build(BuildContext context) {
     final colors = CollegeImageHelper.coverGradient(collegeId);
+    final initials = _initials;
 
     final content = Container(
       width: width ?? double.infinity,
@@ -36,15 +53,35 @@ class BrandedCampusFallback extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          Positioned(
-            right: -24,
-            top: -24,
-            child: Icon(
-              Icons.account_balance_rounded,
-              size: height * 0.75,
-              color: Colors.white.withValues(alpha: 0.08),
+          if (initials.isNotEmpty)
+            // The college's own initials, oversized and low-opacity, as a
+            // deterministic per-college watermark -- this is what makes
+            // every fallback look designed and distinct instead of every
+            // photo-less college sharing one identical generic mark.
+            Positioned(
+              right: -height * 0.14,
+              top: -height * 0.22,
+              child: Text(
+                initials,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: height * 0.95,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white.withValues(alpha: 0.14),
+                  height: 1,
+                  letterSpacing: -4,
+                ),
+              ),
+            )
+          else
+            Positioned(
+              right: -24,
+              top: -24,
+              child: Icon(
+                Icons.account_balance_rounded,
+                size: height * 0.75,
+                color: Colors.white.withValues(alpha: 0.08),
+              ),
             ),
-          ),
           Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -66,12 +103,12 @@ class BrandedCampusFallback extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  'College Reality',
+                  initials.isNotEmpty ? initials : 'College Reality',
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white.withValues(alpha: 0.92),
-                    letterSpacing: 0.4,
+                    fontSize: initials.isNotEmpty ? 20 : 13,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white.withValues(alpha: 0.95),
+                    letterSpacing: initials.isNotEmpty ? 1 : 0.4,
                   ),
                 ),
               ],

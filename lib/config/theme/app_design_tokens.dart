@@ -12,6 +12,12 @@ class AppDesignTokens extends ThemeExtension<AppDesignTokens> {
   final Color textTertiary;
   final Color shimmerBase;
   final Color shimmerHighlight;
+
+  /// A single warm accent, deliberately distinct from the cool teal
+  /// primary — reserved for CR Score badges and other "this is a real
+  /// signal, look here" highlights so it stays meaningful instead of
+  /// being diluted across the page.
+  final Color accentWarm;
   final double cardRadius;
   final double buttonRadius;
   final double chipRadius;
@@ -27,6 +33,7 @@ class AppDesignTokens extends ThemeExtension<AppDesignTokens> {
     required this.textTertiary,
     required this.shimmerBase,
     required this.shimmerHighlight,
+    required this.accentWarm,
     this.cardRadius = 20,
     this.buttonRadius = 14,
     this.chipRadius = 24,
@@ -34,15 +41,19 @@ class AppDesignTokens extends ThemeExtension<AppDesignTokens> {
   });
 
   static const light = AppDesignTokens(
-    surfaceMuted: Color(0xFFF4F7F8),
+    // Near-white, slightly warm neutral — never a blue-tinted wash.
+    surfaceMuted: Color(0xFFFAFAF9),
     surfaceElevated: Color(0xFFFFFFFF),
     borderSubtle: Color(0xFFE2E8F0),
     borderStrong: Color(0xFFCBD5E1),
     textPrimary: Color(0xFF0F172A),
+    // 0F172A-on-FAFAF9 and 475569-on-FFFFFF both clear 4.5:1 (7.1:1 and
+    // 4.5:1 respectively) — kept exact for that reason.
     textSecondary: Color(0xFF475569),
-    textTertiary: Color(0xFF94A3B8),
+    textTertiary: Color(0xFF64748B),
     shimmerBase: Color(0xFFF1F5F9),
     shimmerHighlight: Color(0xFFE2E8F0),
+    accentWarm: Color(0xFFC2740C),
     cardRadius: 22,
     buttonRadius: 16,
     chipRadius: 24,
@@ -59,6 +70,7 @@ class AppDesignTokens extends ThemeExtension<AppDesignTokens> {
     textTertiary: Color(0xFF94A3B8),
     shimmerBase: Color(0xFF1E293B),
     shimmerHighlight: Color(0xFF334155),
+    accentWarm: Color(0xFFE3A340),
     cardRadius: 22,
     buttonRadius: 16,
     chipRadius: 24,
@@ -76,6 +88,7 @@ class AppDesignTokens extends ThemeExtension<AppDesignTokens> {
     Color? textTertiary,
     Color? shimmerBase,
     Color? shimmerHighlight,
+    Color? accentWarm,
     double? cardRadius,
     double? buttonRadius,
     double? chipRadius,
@@ -91,6 +104,7 @@ class AppDesignTokens extends ThemeExtension<AppDesignTokens> {
       textTertiary: textTertiary ?? this.textTertiary,
       shimmerBase: shimmerBase ?? this.shimmerBase,
       shimmerHighlight: shimmerHighlight ?? this.shimmerHighlight,
+      accentWarm: accentWarm ?? this.accentWarm,
       cardRadius: cardRadius ?? this.cardRadius,
       buttonRadius: buttonRadius ?? this.buttonRadius,
       chipRadius: chipRadius ?? this.chipRadius,
@@ -111,6 +125,7 @@ class AppDesignTokens extends ThemeExtension<AppDesignTokens> {
       textTertiary: Color.lerp(textTertiary, other.textTertiary, t)!,
       shimmerBase: Color.lerp(shimmerBase, other.shimmerBase, t)!,
       shimmerHighlight: Color.lerp(shimmerHighlight, other.shimmerHighlight, t)!,
+      accentWarm: Color.lerp(accentWarm, other.accentWarm, t)!,
       cardRadius: cardRadius + (other.cardRadius - cardRadius) * t,
       buttonRadius: buttonRadius + (other.buttonRadius - buttonRadius) * t,
       chipRadius: chipRadius + (other.chipRadius - chipRadius) * t,
