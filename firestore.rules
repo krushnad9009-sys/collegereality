@@ -709,6 +709,23 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // AI chatbot per-user daily rate-limit counters — written only by the
+    // aiChatComplete Cloud Function (Admin SDK, bypasses these rules). No
+    // client read/write: a client that could reset or read its own counter
+    // could bypass the daily cap entirely.
+    match /aiUsage/{usageId} {
+      allow read, write: if false;
+    }
+
+    // AI chatbot response cache, keyed by a hash of the normalized
+    // question + college/filter context (never a uid — see
+    // functions/src/ai/cache.js). Server-only; nothing here is
+    // user-specific, but there is no product reason for a client to read
+    // or write it directly either.
+    match /aiChatCache/{cacheId} {
+      allow read, write: if false;
+    }
+
     // Per-guide earnings ledger — written only by trusted backend logic
     // (consultation-completion Cloud Function), readable by the guide
     // themself (their own balance) or admin.

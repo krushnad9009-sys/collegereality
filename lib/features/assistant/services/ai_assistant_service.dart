@@ -6,11 +6,14 @@ import '../../colleges/models/college_model.dart';
 import '../../colleges/repositories/college_repository.dart';
 import '../../colleges/utils/college_search_utils.dart';
 import '../../ranking/models/ranking_models.dart';
+import '../../ranking/utils/cr_score_engine.dart';
 import '../../ranking/utils/smart_recommendation_engine.dart';
 import '../models/ai_assistant_message.dart';
+import '../models/ai_college_data_bundle.dart';
 import '../models/ai_college_recommendation.dart';
 import '../models/ai_query_intent.dart';
 import '../models/ai_topic.dart';
+import 'ai_chat_backend_client.dart';
 import 'ai_college_data_service.dart';
 import 'ai_college_ranker.dart';
 import 'ai_comparison_service.dart';
@@ -20,12 +23,24 @@ import 'ai_query_parser.dart';
 import 'ai_suggestion_service.dart';
 import 'ai_topic_detector.dart';
 
-/// Orchestrates NL parsing → Firestore fetch → rank → grounded explain. No LLM.
+/// Orchestrates NL parsing → Firestore fetch → rank → grounded explain, and
+/// — for genuinely ambiguous/open-ended/reasoning-heavy questions only —
+/// hands compact, pre-retrieved verified data to the LLM backend
+/// (AiChatBackendClient → Cloud Function → Gemini) for natural-language
+/// reasoning. Simple factual lookups (fees/hostel/placements/etc, when
+/// verified data actually answers them) never touch the LLM at all — see
+/// _answerAboutCollege and processQuery's search branch for exactly where
+/// that decision is made and why.
 class AiAssistantService {
-  AiAssistantService(this._collegeRepository, this._collegeDataService);
+  AiAssistantService(
+    this._collegeRepository,
+    this._collegeDataService, [
+    AiChatBackendClient? chatBackend,
+  ]) : _chatBackend = chatBackend ?? AiChatBackendClient();
 
   final CollegeRepository _collegeRepository;
   final AiCollegeDataService _collegeDataService;
+  final AiChatBackendClient _chatBackend;
   final AiQueryParser _parser = AiQueryParser();
   final AiCollegeRanker _ranker = AiCollegeRanker();
   final AiExplanationBuilder _explanationBuilder = AiExplanationBuilder();
@@ -47,6 +62,7 @@ class AiAssistantService {
     String? conversationState,
     CollegeModel? anchorCollege,
     AiAssistantMode mode = AiAssistantMode.chat,
+    List<AiAssistantMessage> history = const [],
   }) async {
     final hasContext =
         contextCollegeIds.isNotEmpty || anchorCollege != null;
@@ -83,6 +99,7 @@ class AiAssistantService {
         userCity: userCity,
         userState: userState,
         mode: mode,
+        history: history,
       );
     }
 
@@ -102,6 +119,7 @@ class AiAssistantService {
         userCity: userCity,
         userState: userState,
         mode: mode,
+        history: history,
       );
     }
 
@@ -147,10 +165,36 @@ class AiAssistantService {
       anchorCollege: anchorCollege,
     );
 
-    final summary = _explanationBuilder.buildSearchSummary(
+    var summary = _explanationBuilder.buildSearchSummary(
       intent,
       dedupedRecommendations.length,
     );
+    var isGeneralAdvice = false;
+
+    // Discovery/ranking questions ("best colleges in X", budget-constrained,
+    // "good for CSE") are exactly the reasoning-over-multiple-results case
+    // the LLM is for -- but only when there's something real to reason
+    // about; a zero-result reply is already complete and correct as-is, so
+    // skip the LLM call entirely rather than asking it to explain nothing.
+    if (dedupedRecommendations.isNotEmpty) {
+      try {
+        final llmResult = await _chatBackend.complete(
+          question: query,
+          mode: 'explore',
+          candidateColleges: dedupedRecommendations
+              .map((r) => _candidateContext(r.college))
+              .toList(),
+          history: _historyContext(history),
+          filters: {'city': intent.city, 'state': intent.state, 'course': intent.course},
+        );
+        summary = llmResult.text;
+        isGeneralAdvice = llmResult.isGeneralAdvice;
+      } on AiChatQuotaExceededException {
+        rethrow;
+      } catch (e) {
+        _log('LLM enhancement failed for search summary, using templated summary: $e');
+      }
+    }
 
     return AiAssistantMessage(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -161,6 +205,7 @@ class AiAssistantService {
       createdAt: DateTime.now(),
       dataGrounded: true,
       mode: mode,
+      isGeneralAdvice: isGeneralAdvice,
       // Only stamped when this reply actually matched something for that
       // location -- a zero-result "no colleges match X" reply must not
       // poison the next follow-up into silently reusing a location that
@@ -177,6 +222,7 @@ class AiAssistantService {
     String? userCity,
     String? userState,
     AiAssistantMode mode = AiAssistantMode.chat,
+    List<AiAssistantMessage> history = const [],
   }) =>
       _answerAboutCollege(
         college: college,
@@ -185,6 +231,7 @@ class AiAssistantService {
         userCity: userCity,
         userState: userState,
         mode: mode,
+        history: history,
       );
 
   Future<AiAssistantMessage> _answerAboutCollege({
@@ -194,6 +241,7 @@ class AiAssistantService {
     String? userCity,
     String? userState,
     AiAssistantMode mode = AiAssistantMode.chat,
+    List<AiAssistantMessage> history = const [],
   }) async {
     final ids = [college.id, ...contextCollegeIds.where((id) => id != college.id)];
     final intent = _parser.parse(
@@ -236,15 +284,131 @@ class AiAssistantService {
     );
     _log('SUCCESS build grounded answer, sources=${grounded.sources.length}');
 
-    return AiAssistantMessage(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      role: AiMessageRole.assistant,
-      text: grounded.text,
-      sources: grounded.sources,
-      createdAt: DateTime.now(),
-      dataGrounded: true,
-      mode: mode,
-    );
+    // Cost control (spec's "don't call the LLM for every simple database
+    // question"): the 7 specific factual topics already have a complete,
+    // free, database-only answer above -- fees/hostel/placements/package/
+    // faculty/campusLife/ragging never touch the LLM. Only genuinely
+    // open-ended questions ("how is student life", "tell me about this
+    // college", "is this college good") and stray exam-score phrasing that
+    // landed here go to the LLM, and only to turn the SAME already-fetched
+    // verified bundle into a natural reply -- never to invent new facts.
+    final needsLlmReasoning = topic == AiTopic.general || topic == AiTopic.examScore;
+    if (!needsLlmReasoning) {
+      return AiAssistantMessage(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        role: AiMessageRole.assistant,
+        text: grounded.text,
+        sources: grounded.sources,
+        createdAt: DateTime.now(),
+        dataGrounded: true,
+        mode: mode,
+      );
+    }
+
+    try {
+      final llmResult = await _chatBackend.complete(
+        question: question,
+        mode: 'college',
+        collegeId: college.id,
+        collegeContext: _collegeContext(bundle),
+        history: _historyContext(history),
+      );
+      return AiAssistantMessage(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        role: AiMessageRole.assistant,
+        text: llmResult.text,
+        sources: grounded.sources,
+        createdAt: DateTime.now(),
+        dataGrounded: true,
+        mode: mode,
+        isGeneralAdvice: llmResult.isGeneralAdvice,
+      );
+    } on AiChatQuotaExceededException {
+      rethrow;
+    } catch (e) {
+      _log('LLM enhancement failed for college question, falling back to grounded answer: $e');
+      return AiAssistantMessage(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        role: AiMessageRole.assistant,
+        text: grounded.text,
+        sources: grounded.sources,
+        createdAt: DateTime.now(),
+        dataGrounded: true,
+        mode: mode,
+      );
+    }
+  }
+
+  /// Compact, cost-conscious college context for the LLM -- real verified
+  /// fields only, capped review/answer excerpts, never the full bundle.
+  Map<String, dynamic> _collegeContext(AiCollegeDataBundle bundle) {
+    final college = bundle.college;
+    final crScore = CrScoreEngine.effectiveScore(college);
+    return {
+      'name': college.name,
+      'city': college.city,
+      'state': college.state,
+      'category': college.category,
+      if (crScore > 0) 'crScore': crScore,
+      if (college.fees.tuitionMin > 0) 'feesMin': college.fees.tuitionMin,
+      if (college.fees.tuitionMax > 0) 'feesMax': college.fees.tuitionMax,
+      if (college.placements.averagePackageLpa > 0)
+        'avgPackageLpa': college.placements.averagePackageLpa,
+      if (college.placements.highestPackageLpa > 0)
+        'highestPackageLpa': college.placements.highestPackageLpa,
+      if (college.placements.placementPercentage > 0)
+        'placementPct': college.placements.placementPercentage,
+      'hostelAvailable': college.hostel.available,
+      'reviewExcerpts': bundle.reviews
+          .where((r) => r.textReview.isNotEmpty)
+          .take(3)
+          .map((r) => r.textReview)
+          .toList(),
+      'verifiedAnswerExcerpts': bundle.verifiedAnswers
+          .where((a) => a.answer.body.isNotEmpty)
+          .take(3)
+          .map((a) => a.answer.body)
+          .toList(),
+    };
+  }
+
+  Map<String, dynamic> _candidateContext(CollegeModel college) {
+    final crScore = CrScoreEngine.effectiveScore(college);
+    return {
+      'id': college.id,
+      'name': college.name,
+      'city': college.city,
+      'state': college.state,
+      if (crScore > 0) 'crScore': crScore,
+      if (college.placements.averagePackageLpa > 0)
+        'avgPackageLpa': college.placements.averagePackageLpa,
+      if (college.placements.placementPercentage > 0)
+        'placementPct': college.placements.placementPercentage,
+      if (college.fees.tuitionMin > 0) 'feesMin': college.fees.tuitionMin,
+    };
+  }
+
+  // Deliberately small and independent of AiAssistantConstants
+  // .maxConversationTurns (that constant bounds local on-device history
+  // storage -- a much larger, unrelated concern). The server
+  // (AI_CHAT_CONFIG.MAX_HISTORY_TURNS) independently re-caps this again.
+  static const _maxLlmHistoryMessages = 6;
+
+  /// Last few messages only, plain role/text pairs -- keeps the request
+  /// small and controls cost.
+  List<Map<String, String>> _historyContext(List<AiAssistantMessage> history) {
+    return history
+        .where((m) => m.text.isNotEmpty)
+        .toList()
+        .reversed
+        .take(_maxLlmHistoryMessages)
+        .toList()
+        .reversed
+        .map((m) => {
+              'role': m.role == AiMessageRole.user ? 'user' : 'assistant',
+              'text': m.text,
+            })
+        .toList();
   }
 
   Future<AiAssistantMessage> _handleExamScoreQuery(

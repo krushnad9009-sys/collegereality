@@ -11,6 +11,7 @@ const { razorpayWebhook } = require('./src/webhook');
 const { mintConsultationCallToken } = require('./src/callToken');
 const { onConsultationWrite } = require('./src/triggers');
 const { expireStaleConsultations } = require('./src/scheduled');
+const { aiChatComplete } = require('./src/aiChat');
 
 module.exports = {
   createConsultationOrder,
@@ -19,4 +20,5 @@ module.exports = {
   mintConsultationCallToken,
   onConsultationWrite,
   expireStaleConsultations,
+  aiChatComplete,
 };

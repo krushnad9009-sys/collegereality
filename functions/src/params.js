@@ -10,6 +10,7 @@ const RAZORPAY_KEY_SECRET = defineSecret('RAZORPAY_KEY_SECRET');
 const RAZORPAY_WEBHOOK_SECRET = defineSecret('RAZORPAY_WEBHOOK_SECRET');
 const AGORA_APP_ID = defineSecret('AGORA_APP_ID');
 const AGORA_APP_CERTIFICATE = defineSecret('AGORA_APP_CERTIFICATE');
+const GEMINI_API_KEY = defineSecret('GEMINI_API_KEY');
 
 module.exports = {
   RAZORPAY_KEY_ID,
@@ -17,4 +18,5 @@ module.exports = {
   RAZORPAY_WEBHOOK_SECRET,
   AGORA_APP_ID,
   AGORA_APP_CERTIFICATE,
+  GEMINI_API_KEY,
 };

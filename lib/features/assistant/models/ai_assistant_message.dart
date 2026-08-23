@@ -28,6 +28,14 @@ class AiAssistantMessage {
   final String? resolvedCity;
   final String? resolvedState;
 
+  /// True when this reply's text drew on the LLM's general educational/
+  /// career knowledge rather than College Reality's own verified data
+  /// (the LLM is instructed to say so inline in the text itself; this is
+  /// just a structured mirror of that for callers that want it). Always
+  /// false for database-only replies, which by construction never
+  /// contain anything but verified data.
+  final bool isGeneralAdvice;
+
   const AiAssistantMessage({
     required this.id,
     required this.role,
@@ -41,6 +49,7 @@ class AiAssistantMessage {
     this.dataGrounded = true,
     this.resolvedCity,
     this.resolvedState,
+    this.isGeneralAdvice = false,
   });
 
   factory AiAssistantMessage.fromJson(Map<String, dynamic> json) {

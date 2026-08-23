@@ -15,6 +15,7 @@ import '../../reviews/providers/review_provider.dart';
 import '../models/ai_assistant_message.dart';
 import '../models/ai_topic.dart';
 import '../services/ai_assistant_service.dart';
+import '../services/ai_chat_backend_client.dart' show AiChatBackendClient, AiChatQuotaExceededException;
 import '../services/ai_college_data_service.dart';
 import '../services/ai_conversation_store.dart';
 
@@ -27,10 +28,18 @@ final aiCollegeDataServiceProvider = Provider<AiCollegeDataService>((ref) {
   );
 });
 
+/// The only place a raw AiChatBackendClient gets constructed -- lets tests
+/// override it with a fake without needing a real Firebase Functions
+/// connection.
+final aiChatBackendClientProvider = Provider<AiChatBackendClient>((ref) {
+  return AiChatBackendClient();
+});
+
 final aiAssistantServiceProvider = Provider<AiAssistantService>((ref) {
   return AiAssistantService(
     ref.watch(collegeRepositoryProvider),
     ref.watch(aiCollegeDataServiceProvider),
+    ref.watch(aiChatBackendClientProvider),
   );
 });
 
@@ -165,6 +174,10 @@ class AiAssistantNotifier extends StateNotifier<AiAssistantState> {
 
   Future<void> _runQuery(String trimmed, {required bool addUserMessage}) async {
     _lastQuery = trimmed;
+    // Captured before appending this turn's own user message below -- the
+    // current question is already sent separately, so history sent to the
+    // LLM must not also end with a duplicate of it.
+    final historyForLlm = state.messages;
     final userMessage = AiAssistantMessage(
       id: '${DateTime.now().millisecondsSinceEpoch}_user',
       role: AiMessageRole.user,
@@ -232,6 +245,7 @@ class AiAssistantNotifier extends StateNotifier<AiAssistantState> {
               userCity: userCity,
               userState: userState,
               mode: state.mode,
+              history: historyForLlm,
             );
             _log('SUCCESS askAboutCollege');
             return result;
@@ -250,6 +264,7 @@ class AiAssistantNotifier extends StateNotifier<AiAssistantState> {
           conversationCity: _lastResolvedCity,
           conversationState: _lastResolvedState,
           mode: state.mode,
+          history: historyForLlm,
         );
         _log('SUCCESS processQuery');
         return result;
@@ -301,7 +316,9 @@ class AiAssistantNotifier extends StateNotifier<AiAssistantState> {
       final isTimeout = e is TimeoutException;
       final userFacing = isTimeout
           ? 'That took too long to answer. Please try again.'
-          : FirestoreErrorUtils.userMessage(e);
+          : e is AiChatQuotaExceededException
+              ? e.message
+              : FirestoreErrorUtils.userMessage(e);
 
       state = state.copyWith(
         isLoading: false,
