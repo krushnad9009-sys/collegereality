@@ -29,6 +29,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -110,10 +111,21 @@ def main() -> None:
         print("\nDry run only -- no write performed. Re-run with --apply to write for real.")
         return
 
+    # A plain ISO-8601 string, NOT firestore.SERVER_TIMESTAMP -- UserModel.
+    # fromJson() (lib/features/auth/models/user_model.dart) expects
+    # createdAt/updatedAt as strings (it does
+    # `json['updatedAt'] is DateTime ? ... : DateTime.parse(json['updatedAt']
+    # as String)`, and a native Firestore Timestamp is neither, so it throws
+    # a cast error). That exact bug happened here once already: it silently
+    # broke every future read of this user's profile (including
+    # isSuperAdminProvider, which treats any read failure as "not admin"),
+    # showing "Access Denied" for a user who genuinely had userType ==
+    # 'super_admin'. Keep this a string.
+    updated_at_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
     user_ref.set(
         {
             "userType": SUPER_ADMIN_USER_TYPE,
-            "updatedAt": firestore.SERVER_TIMESTAMP,
+            "updatedAt": updated_at_iso,
         },
         merge=True,
     )
