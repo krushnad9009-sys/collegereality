@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -31,6 +32,10 @@ import '../screens/super_admin_moderation_hub_screen.dart';
 import '../screens/super_admin_settings_screen.dart';
 import 'super_admin_route_names.dart';
 
+void _routerLog(String message) {
+  if (kDebugMode) debugPrint('[SuperAdminRouter] $message');
+}
+
 final superAdminRouterProvider = Provider<GoRouter>((ref) {
   final firebaseAuth = FirebaseAuth.instance;
   final authRefresh = GoRouterRefreshStream(firebaseAuth.authStateChanges());
@@ -43,12 +48,34 @@ final superAdminRouterProvider = Provider<GoRouter>((ref) {
     refreshListenable: authRefresh,
     redirect: (context, state) async {
       final path = state.uri.path;
+      _routerLog('START redirect path=$path');
+
+      // On a Flutter Web hard refresh, this redirect's first evaluation
+      // runs before Firebase Auth has finished restoring the persisted
+      // session -- firebaseAuth.currentUser briefly reads null even for an
+      // already-authenticated Super Admin, which used to bounce straight
+      // to /login (or get stuck there) before self-correcting. Bounded so
+      // a genuinely signed-out user (or a slow/broken auth SDK) is never
+      // stuck waiting. Same fix already proven in app_router.dart's
+      // redirect -- see GoRouterRefreshStream.firstEvent's doc comment.
+      try {
+        await authRefresh.firstEvent.timeout(const Duration(seconds: 4));
+      } catch (_) {
+        // Timed out — proceed with whatever currentUser currently reads.
+      }
+
       final isLoggedIn = firebaseAuth.currentUser != null;
       final isPublicRoute = path == SuperAdminRouteNames.login ||
           path == SuperAdminRouteNames.accessDenied;
+      _routerLog(
+        'auth settled -- isLoggedIn=$isLoggedIn uid=${firebaseAuth.currentUser?.uid ?? "(none)"} '
+        'path=$path isPublicRoute=$isPublicRoute',
+      );
 
       if (!isLoggedIn) {
-        return isPublicRoute ? null : SuperAdminRouteNames.login;
+        final result = isPublicRoute ? null : SuperAdminRouteNames.login;
+        _routerLog('END redirect path=$path -> ${result ?? "(render as-is)"}');
+        return result;
       }
 
       Future<bool> checkSuperAdmin() async {
@@ -61,20 +88,22 @@ final superAdminRouterProvider = Provider<GoRouter>((ref) {
 
       if (path == SuperAdminRouteNames.login) {
         final isSuperAdmin = await checkSuperAdmin();
-        if (isSuperAdmin) return SuperAdminRouteNames.dashboard;
-        return SuperAdminRouteNames.accessDenied;
+        final result = isSuperAdmin ? SuperAdminRouteNames.dashboard : SuperAdminRouteNames.accessDenied;
+        _routerLog('END redirect path=$path isSuperAdmin=$isSuperAdmin -> $result');
+        return result;
       }
 
       if (path == SuperAdminRouteNames.accessDenied) {
         final isSuperAdmin = await checkSuperAdmin();
-        if (isSuperAdmin) return SuperAdminRouteNames.dashboard;
-        return null;
+        final result = isSuperAdmin ? SuperAdminRouteNames.dashboard : null;
+        _routerLog('END redirect path=$path isSuperAdmin=$isSuperAdmin -> ${result ?? "(render as-is)"}');
+        return result;
       }
 
       final isSuperAdmin = await checkSuperAdmin();
-      if (!isSuperAdmin) return SuperAdminRouteNames.accessDenied;
-
-      return null;
+      final result = isSuperAdmin ? null : SuperAdminRouteNames.accessDenied;
+      _routerLog('END redirect path=$path isSuperAdmin=$isSuperAdmin -> ${result ?? "(render as-is)"}');
+      return result;
     },
     routes: [
       GoRoute(
