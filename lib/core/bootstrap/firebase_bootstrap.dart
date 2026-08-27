@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:developer' as developer;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -7,6 +6,21 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../firebase_options.dart';
+
+void _log(String message) {
+  // debugPrint, not dart:developer's log() -- on Flutter Web, log()'s
+  // `error:` parameter requires a JS-interop-safe value; passing a raw
+  // FirebaseException (exactly what setPersistence()/Firestore settings
+  // throw here) crashes with "type 'FirebaseException' is not a subtype
+  // of type 'JavaScriptObject'" instead of logging anything. That crash
+  // happened INSIDE this file's own catch blocks, before runApp() ever
+  // fired, which is worse than the error it was trying to report.
+  // debugPrint is a plain string sink with no such constraint, and (like
+  // the original developer.log calls here) intentionally not gated by
+  // kDebugMode -- these are operational "continuing in degraded mode"
+  // notes worth keeping visible in production too.
+  debugPrint('[FirebaseBootstrap] $message');
+}
 
 /// Non-blocking Firebase initialization started from [main] and awaited on splash.
 ///
@@ -38,10 +52,9 @@ class FirebaseBootstrap {
     _initFuture ??= _initialize().timeout(
       _initTimeout,
       onTimeout: () {
-        developer.log(
+        _log(
           'Firebase init exceeded $_initTimeout — continuing without it so '
           'the UI can still render (splash/auth flow will retry).',
-          name: 'CollegeReality',
         );
       },
     );
@@ -65,12 +78,8 @@ class FirebaseBootstrap {
             .setPersistence(Persistence.LOCAL)
             .timeout(_persistenceCallTimeout);
       } catch (e, st) {
-        developer.log(
-          'Auth persistence setup failed (continuing without it): $e',
-          name: 'CollegeReality',
-          error: e,
-          stackTrace: st,
-        );
+        _log('Auth persistence setup failed (continuing without it): $e');
+        if (kDebugMode) debugPrintStack(stackTrace: st);
       }
     }
 
@@ -79,12 +88,8 @@ class FirebaseBootstrap {
         persistenceEnabled: true,
       );
     } catch (e, st) {
-      developer.log(
-        'Firestore persistence setup failed (continuing without it): $e',
-        name: 'CollegeReality',
-        error: e,
-        stackTrace: st,
-      );
+      _log('Firestore persistence setup failed (continuing without it): $e');
+      if (kDebugMode) debugPrintStack(stackTrace: st);
     }
 
     _configured = true;

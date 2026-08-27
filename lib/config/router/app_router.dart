@@ -1,9 +1,11 @@
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter/foundation.dart';
 import '../../core/services/analytics_service.dart';
+import '../../core/widgets/firebase_initializing_screen.dart';
 import 'go_router_refresh_stream.dart';
 import '../../features/auth/screens/splash_screen.dart';
 import '../../features/auth/screens/onboarding_screen.dart';
@@ -250,7 +252,37 @@ Future<String?> _resolveRedirect(
   return null;
 }
 
-final appRouterProvider = Provider<GoRouter>((ref) {
+final Provider<GoRouter> appRouterProvider = Provider<GoRouter>((ref) {
+  // Firebase.apps is a plain, safe list check (firebase_core_web's own
+  // `apps` getter defensively returns [] rather than throwing when
+  // nothing is registered yet). FirebaseAuth.instance / Firebase.app(),
+  // by contrast, hit a real bug in firebase_core_web 2.24.1's app()
+  // lookup when called before the JS SDK has actually registered the
+  // default app: its catch block unconditionally does `e as JSError` on
+  // whatever guardNotInitialized() throws, which can already be a Dart
+  // FirebaseException -- crashing with "type 'FirebaseException' is not
+  // a subtype of type 'JavaScriptObject'" (a raw JS-interop TypeError)
+  // instead of a normal catchable error. This can happen for real: main()
+  // calls FirebaseBootstrap.ensureInitialized(), which is itself bounded
+  // by a timeout so a stuck IndexedDB persistence lock can never hang
+  // startup forever -- but on a slow connection, that timeout can fire
+  // while Firebase.initializeApp() is still genuinely (not stuck, just
+  // slow) completing in the background. Never call FirebaseAuth.instance
+  // until Firebase.apps confirms the app actually exists.
+  if (Firebase.apps.isEmpty) {
+    _routerLog('Firebase app not yet registered -- deferring router build');
+    return GoRouter(
+      initialLocation: '/',
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (context, state) =>
+              FirebaseInitializingScreen(routerProvider: appRouterProvider),
+        ),
+      ],
+    );
+  }
+
   final firebaseAuth = FirebaseAuth.instance;
   final authRefresh = GoRouterRefreshStream(firebaseAuth.authStateChanges());
 

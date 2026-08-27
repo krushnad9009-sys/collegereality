@@ -1,8 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../config/router/go_router_refresh_stream.dart';
+import '../../core/widgets/firebase_initializing_screen.dart';
 import '../../features/admin/screens/admin_analytics_screen.dart';
 import '../../features/admin/screens/admin_announcements_screen.dart';
 import '../../features/admin/screens/admin_ads_screen.dart';
@@ -31,7 +33,28 @@ import '../screens/super_admin_moderation_hub_screen.dart';
 import '../screens/super_admin_settings_screen.dart';
 import 'super_admin_route_names.dart';
 
-final superAdminRouterProvider = Provider<GoRouter>((ref) {
+final Provider<GoRouter> superAdminRouterProvider = Provider<GoRouter>((ref) {
+  // See the identical guard in config/router/app_router.dart for the full
+  // explanation: FirebaseAuth.instance / Firebase.app() crash with a raw
+  // JS-interop TypeError ("type 'FirebaseException' is not a subtype of
+  // type 'JavaScriptObject'") when called before the JS SDK has actually
+  // registered the default app -- a real bug in firebase_core_web
+  // 2.24.1's app() lookup, not application code. Firebase.apps is the
+  // safe, non-throwing way to check readiness first.
+  if (Firebase.apps.isEmpty) {
+    return GoRouter(
+      initialLocation: '/',
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (context, state) => FirebaseInitializingScreen(
+            routerProvider: superAdminRouterProvider,
+          ),
+        ),
+      ],
+    );
+  }
+
   final firebaseAuth = FirebaseAuth.instance;
   final authRefresh = GoRouterRefreshStream(firebaseAuth.authStateChanges());
 

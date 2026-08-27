@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -86,7 +87,19 @@ const superAdminPanelConfig = SuperAdminPanelConfig(
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await FirebaseBootstrap.ensureInitialized();
+
+  // Firebase failing or hanging must never prevent runApp() from firing --
+  // otherwise the Super Admin panel never reaches even the login screen.
+  // (FirebaseBootstrap itself is already internally bounded/best-effort;
+  // this is a second layer of defense against anything unexpected still
+  // escaping it.) Mirrors the same guard already in the main app's
+  // lib/main.dart.
+  try {
+    await FirebaseBootstrap.ensureInitialized();
+  } catch (e, st) {
+    debugPrint('[SuperAdmin] Firebase bootstrap failed at startup, continuing: $e');
+    if (kDebugMode) debugPrintStack(stackTrace: st);
+  }
 
   runApp(
     const ProviderScope(
