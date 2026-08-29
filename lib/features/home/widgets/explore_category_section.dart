@@ -23,7 +23,11 @@ class ExploreCategoryGrid extends ConsumerWidget {
   const ExploreCategoryGrid({super.key});
 
   static const _categories = [
-    _CategoryDef('Engineering', Icons.precision_manufacturing_rounded, Color(0xFF0F766E)),
+    _CategoryDef(
+      'Engineering',
+      Icons.precision_manufacturing_rounded,
+      Color(0xFF0F766E),
+    ),
     _CategoryDef('Medical', Icons.local_hospital_rounded, Color(0xFFB91C63)),
     _CategoryDef('MBA', Icons.business_center_rounded, Color(0xFF0369A1)),
     _CategoryDef('Law', Icons.gavel_rounded, Color(0xFF5C4D7D)),
@@ -38,7 +42,14 @@ class ExploreCategoryGrid extends ConsumerWidget {
     final countsAsync = ref.watch(collegeCategoryCountsProvider);
 
     return SizedBox(
-      height: 56,
+      // 60, not 56: at 56 the two-line (label + "N colleges") variant
+      // overflows by ~1px once counts load, because the label/count Text
+      // styles below don't pin an explicit line-height, so the font's
+      // default metrics eat into the tile's vertical padding. Tightening
+      // those text styles (see below) fixes the root cause; the extra 4px
+      // here is deliberate headroom so a few pixels of font-metric
+      // variance across browsers/OSes never reopens the same overflow.
+      height: 60,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         clipBehavior: Clip.none,
@@ -65,7 +76,11 @@ class _CategoryTile extends StatefulWidget {
   final int? count;
   final VoidCallback onTap;
 
-  const _CategoryTile({required this.def, required this.count, required this.onTap});
+  const _CategoryTile({
+    required this.def,
+    required this.count,
+    required this.onTap,
+  });
 
   @override
   State<_CategoryTile> createState() => _CategoryTileState();
@@ -73,54 +88,95 @@ class _CategoryTile extends StatefulWidget {
 
 class _CategoryTileState extends State<_CategoryTile> {
   bool _pressed = false;
+  bool _hovered = false;
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final color = widget.def.color;
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapUp: (_) => setState(() => _pressed = false),
-      onTapCancel: () => setState(() => _pressed = false),
-      onTap: widget.onTap,
-      child: AnimatedScale(
-        scale: _pressed ? 0.96 : 1,
-        duration: const Duration(milliseconds: 120),
-        curve: Curves.easeOutCubic,
-        child: AnimatedContainer(
+    // Contrast step: idle border alpha raised (0.22 -> 0.30) so pills read
+    // clearly against the page background without losing the restrained,
+    // editorial tone; hover/press states step up further for a clear,
+    // smoothly-animated affordance.
+    final borderAlpha = _pressed ? 0.5 : (_hovered ? 0.38 : 0.30);
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTapDown: (_) => setState(() => _pressed = true),
+        onTapUp: (_) => setState(() => _pressed = false),
+        onTapCancel: () => setState(() => _pressed = false),
+        onTap: widget.onTap,
+        child: AnimatedScale(
+          scale: _pressed ? 0.96 : 1,
           duration: const Duration(milliseconds: 120),
-          padding: const EdgeInsets.fromLTRB(10, 9, 16, 9),
-          decoration: BoxDecoration(
-            color: _pressed ? color.withValues(alpha: 0.08) : tokens.surfaceElevated,
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: color.withValues(alpha: _pressed ? 0.4 : 0.22)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(color: color.withValues(alpha: 0.14), shape: BoxShape.circle),
-                child: Icon(widget.def.icon, size: 17, color: color),
-              ),
-              const SizedBox(width: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    widget.def.label,
-                    style: AppFonts.plusJakarta(fontSize: 14, fontWeight: FontWeight.w700, color: tokens.textPrimary),
+          curve: Curves.easeOutCubic,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 160),
+            curve: Curves.easeOutCubic,
+            padding: const EdgeInsets.fromLTRB(10, 8, 16, 8),
+            decoration: BoxDecoration(
+              color: _pressed
+                  ? color.withValues(alpha: 0.08)
+                  : tokens.surfaceElevated,
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: color.withValues(alpha: borderAlpha)),
+              boxShadow: _hovered && !_pressed
+                  ? [
+                      BoxShadow(
+                        color: color.withValues(alpha: 0.18),
+                        blurRadius: 10,
+                        offset: const Offset(0, 3),
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.14),
+                    shape: BoxShape.circle,
                   ),
-                  if (widget.count != null && widget.count! > 0)
+                  child: Icon(widget.def.icon, size: 17, color: color),
+                ),
+                const SizedBox(width: 10),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                     Text(
-                      '${widget.count! >= 1000 ? '${(widget.count! / 1000).toStringAsFixed(1)}k' : widget.count} colleges',
-                      style: AppFonts.plusJakarta(fontSize: 11.5, fontWeight: FontWeight.w500, color: tokens.textTertiary),
+                      widget.def.label,
+                      // Explicit height: font-metric line-height left
+                      // unpinned is what caused the tile to overflow its
+                      // fixed row height by ~1px once the count line below
+                      // was present — pin both lines down tightly instead
+                      // of just padding around the problem.
+                      style: AppFonts.plusJakarta(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        height: 1.1,
+                        color: tokens.textPrimary,
+                      ),
                     ),
-                ],
-              ),
-            ],
+                    if (widget.count != null && widget.count! > 0)
+                      Text(
+                        '${widget.count! >= 1000 ? '${(widget.count! / 1000).toStringAsFixed(1)}k' : widget.count} colleges',
+                        style: AppFonts.plusJakarta(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w500,
+                          height: 1.1,
+                          color: tokens.textTertiary,
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
