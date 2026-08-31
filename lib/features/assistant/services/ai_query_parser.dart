@@ -288,9 +288,21 @@ class AiQueryParser {
     return AiQueryType.search;
   }
 
+  // A short alias (e.g. state 'mp'/'up', city 'pun') as a raw substring
+  // false-positives inside ordinary words -- "the importance of
+  // internships" contains "mp" (i-MP-ortance), which used to get silently
+  // read as "Madhya Pradesh". Mirrors the same word-boundary treatment
+  // _extractCourse already applies to its own short keywords below.
+  bool _matchesAliasKey(String q, String key) {
+    if (key.length <= 3) {
+      return RegExp('\\b${RegExp.escape(key)}\\b').hasMatch(q);
+    }
+    return q.contains(key);
+  }
+
   String? _extractCity(String q) {
     for (final entry in _cityAliases.entries) {
-      if (q.contains(entry.key)) return entry.value;
+      if (_matchesAliasKey(q, entry.key)) return entry.value;
     }
     final inMatch = RegExp(
       r'(?:in|at|mein|me|madhe|मध्ये|मध्ये)\s+([a-z\u0900-\u097F]{3,20})',
@@ -307,10 +319,10 @@ class AiQueryParser {
 
   String? _extractState(String q) {
     for (final entry in _stateAliases.entries) {
-      if (q.contains(entry.key)) return entry.value;
+      if (_matchesAliasKey(q, entry.key)) return entry.value;
     }
     for (final state in CollegeConstants.indianStates) {
-      if (q.contains(state.toLowerCase())) return state;
+      if (_matchesAliasKey(q, state.toLowerCase())) return state;
     }
     return null;
   }

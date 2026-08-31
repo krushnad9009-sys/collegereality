@@ -215,6 +215,70 @@ void main() {
     });
   });
 
+  group('General educational/career questions (category A) route to the LLM directly', () {
+    for (final q in [
+      'What is the importance of internships?',
+      'How should a student prepare for placements?',
+      'What should I check before taking admission?',
+      'Engineering college select kartana kay baghaycha?',
+    ]) {
+      test('"$q" answers via mode=general, never the college search pipeline', () async {
+        final result = await service.processQuery(query: q);
+        expect(chatBackend.callCount, 1);
+        expect(chatBackend.lastMode, 'general');
+        expect(result.text, 'LLM-generated answer');
+        expect(result.dataGrounded, isFalse);
+        expect(result.isGeneralAdvice, isTrue);
+        expect(result.recommendations, isEmpty);
+      });
+    }
+
+    test('"CSE vs IT which is better?" answers via the LLM instead of a canned '
+        '"add colleges" compare prompt', () async {
+      final result = await service.processQuery(query: 'CSE vs IT which is better?');
+      expect(chatBackend.callCount, 1);
+      expect(chatBackend.lastMode, 'general');
+      expect(result.text, 'LLM-generated answer');
+      expect(result.text, isNot(contains('search for colleges first')));
+    });
+
+    test('an explicit city still takes priority over an incidental advice-style phrase',
+        () async {
+      await service.processQuery(query: 'How should I choose colleges in Pune?');
+      expect(chatBackend.callCount, 1);
+      expect(chatBackend.lastMode, 'explore',
+          reason: 'an explicit city is a real search request, not a general question');
+    });
+
+    test('falls back gracefully when the LLM is unavailable for a general question', () async {
+      chatBackend.throwOnComplete = Exception('network unreachable');
+      final result =
+          await service.processQuery(query: 'What is the importance of internships?');
+      expect(chatBackend.callCount, 1);
+      expect(result.text, isNotEmpty);
+      expect(result.text, isNot('LLM-generated answer'));
+    });
+
+    test('a quota-exceeded failure propagates for a general question too', () {
+      chatBackend.throwOnComplete =
+          const AiChatQuotaExceededException("You've reached today's AI chat limit.");
+      expect(
+        () => service.processQuery(query: 'What is the importance of internships?'),
+        throwsA(isA<AiChatQuotaExceededException>()),
+      );
+    });
+  });
+
+  group('Off-topic questions are still rejected without calling the LLM', () {
+    for (final q in ['What is the weather today?', 'Write me a python script']) {
+      test('"$q" gets the polite scope response', () async {
+        final result = await service.processQuery(query: q);
+        expect(chatBackend.callCount, 0);
+        expect(result.text, contains('colleges, education, admissions, careers'));
+      });
+    }
+  });
+
   group('LLM fallback when the backend is unavailable', () {
     test('falls back to the grounded database answer on any non-quota failure', () async {
       chatBackend.throwOnComplete = Exception('network unreachable');

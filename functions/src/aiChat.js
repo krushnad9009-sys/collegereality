@@ -66,9 +66,13 @@ function sanitizeHistory(raw) {
  * ever read (Secret Manager, injected at invocation time) — it never
  * reaches the client. See functions/README.md for required setup.
  *
- * Request shape: { question, mode: 'college'|'explore', collegeId?,
+ * Request shape: { question, mode: 'college'|'explore'|'general', collegeId?,
  *   collegeContext?, candidateColleges?, history?, filters? }
  * Response shape: { text, cached, isGeneralAdvice }
+ *
+ * 'general' is for a question with no specific college in context at all
+ * (general educational/career guidance) -- no collegeContext or
+ * candidateColleges are used for it; see promptBuilder.js.
  */
 const aiChatComplete = onCall(
   { secrets: [GEMINI_API_KEY], timeoutSeconds: 30, memory: '256MiB' },
@@ -80,7 +84,8 @@ const aiChatComplete = onCall(
     const question = sanitizeString(data.question, 1000);
     if (!question) throw new HttpsError('invalid-argument', 'question is required.');
 
-    const mode = data.mode === 'college' ? 'college' : 'explore';
+    const mode =
+      data.mode === 'college' ? 'college' : data.mode === 'general' ? 'general' : 'explore';
     const collegeId = sanitizeString(data.collegeId, 100);
     const collegeContext = mode === 'college' ? sanitizeCollegeContext(data.collegeContext) : null;
     const candidateColleges = mode === 'explore' ? sanitizeCandidates(data.candidateColleges) : [];

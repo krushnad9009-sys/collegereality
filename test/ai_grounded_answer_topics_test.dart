@@ -81,4 +81,30 @@ void main() {
     );
     expect(answer.text, isNotEmpty);
   });
+
+  group('"Not enough verified data available yet." for a specific college '
+      'question with no matching data', () {
+    for (final topic in [
+      AiTopic.fees,
+      AiTopic.faculty,
+      AiTopic.campusLife,
+      AiTopic.placements,
+      AiTopic.package,
+      AiTopic.ragging,
+    ]) {
+      test('${topic.name}: says so plainly instead of inventing a fact or going blank', () {
+        final sparse = CollegeModel.createDraft(id: 'x');
+        final answer = AiGroundedAnswerBuilder().build(
+          bundle: AiCollegeDataBundle(college: sparse, fetchedAt: DateTime.now()),
+          topic: topic,
+          query: 'Tell me about ${topic.name}',
+        );
+        expect(
+          answer.text,
+          contains('Not enough verified data available yet.'),
+          reason: topic.name,
+        );
+      });
+    }
+  });
 }

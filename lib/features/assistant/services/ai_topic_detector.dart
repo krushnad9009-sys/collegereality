@@ -30,6 +30,7 @@ class AiTopicDetector {
     'institute',
     'campus',
     'placement',
+    'internship',
     'hostel',
     'fees',
     'admission',
@@ -55,10 +56,68 @@ class AiTopicDetector {
     'faculty',
     'course',
     'branch',
+    'career',
+    'scholarship',
+    'exam',
+    'syllabus',
+    'semester',
+    'student',
     'कॉलेज',
     'विद्यालय',
     'प्रवेश',
     'महाविद्यालय',
+  ];
+
+  // Grammatical patterns for an open-ended "give me guidance" question —
+  // NOT a fixed list of specific questions (any phrasing matching one of
+  // these patterns qualifies, in any of the app's supported languages).
+  // Used to route general educational/career questions straight to the
+  // LLM's own knowledge instead of forcing them through the college
+  // search/ranking pipeline, which only makes sense for an actual
+  // "find/list/compare real colleges" request.
+  static const _adviceSignals = [
+    // English
+    'should i',
+    'should a student',
+    'how to',
+    'how should',
+    'how do i',
+    'how can i',
+    'how do you',
+    'what should i',
+    'what to check',
+    'what to look',
+    'what should you',
+    'importance of',
+    'why is',
+    'why should',
+    'tips for',
+    'tips to',
+    'guide me',
+    'help me choose',
+    'help me decide',
+    'pros and cons',
+    'benefits of',
+    'prepare for',
+    'preparation for',
+    'is it worth',
+    // Hinglish / Marathi-English mixed phrasing
+    'kay baghaycha',
+    'kay pahaycha',
+    'kase baghave',
+    'kasa baghava',
+    'kase nivadave',
+    'kasa nivadava',
+    'kaise chunen',
+    'kaise select',
+    'kya dekhna',
+    'kya check karna',
+    'kartana kay',
+    'karayla kay',
+    'kasa karava',
+    'kase select',
+    'kaise taiyari',
+    'taiyari kaise',
   ];
 
   bool isCollegeRelated(String query, {bool hasCollegeContext = false}) {
@@ -156,8 +215,25 @@ class AiTopicDetector {
     return terms.any((t) => q.contains(t));
   }
 
+  /// Whether [query] reads as an open-ended "give me guidance" question
+  /// (e.g. "how should I prepare for placements?", "engineering college
+  /// select kartana kay baghaycha?") rather than a request to look up,
+  /// list, or compare specific colleges. These should be answered directly
+  /// from the AI model's own general knowledge — routing them through the
+  /// college search/ranking pipeline first (which exists to find real
+  /// colleges) produces an unhelpful, unrelated answer.
+  ///
+  /// Pattern-based, like every other classifier in this class — it
+  /// generalizes to any phrasing matching one of the grammatical patterns
+  /// above, never a fixed list of exact questions.
+  bool isGeneralAdviceQuery(String query) {
+    final q = query.toLowerCase().trim();
+    return _adviceSignals.any((s) => q.contains(s));
+  }
+
   String offTopicMessage() =>
-      'I can only help with college-related questions using verified College Reality data '
-      '(profiles, reviews, student answers, and community posts). '
-      'Try asking about placements, hostel, fees, CSE, or comparing colleges.';
+      'I can help with colleges, education, admissions, careers, and student-related '
+      'topics — general guidance (e.g. how to choose a college, exam prep, placements) '
+      'as well as verified College Reality data (fees, hostel, placements, reviews) for '
+      'specific colleges. Try asking me something along those lines!';
 }

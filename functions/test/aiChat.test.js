@@ -64,6 +64,34 @@ describe('buildPrompt', () => {
     const { userPrompt } = buildPrompt({ question: longQuestion, mode: 'explore' });
     expect(userPrompt.length).toBeLessThan(longQuestion.length);
   });
+
+  describe('general mode (open-ended educational/career questions)', () => {
+    it('tells the model plainly that no college is in context, even if candidates were passed', () => {
+      const { userPrompt } = buildPrompt({
+        question: 'What is the importance of internships?',
+        mode: 'general',
+        // Must be ignored in general mode -- a caller bug passing stray
+        // candidates must never leak a specific college into a general
+        // answer.
+        candidateColleges: [{ name: 'Should Not Appear College', city: 'Pune' }],
+      });
+      expect(userPrompt).toContain('no specific college is in context');
+      expect(userPrompt).not.toContain('Should Not Appear College');
+      expect(userPrompt).toContain('What is the importance of internships?');
+    });
+
+    it('does not use the explore branch\'s "(none matched this query)" wording', () => {
+      const { userPrompt } = buildPrompt({ question: 'CSE vs IT which is better?', mode: 'general' });
+      expect(userPrompt).not.toContain('(none matched this query)');
+    });
+
+    it('the system prompt instructs the model never to fabricate a specific college fact '
+      + 'when answering generally', () => {
+      const { systemPrompt } = buildPrompt({ question: 'q', mode: 'general' });
+      expect(systemPrompt.toLowerCase()).toContain('general');
+      expect(systemPrompt).toContain('Not enough verified data available yet.');
+    });
+  });
 });
 
 describe('buildCacheKey', () => {

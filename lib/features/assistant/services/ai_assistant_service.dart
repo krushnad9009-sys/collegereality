@@ -83,7 +83,7 @@ class AiAssistantService {
     if (mode == AiAssistantMode.compare ||
         intent.type == AiQueryType.compare ||
         (intent.type == AiQueryType.question && contextCollegeIds.length >= 2)) {
-      return _handleComparison(query, intent, contextCollegeIds, mode);
+      return _handleComparison(query, intent, contextCollegeIds, mode, history: history);
     }
 
     final topic = _topicDetector.detectTopic(query);
@@ -109,6 +109,21 @@ class AiAssistantService {
     // so it can't hijack a location-scoped question into an answer about
     // one arbitrary (and possibly wrong-city) college.
     final hasExplicitLocation = intent.city != null || intent.state != null;
+
+    // Open-ended educational/career guidance ("how should a student prepare
+    // for placements?", "engineering college select kartana kay
+    // baghaycha?") has no specific college to look up and isn't a real
+    // search/ranking request -- answer it directly from the AI model's
+    // general knowledge rather than forcing it through the college search
+    // pipeline below, which exists to find real colleges and would either
+    // return unrelated results or nothing at all. An explicit city/state is
+    // still honoured first (a deliberate, unambiguous signal the user wants
+    // real local results), unlike an incidental word like "engineering"
+    // that can appear inside an advice question without meaning "search".
+    if (!hasExplicitLocation && _topicDetector.isGeneralAdviceQuery(query)) {
+      return _answerGeneralQuestion(query, history: history, mode: mode);
+    }
+
     final resolvedCollege =
         hasExplicitLocation ? null : await _resolveCollegeFromQuery(query);
     if (resolvedCollege != null && _isCollegeSpecificQuestion(query, topic)) {
@@ -260,6 +275,7 @@ class AiAssistantService {
         intent,
         ids.take(AiAssistantConstants.maxCompareColleges).toList(),
         mode,
+        history: history,
       );
     }
 
@@ -334,6 +350,47 @@ class AiAssistantService {
         sources: grounded.sources,
         createdAt: DateTime.now(),
         dataGrounded: true,
+        mode: mode,
+      );
+    }
+  }
+
+  /// Direct AI-model answer for a general college/education question that
+  /// isn't about any specific college and isn't a search/list/compare
+  /// request (spec category A: "Engineering college select kartana kay
+  /// baghaycha?", "CSE vs IT which is better?", "importance of
+  /// internships", etc). No Firestore search, no candidate colleges are
+  /// sent -- the backend's 'general' mode tells Gemini plainly that no
+  /// verified college is in context, so it answers from its own knowledge
+  /// and never invents a specific college fact (see promptBuilder.js).
+  Future<AiAssistantMessage> _answerGeneralQuestion(
+    String question, {
+    List<AiAssistantMessage> history = const [],
+    AiAssistantMode mode = AiAssistantMode.chat,
+  }) async {
+    try {
+      final llmResult = await _chatBackend.complete(
+        question: question,
+        mode: 'general',
+        history: _historyContext(history),
+      );
+      return AiAssistantMessage(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        role: AiMessageRole.assistant,
+        text: llmResult.text,
+        createdAt: DateTime.now(),
+        dataGrounded: false,
+        mode: mode,
+        isGeneralAdvice: true,
+      );
+    } on AiChatQuotaExceededException {
+      rethrow;
+    } catch (e) {
+      _log('LLM general-advice call failed, returning graceful fallback: $e');
+      return _textReply(
+        "I couldn't reach the AI assistant right now. Please try again in a moment -- "
+        "or ask about a specific college's fees, placements, hostel, or reviews using "
+        'verified College Reality data.',
         mode: mode,
       );
     }
@@ -477,8 +534,9 @@ class AiAssistantService {
     String query,
     AiQueryIntent intent,
     List<String> contextCollegeIds,
-    AiAssistantMode mode,
-  ) async {
+    AiAssistantMode mode, {
+    List<AiAssistantMessage> history = const [],
+  }) async {
     var collegeIds = contextCollegeIds.take(AiAssistantConstants.maxCompareColleges).toList();
 
     if (collegeIds.length < 2) {
@@ -495,6 +553,17 @@ class AiAssistantService {
     }
 
     if (collegeIds.isEmpty) {
+      // A comparison-shaped phrase ("X vs Y", "which is better") matched,
+      // but no actual college name could be resolved from the text, and
+      // the user wasn't already mid a college-comparison flow (no
+      // pre-selected colleges, and this wasn't the dedicated Compare-mode
+      // screen). That combination is almost always comparing two general
+      // concepts -- branches, exams, career paths (e.g. "CSE vs IT which
+      // is better?") -- not colleges. Answer it for real via the AI model
+      // instead of a canned "add colleges" prompt that doesn't apply.
+      if (mode != AiAssistantMode.compare && contextCollegeIds.isEmpty) {
+        return _answerGeneralQuestion(query, history: history, mode: mode);
+      }
       return _textReply(
         'Compare mode: search for colleges first or name two colleges '
         '(e.g. "COEP vs VIT Pune"). Up to ${AiAssistantConstants.maxCompareColleges} colleges.',

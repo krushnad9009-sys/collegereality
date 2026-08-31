@@ -130,7 +130,7 @@ class AiGroundedAnswerBuilder {
       );
     }
     if (p.placementPercentage <= 0 && college.aggregatedRatings.placements <= 0) {
-      lines.add('No placement statistics in our verified profile yet.');
+      lines.add('Not enough verified data available yet.');
     }
 
     _addMatchingReviews(bundle, sources, lines, ['placement', 'placed', 'company', 'recruit']);
@@ -179,7 +179,7 @@ class AiGroundedAnswerBuilder {
       lines.add('Placement rate: ${p.placementPercentage}%.');
     }
     if (p.averagePackageLpa <= 0 && p.highestPackageLpa <= 0) {
-      lines.add('Package data not available in verified profile.');
+      lines.add('Not enough verified data available yet.');
     }
 
     _addMatchingReviews(bundle, sources, lines, ['lpa', 'package', 'salary', 'ctc']);
@@ -211,7 +211,7 @@ class AiGroundedAnswerBuilder {
         '$yesCount reported ragging, $noCount said no ragging.',
       );
     } else {
-      lines.add('No ragging survey responses in verified reviews yet.');
+      lines.add('Not enough verified data available yet.');
     }
 
     _addMatchingReviews(bundle, sources, lines, ['ragging', 'bullying', 'senior']);
@@ -234,6 +234,9 @@ class AiGroundedAnswerBuilder {
         'Teaching quality: ${college.aggregatedRatings.teaching.toStringAsFixed(1)}/5.',
       );
     }
+    if (college.aggregatedRatings.faculty <= 0 && college.aggregatedRatings.teaching <= 0) {
+      lines.add('Not enough verified data available yet.');
+    }
 
     _addMatchingReviews(bundle, sources, lines, ['faculty', 'professor', 'teaching']);
     _addMatchingAnswers(bundle, sources, lines, ['faculty', 'professor']);
@@ -254,6 +257,9 @@ class AiGroundedAnswerBuilder {
       lines.add(
         'Value-for-money rating: ${college.aggregatedRatings.fees.toStringAsFixed(1)}/5.',
       );
+    }
+    if (fees.tuitionMin <= 0 && fees.tuitionMax <= 0 && college.aggregatedRatings.fees <= 0) {
+      lines.add('Not enough verified data available yet.');
     }
 
     _addMatchingReviews(bundle, sources, lines, ['fees', 'fee', 'tuition', 'cost']);
@@ -276,6 +282,9 @@ class AiGroundedAnswerBuilder {
       lines.add(
         '${college.wouldChooseAgainPercent!.round()}% of reviewers would choose this college again.',
       );
+    }
+    if (college.aggregatedRatings.campusLife <= 0 && college.wouldChooseAgainPercent == null) {
+      lines.add('Not enough verified data available yet.');
     }
 
     _addMatchingReviews(bundle, sources, lines, ['campus', 'fest', 'culture', 'life']);
