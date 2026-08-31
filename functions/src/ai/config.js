@@ -14,7 +14,13 @@ const AI_CHAT_CONFIG = {
   // tier suitable for short, grounded conversational replies — swapping
   // this string (or the whole provider, via ai_model_provider.js) never
   // requires touching aiChatService.js or the Flutter client.
-  MODEL_NAME: 'gemini-2.5-flash-lite',
+  //
+  // gemini-2.5-flash-lite was retired for new users (confirmed live via a
+  // 404 from the Gemini API on 2026-08-31: "no longer available to new
+  // users... use models/gemini-3.5-flash-lite"); switched per that
+  // response, which is the authoritative source for the current
+  // replacement model name.
+  MODEL_NAME: 'gemini-3.5-flash-lite',
 
   // Keep replies short and concise per spec — also directly controls
   // per-request cost, since output tokens are billed.

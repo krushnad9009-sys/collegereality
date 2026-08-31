@@ -63,6 +63,15 @@ async function answerChatTurn({ uid, question, mode, collegeId, collegeContext, 
       hasCollegeId: !!collegeId,
       errorCode: err && err.code,
       errorStatus: err && err.status,
+      // The provider's own error text (e.g. Gemini's "API key not valid" /
+      // "API has not been used in project ...") -- never contains the key
+      // itself (Google's error responses don't echo credentials back), but
+      // was previously dropped entirely, leaving only a bare status code to
+      // diagnose a failure from. Server-side log only, never returned to
+      // the client (aiChat.js's onCall handler always maps any failure
+      // here to the same generic "AI assistant is temporarily
+      // unavailable." before responding).
+      errorMessage: err && err.message,
       latencyMs: Date.now() - startedAt,
     });
     throw err;
