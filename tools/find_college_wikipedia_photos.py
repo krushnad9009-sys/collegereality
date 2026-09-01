@@ -190,7 +190,21 @@ def candidate_photos_for_title(title: str, top_n: int = 3) -> list[dict]:
     return candidates[:top_n]
 
 
+FIRESTORE_PAGE_SIZE = 500  # matches Firestore's own batch-write cap
+
+
 def load_colleges(limit: int | None) -> list[tuple[str, str]]:
+    """Paginates through `colleges` in bounded pages of
+    FIRESTORE_PAGE_SIZE via a start_after cursor, instead of one
+    unbounded .stream() over the full 45,020-doc collection -- that
+    single giant stream was timing out in practice. Ordered by document
+    ID (`__name__`) so the cursor is well-defined and every doc is
+    visited exactly once regardless of page size.
+
+    Each page is retried independently on a transient failure (timeout,
+    UNAVAILABLE, etc), so one flaky page never loses everything already
+    fetched -- unlike the old single-stream approach, where any failure
+    meant starting over from nothing."""
     import firebase_admin
     from firebase_admin import credentials, firestore
 
@@ -199,15 +213,51 @@ def load_colleges(limit: int | None) -> list[tuple[str, str]]:
     firebase_admin.initialize_app(credentials.Certificate(str(CREDS)), {"projectId": "college-reality"})
     db = firestore.client()
 
-    colleges = []
-    query = db.collection("colleges")
-    if limit:
-        query = query.limit(limit)
-    for snap in query.stream():
-        data = snap.to_dict() or {}
-        name = data.get("name")
-        if name:
-            colleges.append((snap.id, name))
+    colleges: list[tuple[str, str]] = []
+    base_query = db.collection("colleges").order_by("__name__")
+    last_doc = None
+    page_num = 0
+
+    while True:
+        if limit is not None and len(colleges) >= limit:
+            break
+        page_size = FIRESTORE_PAGE_SIZE
+        if limit is not None:
+            page_size = min(page_size, limit - len(colleges))
+
+        query = base_query.limit(page_size)
+        if last_doc is not None:
+            query = query.start_after(last_doc)
+
+        page_num += 1
+        docs = None
+        max_page_attempts = 4
+        for attempt in range(max_page_attempts):
+            try:
+                docs = list(query.stream(timeout=30))
+                break
+            except Exception as e:
+                if attempt < max_page_attempts - 1:
+                    wait = 3 * (attempt + 1)
+                    print(f"  page {page_num}: query failed ({e}), retrying in {wait}s...")
+                    time.sleep(wait)
+                else:
+                    raise
+
+        if not docs:
+            break
+
+        for snap in docs:
+            data = snap.to_dict() or {}
+            name = data.get("name")
+            if name:
+                colleges.append((snap.id, name))
+        last_doc = docs[-1]
+        print(f"  fetched page {page_num} ({len(docs)} docs, {len(colleges)} total so far)")
+
+        if len(docs) < page_size:
+            break  # short page -- reached the end of the collection
+
     return colleges
 
 
