@@ -140,18 +140,28 @@ class AdminAnalyticsService {
   Future<AdminAnalyticsData> fetchAnalyticsData() async {
     final now = DateTime.now();
 
-    final reviewSnap = await _reviews
-        .orderBy('createdAt', descending: true)
-        .limit(AdminConstants.analyticsSampleLimit)
-        .get();
-    final userSnap = await _users
-        .orderBy('createdAt', descending: true)
-        .limit(AdminConstants.analyticsSampleLimit)
-        .get();
-    final collegeSnap = await _colleges
-        .orderBy('updatedAt', descending: true)
-        .limit(AdminConstants.analyticsSampleLimit)
-        .get();
+    // These 7 reads are all independent of each other (none consumes
+    // another's result) but were previously awaited one at a time --
+    // fully serialized, so the total wall-clock time was the SUM of every
+    // round trip rather than the max of one. Firing them together cuts a
+    // dashboard load that could plausibly take 10+ seconds down to
+    // roughly the time of the single slowest query.
+    final results = await Future.wait([
+      _reviews.orderBy('createdAt', descending: true).limit(AdminConstants.analyticsSampleLimit).get(),
+      _users.orderBy('createdAt', descending: true).limit(AdminConstants.analyticsSampleLimit).get(),
+      _colleges.orderBy('updatedAt', descending: true).limit(AdminConstants.analyticsSampleLimit).get(),
+      _analyticsEvents.orderBy('count', descending: true).limit(20).get(),
+      _users.limit(100).get(),
+      _colleges.where('isActive', isEqualTo: true).orderBy('reviewCount', descending: true).limit(10).get(),
+      _communityPosts.orderBy('engagementScore', descending: true).limit(30).get(),
+    ]);
+    final reviewSnap = results[0];
+    final userSnap = results[1];
+    final collegeSnap = results[2];
+    final eventSnap = results[3];
+    final usersForBookmarks = results[4];
+    final topReviewedSnap = results[5];
+    final trendingSnap = results[6];
 
     final reviewDates = reviewSnap.docs
         .map((d) => DateTime.tryParse(d.data()['createdAt']?.toString() ?? ''))
@@ -165,11 +175,6 @@ class AdminAnalyticsService {
         .map((d) => DateTime.tryParse(d.data()['createdAt']?.toString() ?? ''))
         .whereType<DateTime>()
         .toList();
-
-    final eventSnap = await _analyticsEvents
-        .orderBy('count', descending: true)
-        .limit(20)
-        .get();
 
     final viewMetrics = <AdminTopCollegeMetric>[];
     final searchMetrics = <AdminTopCollegeMetric>[];
@@ -199,7 +204,6 @@ class AdminAnalyticsService {
     }
 
     final bookmarkCounts = <String, int>{};
-    final usersForBookmarks = await _users.limit(100).get();
     for (final doc in usersForBookmarks.docs) {
       final ids = (doc.data()['favoriteCollegeIds'] as List<dynamic>?)?.cast<String>() ?? [];
       for (final id in ids) {
@@ -207,11 +211,6 @@ class AdminAnalyticsService {
       }
     }
 
-    final topReviewedSnap = await _colleges
-        .where('isActive', isEqualTo: true)
-        .orderBy('reviewCount', descending: true)
-        .limit(10)
-        .get();
     final topReviewed = topReviewedSnap.docs.map((d) {
       final data = d.data();
       return AdminTopCollegeMetric(
@@ -222,10 +221,6 @@ class AdminAnalyticsService {
       );
     }).toList();
 
-    final trendingSnap = await _communityPosts
-        .orderBy('engagementScore', descending: true)
-        .limit(30)
-        .get();
     final activityByCollege = <String, int>{};
     for (final doc in trendingSnap.docs) {
       final collegeId = doc.data()['collegeId']?.toString() ?? '';
@@ -248,7 +243,11 @@ class AdminAnalyticsService {
         ? viewMetrics.take(10).toList()
         : topReviewed.take(10).toList();
 
-    final topContributors = await _fetchTopContributors();
+    // Passes the reviews snapshot already fetched above -- this used to
+    // re-run the IDENTICAL orderBy('createdAt')/limit query a second time
+    // from scratch inside _fetchTopContributors, a genuine wasted round
+    // trip on every single dashboard load.
+    final topContributors = await _fetchTopContributors(reviewSnap);
 
     return AdminAnalyticsData(
       reviewGrowth: buildDailyGrowthSeries(timestamps: reviewDates),
@@ -265,11 +264,9 @@ class AdminAnalyticsService {
     );
   }
 
-  Future<List<AdminTopContributor>> _fetchTopContributors() async {
-    final reviewSnap = await _reviews
-        .orderBy('createdAt', descending: true)
-        .limit(AdminConstants.analyticsSampleLimit)
-        .get();
+  Future<List<AdminTopContributor>> _fetchTopContributors(
+    QuerySnapshot<Map<String, dynamic>> reviewSnap,
+  ) async {
     final counts = <String, ({String name, int reviews, int answers, int posts})>{};
 
     void bump(String userId, String name, {int reviews = 0, int answers = 0, int posts = 0}) {
@@ -289,7 +286,13 @@ class AdminAnalyticsService {
       bump(uid, data['anonymousAlias']?.toString() ?? '', reviews: 1);
     }
 
-    final questionSnap = await _questions.limit(100).get();
+    final remaining = await Future.wait([
+      _questions.limit(100).get(),
+      _communityPosts.limit(100).get(),
+    ]);
+    final questionSnap = remaining[0];
+    final postSnap = remaining[1];
+
     for (final q in questionSnap.docs) {
       final answers = (q.data()['answerCount'] as num?)?.toInt() ?? 0;
       if (answers <= 0) continue;
@@ -298,7 +301,6 @@ class AdminAnalyticsService {
       bump(uid, q.data()['authorDisplayName']?.toString() ?? '', answers: answers);
     }
 
-    final postSnap = await _communityPosts.limit(100).get();
     for (final p in postSnap.docs) {
       final uid = p.data()['authorId']?.toString() ?? '';
       if (uid.isEmpty) continue;

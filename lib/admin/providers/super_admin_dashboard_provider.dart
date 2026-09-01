@@ -62,10 +62,23 @@ typedef SuperAdminDashboardBundle = ({
 
 final superAdminDashboardBundleProvider = FutureProvider<SuperAdminDashboardBundle>((ref) async {
   Future<SuperAdminDashboardBundle> load() async {
-    final stats = await ref.watch(adminDashboardStatsProvider.future);
-    final extended = await ref.watch(superAdminExtendedStatsProvider.future);
-    final analytics = await ref.watch(adminAnalyticsDataProvider.future);
-    return (stats: stats, extended: extended, analytics: analytics);
+    // stats/extended/analytics don't depend on each other's *results* (only
+    // extended internally reuses stats' own cached Future via its own
+    // ref.watch -- that's unaffected by the order these three are kicked
+    // off in here). Firing all three at once instead of one after another
+    // roughly triples how much of this load happens concurrently rather
+    // than serially, directly cutting the total wait before the dashboard
+    // has anything to show.
+    final results = await Future.wait([
+      ref.watch(adminDashboardStatsProvider.future),
+      ref.watch(superAdminExtendedStatsProvider.future),
+      ref.watch(adminAnalyticsDataProvider.future),
+    ]);
+    return (
+      stats: results[0] as AdminDashboardStats,
+      extended: results[1] as SuperAdminExtendedStats,
+      analytics: results[2] as AdminAnalyticsData,
+    );
   }
 
   // Bounds the whole dashboard load, not just individual queries -- a
