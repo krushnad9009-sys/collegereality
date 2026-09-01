@@ -115,8 +115,21 @@ final Provider<GoRouter> superAdminRouterProvider = Provider<GoRouter>((ref) {
       }
 
       if (path == SuperAdminRouteNames.accessDenied) {
-        final isSuperAdmin = await checkSuperAdmin();
-        if (isSuperAdmin) return SuperAdminRouteNames.dashboard;
+        // Deliberately NOT re-checking isSuperAdmin here to bounce back to
+        // the dashboard -- that would pair with the catch-all rule below
+        // (dashboard -> access-denied when not admin) to form exactly a
+        // dashboard <-> access-denied cycle if checkSuperAdmin() is even
+        // slightly inconsistent across two back-to-back redirect()
+        // invocations, which GoRouter calls repeatedly within one
+        // resolution episode until it settles. That inconsistency is a
+        // real possibility right after a refresh, while auth/Firestore
+        // state is still settling -- and is exactly what produced the
+        // reported "GoException: redirect loop detected /panel/dashboard
+        // => /panel/access-denied => ..." crash. access-denied is a
+        // structurally terminal page from the router's own redirect logic
+        // now; AccessDeniedScreen itself handles auto-leaving once it
+        // actually observes a confirmed super-admin result, via a normal
+        // one-shot context.go() outside this tight resolution loop.
         return null;
       }
 

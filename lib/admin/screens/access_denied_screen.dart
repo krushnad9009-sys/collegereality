@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../config/theme/app_theme.dart';
 import '../../features/auth/providers/auth_provider.dart';
+import '../providers/super_admin_provider.dart';
 import '../router/super_admin_route_names.dart';
 
 class AccessDeniedScreen extends ConsumerWidget {
@@ -12,6 +13,22 @@ class AccessDeniedScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Auto-leaves once a confirmed super-admin result actually arrives --
+    // e.g. this page was reached because the very first admin check right
+    // after a refresh raced ahead of Firestore/auth state settling. This
+    // is deliberately a one-shot widget-level side effect (ref.listen),
+    // not a GoRouter `redirect` rule: a plain context.go() here is a
+    // fresh, independent navigation from GoRouter's point of view, so it
+    // can never join the tight, repeatedly-re-invoked resolution loop
+    // that a reactive access-denied -> dashboard redirect rule previously
+    // could -- see super_admin_router.dart's redirect for the full
+    // explanation of the crash that caused.
+    ref.listen<AsyncValue<bool>>(isSuperAdminProvider, (previous, next) {
+      if (next.valueOrNull == true && context.mounted) {
+        context.go(SuperAdminRouteNames.dashboard);
+      }
+    });
+
     return Scaffold(
       body: Center(
         child: ConstrainedBox(
