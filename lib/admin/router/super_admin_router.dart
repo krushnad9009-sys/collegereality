@@ -91,7 +91,18 @@ final Provider<GoRouter> superAdminRouterProvider = Provider<GoRouter>((ref) {
 
       Future<bool> checkSuperAdmin() async {
         try {
-          return await ref.read(isSuperAdminProvider.future);
+          // Bounded the same way app_router.dart's equivalent isStaffProvider
+          // check already is -- without this, a getUser() call that hangs
+          // (rather than throwing -- e.g. a genuinely stuck Firestore
+          // connection on web) never resolves the try/catch below it either,
+          // so this whole redirect callback would await forever. Since
+          // GoRouter never renders any route until its redirect resolves,
+          // that hang is exactly what shows as "stuck on the app logo
+          // forever" -- the try/catch alone only guards against a *thrown*
+          // error, not a Future that simply never completes.
+          return await ref
+              .read(isSuperAdminProvider.future)
+              .timeout(const Duration(seconds: 8));
         } catch (_) {
           return false;
         }

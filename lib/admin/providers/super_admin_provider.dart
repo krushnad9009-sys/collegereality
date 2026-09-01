@@ -30,7 +30,15 @@ final isSuperAdminProvider = FutureProvider<bool>((ref) async {
   );
 
   try {
-    final userDetail = await ref.watch(userRepositoryProvider).getUser(user.uid);
+    // Explicit timeout, not just the try/catch below: a Firestore .get()
+    // that hangs (rather than throwing -- e.g. a stuck connection on web
+    // after a hard refresh) would otherwise never resolve this Future at
+    // all, which every caller of this provider (the router's redirect
+    // included) then waits on indefinitely.
+    final userDetail = await ref
+        .watch(userRepositoryProvider)
+        .getUser(user.uid)
+        .timeout(const Duration(seconds: 8));
     final userType = userDetail?.userType;
     final result = AdminPermissions.isSuperAdmin(userType);
     _log(

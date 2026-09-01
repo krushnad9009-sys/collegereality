@@ -54,12 +54,26 @@ final superAdminExtendedStatsProvider = FutureProvider<SuperAdminExtendedStats>(
   );
 });
 
-final superAdminDashboardBundleProvider =
-    FutureProvider<({AdminDashboardStats stats, SuperAdminExtendedStats extended, AdminAnalyticsData analytics})>(
-  (ref) async {
+typedef SuperAdminDashboardBundle = ({
+  AdminDashboardStats stats,
+  SuperAdminExtendedStats extended,
+  AdminAnalyticsData analytics,
+});
+
+final superAdminDashboardBundleProvider = FutureProvider<SuperAdminDashboardBundle>((ref) async {
+  Future<SuperAdminDashboardBundle> load() async {
     final stats = await ref.watch(adminDashboardStatsProvider.future);
     final extended = await ref.watch(superAdminExtendedStatsProvider.future);
     final analytics = await ref.watch(adminAnalyticsDataProvider.future);
     return (stats: stats, extended: extended, analytics: analytics);
-  },
-);
+  }
+
+  // Bounds the whole dashboard load, not just individual queries -- a
+  // Firestore call that hangs rather than throwing (a stuck connection,
+  // a still-building index that never actually errors, etc) would
+  // otherwise leave the screen's AsyncValue stuck on `loading` forever,
+  // which reads to a user as "the dashboard never loads" even though
+  // the screen's own .when() already has a real error branch -- that
+  // branch just never gets a chance to run without this.
+  return load().timeout(const Duration(seconds: 20));
+});
