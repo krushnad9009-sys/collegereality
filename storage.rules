@@ -68,6 +68,20 @@ service firebase.storage {
         isImageContent();
     }
 
+    // Bulk-imported/curated directory cover photos — public read, matching
+    // the `colleges` Firestore collection's own public-read policy (home/
+    // search/browse are guest-accessible), so a signed-out user's college
+    // card/detail cover photo loads without needing auth. Write is admin-
+    // only, same as who may create/edit a `colleges` doc itself. Distinct
+    // from college_media/ below, which is for admin/verified-college-
+    // official uploads specifically.
+    match /college_covers/{collegeId} {
+      allow read: if true;
+      allow write: if isAdmin() &&
+        request.resource.size < 8 * 1024 * 1024 &&
+        isImageContent();
+    }
+
     // Official college media only — no arbitrary authenticated uploads.
     match /college_media/{collegeId}/{fileName} {
       allow read: if isAuthenticated();
