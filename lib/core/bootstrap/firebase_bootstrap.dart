@@ -57,16 +57,36 @@ class FirebaseBootstrap {
           'the UI can still render (splash/auth flow will retry).',
         );
       },
-    );
+    ).catchError((Object e, StackTrace st) {
+      // A *thrown* init failure (bad options, plugin error) must not leave
+      // a rejected future memoised forever — every later awaiter (router,
+      // splash, FCM) would then synchronously rethrow it. Swallow here;
+      // callers already treat "Firebase not ready" as a soft state and
+      // FirebaseInitializingScreen offers an explicit retry.
+      _log('Firebase init threw — continuing without it: $e\n$st');
+    });
     return _initFuture!;
   }
 
   static bool get isInitialized => _configured;
 
+  /// Discards the memoised init result so the next [ensureInitialized]
+  /// genuinely re-runs `Firebase.initializeApp()`. Used by
+  /// `FirebaseInitializingScreen`'s "Retry" action after a boot stall.
+  static void resetForRetry() {
+    _initFuture = null;
+    _configured = false;
+  }
+
   static Future<void> _initialize() async {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
+    // Guard against a duplicate-app throw: a slow first initializeApp() can
+    // still be in flight (or have completed after our timeout) when a
+    // retry calls in here again.
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+    }
 
     // Persistence is a best-effort offline/session convenience. It must
     // never block app startup or crash it — e.g. another open tab holding

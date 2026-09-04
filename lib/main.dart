@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -14,20 +16,39 @@ import 'features/engagement/services/firebase_messaging_service.dart';
 Future<void> main() async {
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
-  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
   AppErrorHandler.install();
 
-  // Firebase init failing or hanging (e.g. a stale IndexedDB persistence
-  // lock from another browser tab after a hard refresh) must never prevent
-  // runApp() from firing — otherwise the native splash never gets removed
-  // and the app looks permanently frozen. SplashScreen re-resolves/retries
-  // this on its own once the widget tree exists.
+  // Registering the background handler only stores a function reference; a
+  // misbehaving plugin registration here must still never abort main()
+  // before runApp().
   try {
-    await FirebaseBootstrap.ensureInitialized();
-    await CrashlyticsService.initialize();
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
   } catch (e, st) {
-    debugPrint('Firebase bootstrap failed at startup, continuing: $e\n$st');
+    debugPrint('[main] FCM background handler registration failed: $e\n$st');
   }
+
+  // Firebase / Crashlytics init is deliberately NOT awaited before
+  // runApp(). Firebase.initializeApp() hits the network on web and can be
+  // slow or stall (a stale IndexedDB persistence lock from another tab, a
+  // blocked CDN); blocking the first frame on it is exactly what leaves
+  // the OS splash frozen with nothing rendered behind it. Both the router
+  // (via FirebaseInitializingScreen) and SplashScreen re-await
+  // FirebaseBootstrap.ensureInitialized() themselves once the widget tree
+  // exists, so the UI renders now and catches up when init lands. The
+  // chain below is bounded and fully guarded so a stuck platform channel
+  // can never surface as an unhandled boot exception.
+  unawaited(
+    FirebaseBootstrap.ensureInitialized()
+        .then((_) => CrashlyticsService.initialize())
+        .timeout(
+          const Duration(seconds: 20),
+          onTimeout: () =>
+              debugPrint('[main] boot services still not ready after 20s'),
+        )
+        .catchError((Object e, StackTrace st) {
+          debugPrint('[main] boot services init failed, continuing: $e\n$st');
+        }),
+  );
 
   runApp(
     const ProviderScope(

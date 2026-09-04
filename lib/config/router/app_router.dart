@@ -41,6 +41,7 @@ import '../../features/admin/screens/admin_export_screen.dart';
 import '../../features/auth/providers/user_provider.dart';
 import '../../features/auth/models/user_model.dart';
 import '../../features/admin/providers/admin_provider.dart';
+import '../../features/admin/widgets/admin_access_guard.dart';
 import '../../features/admin/screens/admin_verification_screen.dart';
 import '../../features/profile/screens/premium_student_profile_screen.dart';
 import '../../features/verification/screens/verification_screen.dart';
@@ -744,100 +745,114 @@ final Provider<GoRouter> appRouterProvider = Provider<GoRouter>((ref) {
         path: RouteNames.adminLogin,
         builder: (context, state) => const AdminLoginScreen(),
       ),
-      GoRoute(
-        path: RouteNames.admin,
-        builder: (context, state) => const AdminDashboardScreen(),
-      ),
-      GoRoute(
-        path: RouteNames.adminColleges,
-        builder: (context, state) => const AdminCollegesScreen(),
-      ),
-      GoRoute(
-        path: RouteNames.adminCollegeNew,
-        builder: (context, state) => const AdminCollegeEditScreen(),
-      ),
-      GoRoute(
-        path: RouteNames.adminCollegeEdit,
-        builder: (context, state) {
-          final id = state.pathParameters['id']!;
-          return AdminCollegeEditScreen(collegeId: id);
-        },
-      ),
-      GoRoute(
-        path: RouteNames.adminMergeColleges,
-        builder: (context, state) => const AdminMergeCollegesScreen(),
-      ),
-      GoRoute(
-        path: RouteNames.adminReviews,
-        builder: (context, state) => const AdminReviewsScreen(),
-      ),
-      GoRoute(
-        path: RouteNames.adminPlacements,
-        builder: (context, state) => const AdminPlacementsScreen(),
-      ),
-      GoRoute(
-        path: RouteNames.adminUsers,
-        builder: (context, state) => const AdminUsersScreen(),
-      ),
-      GoRoute(
-        path: RouteNames.adminAnalytics,
-        builder: (context, state) => const AdminAnalyticsScreen(),
-      ),
-      GoRoute(
-        path: RouteNames.adminReports,
-        builder: (context, state) => const AdminReportsHubScreen(),
-      ),
-      GoRoute(
-        path: RouteNames.adminConsultations,
-        builder: (context, state) => const AdminConsultationsScreen(),
-      ),
-      GoRoute(
-        path: RouteNames.adminConsultationRevenue,
-        builder: (context, state) => const AdminConsultationRevenueScreen(),
-      ),
-      GoRoute(
-        path: RouteNames.adminSystem,
-        builder: (context, state) => const AdminSystemMonitorScreen(),
-      ),
-      GoRoute(
-        path: RouteNames.adminRecalculateCrScore,
-        builder: (context, state) => const AdminCrScoreScreen(),
-      ),
-      GoRoute(
-        path: RouteNames.adminBulk,
-        builder: (context, state) => const AdminCollegeBulkScreen(),
-      ),
-      GoRoute(
-        path: RouteNames.adminExport,
-        builder: (context, state) => const AdminExportScreen(),
-      ),
-      GoRoute(
-        path: RouteNames.adminCommunication,
-        builder: (context, state) => const AdminCommunicationScreen(),
-      ),
-      GoRoute(
-        path: RouteNames.adminAnnouncements,
-        builder: (context, state) => const AdminAnnouncementsScreen(),
-      ),
-      GoRoute(
-        path: RouteNames.adminVerification,
-        builder: (context, state) => const AdminVerificationScreen(),
-      ),
-      GoRoute(
-        path: RouteNames.adminCommunity,
-        builder: (context, state) => const AdminCommunityScreen(),
-      ),
-      GoRoute(
-        path: RouteNames.adminQuestions,
-        builder: (context, state) => const AdminQuestionsScreen(),
-      ),
-      GoRoute(
-        path: RouteNames.adminStudentLife,
-        builder: (context, state) => const AdminStudentLifeScreen(),
-      ),
-      GoRoute(
-        path: RouteNames.adminEcosystem,
-        builder: (context, state) => const AdminEcosystemHubScreen(),
+      // Every /admin/* screen is additionally wrapped in AdminAccessGuard —
+      // an independent, render-time RBAC check layered on top of the
+      // _resolveRedirect gate above. If that single redirect is ever
+      // regressed or races on a hard refresh, a non-staff user still gets
+      // an "Access denied" screen and is bounced to /home instead of
+      // seeing admin content or triggering admin-only network calls.
+      // /admin/login deliberately stays OUTSIDE this shell so it remains
+      // reachable while signed out.
+      ShellRoute(
+        builder: (context, state, child) => AdminAccessGuard(child: child),
+        routes: [
+          GoRoute(
+            path: RouteNames.admin,
+            builder: (context, state) => const AdminDashboardScreen(),
+          ),
+          GoRoute(
+            path: RouteNames.adminColleges,
+            builder: (context, state) => const AdminCollegesScreen(),
+          ),
+          GoRoute(
+            path: RouteNames.adminCollegeNew,
+            builder: (context, state) => const AdminCollegeEditScreen(),
+          ),
+          GoRoute(
+            path: RouteNames.adminCollegeEdit,
+            builder: (context, state) {
+              final id = state.pathParameters['id']!;
+              return AdminCollegeEditScreen(collegeId: id);
+            },
+          ),
+          GoRoute(
+            path: RouteNames.adminMergeColleges,
+            builder: (context, state) => const AdminMergeCollegesScreen(),
+          ),
+          GoRoute(
+            path: RouteNames.adminReviews,
+            builder: (context, state) => const AdminReviewsScreen(),
+          ),
+          GoRoute(
+            path: RouteNames.adminPlacements,
+            builder: (context, state) => const AdminPlacementsScreen(),
+          ),
+          GoRoute(
+            path: RouteNames.adminUsers,
+            builder: (context, state) => const AdminUsersScreen(),
+          ),
+          GoRoute(
+            path: RouteNames.adminAnalytics,
+            builder: (context, state) => const AdminAnalyticsScreen(),
+          ),
+          GoRoute(
+            path: RouteNames.adminReports,
+            builder: (context, state) => const AdminReportsHubScreen(),
+          ),
+          GoRoute(
+            path: RouteNames.adminConsultations,
+            builder: (context, state) => const AdminConsultationsScreen(),
+          ),
+          GoRoute(
+            path: RouteNames.adminConsultationRevenue,
+            builder: (context, state) =>
+                const AdminConsultationRevenueScreen(),
+          ),
+          GoRoute(
+            path: RouteNames.adminSystem,
+            builder: (context, state) => const AdminSystemMonitorScreen(),
+          ),
+          GoRoute(
+            path: RouteNames.adminRecalculateCrScore,
+            builder: (context, state) => const AdminCrScoreScreen(),
+          ),
+          GoRoute(
+            path: RouteNames.adminBulk,
+            builder: (context, state) => const AdminCollegeBulkScreen(),
+          ),
+          GoRoute(
+            path: RouteNames.adminExport,
+            builder: (context, state) => const AdminExportScreen(),
+          ),
+          GoRoute(
+            path: RouteNames.adminCommunication,
+            builder: (context, state) => const AdminCommunicationScreen(),
+          ),
+          GoRoute(
+            path: RouteNames.adminAnnouncements,
+            builder: (context, state) => const AdminAnnouncementsScreen(),
+          ),
+          GoRoute(
+            path: RouteNames.adminVerification,
+            builder: (context, state) => const AdminVerificationScreen(),
+          ),
+          GoRoute(
+            path: RouteNames.adminCommunity,
+            builder: (context, state) => const AdminCommunityScreen(),
+          ),
+          GoRoute(
+            path: RouteNames.adminQuestions,
+            builder: (context, state) => const AdminQuestionsScreen(),
+          ),
+          GoRoute(
+            path: RouteNames.adminStudentLife,
+            builder: (context, state) => const AdminStudentLifeScreen(),
+          ),
+          GoRoute(
+            path: RouteNames.adminEcosystem,
+            builder: (context, state) => const AdminEcosystemHubScreen(),
+          ),
+        ],
       ),
       GoRoute(
         path: RouteNames.communityPrivateChats,

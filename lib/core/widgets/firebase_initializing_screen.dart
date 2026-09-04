@@ -4,6 +4,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../bootstrap/firebase_bootstrap.dart';
+
 /// Shown for the brief window (typically well under a second) where
 /// `Firebase.initializeApp()` is still genuinely completing in the
 /// background after `FirebaseBootstrap`'s own bootstrap timeout gave up
@@ -37,10 +39,18 @@ class _FirebaseInitializingScreenState
   Timer? _timer;
   static const _maxPolls = 60; // ~9s at 150ms
   int _attempts = 0;
+  bool _timedOut = false;
 
   @override
   void initState() {
     super.initState();
+    _startPolling();
+  }
+
+  void _startPolling() {
+    _timer?.cancel();
+    _attempts = 0;
+    if (_timedOut) setState(() => _timedOut = false);
     _timer = Timer.periodic(const Duration(milliseconds: 150), (t) {
       _attempts++;
       if (Firebase.apps.isNotEmpty) {
@@ -48,8 +58,17 @@ class _FirebaseInitializingScreenState
         if (mounted) ref.invalidate(widget.routerProvider);
       } else if (_attempts >= _maxPolls) {
         t.cancel();
+        // Don't just stop and leave a spinner forever — surface an
+        // explicit, recoverable error boundary instead.
+        if (mounted) setState(() => _timedOut = true);
       }
     });
+  }
+
+  Future<void> _retry() async {
+    FirebaseBootstrap.resetForRetry();
+    unawaited(FirebaseBootstrap.ensureInitialized());
+    if (mounted) _startPolling();
   }
 
   @override
@@ -60,14 +79,39 @@ class _FirebaseInitializingScreenState
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       backgroundColor: Colors.white,
       body: Center(
-        child: SizedBox(
-          width: 32,
-          height: 32,
-          child: CircularProgressIndicator(strokeWidth: 2.5),
-        ),
+        child: _timedOut ? _errorBoundary() : _spinner(),
+      ),
+    );
+  }
+
+  Widget _spinner() => const SizedBox(
+        width: 32,
+        height: 32,
+        child: CircularProgressIndicator(strokeWidth: 2.5),
+      );
+
+  Widget _errorBoundary() {
+    return Padding(
+      padding: const EdgeInsets.all(32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.wifi_off_rounded, size: 40, color: Colors.black45),
+          const SizedBox(height: 16),
+          const Text(
+            "Couldn't finish starting up.\nCheck your connection and try again.",
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 14, color: Colors.black54, height: 1.4),
+          ),
+          const SizedBox(height: 20),
+          FilledButton(
+            onPressed: _retry,
+            child: const Text('Retry'),
+          ),
+        ],
       ),
     );
   }

@@ -4,6 +4,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_auth_platform_interface/firebase_auth_platform_interface.dart';
 import 'package:flutter/foundation.dart';
 
+import 'crashlytics_service.dart';
+
 /// Hostname check for localhost web dev (testable without Firebase).
 bool isLocalWebHostName(String host) {
   final normalized = host.toLowerCase();
@@ -18,6 +20,43 @@ class PhoneAuthService {
   static const _webLinkTimeout = Duration(seconds: 120);
   static const _logTag = '[PhoneAuthService]';
 
+  /// When true, Firebase phone-auth "app verification" — Play Integrity /
+  /// SafetyNet on Android, reCAPTCHA on web — is disabled so the **test
+  /// phone numbers** registered in Firebase Console
+  /// (Authentication → Sign-in method → Phone → "Phone numbers for
+  /// testing") return their pre-set code with **no real SMS** and no
+  /// reCAPTCHA challenge.
+  ///
+  /// Defaults **OFF** — the normal flow dispatches a real SMS. Turn it on
+  /// only when you are deliberately testing against Console test numbers:
+  /// `--dart-define=PHONE_AUTH_DISABLE_APP_VERIFICATION=true` (debug builds
+  /// only; the `kDebugMode &&` guard forces it off in release regardless).
+  static const bool disableAppVerificationForTesting = kDebugMode &&
+      bool.fromEnvironment(
+        'PHONE_AUTH_DISABLE_APP_VERIFICATION',
+        defaultValue: false,
+      );
+
+  /// Forces the **reCAPTCHA** verification fallback on Android instead of
+  /// the Play Integrity / SafetyNet attestation path.
+  ///
+  /// Defaults ON for Android debug builds: a locally-built debug APK whose
+  /// signing SHA-256 isn't registered in Firebase Console fails attestation
+  /// (`invalid-app-credential` / `missing-client-identifier`) and the
+  /// automatic fallback is unreliable on some devices/emulators — so real
+  /// OTP SMS never gets dispatched. Forcing reCAPTCHA makes it work with
+  /// zero console setup. Disable with
+  /// `--dart-define=PHONE_AUTH_FORCE_RECAPTCHA=false` once a real SHA-256
+  /// is registered. No-op on web/iOS and in release.
+  static bool get forceRecaptchaFlowForDebug =>
+      kDebugMode &&
+      !kIsWeb &&
+      defaultTargetPlatform == TargetPlatform.android &&
+      const bool.fromEnvironment(
+        'PHONE_AUTH_FORCE_RECAPTCHA',
+        defaultValue: true,
+      );
+
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   String? _verificationId;
@@ -26,6 +65,7 @@ class PhoneAuthService {
   ConfirmationResult? _webConfirmationResult;
   RecaptchaVerifier? _recaptchaVerifier;
   Future<void>? _sendOtpInFlight;
+  bool _authSettingsApplied = false;
 
   String? get verificationId => _verificationId;
   String? get pendingPhone => _pendingPhone;
@@ -37,13 +77,115 @@ class PhoneAuthService {
   void _logException(Object error, StackTrace stackTrace, {String? step}) {
     final prefix = step == null ? 'Exception' : 'Exception at $step';
     if (error is FirebaseAuthException) {
+      final hint = _diagnosticHint(error.code);
       _log(
-        '$prefix: FirebaseAuthException code=${error.code} '
-        'message=${error.message}\n$stackTrace',
+        '$prefix: FirebaseAuthException '
+        'code=${error.code} '
+        'message=${error.message} '
+        'plugin=${error.plugin}'
+        '${hint == null ? '' : '\n  ↳ FIX: $hint'}\n$stackTrace',
+      );
+    } else {
+      _log('$prefix: ${error.runtimeType}: $error\n$stackTrace');
+    }
+    // No-op in debug and on web (see CrashlyticsService); in a release
+    // native build this puts the exact code/message behind every
+    // user-facing "OTP failed" message so the root cause is visible
+    // without a repro.
+    CrashlyticsService.recordError(
+      error,
+      stackTrace,
+      reason: 'PhoneAuth${step == null ? '' : ' ($step)'}',
+    );
+  }
+
+  /// Actionable next step for the FirebaseAuthException codes that mean a
+  /// project/build **misconfiguration** rather than user error — surfaced
+  /// in the log so "OTP just fails" is self-diagnosing during local dev.
+  String? _diagnosticHint(String code) {
+    switch (code) {
+      case 'invalid-app-credential':
+      case 'missing-client-identifier':
+        return 'Android app attestation failed. Add this build\'s SHA-1 AND '
+            'SHA-256 to Firebase Console -> Project Settings -> your Android '
+            'app, re-download google-services.json, and enable the Play '
+            'Integrity API. Or (default in debug) let PHONE_AUTH_FORCE_'
+            'RECAPTCHA=true use the reCAPTCHA fallback instead.';
+      case 'captcha-check-failed':
+        return 'reCAPTCHA token rejected. Web: add this origin under '
+            'Authentication -> Settings -> Authorized domains, and check the '
+            'API key HTTP-referrer restrictions in Google Cloud Console.';
+      case 'too-many-requests':
+      case 'quota-exceeded':
+        return 'SMS/verification quota hit for this project/device/number. '
+            'Use a Firebase Console test phone number (no quota, no SMS) for '
+            'local testing, or wait ~30 minutes.';
+      case 'operation-not-allowed':
+        return 'Phone provider disabled, or SMS region policy blocks this '
+            'country. Firebase Console -> Authentication -> Sign-in method -> '
+            'Phone (enable), and -> Settings -> SMS region policy (allow the '
+            'target country, e.g. +91 India).';
+      case 'billing-not-enabled':
+        return 'Phone Auth on this project requires the Blaze plan. Upgrade '
+            'billing, or use a Console test phone number.';
+      case 'unauthorized-domain':
+        return 'This web origin is not in Authentication -> Settings -> '
+            'Authorized domains.';
+      case 'app-not-authorized':
+        return 'This app is not authorized to use Firebase Authentication '
+            'with the provided API key. Check the API key restrictions and '
+            'that google-services.json / GoogleService-Info.plist matches '
+            'this bundle/package id.';
+      default:
+        return null;
+    }
+  }
+
+  /// Applies phone-auth [FirebaseAuth.setSettings] flags exactly once per
+  /// service instance, before the first OTP request:
+  ///  * [disableAppVerificationForTesting] — Console test numbers only.
+  ///  * [forceRecaptchaFlowForDebug] — Android debug reCAPTCHA fallback so
+  ///    real SMS dispatches without a registered SHA-256.
+  /// Any failure here is logged but non-fatal — the request still proceeds.
+  Future<void> _applyAuthSettingsOnce() async {
+    if (_authSettingsApplied) return;
+    _authSettingsApplied = true;
+
+    final disableAppVerification = disableAppVerificationForTesting;
+    final forceRecaptcha = forceRecaptchaFlowForDebug;
+
+    if (!disableAppVerification && !forceRecaptcha) {
+      _log(
+        'Auth settings: default real app-verification path '
+        '(kIsWeb=$kIsWeb debug=$kDebugMode platform=$defaultTargetPlatform).',
       );
       return;
     }
-    _log('$prefix: $error\n$stackTrace');
+
+    try {
+      if (kIsWeb) {
+        // firebase_auth_web's setSettings only supports this flag.
+        await _auth.setSettings(
+          appVerificationDisabledForTesting: disableAppVerification,
+        );
+      } else {
+        await _auth.setSettings(
+          appVerificationDisabledForTesting: disableAppVerification,
+          forceRecaptchaFlow: forceRecaptcha ? true : null,
+        );
+      }
+      _log(
+        'Auth settings applied: '
+        'appVerificationDisabledForTesting=$disableAppVerification, '
+        'forceRecaptchaFlow=${!kIsWeb && forceRecaptcha}. '
+        '${disableAppVerification ? "ONLY Console test phone numbers will "
+            "receive a code (no real SMS). " : ""}'
+        '${!kIsWeb && forceRecaptcha ? "Android uses the reCAPTCHA fallback "
+            "(a browser challenge) instead of Play Integrity/SafetyNet. " : ""}',
+      );
+    } catch (e, st) {
+      _logException(e, st, step: 'setSettings');
+    }
   }
 
   /// Each web OTP attempt needs a fresh reCAPTCHA verifier. Reusing one causes
@@ -89,6 +231,14 @@ class PhoneAuthService {
     }
 
     _log('sendOtp started for $formatted (raw input=$phoneNumber)');
+
+    await _applyAuthSettingsOnce();
+    _log(
+      'sendOtp config: kIsWeb=$kIsWeb kDebugMode=$kDebugMode '
+      'appVerificationDisabledForTesting=$disableAppVerificationForTesting '
+      'forceRecaptchaFlowForDebug=$forceRecaptchaFlowForDebug '
+      'host=${kIsWeb ? Uri.base.host : "(native)"}',
+    );
 
     if (kIsWeb) {
       await _sendOtpWeb(formatted);
@@ -162,8 +312,10 @@ class PhoneAuthService {
           }
         },
         verificationFailed: (FirebaseAuthException e) {
-          _log(
-            'verificationFailed callback: code=${e.code} message=${e.message}',
+          _logException(
+            e,
+            e.stackTrace ?? StackTrace.current,
+            step: 'verifyPhoneNumber.verificationFailed',
           );
           _completeOnce(completer, error: _mapError(e));
         },
