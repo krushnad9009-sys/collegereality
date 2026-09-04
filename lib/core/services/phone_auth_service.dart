@@ -451,15 +451,26 @@ class PhoneAuthService {
       _log(
         'FirebaseAuthException mapped: code=${e.code} message=${e.message}',
       );
+      // Every branch below also carries [_diagnosticHint] and the raw
+      // FirebaseAuthException message so the UI (in debug) can show the
+      // *exact* code/message/fix on screen, not just a friendly string.
+      final hint = _diagnosticHint(e.code);
+      final rawMessage = e.message;
       switch (e.code) {
         case 'invalid-phone-number':
-          return PhoneAuthException('Invalid phone number format', code: e.code);
+          return PhoneAuthException(
+            'Invalid phone number format',
+            code: e.code,
+            rawMessage: rawMessage,
+          );
         case 'too-many-requests':
           return PhoneAuthException(
             e.message ??
                 'Too many OTP requests. Please try again in 30 minutes.',
             code: e.code,
             retryAfter: const Duration(minutes: 30),
+            rawMessage: rawMessage,
+            hint: hint,
           );
         case 'quota-exceeded':
           return PhoneAuthException(
@@ -467,11 +478,21 @@ class PhoneAuthService {
                 'Too many verification attempts. Please try again in 30 minutes.',
             code: e.code,
             retryAfter: const Duration(minutes: 30),
+            rawMessage: rawMessage,
+            hint: hint,
           );
         case 'invalid-verification-code':
-          return PhoneAuthException('Invalid OTP. Please try again.', code: e.code);
+          return PhoneAuthException(
+            'Invalid OTP. Please try again.',
+            code: e.code,
+            rawMessage: rawMessage,
+          );
         case 'session-expired':
-          return PhoneAuthException('OTP expired. Request a new code.', code: e.code);
+          return PhoneAuthException(
+            'OTP expired. Request a new code.',
+            code: e.code,
+            rawMessage: rawMessage,
+          );
         case 'operation-not-allowed':
           return PhoneAuthException(
             e.message ??
@@ -479,26 +500,36 @@ class PhoneAuthService {
                     'Enable India (+91) under Firebase Console → Authentication → '
                     'Settings → SMS region policy.',
             code: e.code,
+            rawMessage: rawMessage,
+            hint: hint,
           );
         case 'captcha-check-failed':
           return PhoneAuthException(
             e.message ?? 'reCAPTCHA verification failed. Please try again.',
             code: e.code,
+            rawMessage: rawMessage,
+            hint: hint,
           );
         case 'invalid-app-credential':
           return PhoneAuthException(
             e.message ?? 'Invalid app credentials for phone authentication.',
             code: e.code,
+            rawMessage: rawMessage,
+            hint: hint,
           );
         case 'unauthorized-domain':
           return PhoneAuthException(
             e.message ?? 'This domain is not authorized for phone authentication.',
             code: e.code,
+            rawMessage: rawMessage,
+            hint: hint,
           );
         default:
           return PhoneAuthException(
             e.message ?? 'Phone verification failed. Please try again.',
             code: e.code,
+            rawMessage: rawMessage,
+            hint: hint,
           );
       }
     }
@@ -514,14 +545,26 @@ class PhoneAuthService {
 }
 
 class PhoneAuthException implements Exception {
+  /// Short, friendly, user-facing message.
   final String message;
   final String? code;
   final Duration? retryAfter;
+
+  /// The original `FirebaseAuthException.message`, when this wraps one —
+  /// kept separate from [message] (which may be a friendlier override) so
+  /// debug UI can show exactly what Firebase said.
+  final String? rawMessage;
+
+  /// Actionable next step for a project/build misconfiguration (see
+  /// `PhoneAuthService._diagnosticHint`), when [code] is one of those.
+  final String? hint;
 
   PhoneAuthException(
     this.message, {
     this.code,
     this.retryAfter,
+    this.rawMessage,
+    this.hint,
   });
 
   @override

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../config/theme/app_fonts.dart';
@@ -174,10 +175,82 @@ class _PhoneVerificationSectionState
                 : 'Could not send OTP. Please try again.',
           );
         }
+        // Debug builds only: `verificationFailed` (and every other OTP-send
+        // failure) is otherwise only visible in `debugPrint` logs. Put the
+        // exact FirebaseAuthException code/message/fix on screen so a local
+        // "SMS never arrives" repro is diagnosable without a log console.
+        if (kDebugMode && e is PhoneAuthException) {
+          _showDebugPhoneAuthErrorDialog(e);
+        }
       }
     } finally {
       if (mounted) setState(() => _isSending = false);
     }
+  }
+
+  void _showDebugPhoneAuthErrorDialog(PhoneAuthException e) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Phone Auth failed (debug)'),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _debugRow('code', e.code ?? '(none)'),
+              _debugRow('message', e.rawMessage ?? e.message),
+              if (e.hint != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  'FIX',
+                  style: AppFonts.plusJakarta(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.secondaryColor,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                SelectableText(
+                  e.hint!,
+                  style: AppFonts.plusJakarta(fontSize: 13),
+                ),
+              ],
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _debugRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: AppFonts.plusJakarta(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.secondaryColor,
+            ),
+          ),
+          const SizedBox(height: 2),
+          SelectableText(
+            value,
+            style: AppFonts.plusJakarta(fontSize: 13),
+          ),
+        ],
+      ),
+    );
   }
 
   void _changeNumber() {
