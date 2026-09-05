@@ -296,9 +296,44 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         onPressed: _handleEmailLogin,
                       ),
                     ),
+                    const SizedBox(height: AppSpacing.lg),
+                    // Directly below Sign In, and rendered unconditionally
+                    // (not gated on onboarding/skip state) so it's always
+                    // the first thing visible under the fold, on every
+                    // screen size, however the user arrived at /login.
+                    FadeInSection(
+                      delayMs: 170,
+                      child: Wrap(
+                        alignment: WrapAlignment.center,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          Text(
+                            "Don't have an account? ",
+                            style: AppTypography.body(
+                              "Don't have an account? ",
+                            ).copyWith(color: tokens.textSecondary),
+                          ),
+                          TextLink(
+                            text: 'Create Account',
+                            fontSize: 14,
+                            onPressed: () {
+                              final from = GoRouterState.of(context)
+                                  .uri
+                                  .queryParameters['from'];
+                              final safe = RouteNames.safeReturnPath(from);
+                              context.go(
+                                safe != null
+                                    ? RouteNames.signupWithReturn(safe)
+                                    : RouteNames.signup,
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
                     const SizedBox(height: AppSpacing.xxl),
                     FadeInSection(
-                      delayMs: 180,
+                      delayMs: 200,
                       child: Row(
                         children: [
                           Expanded(child: Divider(color: tokens.borderSubtle)),
@@ -319,41 +354,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     const SizedBox(height: AppSpacing.xxl),
                     FadeInSection(
-                      delayMs: 220,
+                      delayMs: 230,
                       child: GoogleSignInButton(
                         isLoading: authState.isLoading,
                         onPressed: _handleGoogleLogin,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.section),
-                    FadeInSection(
-                      delayMs: 260,
-                      child: Wrap(
-                        alignment: WrapAlignment.center,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          Text(
-                            "Don't have an account? ",
-                            style: AppTypography.body(
-                              "Don't have an account? ",
-                            ).copyWith(color: tokens.textSecondary),
-                          ),
-                          TextLink(
-                            text: 'Sign Up',
-                            fontSize: 14,
-                            onPressed: () {
-                              final from = GoRouterState.of(context)
-                                  .uri
-                                  .queryParameters['from'];
-                              final safe = RouteNames.safeReturnPath(from);
-                              context.go(
-                                safe != null
-                                    ? RouteNames.signupWithReturn(safe)
-                                    : RouteNames.signup,
-                              );
-                            },
-                          ),
-                        ],
                       ),
                     ),
                     const SizedBox(height: AppSpacing.xl),
