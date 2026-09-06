@@ -9,8 +9,8 @@ import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/widgets/index.dart';
 import '../../admin/providers/admin_provider.dart';
-import '../../auth/providers/auth_provider.dart';
 import '../../auth/providers/user_provider.dart';
+import '../../auth/utils/sign_out.dart';
 import '../../engagement/providers/engagement_provider.dart';
 
 /// Compact profile + notification actions for the home header.
@@ -102,8 +102,13 @@ class HomeHeaderActions extends ConsumerWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (context) {
-        final tokens = context.tokens;
+      // `sheetContext` is only for closing the sheet. Everything that runs
+      // AFTER `Navigator.pop` (navigation, the async sign-out dialog) must
+      // use the outer `context`, which stays mounted — the old code reused
+      // the popped sheet context, so `context.mounted` was already false
+      // by the time the sign-out confirmation resolved and nothing ran.
+      builder: (sheetContext) {
+        final tokens = sheetContext.tokens;
         return SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
@@ -152,7 +157,7 @@ class HomeHeaderActions extends ConsumerWidget {
                   leadingIcon: Icons.person_outline_rounded,
                   title: 'My Profile',
                   onTap: () {
-                    Navigator.pop(context);
+                    Navigator.pop(sheetContext);
                     context.go(RouteNames.profile);
                   },
                 ),
@@ -160,7 +165,7 @@ class HomeHeaderActions extends ConsumerWidget {
                   leadingIcon: Icons.search_rounded,
                   title: 'Search Colleges',
                   onTap: () {
-                    Navigator.pop(context);
+                    Navigator.pop(sheetContext);
                     context.go(RouteNames.collegeSearch);
                   },
                 ),
@@ -168,7 +173,7 @@ class HomeHeaderActions extends ConsumerWidget {
                   leadingIcon: Icons.rate_review_outlined,
                   title: 'My Reviews',
                   onTap: () {
-                    Navigator.pop(context);
+                    Navigator.pop(sheetContext);
                     context.go(RouteNames.myReviews);
                   },
                 ),
@@ -176,7 +181,7 @@ class HomeHeaderActions extends ConsumerWidget {
                   leadingIcon: Icons.bookmark_outline_rounded,
                   title: 'Bookmarks',
                   onTap: () {
-                    Navigator.pop(context);
+                    Navigator.pop(sheetContext);
                     context.go(RouteNames.favorites);
                   },
                 ),
@@ -184,13 +189,13 @@ class HomeHeaderActions extends ConsumerWidget {
                   leadingIcon: Icons.notifications_outlined,
                   title: 'Notifications',
                   onTap: () {
-                    Navigator.pop(context);
+                    Navigator.pop(sheetContext);
                     context.go(RouteNames.notifications);
                   },
                 ),
                 Consumer(
-                  builder: (context, ref, _) {
-                    final isAdminAsync = ref.watch(isAdminProvider);
+                  builder: (consumerContext, consumerRef, _) {
+                    final isAdminAsync = consumerRef.watch(isAdminProvider);
                     return isAdminAsync.when(
                       loading: () => const SizedBox.shrink(),
                       error: (_, _) => const SizedBox.shrink(),
@@ -200,7 +205,7 @@ class HomeHeaderActions extends ConsumerWidget {
                           leadingIcon: Icons.admin_panel_settings_outlined,
                           title: 'Admin Panel',
                           onTap: () {
-                            Navigator.pop(context);
+                            Navigator.pop(sheetContext);
                             context.go(RouteNames.admin);
                           },
                         );
@@ -218,7 +223,7 @@ class HomeHeaderActions extends ConsumerWidget {
                   titleColor: AppTheme.errorColor,
                   showChevron: false,
                   onTap: () {
-                    Navigator.pop(context);
+                    Navigator.pop(sheetContext);
                     _showSignOutConfirmation(context, ref);
                   },
                 ),
@@ -230,21 +235,19 @@ class HomeHeaderActions extends ConsumerWidget {
     );
   }
 
-  void _showSignOutConfirmation(BuildContext context, WidgetRef ref) {
-    DialogHelper.showConfirmDialog(
+  Future<void> _showSignOutConfirmation(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final confirmed = await DialogHelper.showConfirmDialog(
       context,
       title: 'Sign Out',
       message: 'Are you sure you want to sign out?',
       confirmText: 'Yes, Sign Out',
       cancelText: 'Cancel',
-    ).then((confirmed) async {
-      if (confirmed == true && context.mounted) {
-        await ref.read(authProvider.notifier).signOut();
-        if (context.mounted) {
-          context.go(RouteNames.login);
-        }
-      }
-    });
+    );
+    if (confirmed != true || !context.mounted) return;
+    await signOutAndRedirect(context, ref);
   }
 }
 

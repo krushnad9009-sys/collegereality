@@ -14,6 +14,7 @@ import '../../admin/providers/admin_provider.dart';
 import '../../auth/models/user_model.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/providers/user_provider.dart';
+import '../../auth/utils/sign_out.dart';
 import '../../auth/utils/validation_util.dart';
 import '../../colleges/widgets/college_autocomplete_field.dart';
 import '../../communication/models/guide_stats_model.dart';
@@ -169,8 +170,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       if (user == null) return;
       await ref.read(userRepositoryProvider).deleteUser(user.uid);
       await user.delete();
-      await ref.read(authProvider.notifier).signOut();
-      if (mounted) context.go(RouteNames.login);
+      if (mounted) await signOutAndRedirect(context, ref);
     } catch (e) {
       if (mounted) {
         SnackBarHelper.showErrorSnackBar(
@@ -179,6 +179,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         );
       }
     }
+  }
+
+  Future<void> _confirmSignOut() async {
+    final confirmed = await DialogHelper.showConfirmDialog(
+      context,
+      title: 'Sign Out',
+      message: 'Are you sure you want to sign out?',
+      confirmText: 'Yes, Sign Out',
+      cancelText: 'Cancel',
+    );
+    if (confirmed != true || !mounted) return;
+    await signOutAndRedirect(context, ref);
   }
 
   @override
@@ -525,6 +537,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xl),
+                  PremiumCard(
+                    radius: tokens.cardRadius,
+                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                    child: PremiumListRow(
+                      leadingIcon: Icons.logout_rounded,
+                      title: 'Sign Out',
+                      showChevron: false,
+                      onTap: _confirmSignOut,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
                   PremiumCard(
                     radius: tokens.cardRadius,
                     padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),

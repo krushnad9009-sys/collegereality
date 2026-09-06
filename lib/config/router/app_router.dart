@@ -1,9 +1,11 @@
+import 'dart:async';
+
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter/foundation.dart';
+import '../../core/bootstrap/native_splash.dart';
 import '../../core/services/analytics_service.dart';
 import '../../core/widgets/firebase_initializing_screen.dart';
 import 'go_router_refresh_stream.dart';
@@ -118,25 +120,34 @@ void _routerLog(String message) {
   if (kDebugMode) debugPrint('[AppRouter] $message');
 }
 
-/// The pre-Flutter HTML splash graphic (`index.html`'s `#splash` element,
-/// preserved by `FlutterNativeSplash.preserve()` in `main()`) used to be
-/// removed only from inside `SplashScreen`'s `initState`. On a Flutter Web
-/// hard refresh (or a pasted deep link) landing directly on any route other
-/// than the splash path (`/`) -- e.g. `/college-details/<id>` --
-/// `SplashScreen` is never built at all, so that removal call never fired
-/// and the HTML splash graphic stayed on screen forever, fully covering
-/// whatever the app had actually rendered underneath it. Removing it here
-/// instead -- once per app lifetime, right when the first redirect
-/// resolution completes for whichever route the browser actually opened --
-/// covers every entry route, not just the splash one, without making
-/// routing wait on anything beyond the same auth/session checks the
-/// redirect already performs.
-bool _nativeSplashRemoved = false;
-void _removeNativeSplashOnce() {
-  if (_nativeSplashRemoved) return;
-  _nativeSplashRemoved = true;
-  _routerLog('removing native HTML splash (first redirect resolved)');
-  FlutterNativeSplash.remove();
+/// Where to send the user when [_resolveRedirect] times out or throws and
+/// its auth/session checks can no longer be trusted. Splash and the
+/// public / auth routes render as-is (`null`); every other (protected)
+/// route falls back to `/home` when a Firebase user is already present,
+/// otherwise `/login`. This is the "graceful default" for a hung or broken
+/// auth SDK on a deep-link hard refresh.
+String? _fallbackRouteFor(String path, FirebaseAuth firebaseAuth) {
+  if (path == RouteNames.splash) return null;
+  const safePaths = <String>{
+    RouteNames.onboarding,
+    RouteNames.login,
+    RouteNames.adminLogin,
+    RouteNames.signup,
+    RouteNames.forgotPassword,
+    RouteNames.home,
+    RouteNames.collegeSearch,
+    RouteNames.collegeBrowse,
+    RouteNames.privacyPolicy,
+    RouteNames.termsOfService,
+  };
+  if (safePaths.contains(path)) return null;
+  bool loggedIn;
+  try {
+    loggedIn = firebaseAuth.currentUser != null;
+  } catch (_) {
+    loggedIn = false;
+  }
+  return loggedIn ? RouteNames.home : RouteNames.login;
 }
 
 Future<String?> _resolveRedirect(
@@ -254,6 +265,13 @@ Future<String?> _resolveRedirect(
 }
 
 final Provider<GoRouter> appRouterProvider = Provider<GoRouter>((ref) {
+  // Ultimate backstop: whatever happens with Firebase registration, auth
+  // restoration, or the first redirect, the pre-Flutter splash comes down
+  // within 8s so the user can never be stuck looking at a frozen splash.
+  final splashSafetyTimer =
+      Timer(const Duration(seconds: 8), removeNativeSplashOnce);
+  ref.onDispose(splashSafetyTimer.cancel);
+
   // Firebase.apps is a plain, safe list check (firebase_core_web's own
   // `apps` getter defensively returns [] rather than throwing when
   // nothing is registered yet). FirebaseAuth.instance / Firebase.app(),
@@ -272,8 +290,17 @@ final Provider<GoRouter> appRouterProvider = Provider<GoRouter>((ref) {
   // until Firebase.apps confirms the app actually exists.
   if (Firebase.apps.isEmpty) {
     _routerLog('Firebase app not yet registered -- deferring router build');
+    // `errorBuilder` (not just the '/' route) so a deep-link hard refresh
+    // -- e.g. `/#/profile` -- while Firebase is still registering renders
+    // the initializing screen at the ORIGINAL url instead of GoRouter's
+    // "page not found". That keeps the deep link intact: once
+    // FirebaseInitializingScreen sees `Firebase.apps` populate it
+    // invalidates this provider, the real router rebuilds, and it
+    // resolves `/profile` for real.
     return GoRouter(
       initialLocation: '/',
+      errorBuilder: (context, state) =>
+          FirebaseInitializingScreen(routerProvider: appRouterProvider),
       routes: [
         GoRoute(
           path: '/',
@@ -297,20 +324,35 @@ final Provider<GoRouter> appRouterProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) async {
       final path = state.uri.path;
       _routerLog('START redirect path=$path');
-      final result = await _resolveRedirect(
-        ref,
-        firebaseAuth,
-        authRefresh,
-        state,
-      );
+
+      String? result;
+      try {
+        // Overall cap on the redirect: the individual auth/session awaits
+        // inside are already bounded, but this guards against them
+        // stacking up (or a new unbounded one slipping in) into a
+        // multi-second frozen splash on a deep-link hard refresh.
+        result = await _resolveRedirect(ref, firebaseAuth, authRefresh, state)
+            .timeout(const Duration(seconds: 12));
+      } on TimeoutException {
+        result = _fallbackRouteFor(path, firebaseAuth);
+        _routerLog('redirect TIMED OUT path=$path -> ${result ?? "as-is"}');
+      } catch (e, st) {
+        // Auth init threw (e.g. the firebase_core_web app() JS-interop
+        // crash, a provider error) — never let it wedge the router.
+        result = _fallbackRouteFor(path, firebaseAuth);
+        _routerLog('redirect THREW path=$path: $e\n$st -> ${result ?? "as-is"}');
+      } finally {
+        // Must fire for every entry route, not only the splash one, and
+        // even when the redirect timed out or threw above — otherwise the
+        // pre-Flutter splash stays on screen forever.
+        removeNativeSplashOnce();
+      }
+
       _routerLog(
         result == null
             ? 'END redirect path=$path -- rendering as-is'
             : 'REDIRECT path=$path -> $result',
       );
-      // See _removeNativeSplashOnce's doc comment: this must fire for every
-      // entry route, not only the splash one.
-      _removeNativeSplashOnce();
       return result;
     },
     routes: [

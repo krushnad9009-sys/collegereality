@@ -1,13 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../../config/router/route_names.dart';
 import '../../../core/bootstrap/firebase_bootstrap.dart';
+import '../../../core/bootstrap/native_splash.dart';
 
 void _log(String message) {
   if (kDebugMode) debugPrint('[SplashScreen] $message');
@@ -48,15 +50,25 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   bool _navigated = false;
   bool _navigating = false;
   bool _logoPrecached = false;
-  bool _nativeSplashRemoved = false;
+  Timer? _hardFallbackTimer;
 
   @override
   void initState() {
     super.initState();
     _setupAnimations();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _removeNativeSplashWhenReady();
+      removeNativeSplashOnce();
       _navigateWhenReady();
+    });
+    // Absolute backstop: if `_navigateWhenReady` (and its own
+    // `.timeout(_kSplashTimeout)`) somehow never lands a navigation —
+    // e.g. `_goTo` wedged with `_navigating == true` — force the user off
+    // the splash. Never redirect to the initial route ('/') itself; that
+    // would just rebuild this screen.
+    _hardFallbackTimer = Timer(_kSplashTimeout + const Duration(seconds: 2), () {
+      if (!mounted || _navigated) return;
+      _log('HARD FALLBACK fired -- forcing navigation to login');
+      _forceNavigate(RouteNames.login);
     });
   }
 
@@ -79,12 +91,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     }
   }
 
-  void _removeNativeSplashWhenReady() {
-    if (_nativeSplashRemoved || !mounted) return;
-    _nativeSplashRemoved = true;
-    FlutterNativeSplash.remove();
-  }
-
   Future<void> _navigateWhenReady() async {
     if (_navigated) return;
 
@@ -92,7 +98,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       await _resolveAndNavigate().timeout(_kSplashTimeout);
     } catch (e, st) {
       debugPrint('Splash navigation error: $e\n$st');
-      await _goTo(RouteNames.login);
+      // Use the force path: a normal `_goTo` no-ops if `_navigating` is
+      // still true from a `_resolveAndNavigate` that hung mid-`_goTo`.
+      _forceNavigate(RouteNames.login);
     }
   }
 
@@ -150,6 +158,16 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     }
   }
 
+  /// Navigate off the splash immediately, bypassing the exit fade and the
+  /// `_navigating` guard. Only for the timeout / hard-fallback paths.
+  void _forceNavigate(String route) {
+    if (_navigated || !mounted) return;
+    _navigated = true;
+    removeNativeSplashOnce();
+    _log('forceNavigate -- context.go($route)');
+    context.go(route);
+  }
+
   Future<void> _goTo(String route) async {
     if (_navigating || _navigated || !mounted) return;
     _navigating = true;
@@ -172,6 +190,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
   @override
   void dispose() {
+    _hardFallbackTimer?.cancel();
     _exitController.dispose();
     super.dispose();
   }

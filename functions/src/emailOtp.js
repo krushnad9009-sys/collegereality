@@ -221,15 +221,33 @@ const verifyEmailOtp = onCall(
       });
     }
 
-    await getAuth().updateUser(uid, { emailVerified: true });
-    await db.collection('users').doc(uid).set(
-      {
-        isEmailVerified: true,
-        updatedAt: new Date().toISOString(),
-      },
-      { merge: true },
-    );
-    await ref.delete();
+    // The code is correct — from here the only failures are backend ones
+    // (Auth Admin API blip, Firestore). Log them with the full stack and
+    // return a clean, retryable error instead of a bare 'internal'. The
+    // OTP doc is intentionally NOT deleted on failure so a retry works
+    // without a Resend.
+    try {
+      await getAuth().updateUser(uid, { emailVerified: true });
+      await db.collection('users').doc(uid).set(
+        {
+          isEmailVerified: true,
+          updatedAt: new Date().toISOString(),
+        },
+        { merge: true },
+      );
+      await ref.delete();
+    } catch (err) {
+      logger.error('[emailOtp] verifyEmailOtp: post-verify write failed', {
+        uid,
+        errorCode: err && err.code,
+        errorType: err && err.constructor && err.constructor.name,
+        stack: err && err.stack,
+      });
+      throw new HttpsError(
+        'unavailable',
+        'Your code was correct but we could not finish. Please try again in a moment.',
+      );
+    }
 
     return { ok: true };
   },

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../bootstrap/firebase_bootstrap.dart';
+import '../bootstrap/native_splash.dart';
 
 /// Shown for the brief window (typically well under a second) where
 /// `Firebase.initializeApp()` is still genuinely completing in the
@@ -44,6 +45,10 @@ class _FirebaseInitializingScreenState
   @override
   void initState() {
     super.initState();
+    // This screen IS a rendered Flutter frame — take the pre-Flutter
+    // splash down now so a slow Firebase registration doesn't leave the
+    // user looking at the frozen splash instead of this spinner.
+    WidgetsBinding.instance.addPostFrameCallback((_) => removeNativeSplashOnce());
     _startPolling();
   }
 

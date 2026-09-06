@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../core/services/auth_service.dart';
@@ -267,7 +268,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<bool> refreshEmailVerificationStatus() async {
-    final verified = await _authService.reloadUser();
+    // `reloadUser()` already swallows transient `internal-error`s (retry +
+    // fallback), but keep this guard so a hard failure here can never
+    // leave the notifier's `user` stale or throw into a caller that has
+    // already had its email verified server-side.
+    bool verified;
+    try {
+      verified = await _authService.reloadUser();
+    } catch (e, st) {
+      debugPrint('[AuthNotifier] refreshEmailVerificationStatus failed: $e\n$st');
+      verified = _authService.currentUser?.emailVerified ?? false;
+    }
     state = state.copyWith(user: _authService.currentUser);
     return verified;
   }

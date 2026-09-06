@@ -30,6 +30,11 @@ String? _emailDiagnosticHint(String code) {
     case 'network-request-failed':
       return 'Device could not reach Firebase. Check connectivity / proxy / '
           'emulator DNS.';
+    case 'internal-error':
+      return 'Transient Firebase Auth error (token-refresh race, or a '
+          'reload right after a server-side user change). Safe to retry — '
+          'reloadUser() already retries once and then falls back to the '
+          'cached emailVerified flag.';
     default:
       return null;
   }
@@ -143,10 +148,18 @@ class AuthService implements AuthServiceApi {
 
   @override
   Future<void> signOut() async {
-    await Future.wait([
-      _firebaseAuth.signOut(),
-      if (!kIsWeb) _googleSignIn.signOut(),
-    ]);
+    // Google sign-out is best-effort: it throws if the user never signed
+    // in with Google, or if the plugin isn't initialised, and that must
+    // NOT abort (or, via Future.wait, block) the Firebase sign-out that
+    // actually ends the session.
+    if (!kIsWeb) {
+      try {
+        await _googleSignIn.signOut();
+      } catch (e) {
+        _log('Google signOut failed (ignored): $e');
+      }
+    }
+    await _firebaseAuth.signOut();
   }
 
   @override
@@ -182,7 +195,42 @@ class AuthService implements AuthServiceApi {
 
   @override
   Future<bool> reloadUser() async {
-    await currentUser?.reload();
+    final user = currentUser;
+    if (user == null) return false;
+
+    for (var attempt = 1; attempt <= 2; attempt++) {
+      try {
+        await user.reload();
+        return currentUser?.emailVerified ?? false;
+      } on FirebaseAuthException catch (e, st) {
+        // `[firebase_auth/internal-error]` from reload() is a known
+        // transient Firebase Auth state — it commonly fires the first
+        // time the client reloads right after the server changed the user
+        // record out-of-band (the verifyEmailOtp Cloud Function's
+        // `admin.auth().updateUser(uid, {emailVerified: true})`), or
+        // during an ID-token refresh race. Log the FULL stack trace,
+        // retry once after a short delay, then fall back to the cached
+        // flag rather than surfacing a hard failure for something the
+        // server has already done.
+        _log(
+          'reloadUser attempt $attempt FAILED code=${e.code} '
+          'message=${e.message} plugin=${e.plugin}',
+        );
+        debugPrintStack(
+          stackTrace: st,
+          label: '[AuthService] reloadUser FirebaseAuthException',
+        );
+        _logAuthException('reloadUser', e, st);
+        if (attempt == 1 && e.code == 'internal-error') {
+          await Future<void>.delayed(const Duration(milliseconds: 600));
+          continue;
+        }
+        return currentUser?.emailVerified ?? false;
+      } catch (e, st) {
+        _logAuthException('reloadUser', e, st);
+        return currentUser?.emailVerified ?? false;
+      }
+    }
     return currentUser?.emailVerified ?? false;
   }
 }

@@ -97,15 +97,30 @@ class _EmailVerificationSectionState
     return '$totalSeconds seconds';
   }
 
+  /// Drops every trace of the previous code/verification attempt so a
+  /// Resend starts from a clean slate. (The server also fully overwrites
+  /// `email_otps/{uid}` on the next `requestOtp`, invalidating the old
+  /// code — this is the matching client-side reset.)
+  void _resetOtpSession() {
+    _otpController.clear();
+    _isVerifying = false;
+  }
+
   Future<void> _sendCode() async {
     if (_resendSeconds > 0 || _rateLimitSeconds > 0 || _isSending) return;
-    setState(() => _isSending = true);
+    // Reset the prior OTP session BEFORE asking for a new code, so a
+    // stale digit in the field or an in-flight verify can't collide with
+    // the code that's about to be generated.
+    setState(() {
+      _isSending = true;
+      _resetOtpSession();
+    });
     try {
       final result = await ref.read(emailOtpServiceProvider).requestOtp();
       if (!mounted) return;
       setState(() {
         _codeSent = true;
-        _otpController.clear();
+        _resetOtpSession();
       });
       _startResendTimer(result.retryAfterSeconds);
       SnackBarHelper.showSuccessSnackBar(
@@ -145,35 +160,52 @@ class _EmailVerificationSectionState
     }
     setState(() => _isVerifying = true);
     try {
+      // Step 1 — the real verification. Returns only when the server has
+      // confirmed the code; at that point the email IS verified.
       await ref.read(emailOtpServiceProvider).verifyOtp(code);
-      await _markVerifiedLocally(showSnack: true);
     } on EmailOtpException catch (e) {
       if (!mounted) return;
       if (e.code == 'deadline-exceeded' || e.code == 'resource-exhausted') {
+        // The stored code is gone server-side — force a fresh Resend.
         setState(() {
           _codeSent = false;
-          _otpController.clear();
+          _resetOtpSession();
         });
       }
       final suffix = e.attemptsLeft != null
           ? ' (${e.attemptsLeft} attempt${e.attemptsLeft == 1 ? '' : 's'} left)'
           : '';
       SnackBarHelper.showErrorSnackBar(context, message: '${e.message}$suffix');
-    } catch (_) {
+      if (mounted) setState(() => _isVerifying = false);
+      return;
+    } catch (e, st) {
       if (!mounted) return;
+      debugPrint('[EmailVerificationSection] verifyOtp failed: $e\n$st');
       SnackBarHelper.showErrorSnackBar(
         context,
         message: 'Could not verify the code. Please try again.',
       );
-    } finally {
       if (mounted) setState(() => _isVerifying = false);
+      return;
     }
+
+    // Step 2 — reconcile local state. The verification already succeeded,
+    // so a hiccup here (e.g. a transient `firebase_auth/internal-error`
+    // from reload() right after the server changed the record) must NOT
+    // present as a verification failure.
+    await _markVerifiedLocally(showSnack: true);
+    if (mounted) setState(() => _isVerifying = false);
   }
 
   /// Pull the server-set `emailVerified` into the client and mirror it onto
-  /// the Firestore user doc (same post-steps the link flow used).
+  /// the Firestore user doc. Every step here is best-effort — the server
+  /// has already flipped the flag by the time this runs.
   Future<void> _markVerifiedLocally({required bool showSnack}) async {
-    await ref.read(authProvider.notifier).refreshEmailVerificationStatus();
+    try {
+      await ref.read(authProvider.notifier).refreshEmailVerificationStatus();
+    } catch (e, st) {
+      debugPrint('[EmailVerificationSection] refresh after verify: $e\n$st');
+    }
     try {
       await ref.read(userRepositoryProvider).verifyEmail(widget.userId);
     } catch (_) {
