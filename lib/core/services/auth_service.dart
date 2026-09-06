@@ -61,7 +61,11 @@ abstract class AuthServiceApi {
   Future<void> signOut();
   Future<void> updateUserProfile({String? displayName, String? photoURL});
   Future<void> sendPasswordResetEmail(String email);
-  Future<void> sendEmailVerification();
+
+  /// Reloads the Firebase user and returns `emailVerified`. Email
+  /// verification itself is now a custom OTP flow (`EmailOtpService` /
+  /// `functions/src/emailOtp.js`); this just observes the flag the
+  /// `verifyEmailOtp` function sets server-side.
   Future<bool> reloadUser();
 }
 
@@ -158,7 +162,9 @@ class AuthService implements AuthServiceApi {
   @override
   Future<void> sendPasswordResetEmail(String email) async {
     try {
-      // No ActionCodeSettings — see sendEmailVerification for why.
+      // No ActionCodeSettings: the default Firebase-hosted reset handler
+      // needs zero setup; a bad `url`/`dynamicLinkDomain` is the classic
+      // cause of a reset email that silently never arrives.
       await _firebaseAuth.sendPasswordResetEmail(email: email);
       _log('sendPasswordResetEmail dispatched to $email');
     } catch (e, st) {
@@ -167,45 +173,12 @@ class AuthService implements AuthServiceApi {
     }
   }
 
-  @override
-  Future<void> sendEmailVerification() async {
-    final user = currentUser;
-    if (user == null) {
-      throw FirebaseAuthException(
-        code: 'user-not-found',
-        message: 'You must be logged in to verify your email.',
-      );
-    }
-    if (user.emailVerified) {
-      throw FirebaseAuthException(
-        code: 'email-already-verified',
-        message: 'Your email is already verified.',
-      );
-    }
-    try {
-      // Deliberately NO ActionCodeSettings: the default Firebase-hosted
-      // action handler needs zero extra setup. Passing an
-      // ActionCodeSettings whose `url` host isn't in Authentication ->
-      // Settings -> Authorized domains, or a `dynamicLinkDomain` (Dynamic
-      // Links is shut down), makes this call throw
-      // `unauthorized-continue-uri` / `invalid-dynamic-link-domain` — the
-      // classic "verification email silently never arrives". Add one here
-      // only after a custom domain is verified in the console.
-      await user.sendEmailVerification();
-      _log('sendEmailVerification dispatched to ${user.email}');
-    } on FirebaseAuthException catch (e, st) {
-      _logAuthException('sendEmailVerification', e, st);
-      rethrow;
-    } catch (e, st) {
-      _logAuthException('sendEmailVerification', e, st);
-      // Keep the real detail instead of masking every failure as a
-      // network error.
-      throw FirebaseAuthException(
-        code: 'unknown',
-        message: 'Could not send verification email: $e',
-      );
-    }
-  }
+  // Email verification is no longer a Firebase email *link*
+  // (`user.sendEmailVerification()`). It's a custom 6-digit OTP: the
+  // `requestEmailOtp` / `verifyEmailOtp` Cloud Functions email a code and,
+  // on success, set `emailVerified` server-side. The client sends/verifies
+  // codes through `EmailOtpService`; [reloadUser] below is how it then
+  // observes the flag.
 
   @override
   Future<bool> reloadUser() async {

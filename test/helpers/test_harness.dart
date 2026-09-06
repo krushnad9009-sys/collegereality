@@ -186,9 +186,6 @@ class FakeAuthService implements AuthServiceApi {
   Future<void> sendPasswordResetEmail(String email) async {}
 
   @override
-  Future<void> sendEmailVerification() async {}
-
-  @override
   Future<bool> reloadUser() async => currentUser?.emailVerified ?? false;
 }
 

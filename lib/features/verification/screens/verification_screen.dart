@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -8,11 +7,11 @@ import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/verification_constants.dart';
 import '../../../core/utils/firestore_error_utils.dart';
-import '../../../core/widgets/index.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/providers/user_provider.dart';
 import '../widgets/document_upload_section.dart';
 import '../widgets/verification_badge_widget.dart';
+import '../../profile/widgets/email_verification_section.dart';
 import '../../profile/widgets/phone_verification_section.dart';
 
 class VerificationScreen extends ConsumerWidget {
@@ -116,10 +115,10 @@ class VerificationScreen extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  if (!authUser.emailVerified)
-                    _EmailSection(userId: user.uid)
-                  else
-                    const _VerifiedBanner(label: 'Email verified'),
+                  EmailVerificationSection(
+                    userId: user.uid,
+                    email: user.email,
+                  ),
                   const SizedBox(height: 16),
                   PhoneVerificationSection(
                     userId: user.uid,
@@ -141,116 +140,5 @@ class VerificationScreen extends ConsumerWidget {
   }
 }
 
-class _EmailSection extends ConsumerWidget {
-  final String userId;
-
-  const _EmailSection({required this.userId});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Email verification',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: () async {
-                  try {
-                    await ref.read(authProvider.notifier).sendEmailVerification();
-                    if (context.mounted) {
-                      SnackBarHelper.showSuccessSnackBar(
-                        context,
-                        message: 'Verification email sent. Check your inbox.',
-                      );
-                    }
-                  } on FirebaseAuthException catch (e) {
-                    if (!context.mounted) return;
-                    final message = AuthException.fromFirebaseException(e).message;
-                    if (e.code == 'email-already-verified') {
-                      SnackBarHelper.showInfoSnackBar(context, message: message);
-                    } else {
-                      SnackBarHelper.showErrorSnackBar(context, message: message);
-                    }
-                  } catch (_) {
-                    if (!context.mounted) return;
-                    SnackBarHelper.showErrorSnackBar(
-                      context,
-                      message: 'Could not send verification email. Please try again.',
-                    );
-                  }
-                },
-                child: const Text('Resend Email'),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: ElevatedButton(
-                onPressed: () async {
-                  try {
-                    final verified = await ref
-                        .read(authProvider.notifier)
-                        .refreshEmailVerificationStatus();
-                    if (!context.mounted) return;
-                    if (verified) {
-                      await ref.read(userRepositoryProvider).verifyEmail(userId);
-                      ref.invalidate(currentUserDetailProvider);
-                      if (!context.mounted) return;
-                      SnackBarHelper.showSuccessSnackBar(
-                        context,
-                        message: 'Email verified!',
-                      );
-                    } else {
-                      SnackBarHelper.showInfoSnackBar(
-                        context,
-                        message:
-                            'Not verified yet. Open the link in your inbox, then tap I Verified again.',
-                      );
-                    }
-                  } catch (e) {
-                    if (!context.mounted) return;
-                    final message = e is AuthException
-                        ? e.message
-                        : FirestoreErrorUtils.userMessage(e);
-                    SnackBarHelper.showErrorSnackBar(context, message: message);
-                  }
-                },
-                child: const Text('I Verified'),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class _VerifiedBanner extends StatelessWidget {
-  final String label;
-
-  const _VerifiedBanner({required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppTheme.accentColor.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.verified_outlined, color: AppTheme.accentColor),
-          const SizedBox(width: 8),
-          Text(label, style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-        ],
-      ),
-    );
-  }
-}
+// Email + phone verification UI now live in shared widgets
+// (EmailVerificationSection / PhoneVerificationSection) — see above.

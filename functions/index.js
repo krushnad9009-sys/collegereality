@@ -12,6 +12,7 @@ const { mintConsultationCallToken } = require('./src/callToken');
 const { onConsultationWrite } = require('./src/triggers');
 const { expireStaleConsultations } = require('./src/scheduled');
 const { aiChatComplete } = require('./src/aiChat');
+const { requestEmailOtp, verifyEmailOtp } = require('./src/emailOtp');
 
 module.exports = {
   createConsultationOrder,
@@ -21,4 +22,6 @@ module.exports = {
   onConsultationWrite,
   expireStaleConsultations,
   aiChatComplete,
+  requestEmailOtp,
+  verifyEmailOtp,
 };

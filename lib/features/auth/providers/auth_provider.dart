@@ -149,7 +149,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(isLoading: true, error: null);
     try {
       final credential = await _authService.signUpWithEmail(email, password);
-      await _authService.sendEmailVerification();
+      // Email verification is a separate, opt-in OTP step the user does
+      // from the profile / verification screen (EmailVerificationSection) —
+      // no link is sent at signup.
       state = state.copyWith(
         user: credential.user,
         isAuthenticated: true,
@@ -258,27 +260,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
     } catch (e) {
       state = state.copyWith(
         error: 'An unexpected error occurred',
-        isLoading: false,
-      );
-      rethrow;
-    }
-  }
-
-  Future<void> sendEmailVerification() async {
-    state = state.copyWith(isLoading: true, error: null);
-    try {
-      await _authService.sendEmailVerification();
-      state = state.copyWith(isLoading: false);
-    } on FirebaseAuthException catch (e) {
-      final exception = AuthException.fromFirebaseException(e);
-      state = state.copyWith(
-        error: exception.message,
-        isLoading: false,
-      );
-      rethrow;
-    } catch (e) {
-      state = state.copyWith(
-        error: 'Failed to send verification email',
         isLoading: false,
       );
       rethrow;

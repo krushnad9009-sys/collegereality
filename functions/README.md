@@ -21,6 +21,7 @@ firebase functions:secrets:set RAZORPAY_WEBHOOK_SECRET
 firebase functions:secrets:set AGORA_APP_ID
 firebase functions:secrets:set AGORA_APP_CERTIFICATE
 firebase functions:secrets:set GEMINI_API_KEY
+firebase functions:secrets:set RESEND_API_KEY
 ```
 
 - Razorpay keys: Dashboard > Settings > API Keys (use **test mode** keys
@@ -37,6 +38,13 @@ firebase functions:secrets:set GEMINI_API_KEY
   the `firebase functions:secrets:set GEMINI_API_KEY` command above
   prompts you — never into a file in this repo, never into a chat with an
   agent, never into Dart source.
+- Resend API key: create one at https://resend.com/api-keys. Used by the
+  email-OTP verification functions (`requestEmailOtp` / `verifyEmailOtp`,
+  `src/emailOtp.js`) to send the 6-digit code. Also set the sender address
+  as a **non-secret** deploy param — either export it before deploy
+  (`RESEND_FROM="College Reality <verify@yourdomain>"`) or accept the
+  prompt; it must be an address on a domain you've verified in Resend
+  (`onboarding@resend.dev` works only for test sends to your own account).
 
 Without these secrets configured, every callable in this directory throws
 rather than doing anything with a placeholder/fake value — there is no
@@ -103,6 +111,34 @@ everything else is a plain constant in `src/ai/config.js`.
 
 **Deployment:** part of the same `firebase deploy --only functions` as
 everything else in this directory — see "Not deployed automatically" above.
+
+## Email OTP verification (`requestEmailOtp` / `verifyEmailOtp`)
+
+Firebase Auth has no email-OTP primitive, so `src/emailOtp.js` implements
+one:
+
+- **`requestEmailOtp`** (callable, auth required) — generates a
+  cryptographically uniform 6-digit code, stores only its salted SHA-256
+  hash in `email_otps/{uid}` (server-only, see `firestore.rules`) with a
+  10-minute TTL, and emails the plaintext code via the Resend API. Rate
+  limited: 60s between sends, max 5 sends/hour/uid. Throws
+  `already-exists` if the address is already verified.
+- **`verifyEmailOtp`** (callable, auth required) — checks the submitted
+  code (timing-safe) against the stored hash, max 5 attempts before the
+  code is invalidated. On success: `admin.auth().updateUser(uid,
+  {emailVerified: true})` (the client cannot set this), mirrors
+  `users/{uid}.isEmailVerified = true`, deletes the OTP doc.
+
+Flutter side: `lib/core/services/email_otp_service.dart` +
+`EmailVerificationSection` (the old Firebase email *link* flow —
+`user.sendEmailVerification()` — is fully removed). The client only ever
+sends/verifies codes; it never sees the hash. After `verifyEmailOtp`
+succeeds it calls `reloadUser()` to observe the server-set flag.
+
+**Deployment:** same `firebase deploy --only functions`. Needs
+`RESEND_API_KEY` (secret) and `RESEND_FROM` (a verified sender). Until
+deployed, both callables are absent and `EmailVerificationSection` shows
+`unavailable`/`internal` errors from the OTP buttons.
 
 ## What's real vs. what's still a gap
 

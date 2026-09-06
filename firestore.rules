@@ -717,6 +717,16 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Email-OTP verification codes (hashed), keyed by uid. Written and read
+    // ONLY by the requestEmailOtp / verifyEmailOtp Cloud Functions via the
+    // Admin SDK (which bypasses these rules). A client that could read this
+    // would see the code hash + salt and could brute-force offline; one
+    // that could write it could reset its own attempt counter. Never
+    // client-accessible.
+    match /email_otps/{uid} {
+      allow read, write: if false;
+    }
+
     // AI chatbot response cache, keyed by a hash of the normalized
     // question + college/filter context (never a uid — see
     // functions/src/ai/cache.js). Server-only; nothing here is
