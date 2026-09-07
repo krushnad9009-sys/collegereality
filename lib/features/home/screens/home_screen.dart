@@ -24,20 +24,20 @@ import '../widgets/deferred_incoming_call_banner.dart';
 import '../widgets/explore_by_city_section.dart';
 import '../widgets/explore_category_section.dart';
 import '../widgets/home_college_discovery_card.dart';
-import '../widgets/home_compare_section.dart';
+import '../widgets/home_core_features_grid.dart';
 import '../widgets/home_hero_panel.dart';
 import '../widgets/home_more_section.dart';
-import '../widgets/home_trust_section.dart';
+import '../widgets/home_trending_section.dart';
 
 /// Home screen information hierarchy — one purpose per section, no
 /// conceptual duplication:
-///   1. Hero        → greeting + dominant search + quick discovery chips
-///   2. Explore      → browse by stream
-///   3. Discover     → the one college-recommendation carousel
-///   4. Trust        → CR Score, real placement signal, one review, verified-student CTA
-///   5. Compare      → the one comparison feature
-///   6. City         → browse by location
-///   7. More         → secondary, genuinely useful links only
+///   1. Hero            → greeting + avatar + notifications + dominant search
+///   2. Core features   → Talk to a Verified Student · AI Assistant · Compare
+///   3. Trending        → live carousel of the most searched/reviewed colleges
+///   4. Explore by City → modern location pills
+///   5. Explore Colleges→ browse by stream
+///   6. Recommended     → the personalized college carousel
+///   7. More            → secondary, genuinely useful links only
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
@@ -81,7 +81,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final currentUser = authState.user ?? FirebaseAuth.instance.currentUser;
     final userDetail = ref.watch(currentUserDetailProvider).valueOrNull;
 
-    final displayName = userDetail?.effectivePublicDisplayName ??
+    final displayName =
+        userDetail?.effectivePublicDisplayName ??
         currentUser?.displayName ??
         'Student';
 
@@ -108,7 +109,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               SliverToBoxAdapter(
                 child: Center(
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: AppSpacing.maxContentWidth),
+                    constraints: const BoxConstraints(
+                      maxWidth: AppSpacing.maxContentWidth,
+                    ),
                     child: Padding(
                       padding: EdgeInsets.fromLTRB(
                         isMobile ? AppSpacing.lg : AppSpacing.xxl,
@@ -135,78 +138,85 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           ],
                           const _PlatformAnnouncementBanner(),
                           const _HomePromoAdsStrip(),
+                          const SizedBox(height: AppSpacing.section),
+
+                          // ── 2. Core features — the three primary actions ─
+                          FadeInSection(
+                            delayMs: 60,
+                            child: const HomeCoreFeaturesGrid(),
+                          ),
                           const SizedBox(height: AppSpacing.sectionLg),
 
-                          // ── 2. Explore Colleges ──────────────────────────
+                          // ── 3. Trending colleges (live carousel) ─────────
                           FadeInSection(
-                            delayMs: 80,
+                            delayMs: 120,
+                            child: const HomeTrendingSection(),
+                          ),
+                          const SizedBox(height: AppSpacing.sectionLg),
+
+                          // ── 4. Explore by City ────────────────────────────
+                          FadeInSection(
+                            delayMs: 180,
+                            child: SectionHeader(
+                              title: 'Explore by City',
+                              subtitle: 'Find colleges near you',
+                              actionLabel: 'All cities',
+                              onAction: () =>
+                                  context.go(RouteNames.collegeBrowse),
+                            ),
+                          ),
+                          FadeInSection(
+                            delayMs: 200,
+                            child: const ExploreCityCarousel(),
+                          ),
+                          const SizedBox(height: AppSpacing.sectionLg),
+
+                          // ── 5. Explore Colleges (by stream) ─────────────
+                          FadeInSection(
+                            delayMs: 240,
                             child: SectionHeader(
                               title: 'Explore Colleges',
                               subtitle: 'Pick a stream to get started',
                               actionLabel: 'All categories',
-                              onAction: () => context.go(RouteNames.collegeBrowse),
+                              onAction: () =>
+                                  context.go(RouteNames.collegeBrowse),
                             ),
                           ),
                           FadeInSection(
-                            delayMs: 100,
+                            delayMs: 260,
                             child: const ExploreCategoryGrid(),
                           ),
                           const SizedBox(height: AppSpacing.sectionLg),
 
-                          // ── 3. Featured / Recommended Colleges ───────────
-                          FadeInSection(
-                            delayMs: 140,
-                            child: SectionHeader(
-                              title: 'Recommended for You',
-                              subtitle: 'Real colleges, real ratings — picked for you',
-                              actionLabel: 'View all',
-                              onAction: () => context.go(RouteNames.collegeSearch),
-                            ),
-                          ),
-                          FadeInSection(
-                            delayMs: 160,
-                            child: const FeaturedCollegesSection(),
-                          ),
-                          const SizedBox(height: AppSpacing.sectionLg),
-
-                          // ── 4. Trust: CR Score + placements + review + CTA
-                          FadeInSection(
-                            delayMs: 200,
-                            child: const HomeTrustSection(),
-                          ),
-                          const SizedBox(height: AppSpacing.sectionLg),
-
-                          // ── 5. Compare Colleges ──────────────────────────
-                          FadeInSection(
-                            delayMs: 240,
-                            child: const HomeCompareSection(),
-                          ),
-                          const SizedBox(height: AppSpacing.sectionLg),
-
-                          // ── 6. Explore by City ────────────────────────────
-                          FadeInSection(
-                            delayMs: 280,
-                            child: const SectionHeader(
-                              title: 'Explore by City',
-                              subtitle: 'Find colleges near you',
-                            ),
-                          ),
+                          // ── 6. Recommended for You ───────────────────────
                           FadeInSection(
                             delayMs: 300,
-                            child: const ExploreCityCarousel(),
+                            child: SectionHeader(
+                              title: 'Recommended for You',
+                              subtitle:
+                                  'Real colleges, real ratings — picked for you',
+                              actionLabel: 'View all',
+                              onAction: () =>
+                                  context.go(RouteNames.collegeSearch),
+                            ),
+                          ),
+                          FadeInSection(
+                            delayMs: 320,
+                            child: const FeaturedCollegesSection(),
                           ),
                           const SizedBox(height: AppSpacing.sectionLg),
 
                           // ── 7. More to Explore ────────────────────────────
                           FadeInSection(
-                            delayMs: 340,
+                            delayMs: 360,
                             child: const SectionHeader(
                               title: 'More to Explore',
-                              subtitle: 'A few other ways to use College Reality',
+                              subtitle:
+                                  'A few other ways to use College Reality',
                             ),
                           ),
                           FadeInSection(
-                            delayMs: 360,
+                            delayMs: 380,
                             child: const HomeMoreSection(),
                           ),
 
@@ -361,10 +371,7 @@ class _HomePromoAdsStrip extends ConsumerWidget {
                 : () async {
                     final uri = Uri.tryParse(ad.ctaUrl);
                     if (uri == null) return;
-                    await launchUrl(
-                      uri,
-                      mode: LaunchMode.externalApplication,
-                    );
+                    await launchUrl(uri, mode: LaunchMode.externalApplication);
                   },
             child: Row(
               children: [
@@ -373,8 +380,9 @@ class _HomePromoAdsStrip extends ConsumerWidget {
                   height: 40,
                   decoration: BoxDecoration(
                     color: primary.withValues(alpha: 0.12),
-                    borderRadius:
-                        BorderRadius.circular(tokens.buttonRadius * 0.65),
+                    borderRadius: BorderRadius.circular(
+                      tokens.buttonRadius * 0.65,
+                    ),
                   ),
                   child: Icon(
                     Icons.local_offer_outlined,

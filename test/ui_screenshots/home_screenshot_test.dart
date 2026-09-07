@@ -9,10 +9,10 @@ import 'package:college_reality_india/core/widgets/premium_components.dart';
 import 'package:college_reality_india/features/home/widgets/explore_by_city_section.dart';
 import 'package:college_reality_india/features/home/widgets/explore_category_section.dart';
 import 'package:college_reality_india/features/home/widgets/home_college_discovery_card.dart';
-import 'package:college_reality_india/features/home/widgets/home_compare_section.dart';
+import 'package:college_reality_india/features/home/widgets/home_core_features_grid.dart';
 import 'package:college_reality_india/features/home/widgets/home_hero_panel.dart';
 import 'package:college_reality_india/features/home/widgets/home_more_section.dart';
-import 'package:college_reality_india/features/home/widgets/home_trust_section.dart';
+import 'package:college_reality_india/features/home/widgets/home_trending_section.dart';
 import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -66,8 +66,19 @@ void main() {
                       HomeHeroPanel(
                         user: mockUser,
                         displayName: 'Aisha Verma',
-                        subtitle: 'Real reviews & verified CR Scores, personalized for you',
+                        subtitle:
+                            'Real reviews & verified CR Scores, personalized for you',
                       ),
+                      const SizedBox(height: AppSpacing.section),
+                      const HomeCoreFeaturesGrid(),
+                      const SizedBox(height: AppSpacing.sectionLg),
+                      const HomeTrendingSection(),
+                      const SizedBox(height: AppSpacing.sectionLg),
+                      const SectionHeader(
+                        title: 'Explore by City',
+                        subtitle: 'Find colleges near you',
+                      ),
+                      const ExploreCityCarousel(),
                       const SizedBox(height: AppSpacing.sectionLg),
                       SectionHeader(
                         title: 'Explore Colleges',
@@ -79,21 +90,12 @@ void main() {
                       const SizedBox(height: AppSpacing.sectionLg),
                       SectionHeader(
                         title: 'Recommended for You',
-                        subtitle: 'Real colleges, real ratings — picked for you',
+                        subtitle:
+                            'Real colleges, real ratings — picked for you',
                         actionLabel: 'View all',
                         onAction: () {},
                       ),
                       const FeaturedCollegesSection(),
-                      const SizedBox(height: AppSpacing.sectionLg),
-                      const HomeTrustSection(),
-                      const SizedBox(height: AppSpacing.sectionLg),
-                      const HomeCompareSection(),
-                      const SizedBox(height: AppSpacing.sectionLg),
-                      const SectionHeader(
-                        title: 'Explore by City',
-                        subtitle: 'Find colleges near you',
-                      ),
-                      const ExploreCityCarousel(),
                       const SizedBox(height: AppSpacing.sectionLg),
                       const SectionHeader(
                         title: 'More to Explore',
@@ -122,7 +124,8 @@ void main() {
     });
     expect(byteData, isNotNull);
     Directory('screenshots').createSync(recursive: true);
-    File('screenshots/03_home.png')
-        .writeAsBytesSync(byteData!.buffer.asUint8List());
+    File(
+      'screenshots/03_home.png',
+    ).writeAsBytesSync(byteData!.buffer.asUint8List());
   });
 }

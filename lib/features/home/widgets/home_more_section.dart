@@ -23,11 +23,11 @@ class HomeMoreSection extends StatelessWidget {
       child: Column(
         children: [
           PremiumListRow(
-            leadingIcon: Icons.auto_awesome_rounded,
+            leadingIcon: Icons.chat_bubble_outline_rounded,
             iconColor: const Color(0xFF0369A1),
-            title: 'AI Assistant',
-            subtitle: 'Get personalized college recommendations',
-            onTap: () => context.go(RouteNames.assistant),
+            title: 'Your Chats',
+            subtitle: 'Messages with verified students & guides',
+            onTap: () => context.go(RouteNames.communityPrivateChats),
           ),
           Divider(height: 1, color: tokens.borderSubtle),
           PremiumListRow(
