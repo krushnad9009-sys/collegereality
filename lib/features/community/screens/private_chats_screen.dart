@@ -26,16 +26,27 @@ class PrivateChatsScreen extends ConsumerWidget {
         scrolledUnderElevation: 0.5,
         backgroundColor: tokens.surfaceElevated,
         title: Text(
-          'Private Chats',
+          'Chats',
           style: textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.w600,
             color: tokens.textPrimary,
           ),
         ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-          onPressed: () => context.pop(),
-        ),
+        // Reachable both as a bottom-nav tab root (no back affordance) and
+        // via push from the Community hub (show a back button).
+        leading: context.canPop()
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new, size: 18),
+                onPressed: () => context.pop(),
+              )
+            : null,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.groups_outlined),
+            tooltip: 'Community',
+            onPressed: () => context.push(RouteNames.community),
+          ),
+        ],
       ),
       body: AsyncStateView(
         value: chatsAsync,
@@ -60,8 +71,7 @@ class PrivateChatsScreen extends ConsumerWidget {
             separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
             itemBuilder: (context, index) {
               final chat = chats[index];
-              final title =
-                  userId != null ? chat.displayTitle(userId) : 'Chat';
+              final title = userId != null ? chat.displayTitle(userId) : 'Chat';
               final preview = chat.lastMessageText ?? 'No messages yet';
               final timeLabel = chat.lastMessageAt != null
                   ? _shortTime(chat.lastMessageAt!)
@@ -70,7 +80,8 @@ class PrivateChatsScreen extends ConsumerWidget {
               return PremiumCard(
                 padding: EdgeInsets.zero,
                 radius: tokens.cardRadius,
-                onTap: () => context.push(RouteNames.communityChatPath(chat.id)),
+                onTap: () =>
+                    context.push(RouteNames.communityChatPath(chat.id)),
                 child: ListTile(
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: AppSpacing.lg,
@@ -79,11 +90,7 @@ class PrivateChatsScreen extends ConsumerWidget {
                   leading: CircleAvatar(
                     radius: 24,
                     backgroundColor: primary.withValues(alpha: 0.12),
-                    child: Icon(
-                      Icons.person_rounded,
-                      color: primary,
-                      size: 22,
-                    ),
+                    child: Icon(Icons.person_rounded, color: primary, size: 22),
                   ),
                   title: Text(
                     title,

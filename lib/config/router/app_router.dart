@@ -540,6 +540,17 @@ final Provider<GoRouter> appRouterProvider = Provider<GoRouter>((ref) {
               child: const CommunityHubScreen(),
             ),
           ),
+          // "Chats" bottom-nav tab — the private chat inbox. Lives in the
+          // shell so the nav bar stays visible; also reachable via push
+          // from the Community hub.
+          GoRoute(
+            path: RouteNames.communityPrivateChats,
+            pageBuilder: (context, state) => fadeSwitchPage(
+              key: state.pageKey,
+              name: state.name,
+              child: const PrivateChatsScreen(),
+            ),
+          ),
         ],
       ),
       GoRoute(
@@ -983,10 +994,6 @@ final Provider<GoRouter> appRouterProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const AdminEcosystemHubScreen(),
           ),
         ],
-      ),
-      GoRoute(
-        path: RouteNames.communityPrivateChats,
-        builder: (context, state) => const PrivateChatsScreen(),
       ),
       GoRoute(
         path: RouteNames.communityAskSeniors,

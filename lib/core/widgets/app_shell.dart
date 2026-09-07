@@ -39,14 +39,14 @@ class _AppShellState extends ConsumerState<AppShell> {
     RouteNames.home,
     RouteNames.collegeSearch,
     RouteNames.assistant,
-    RouteNames.community,
+    RouteNames.communityPrivateChats,
     RouteNames.profile,
   ];
 
   int _selectedIndex(String location) {
     if (location.startsWith(RouteNames.collegeSearch)) return 1;
     if (location.startsWith(RouteNames.assistant)) return 2;
-    if (location.startsWith(RouteNames.community)) return 3;
+    if (location.startsWith(RouteNames.communityPrivateChats)) return 3;
     if (location.startsWith(RouteNames.profile)) return 4;
     return 0;
   }
@@ -83,7 +83,9 @@ class _AppShellState extends ConsumerState<AppShell> {
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(tokens.navBarRadius),
-                  boxShadow: isDark ? AppElevation.none : AppElevation.floating(AppTheme.primaryDark),
+                  boxShadow: isDark
+                      ? AppElevation.none
+                      : AppElevation.floating(AppTheme.primaryDark),
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(tokens.navBarRadius),
@@ -94,14 +96,21 @@ class _AppShellState extends ConsumerState<AppShell> {
                     backgroundColor: isDark
                         ? AppTheme.gray800.withValues(alpha: 0.95)
                         : AppTheme.white.withValues(alpha: 0.96),
-                    indicatorColor: AppTheme.primaryColor.withValues(alpha: 0.14),
-                    labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+                    indicatorColor: AppTheme.primaryColor.withValues(
+                      alpha: 0.14,
+                    ),
+                    labelBehavior:
+                        NavigationDestinationLabelBehavior.alwaysShow,
                     animationDuration: const Duration(milliseconds: 280),
                     destinations: [
                       _destination(Icons.home_rounded, 'Home'),
                       _destination(Icons.search_rounded, 'Search'),
                       _destination(Icons.auto_awesome_rounded, 'Assistant'),
-                      _destination(Icons.forum_rounded, 'Community'),
+                      _destination(
+                        Icons.chat_bubble_rounded,
+                        'Chats',
+                        unselectedIcon: Icons.chat_bubble_outline_rounded,
+                      ),
                       _destination(Icons.person_rounded, 'Profile'),
                     ],
                   ),
@@ -112,9 +121,13 @@ class _AppShellState extends ConsumerState<AppShell> {
     );
   }
 
-  NavigationDestination _destination(IconData icon, String label) {
+  NavigationDestination _destination(
+    IconData icon,
+    String label, {
+    IconData? unselectedIcon,
+  }) {
     return NavigationDestination(
-      icon: Icon(icon, size: 22),
+      icon: Icon(unselectedIcon ?? icon, size: 22),
       selectedIcon: Icon(icon, size: 24, color: AppTheme.primaryColor),
       label: label,
     );
