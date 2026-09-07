@@ -786,8 +786,18 @@ service cloud.firestore {
     match /verification_requests/{requestId} {
       allow read: if isAdmin() ||
         (isAuthenticated() && resource.data.userId == request.auth.uid);
+      // A client may only submit a fresh request awaiting review. The
+      // outcome fields (status=approved/rejected, reviewedBy, and every
+      // ai* verdict field) are written ONLY by the AI Automated
+      // Verification Agent / an admin, via the Admin SDK — which bypasses
+      // these rules. This blocks a client self-submitting a pre-approved
+      // request or forging an "AI accepted" verdict.
       allow create: if isAuthenticated() &&
-        request.resource.data.userId == request.auth.uid;
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.status in ['pending_review', 'flagged'] &&
+        request.resource.data.get('aiDecision', null) == null &&
+        request.resource.data.get('aiReviewedAt', null) == null &&
+        request.resource.data.get('reviewedBy', null) == null;
       allow update: if isAdmin();
     }
 

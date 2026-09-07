@@ -42,10 +42,47 @@ void main() {
         createdAt: now,
         updatedAt: now,
       );
-      final restored = CollegeRequestModel.fromJson(original.toJson(), docId: 'req-1');
+      final restored = CollegeRequestModel.fromJson(
+        original.toJson(),
+        docId: 'req-1',
+      );
       expect(restored.name, 'New Institute');
       expect(restored.website, 'https://example.com');
       expect(restored.status, EcosystemConstants.statusPending);
+      expect(restored.aiDecision, isNull);
+      expect(restored.aiReviewed, isFalse);
+    });
+
+    test('round-trip preserves the AI agent verdict fields', () {
+      final original = CollegeRequestModel(
+        id: 'req-2',
+        userId: 'u2',
+        name: 'Acme Institute',
+        city: 'Pune',
+        state: 'Maharashtra',
+        status: EcosystemConstants.statusPending,
+        createdAt: now,
+        updatedAt: now,
+        aiDecision: 'flag',
+        aiConfidence: 0.58,
+        aiSummary: 'Plausible but website unreachable.',
+        aiFlags: const ['website_unverified'],
+        aiChecks: const {
+          'websiteVerdict': 'unreachable',
+          'nameScore': 0.9,
+          'serverDetectedDuplicate': false,
+        },
+        aiReviewedAt: now,
+      );
+      final restored = CollegeRequestModel.fromJson(
+        original.toJson(),
+        docId: 'req-2',
+      );
+      expect(restored.aiDecision, 'flag');
+      expect(restored.aiConfidence, 0.58);
+      expect(restored.aiFlags, ['website_unverified']);
+      expect(restored.aiChecks['websiteVerdict'], 'unreachable');
+      expect(restored.aiReviewed, isTrue);
     });
   });
 
@@ -150,7 +187,9 @@ void main() {
         createdAt: now,
         updatedAt: now,
       );
-      final restored = FacultyVerificationRequestModel.fromJson(original.toJson());
+      final restored = FacultyVerificationRequestModel.fromJson(
+        original.toJson(),
+      );
       expect(restored.department, 'Computer');
       expect(restored.facultyIdUrl, isNotNull);
     });

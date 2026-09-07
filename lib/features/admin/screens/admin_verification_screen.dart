@@ -15,9 +15,12 @@ import '../../verification/models/verification_request_model.dart';
 import '../../verification/providers/verification_provider.dart';
 import '../../verification/services/verification_firestore_service.dart';
 import '../../verification/services/verification_storage_service.dart';
+import '../../verification/widgets/ai_verdict_panel.dart';
 
-final _adminUserLoaderProvider =
-    FutureProvider.family<UserModel?, String>((ref, userId) async {
+final _adminUserLoaderProvider = FutureProvider.family<UserModel?, String>((
+  ref,
+  userId,
+) async {
   return FirestoreUserService().getUserByUID(userId);
 });
 
@@ -90,7 +93,9 @@ class _VerificationReviewCard extends ConsumerWidget {
                 ),
               ),
               StatusBadge(
-                label: VerificationConstants.roleLabel(request.verificationRole),
+                label: VerificationConstants.roleLabel(
+                  request.verificationRole,
+                ),
                 color: AppTheme.secondaryColor,
               ),
             ],
@@ -104,7 +109,10 @@ class _VerificationReviewCard extends ConsumerWidget {
               children: [
                 Text(
                   user?.displayName ?? 'Unknown user',
-                  style: AppFonts.plusJakarta(fontWeight: FontWeight.w600, color: tokens.textPrimary),
+                  style: AppFonts.plusJakarta(
+                    fontWeight: FontWeight.w600,
+                    color: tokens.textPrimary,
+                  ),
                 ),
                 Text(
                   user?.email ?? request.userId,
@@ -121,7 +129,10 @@ class _VerificationReviewCard extends ConsumerWidget {
             const SizedBox(height: 6),
             Text(
               'College: ${request.collegeName}',
-              style: AppFonts.plusJakarta(fontSize: 13, color: tokens.textPrimary),
+              style: AppFonts.plusJakarta(
+                fontSize: 13,
+                color: tokens.textPrimary,
+              ),
             ),
           ],
           const SizedBox(height: 6),
@@ -129,20 +140,17 @@ class _VerificationReviewCard extends ConsumerWidget {
             'Status: ${request.status}',
             style: AppFonts.plusJakarta(color: tokens.textSecondary),
           ),
-          const SizedBox(height: 8),
-          Text(
-            request.aiSummary,
-            style: AppFonts.plusJakarta(fontSize: 13, color: tokens.textPrimary),
+          const SizedBox(height: 10),
+          AiVerdictPanel(
+            decision: request.aiDecision,
+            confidence: request.aiConfidence,
+            summary: request.aiSummary,
+            flags: request.aiFlags,
+            checks: request.aiChecks,
+            extracted: request.aiExtracted,
+            model: request.aiModel,
+            reviewedAt: request.aiReviewedAt,
           ),
-          if (request.aiFlags.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 6,
-              children: request.aiFlags
-                  .map((f) => StatusBadge(label: f, color: AppTheme.warningColor))
-                  .toList(),
-            ),
-          ],
           const SizedBox(height: 12),
           OutlinedButton.icon(
             onPressed: () => _viewDocument(context),
@@ -242,13 +250,15 @@ class _VerificationReviewCard extends ConsumerWidget {
     if (adminId == null) return;
 
     try {
-      await ref.read(verificationServiceProvider).approveRequest(
-            requestId: request.id,
-            adminId: adminId,
-          );
+      await ref
+          .read(verificationServiceProvider)
+          .approveRequest(requestId: request.id, adminId: adminId);
       ref.invalidate(verificationQueueProvider);
       if (context.mounted) {
-        SnackBarHelper.showSuccessSnackBar(context, message: 'Verification approved.');
+        SnackBarHelper.showSuccessSnackBar(
+          context,
+          message: 'Verification approved.',
+        );
       }
     } on VerificationException catch (e) {
       if (context.mounted) {
@@ -270,14 +280,19 @@ class _VerificationReviewCard extends ConsumerWidget {
     if (note == null || note.isEmpty) return;
 
     try {
-      await ref.read(verificationServiceProvider).rejectRequest(
+      await ref
+          .read(verificationServiceProvider)
+          .rejectRequest(
             requestId: request.id,
             adminId: adminId,
             adminNote: note,
           );
       ref.invalidate(verificationQueueProvider);
       if (context.mounted) {
-        SnackBarHelper.showSuccessSnackBar(context, message: 'Verification rejected.');
+        SnackBarHelper.showSuccessSnackBar(
+          context,
+          message: 'Verification rejected.',
+        );
       }
     } on VerificationException catch (e) {
       if (context.mounted) {
@@ -299,7 +314,9 @@ class _VerificationReviewCard extends ConsumerWidget {
     if (note == null || note.isEmpty) return;
 
     try {
-      await ref.read(verificationServiceProvider).requestResubmission(
+      await ref
+          .read(verificationServiceProvider)
+          .requestResubmission(
             requestId: request.id,
             adminId: adminId,
             adminNote: note,

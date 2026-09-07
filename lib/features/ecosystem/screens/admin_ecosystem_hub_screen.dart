@@ -6,6 +6,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../admin/utils/admin_route_resolver.dart';
 import '../../../core/constants/ecosystem_constants.dart';
 import '../../auth/providers/user_provider.dart';
+import '../../verification/widgets/ai_verdict_panel.dart';
+import '../models/ecosystem_models.dart';
 import '../providers/ecosystem_provider.dart';
 
 class AdminEcosystemHubScreen extends ConsumerWidget {
@@ -60,22 +62,94 @@ class _RequestsTab extends ConsumerWidget {
       data: (items) => _ListShell(
         empty: 'No pending college requests',
         items: items,
-        builder: (item) => _ApprovalCard(
-          title: item.name,
-          subtitle: '${item.city}, ${item.state} · by ${item.userName}',
-          onApprove: () => ref.read(ecosystemServiceProvider).reviewCollegeRequest(
+        builder: (item) => _CollegeRequestCard(
+          request: item,
+          onApprove: () => ref
+              .read(ecosystemServiceProvider)
+              .reviewCollegeRequest(
                 requestId: item.id,
                 adminId: user!.uid,
                 adminName: user.displayName ?? 'Admin',
                 approve: true,
-              ).then((_) => ref.invalidate(pendingCollegeRequestsProvider)),
-          onReject: () => ref.read(ecosystemServiceProvider).reviewCollegeRequest(
+              )
+              .then((_) => ref.invalidate(pendingCollegeRequestsProvider)),
+          onReject: () => ref
+              .read(ecosystemServiceProvider)
+              .reviewCollegeRequest(
                 requestId: item.id,
                 adminId: user!.uid,
                 adminName: user.displayName ?? 'Admin',
                 approve: false,
                 adminNotes: 'Rejected',
-              ).then((_) => ref.invalidate(pendingCollegeRequestsProvider)),
+              )
+              .then((_) => ref.invalidate(pendingCollegeRequestsProvider)),
+        ),
+      ),
+    );
+  }
+}
+
+/// College-request approval card with the AI Automated Verification Agent's
+/// report inline. Auto-rejected requests already leave this queue (status
+/// != pending_review); what remains is FLAGGED items the agent scored but
+/// could not clear on its own.
+class _CollegeRequestCard extends StatelessWidget {
+  final CollegeRequestModel request;
+  final VoidCallback onApprove;
+  final VoidCallback onReject;
+
+  const _CollegeRequestCard({
+    required this.request,
+    required this.onApprove,
+    required this.onReject,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              request.name,
+              style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '${request.city}, ${request.state} · by ${request.userName}',
+              style: GoogleFonts.poppins(fontSize: 12),
+            ),
+            if ((request.website ?? '').isNotEmpty) ...[
+              const SizedBox(height: 2),
+              Text(
+                request.website!,
+                style: GoogleFonts.poppins(
+                  fontSize: 11,
+                  color: Colors.blueGrey,
+                ),
+              ),
+            ],
+            const SizedBox(height: 10),
+            AiVerdictPanel(
+              decision: request.aiDecision,
+              confidence: request.aiConfidence,
+              summary: request.aiReviewed
+                  ? request.aiSummary
+                  : 'Automated verification is still running for this submission.',
+              flags: request.aiFlags,
+              checks: request.aiChecks,
+              reviewedAt: request.aiReviewedAt,
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                TextButton(onPressed: onApprove, child: const Text('Approve')),
+                TextButton(onPressed: onReject, child: const Text('Reject')),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -96,18 +170,24 @@ class _EditsTab extends ConsumerWidget {
         builder: (item) => _ApprovalCard(
           title: '${item.field} — ${item.collegeName}',
           subtitle: '${item.currentValue} → ${item.suggestedValue}',
-          onApprove: () => ref.read(ecosystemServiceProvider).reviewEditSuggestion(
+          onApprove: () => ref
+              .read(ecosystemServiceProvider)
+              .reviewEditSuggestion(
                 suggestionId: item.id,
                 adminId: user!.uid,
                 adminName: user.displayName ?? 'Admin',
                 approve: true,
-              ).then((_) => ref.invalidate(pendingEditSuggestionsProvider)),
-          onReject: () => ref.read(ecosystemServiceProvider).reviewEditSuggestion(
+              )
+              .then((_) => ref.invalidate(pendingEditSuggestionsProvider)),
+          onReject: () => ref
+              .read(ecosystemServiceProvider)
+              .reviewEditSuggestion(
                 suggestionId: item.id,
                 adminId: user!.uid,
                 adminName: user.displayName ?? 'Admin',
                 approve: false,
-              ).then((_) => ref.invalidate(pendingEditSuggestionsProvider)),
+              )
+              .then((_) => ref.invalidate(pendingEditSuggestionsProvider)),
         ),
       ),
     );
@@ -128,18 +208,24 @@ class _ReportsTab extends ConsumerWidget {
         builder: (item) => _ApprovalCard(
           title: EcosystemConstants.reportTypeLabel(item.reportType),
           subtitle: '${item.collegeName}: ${item.description}',
-          onApprove: () => ref.read(ecosystemServiceProvider).resolveDataReport(
+          onApprove: () => ref
+              .read(ecosystemServiceProvider)
+              .resolveDataReport(
                 reportId: item.id,
                 adminId: user!.uid,
                 adminName: user.displayName ?? 'Admin',
                 resolved: true,
-              ).then((_) => ref.invalidate(pendingDataReportsProvider)),
-          onReject: () => ref.read(ecosystemServiceProvider).resolveDataReport(
+              )
+              .then((_) => ref.invalidate(pendingDataReportsProvider)),
+          onReject: () => ref
+              .read(ecosystemServiceProvider)
+              .resolveDataReport(
                 reportId: item.id,
                 adminId: user!.uid,
                 adminName: user.displayName ?? 'Admin',
                 resolved: false,
-              ).then((_) => ref.invalidate(pendingDataReportsProvider)),
+              )
+              .then((_) => ref.invalidate(pendingDataReportsProvider)),
         ),
       ),
     );
@@ -160,16 +246,22 @@ class _ClaimsTab extends ConsumerWidget {
         builder: (item) => _ApprovalCard(
           title: item.collegeName,
           subtitle: '${item.representativeName} · ${item.officialEmail}',
-          onApprove: () => ref.read(ecosystemServiceProvider).approveCollegeClaim(
+          onApprove: () => ref
+              .read(ecosystemServiceProvider)
+              .approveCollegeClaim(
                 claimId: item.id,
                 adminId: user!.uid,
                 adminName: user.displayName ?? 'Admin',
-              ).then((_) => ref.invalidate(pendingCollegeClaimsProvider)),
-          onReject: () => ref.read(ecosystemServiceProvider).rejectCollegeClaim(
+              )
+              .then((_) => ref.invalidate(pendingCollegeClaimsProvider)),
+          onReject: () => ref
+              .read(ecosystemServiceProvider)
+              .rejectCollegeClaim(
                 claimId: item.id,
                 adminId: user!.uid,
                 adminNotes: 'Rejected',
-              ).then((_) => ref.invalidate(pendingCollegeClaimsProvider)),
+              )
+              .then((_) => ref.invalidate(pendingCollegeClaimsProvider)),
         ),
       ),
     );
@@ -190,11 +282,14 @@ class _FacultyTab extends ConsumerWidget {
         builder: (item) => _ApprovalCard(
           title: item.userName,
           subtitle: '${item.collegeName} · ${item.officialEmail}',
-          onApprove: () => ref.read(ecosystemServiceProvider).approveFacultyVerification(
+          onApprove: () => ref
+              .read(ecosystemServiceProvider)
+              .approveFacultyVerification(
                 requestId: item.id,
                 adminId: user!.uid,
                 adminName: user.displayName ?? 'Admin',
-              ).then((_) => ref.invalidate(pendingFacultyRequestsProvider)),
+              )
+              .then((_) => ref.invalidate(pendingFacultyRequestsProvider)),
           onReject: () async {
             ref.invalidate(pendingFacultyRequestsProvider);
           },
@@ -221,7 +316,10 @@ class _AuditTab extends ConsumerWidget {
             final log = logs[i];
             return Card(
               child: ListTile(
-                title: Text(log.action, style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                title: Text(
+                  log.action,
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                ),
                 subtitle: Text(
                   '${log.actorName.isNotEmpty ? log.actorName : log.actorId} · ${log.createdAt}',
                 ),
@@ -278,7 +376,10 @@ class _ApprovalCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+            Text(
+              title,
+              style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+            ),
             const SizedBox(height: 4),
             Text(subtitle, style: GoogleFonts.poppins(fontSize: 12)),
             const SizedBox(height: 8),

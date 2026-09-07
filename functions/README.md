@@ -112,6 +112,56 @@ everything else is a plain constant in `src/ai/config.js`.
 **Deployment:** part of the same `firebase deploy --only functions` as
 everything else in this directory — see "Not deployed automatically" above.
 
+## AI Automated Verification Agent (`onVerificationRequestCreated` / `onCollegeRequestCreated`)
+
+Background Firestore-create triggers that power the Super Admin panel's
+automated approval flow. Both use Gemini (multimodal — same
+`GEMINI_API_KEY` secret, no new config) via `src/verification/`:
+
+| Module | Role |
+|---|---|
+| `verification/config.js` | Every threshold (accept/reject bands, min clarity/name-match, model name, timeouts). The one place to tune aggressiveness. |
+| `verification/geminiVision.js` | One multimodal Gemini call that returns **strict JSON** (`responseSchema`). Inlines the image/PDF as `inline_data`. Retries once on 5xx/timeout. |
+| `verification/storage.js` | Downloads a Storage object (the request's `storagePath`) into memory; best-effort remote-image fetch for campus photos. |
+| `verification/notify.js` | Writes a `user_notifications` doc as the trusted backend, idempotent by dedupe id (trigger retries won't double-notify). |
+| `verification/studentDocAgent.js` | **Pure** prompt + decision logic for student documents. Unit-tested (`test/studentDocAgent.test.js`). |
+| `verification/collegeListingAgent.js` | **Pure** prompt + decision logic for new-college submissions + website-snippet fetch. Unit-tested (`test/collegeListingAgent.test.js`). |
+| `verificationTriggers.js` | The two triggers: claim-once transaction, download → analyse → decide → write verdict + apply side effects. |
+
+**Student documents** (`verification_requests/{id}` create) — **full auto**:
+
+- Vision AI reads the document, extracts name / college / masked ID / kind,
+  and scores clarity, tamper, name-match, college-match, doc-type-match.
+- `ACCEPT` → request `status: approved`, grants `verificationBadge`
+  (`verified_student` / `verified_alumni`), sets `isVerified`, bumps the
+  college's `verifiedStudentCount` / `verifiedAlumniCount`, notifies the
+  user. (Exactly the side effects of `VerificationFirestoreService.approveRequest`.)
+- `REJECT` → `status: rejected` with a specific `adminNote` reason, user's
+  `verificationStatus: rejected`, notifies the user.
+- `FLAG` → `status: flagged`, stays in the admin queue with the full AI
+  report attached.
+- **Any internal error → FLAG.** The agent never auto-rejects because of an
+  outage, a bad file type, a Gemini failure, or malformed JSON.
+
+**College listings** (`college_requests/{id}` create) — **auto-reject spam,
+flag the rest**:
+
+- Checks name plausibility, address, affiliating university, website
+  (fetched + summarised), campus photo authenticity (Vision), plus a
+  server-side duplicate check against `colleges`.
+- `REJECT` → gibberish / spam / directory duplicate → `status: rejected`
+  with a reason, frees the duplicate-index slot, notifies the user.
+- `FLAG` → everything else stays `pending_review` with the AI report; a
+  human still creates the actual `colleges` doc (unchanged).
+- The agent **never auto-approves** a public directory entry.
+
+All writes are Admin SDK (bypass `firestore.rules`). `firestore.rules`
+additionally forbids a client from creating a `verification_requests` doc
+that carries any `ai*` verdict field or a non-pending `status`.
+
+**Deployment:** part of the same `firebase deploy --only functions`. Needs
+only `GEMINI_API_KEY`. Local pure-logic tests: `npm test` (no emulator).
+
 ## Email OTP verification (`requestEmailOtp` / `verifyEmailOtp`)
 
 Firebase Auth has no email-OTP primitive, so `src/emailOtp.js` implements

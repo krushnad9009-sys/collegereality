@@ -41,14 +41,14 @@ class EditHistoryEntry {
   }
 
   Map<String, dynamic> toJson() => {
-        'action': action,
-        'field': field,
-        'oldValue': oldValue,
-        'newValue': newValue,
-        'actorId': actorId,
-        'actorName': actorName,
-        'at': at.toIso8601String(),
-      };
+    'action': action,
+    'field': field,
+    'oldValue': oldValue,
+    'newValue': newValue,
+    'actorId': actorId,
+    'actorName': actorName,
+    'at': at.toIso8601String(),
+  };
 }
 
 class CollegeRequestModel {
@@ -71,6 +71,19 @@ class CollegeRequestModel {
   final DateTime createdAt;
   final DateTime updatedAt;
 
+  // ── AI Automated Verification Agent (Cloud Functions) ────────────────
+  /// 'reject' | 'flag' — the agent never auto-approves a directory entry.
+  final String? aiDecision;
+  final double aiConfidence;
+  final String aiSummary;
+  final List<String> aiFlags;
+
+  /// Per-check verdicts (address / website / photo / affiliation / dup).
+  final Map<String, dynamic> aiChecks;
+  final DateTime? aiReviewedAt;
+
+  bool get aiReviewed => aiReviewedAt != null;
+
   const CollegeRequestModel({
     required this.id,
     required this.userId,
@@ -90,9 +103,18 @@ class CollegeRequestModel {
     this.approvedCollegeId,
     required this.createdAt,
     required this.updatedAt,
+    this.aiDecision,
+    this.aiConfidence = 0,
+    this.aiSummary = '',
+    this.aiFlags = const [],
+    this.aiChecks = const {},
+    this.aiReviewedAt,
   });
 
-  factory CollegeRequestModel.fromJson(Map<String, dynamic> json, {String? docId}) {
+  factory CollegeRequestModel.fromJson(
+    Map<String, dynamic> json, {
+    String? docId,
+  }) {
     return CollegeRequestModel(
       id: docId ?? json['id'] as String? ?? '',
       userId: json['userId'] as String? ?? '',
@@ -112,29 +134,47 @@ class CollegeRequestModel {
       approvedCollegeId: json['approvedCollegeId'] as String?,
       createdAt: _parseDate(json['createdAt']),
       updatedAt: _parseDate(json['updatedAt']),
+      aiDecision: json['aiDecision'] as String?,
+      aiConfidence: (json['aiConfidence'] as num?)?.toDouble() ?? 0,
+      aiSummary: json['aiSummary'] as String? ?? '',
+      aiFlags:
+          (json['aiFlags'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const [],
+      aiChecks: (json['aiChecks'] as Map?)?.cast<String, dynamic>() ?? const {},
+      aiReviewedAt: json['aiReviewedAt'] != null
+          ? _parseDate(json['aiReviewedAt'])
+          : null,
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'userId': userId,
-        'userName': userName,
-        'name': name,
-        'nameLower': nameLower,
-        'city': city,
-        'cityLower': cityLower,
-        'state': state,
-        'address': address,
-        'website': website,
-        'universityName': universityName,
-        'photoUrl': photoUrl,
-        'notes': notes,
-        'status': status,
-        'adminNotes': adminNotes,
-        'approvedCollegeId': approvedCollegeId,
-        'createdAt': createdAt.toIso8601String(),
-        'updatedAt': updatedAt.toIso8601String(),
-      };
+    'id': id,
+    'userId': userId,
+    'userName': userName,
+    'name': name,
+    'nameLower': nameLower,
+    'city': city,
+    'cityLower': cityLower,
+    'state': state,
+    'address': address,
+    'website': website,
+    'universityName': universityName,
+    'photoUrl': photoUrl,
+    'notes': notes,
+    'status': status,
+    'adminNotes': adminNotes,
+    'approvedCollegeId': approvedCollegeId,
+    'createdAt': createdAt.toIso8601String(),
+    'updatedAt': updatedAt.toIso8601String(),
+    'aiDecision': aiDecision,
+    'aiConfidence': aiConfidence,
+    'aiSummary': aiSummary,
+    'aiFlags': aiFlags,
+    'aiChecks': aiChecks,
+    'aiReviewedAt': aiReviewedAt?.toIso8601String(),
+  };
 }
 
 class CollegeEditSuggestionModel {
@@ -170,7 +210,10 @@ class CollegeEditSuggestionModel {
     required this.updatedAt,
   });
 
-  factory CollegeEditSuggestionModel.fromJson(Map<String, dynamic> json, {String? docId}) {
+  factory CollegeEditSuggestionModel.fromJson(
+    Map<String, dynamic> json, {
+    String? docId,
+  }) {
     return CollegeEditSuggestionModel(
       id: docId ?? json['id'] as String? ?? '',
       collegeId: json['collegeId'] as String? ?? '',
@@ -182,7 +225,8 @@ class CollegeEditSuggestionModel {
       suggestedValue: json['suggestedValue'] as String? ?? '',
       reason: json['reason'] as String? ?? '',
       status: json['status'] as String? ?? EcosystemConstants.statusPending,
-      editHistory: (json['editHistory'] as List<dynamic>?)
+      editHistory:
+          (json['editHistory'] as List<dynamic>?)
               ?.map((e) => EditHistoryEntry.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
@@ -193,21 +237,21 @@ class CollegeEditSuggestionModel {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'collegeId': collegeId,
-        'collegeName': collegeName,
-        'userId': userId,
-        'userName': userName,
-        'field': field,
-        'currentValue': currentValue,
-        'suggestedValue': suggestedValue,
-        'reason': reason,
-        'status': status,
-        'editHistory': editHistory.map((e) => e.toJson()).toList(),
-        'reviewedBy': reviewedBy,
-        'createdAt': createdAt.toIso8601String(),
-        'updatedAt': updatedAt.toIso8601String(),
-      };
+    'id': id,
+    'collegeId': collegeId,
+    'collegeName': collegeName,
+    'userId': userId,
+    'userName': userName,
+    'field': field,
+    'currentValue': currentValue,
+    'suggestedValue': suggestedValue,
+    'reason': reason,
+    'status': status,
+    'editHistory': editHistory.map((e) => e.toJson()).toList(),
+    'reviewedBy': reviewedBy,
+    'createdAt': createdAt.toIso8601String(),
+    'updatedAt': updatedAt.toIso8601String(),
+  };
 }
 
 class CollegeDataReportModel {
@@ -235,7 +279,10 @@ class CollegeDataReportModel {
     required this.updatedAt,
   });
 
-  factory CollegeDataReportModel.fromJson(Map<String, dynamic> json, {String? docId}) {
+  factory CollegeDataReportModel.fromJson(
+    Map<String, dynamic> json, {
+    String? docId,
+  }) {
     return CollegeDataReportModel(
       id: docId ?? json['id'] as String? ?? '',
       collegeId: json['collegeId'] as String? ?? '',
@@ -251,17 +298,17 @@ class CollegeDataReportModel {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'collegeId': collegeId,
-        'collegeName': collegeName,
-        'userId': userId,
-        'userName': userName,
-        'reportType': reportType,
-        'description': description,
-        'status': status,
-        'createdAt': createdAt.toIso8601String(),
-        'updatedAt': updatedAt.toIso8601String(),
-      };
+    'id': id,
+    'collegeId': collegeId,
+    'collegeName': collegeName,
+    'userId': userId,
+    'userName': userName,
+    'reportType': reportType,
+    'description': description,
+    'status': status,
+    'createdAt': createdAt.toIso8601String(),
+    'updatedAt': updatedAt.toIso8601String(),
+  };
 }
 
 class CollegeClaimModel {
@@ -297,7 +344,10 @@ class CollegeClaimModel {
     required this.updatedAt,
   });
 
-  factory CollegeClaimModel.fromJson(Map<String, dynamic> json, {String? docId}) {
+  factory CollegeClaimModel.fromJson(
+    Map<String, dynamic> json, {
+    String? docId,
+  }) {
     return CollegeClaimModel(
       id: docId ?? json['id'] as String? ?? '',
       collegeId: json['collegeId'] as String? ?? '',
@@ -306,7 +356,8 @@ class CollegeClaimModel {
       userName: json['userName'] as String? ?? '',
       officialEmail: json['officialEmail'] as String? ?? '',
       representativeName: json['representativeName'] as String? ?? '',
-      representativeDesignation: json['representativeDesignation'] as String? ?? '',
+      representativeDesignation:
+          json['representativeDesignation'] as String? ?? '',
       authorizationLetterUrl: json['authorizationLetterUrl'] as String?,
       representativeIdUrl: json['representativeIdUrl'] as String?,
       status: json['status'] as String? ?? EcosystemConstants.statusPending,
@@ -317,21 +368,21 @@ class CollegeClaimModel {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'collegeId': collegeId,
-        'collegeName': collegeName,
-        'userId': userId,
-        'userName': userName,
-        'officialEmail': officialEmail,
-        'representativeName': representativeName,
-        'representativeDesignation': representativeDesignation,
-        'authorizationLetterUrl': authorizationLetterUrl,
-        'representativeIdUrl': representativeIdUrl,
-        'status': status,
-        'adminNotes': adminNotes,
-        'createdAt': createdAt.toIso8601String(),
-        'updatedAt': updatedAt.toIso8601String(),
-      };
+    'id': id,
+    'collegeId': collegeId,
+    'collegeName': collegeName,
+    'userId': userId,
+    'userName': userName,
+    'officialEmail': officialEmail,
+    'representativeName': representativeName,
+    'representativeDesignation': representativeDesignation,
+    'authorizationLetterUrl': authorizationLetterUrl,
+    'representativeIdUrl': representativeIdUrl,
+    'status': status,
+    'adminNotes': adminNotes,
+    'createdAt': createdAt.toIso8601String(),
+    'updatedAt': updatedAt.toIso8601String(),
+  };
 }
 
 class CollegeAccountModel {
@@ -357,7 +408,10 @@ class CollegeAccountModel {
     required this.updatedAt,
   });
 
-  factory CollegeAccountModel.fromJson(Map<String, dynamic> json, {String? docId}) {
+  factory CollegeAccountModel.fromJson(
+    Map<String, dynamic> json, {
+    String? docId,
+  }) {
     return CollegeAccountModel(
       userId: docId ?? json['userId'] as String? ?? '',
       collegeId: json['collegeId'] as String? ?? '',
@@ -365,23 +419,25 @@ class CollegeAccountModel {
       officialEmail: json['officialEmail'] as String? ?? '',
       isVerified: json['isVerified'] as bool? ?? false,
       showOfficialBadge: json['showOfficialBadge'] as bool? ?? false,
-      verifiedAt: json['verifiedAt'] != null ? _parseDate(json['verifiedAt']) : null,
+      verifiedAt: json['verifiedAt'] != null
+          ? _parseDate(json['verifiedAt'])
+          : null,
       createdAt: _parseDate(json['createdAt']),
       updatedAt: _parseDate(json['updatedAt']),
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'userId': userId,
-        'collegeId': collegeId,
-        'collegeName': collegeName,
-        'officialEmail': officialEmail,
-        'isVerified': isVerified,
-        'showOfficialBadge': showOfficialBadge,
-        'verifiedAt': verifiedAt?.toIso8601String(),
-        'createdAt': createdAt.toIso8601String(),
-        'updatedAt': updatedAt.toIso8601String(),
-      };
+    'userId': userId,
+    'collegeId': collegeId,
+    'collegeName': collegeName,
+    'officialEmail': officialEmail,
+    'isVerified': isVerified,
+    'showOfficialBadge': showOfficialBadge,
+    'verifiedAt': verifiedAt?.toIso8601String(),
+    'createdAt': createdAt.toIso8601String(),
+    'updatedAt': updatedAt.toIso8601String(),
+  };
 }
 
 class FacultyVerificationRequestModel {
@@ -415,7 +471,10 @@ class FacultyVerificationRequestModel {
     required this.updatedAt,
   });
 
-  factory FacultyVerificationRequestModel.fromJson(Map<String, dynamic> json, {String? docId}) {
+  factory FacultyVerificationRequestModel.fromJson(
+    Map<String, dynamic> json, {
+    String? docId,
+  }) {
     return FacultyVerificationRequestModel(
       id: docId ?? json['id'] as String? ?? '',
       userId: json['userId'] as String? ?? '',
@@ -434,20 +493,20 @@ class FacultyVerificationRequestModel {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'userId': userId,
-        'userName': userName,
-        'collegeId': collegeId,
-        'collegeName': collegeName,
-        'officialEmail': officialEmail,
-        'facultyIdUrl': facultyIdUrl,
-        'department': department,
-        'designation': designation,
-        'status': status,
-        'adminNotes': adminNotes,
-        'createdAt': createdAt.toIso8601String(),
-        'updatedAt': updatedAt.toIso8601String(),
-      };
+    'id': id,
+    'userId': userId,
+    'userName': userName,
+    'collegeId': collegeId,
+    'collegeName': collegeName,
+    'officialEmail': officialEmail,
+    'facultyIdUrl': facultyIdUrl,
+    'department': department,
+    'designation': designation,
+    'status': status,
+    'adminNotes': adminNotes,
+    'createdAt': createdAt.toIso8601String(),
+    'updatedAt': updatedAt.toIso8601String(),
+  };
 }
 
 class CollegeOfficialContentModel {
@@ -477,7 +536,10 @@ class CollegeOfficialContentModel {
     required this.updatedAt,
   });
 
-  factory CollegeOfficialContentModel.fromJson(Map<String, dynamic> json, {String? docId}) {
+  factory CollegeOfficialContentModel.fromJson(
+    Map<String, dynamic> json, {
+    String? docId,
+  }) {
     return CollegeOfficialContentModel(
       id: docId ?? json['id'] as String? ?? '',
       collegeId: json['collegeId'] as String? ?? '',
@@ -486,7 +548,8 @@ class CollegeOfficialContentModel {
       section: json['section'] as String? ?? '',
       title: json['title'] as String? ?? '',
       body: json['body'] as String? ?? '',
-      mediaUrls: (json['mediaUrls'] as List<dynamic>?)?.cast<String>() ?? const [],
+      mediaUrls:
+          (json['mediaUrls'] as List<dynamic>?)?.cast<String>() ?? const [],
       isPublished: json['isPublished'] as bool? ?? true,
       createdAt: _parseDate(json['createdAt']),
       updatedAt: _parseDate(json['updatedAt']),
@@ -494,18 +557,18 @@ class CollegeOfficialContentModel {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'collegeId': collegeId,
-        'collegeName': collegeName,
-        'authorId': authorId,
-        'section': section,
-        'title': title,
-        'body': body,
-        'mediaUrls': mediaUrls,
-        'isPublished': isPublished,
-        'createdAt': createdAt.toIso8601String(),
-        'updatedAt': updatedAt.toIso8601String(),
-      };
+    'id': id,
+    'collegeId': collegeId,
+    'collegeName': collegeName,
+    'authorId': authorId,
+    'section': section,
+    'title': title,
+    'body': body,
+    'mediaUrls': mediaUrls,
+    'isPublished': isPublished,
+    'createdAt': createdAt.toIso8601String(),
+    'updatedAt': updatedAt.toIso8601String(),
+  };
 }
 
 class FacultyWorkshopModel {
@@ -529,29 +592,34 @@ class FacultyWorkshopModel {
     required this.createdAt,
   });
 
-  factory FacultyWorkshopModel.fromJson(Map<String, dynamic> json, {String? docId}) {
+  factory FacultyWorkshopModel.fromJson(
+    Map<String, dynamic> json, {
+    String? docId,
+  }) {
     return FacultyWorkshopModel(
       id: docId ?? json['id'] as String? ?? '',
       facultyId: json['facultyId'] as String? ?? '',
       collegeId: json['collegeId'] as String? ?? '',
       title: json['title'] as String? ?? '',
       description: json['description'] as String? ?? '',
-      scheduledAt: json['scheduledAt'] != null ? _parseDate(json['scheduledAt']) : null,
+      scheduledAt: json['scheduledAt'] != null
+          ? _parseDate(json['scheduledAt'])
+          : null,
       status: json['status'] as String? ?? 'published',
       createdAt: _parseDate(json['createdAt']),
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'facultyId': facultyId,
-        'collegeId': collegeId,
-        'title': title,
-        'description': description,
-        'scheduledAt': scheduledAt?.toIso8601String(),
-        'status': status,
-        'createdAt': createdAt.toIso8601String(),
-      };
+    'id': id,
+    'facultyId': facultyId,
+    'collegeId': collegeId,
+    'title': title,
+    'description': description,
+    'scheduledAt': scheduledAt?.toIso8601String(),
+    'status': status,
+    'createdAt': createdAt.toIso8601String(),
+  };
 }
 
 class FacultyResearchModel {
@@ -573,7 +641,10 @@ class FacultyResearchModel {
     required this.createdAt,
   });
 
-  factory FacultyResearchModel.fromJson(Map<String, dynamic> json, {String? docId}) {
+  factory FacultyResearchModel.fromJson(
+    Map<String, dynamic> json, {
+    String? docId,
+  }) {
     return FacultyResearchModel(
       id: docId ?? json['id'] as String? ?? '',
       facultyId: json['facultyId'] as String? ?? '',
@@ -586,14 +657,14 @@ class FacultyResearchModel {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'facultyId': facultyId,
-        'collegeId': collegeId,
-        'title': title,
-        'abstract': abstract,
-        'linkUrl': linkUrl,
-        'createdAt': createdAt.toIso8601String(),
-      };
+    'id': id,
+    'facultyId': facultyId,
+    'collegeId': collegeId,
+    'title': title,
+    'abstract': abstract,
+    'linkUrl': linkUrl,
+    'createdAt': createdAt.toIso8601String(),
+  };
 }
 
 class AlumniMentorshipOfferModel {
@@ -619,7 +690,10 @@ class AlumniMentorshipOfferModel {
     required this.createdAt,
   });
 
-  factory AlumniMentorshipOfferModel.fromJson(Map<String, dynamic> json, {String? docId}) {
+  factory AlumniMentorshipOfferModel.fromJson(
+    Map<String, dynamic> json, {
+    String? docId,
+  }) {
     return AlumniMentorshipOfferModel(
       id: docId ?? json['id'] as String? ?? '',
       alumniId: json['alumniId'] as String? ?? '',
@@ -634,16 +708,16 @@ class AlumniMentorshipOfferModel {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'alumniId': alumniId,
-        'alumniName': alumniName,
-        'collegeId': collegeId,
-        'collegeName': collegeName,
-        'topic': topic,
-        'description': description,
-        'isActive': isActive,
-        'createdAt': createdAt.toIso8601String(),
-      };
+    'id': id,
+    'alumniId': alumniId,
+    'alumniName': alumniName,
+    'collegeId': collegeId,
+    'collegeName': collegeName,
+    'topic': topic,
+    'description': description,
+    'isActive': isActive,
+    'createdAt': createdAt.toIso8601String(),
+  };
 }
 
 class AuditLogModel {
@@ -681,13 +755,13 @@ class AuditLogModel {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'action': action,
-        'actorId': actorId,
-        'actorName': actorName,
-        'targetId': targetId,
-        'targetType': targetType,
-        'metadata': metadata,
-        'createdAt': createdAt.toIso8601String(),
-      };
+    'id': id,
+    'action': action,
+    'actorId': actorId,
+    'actorName': actorName,
+    'targetId': targetId,
+    'targetType': targetType,
+    'metadata': metadata,
+    'createdAt': createdAt.toIso8601String(),
+  };
 }

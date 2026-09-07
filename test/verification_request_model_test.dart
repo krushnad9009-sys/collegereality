@@ -27,7 +27,10 @@ void main() {
         createdAt: created,
         reviewedAt: reviewed,
       );
-      final restored = VerificationRequestModel.fromJson(original.toJson(), docId: 'ver-1');
+      final restored = VerificationRequestModel.fromJson(
+        original.toJson(),
+        docId: 'ver-1',
+      );
       expect(restored.documentType, VerificationConstants.documentCollegeId);
       expect(restored.aiFlags, ['blurry', 'name_mismatch']);
       expect(restored.aiConfidence, 0.72);
@@ -48,6 +51,52 @@ void main() {
       expect(restored.verificationRole, VerificationConstants.roleStudent);
       expect(restored.aiFlags, isEmpty);
       expect(restored.requiresManualReview, isTrue);
+      expect(restored.aiDecision, isNull);
+      expect(restored.aiStatus, 'pending');
+      expect(restored.aiExtracted, isEmpty);
+      expect(restored.aiChecks, isEmpty);
+      expect(restored.aiReviewed, isFalse);
+    });
+
+    test('round-trip preserves the AI agent verdict fields', () {
+      final original = VerificationRequestModel(
+        id: 'ver-2',
+        userId: 'u2',
+        documentType: VerificationConstants.documentCollegeId,
+        storagePath: 'p',
+        contentHash: 'h',
+        status: VerificationConstants.statusFlagged,
+        createdAt: created,
+        aiDecision: 'flag',
+        aiStatus: 'done',
+        aiConfidence: 0.61,
+        aiSummary: 'Borderline — needs a human.',
+        aiFlags: const ['low_quality'],
+        aiExtracted: const {
+          'name': 'Asha Kumari',
+          'idNumberMasked': 'XXXX 4821',
+        },
+        aiChecks: const {
+          'clarity': 0.4,
+          'nameMatch': 0.9,
+          'documentKind': 'college id card',
+        },
+        aiModel: 'gemini-3.5-flash-lite',
+        aiReviewedAt: reviewed,
+      );
+      final restored = VerificationRequestModel.fromJson(
+        original.toJson(),
+        docId: 'ver-2',
+      );
+      expect(restored.aiDecision, 'flag');
+      expect(restored.aiStatus, 'done');
+      expect(restored.aiConfidence, 0.61);
+      expect(restored.aiExtracted['name'], 'Asha Kumari');
+      expect(restored.aiChecks['clarity'], 0.4);
+      expect(restored.aiChecks['documentKind'], 'college id card');
+      expect(restored.aiModel, 'gemini-3.5-flash-lite');
+      expect(restored.aiReviewedAt, reviewed);
+      expect(restored.aiReviewed, isTrue);
     });
   });
 

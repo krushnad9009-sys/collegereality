@@ -13,6 +13,10 @@ const { onConsultationWrite } = require('./src/triggers');
 const { expireStaleConsultations } = require('./src/scheduled');
 const { aiChatComplete } = require('./src/aiChat');
 const { requestEmailOtp, verifyEmailOtp } = require('./src/emailOtp');
+const {
+  onVerificationRequestCreated,
+  onCollegeRequestCreated,
+} = require('./src/verificationTriggers');
 
 module.exports = {
   createConsultationOrder,
@@ -24,4 +28,7 @@ module.exports = {
   aiChatComplete,
   requestEmailOtp,
   verifyEmailOtp,
+  // AI Automated Verification Agent (Super Admin panel background flow).
+  onVerificationRequestCreated,
+  onCollegeRequestCreated,
 };
