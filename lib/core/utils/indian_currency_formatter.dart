@@ -18,6 +18,22 @@ class IndianCurrencyFormatter {
     return includeSymbol ? '₹$core$suffix' : '$core$suffix';
   }
 
+  /// Ultra-short form for tight UI like stat chips: `₹85k`, `₹1.2L`, `₹3.5Cr`.
+  /// No `/year` suffix. Returns `'—'` for non-positive amounts.
+  static String compact(num amount) {
+    if (amount <= 0) return '—';
+    final v = amount.toDouble();
+    if (v >= 10000000) return '₹${_trimZero(v / 10000000)}Cr';
+    if (v >= 100000) return '₹${_trimZero(v / 100000)}L';
+    if (v >= 1000) return '₹${_trimZero(v / 1000)}k';
+    return '₹${v.round()}';
+  }
+
+  static String _trimZero(double n) {
+    final s = n.toStringAsFixed(1);
+    return s.endsWith('.0') ? s.substring(0, s.length - 2) : s;
+  }
+
   static String formatRange({
     required int min,
     required int max,

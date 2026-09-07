@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../config/theme/app_fonts.dart';
 
+import '../animations/app_animations.dart';
 import '../../config/theme/app_design_tokens.dart';
 import '../../config/theme/app_elevation.dart';
 import '../../config/theme/app_spacing.dart';
@@ -34,10 +35,7 @@ class PremiumCard extends StatelessWidget {
     // tappable — so widgets like ListTile/SwitchListTile/Chip that paint on
     // the nearest Material (ink splashes, selection color) work correctly
     // when nested inside, even without an onTap on the card itself.
-    final content = Padding(
-      padding: padding ?? EdgeInsets.zero,
-      child: child,
-    );
+    final content = Padding(padding: padding ?? EdgeInsets.zero, child: child);
 
     return AnimatedContainer(
       duration: AppMotion.fast,
@@ -45,7 +43,9 @@ class PremiumCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: bg,
         borderRadius: borderRadius,
-        boxShadow: isDark ? AppElevation.none : AppElevation.soft(AppTheme.primaryDark),
+        boxShadow: isDark
+            ? AppElevation.none
+            : AppElevation.soft(AppTheme.primaryDark),
         border: Border.all(
           color: isDark
               ? tokens.borderSubtle.withValues(alpha: 0.6)
@@ -218,62 +218,16 @@ class PremiumChip extends StatelessWidget {
   }
 }
 
-class FadeInSection extends StatefulWidget {
+/// Fade + short upward slide entrance. Thin wrapper over [AppReveal] (which
+/// is `flutter_animate`-backed and reduce-motion aware) kept for the many
+/// existing call sites — new code can use [AppReveal] directly.
+class FadeInSection extends StatelessWidget {
   final Widget child;
   final int delayMs;
 
-  const FadeInSection({
-    required this.child,
-    this.delayMs = 0,
-    super.key,
-  });
+  const FadeInSection({required this.child, this.delayMs = 0, super.key});
 
   @override
-  State<FadeInSection> createState() => _FadeInSectionState();
-}
-
-class _FadeInSectionState extends State<FadeInSection>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _opacity;
-  late Animation<Offset> _slide;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 500),
-    );
-    _opacity = CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic);
-    _slide = Tween<Offset>(
-      begin: const Offset(0, 0.04),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
-
-    // Respect the platform's reduce-motion setting (Flutter's equivalent of
-    // prefers-reduced-motion) -- jump straight to the settled state instead
-    // of animating.
-    if (WidgetsBinding.instance.platformDispatcher.accessibilityFeatures.disableAnimations) {
-      _controller.value = 1;
-    } else {
-      Future.delayed(Duration(milliseconds: widget.delayMs), () {
-        if (mounted) _controller.forward();
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: _opacity,
-      child: SlideTransition(position: _slide, child: widget.child),
-    );
-  }
+  Widget build(BuildContext context) =>
+      AppReveal(delayMs: delayMs, child: child);
 }

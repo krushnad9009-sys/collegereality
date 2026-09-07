@@ -103,6 +103,17 @@ class FakeUserRepository implements UserRepository {
   Future<void> verifyPhone(String uid, {String? phone}) async {}
 
   @override
+  Future<void> acceptTerms(String uid) async {
+    final existing = users[uid];
+    if (existing != null) {
+      users[uid] = existing.copyWith(
+        hasAcceptedTerms: true,
+        termsAcceptedAt: DateTime.now(),
+      );
+    }
+  }
+
+  @override
   Future<void> deleteUser(String uid) async {
     users.remove(uid);
   }

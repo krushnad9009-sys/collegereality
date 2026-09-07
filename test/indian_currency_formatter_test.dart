@@ -20,6 +20,17 @@ void main() {
       expect(IndianCurrencyFormatter.format(-100), '—');
     });
 
+    test('compact form for tight UI', () {
+      expect(IndianCurrencyFormatter.compact(0), '—');
+      expect(IndianCurrencyFormatter.compact(-5), '—');
+      expect(IndianCurrencyFormatter.compact(850), '₹850');
+      expect(IndianCurrencyFormatter.compact(85000), '₹85k');
+      expect(IndianCurrencyFormatter.compact(120000), '₹1.2L');
+      expect(IndianCurrencyFormatter.compact(200000), '₹2L');
+      expect(IndianCurrencyFormatter.compact(3500000), '₹35L');
+      expect(IndianCurrencyFormatter.compact(35000000), '₹3.5Cr');
+    });
+
     test('formats fee ranges', () {
       expect(
         IndianCurrencyFormatter.formatRange(min: 85000, max: 125000),

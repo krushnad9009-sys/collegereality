@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_elevation.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/utils/indian_currency_formatter.dart';
 import '../../../core/widgets/premium_components.dart';
@@ -13,120 +14,89 @@ import '../../../core/widgets/premium_list_row.dart';
 import '../../reviews/widgets/review_summary_panel.dart';
 import '../../community_feed/providers/college_community_feed_provider.dart';
 import '../models/college_model.dart';
-import 'talk_to_verified_student_card.dart';
 
-/// Trust & activity stats shown under the college header.
+/// At-a-glance college stats as a row of modern floating cards:
+/// Rating · Reviews · Verified students · Avg package · Tuition fees.
+/// Missing data renders an elegant "No data yet" placeholder rather than a
+/// coloured box implying a real value.
 class CollegeProfileStatsStrip extends StatelessWidget {
   final CollegeModel college;
 
   const CollegeProfileStatsStrip({required this.college, super.key});
 
+  String _feeValue() {
+    final fees = college.fees;
+    final min = fees.tuitionMin;
+    final max = fees.tuitionMax;
+    if (min > 0 && max > 0 && min != max) {
+      return '${IndianCurrencyFormatter.compact(min)}–'
+          '${IndianCurrencyFormatter.compact(max)}';
+    }
+    final single = max > 0 ? max : min;
+    return single > 0 ? IndianCurrencyFormatter.compact(single) : '';
+  }
+
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final choosePercent = college.wouldChooseAgainPercent;
-    final stats = <_StatItem>[
+    final scheme = Theme.of(context).colorScheme;
+    final ratings = college.aggregatedRatings;
+    final placements = college.placements;
+
+    final avg = placements.averagePackageLpa;
+    final avgStr = avg > 0
+        ? '${avg == avg.roundToDouble() ? avg.toStringAsFixed(0) : avg.toStringAsFixed(1)} LPA'
+        : '';
+
+    final items = <_StatItem>[
       _StatItem(
         icon: Icons.star_rounded,
-        label: 'Reviews',
-        value: college.reviewCount > 0 ? '${college.reviewCount}' : '—',
+        label: 'Rating',
+        value: ratings.overall > 0 ? ratings.overall.toStringAsFixed(1) : '',
         color: AppTheme.warningColor,
       ),
       _StatItem(
+        icon: Icons.rate_review_outlined,
+        label: 'Reviews',
+        value: college.reviewCount > 0 ? '${college.reviewCount}' : '',
+        color: scheme.primary,
+      ),
+      _StatItem(
         icon: Icons.verified_outlined,
-        label: 'Students',
+        label: 'Verified students',
         value: college.verifiedStudentCount > 0
             ? '${college.verifiedStudentCount}'
-            : '—',
-        color: colorScheme.primary,
-      ),
-      _StatItem(
-        icon: Icons.school_outlined,
-        label: 'Alumni',
-        value: college.verifiedAlumniCount > 0
-            ? '${college.verifiedAlumniCount}'
-            : '—',
-        color: colorScheme.secondary,
-      ),
-      _StatItem(
-        icon: Icons.quiz_outlined,
-        label: 'Questions',
-        value: college.questionCount > 0 ? '${college.questionCount}' : '—',
-        color: const Color(0xFF7C3AED),
-      ),
-      _StatItem(
-        icon: Icons.forum_outlined,
-        label: 'Answered',
-        value: college.answersAnsweredCount > 0
-            ? '${college.answersAnsweredCount}'
-            : '—',
+            : '',
         color: const Color(0xFF0891B2),
       ),
-      if (choosePercent != null)
-        _StatItem(
-          icon: Icons.thumb_up_alt_outlined,
-          label: 'Choose again',
-          value: '${choosePercent.round()}%',
-          color: const Color(0xFF059669),
-        ),
+      _StatItem(
+        icon: Icons.work_outline_rounded,
+        label: 'Avg package',
+        value: avgStr,
+        color: const Color(0xFF059669),
+      ),
+      _StatItem(
+        icon: Icons.payments_outlined,
+        label: 'Tuition fees',
+        value: _feeValue(),
+        color: scheme.secondary,
+      ),
     ];
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final crossCount = constraints.maxWidth >= 600 ? 3 : 2;
-        return GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossCount,
-            mainAxisSpacing: 8,
-            crossAxisSpacing: 8,
-            childAspectRatio: constraints.maxWidth >= 600 ? 2.8 : 2.4,
-          ),
-          itemCount: stats.length,
-          itemBuilder: (context, index) {
-            final stat = stats[index];
-            final tokens = context.tokens;
-            return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              decoration: BoxDecoration(
-                color: stat.color.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(tokens.buttonRadius * 0.7),
-                border: Border.all(color: stat.color.withValues(alpha: 0.2)),
+        const gap = 10.0;
+        final perRow = constraints.maxWidth >= 640 ? 3 : 2;
+        final cardWidth = (constraints.maxWidth - gap * (perRow - 1)) / perRow;
+        return Wrap(
+          spacing: gap,
+          runSpacing: gap,
+          children: [
+            for (final item in items)
+              SizedBox(
+                width: cardWidth,
+                child: _StatFloatingCard(item: item),
               ),
-              child: Row(
-                children: [
-                  Icon(stat.icon, size: 18, color: stat.color),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          stat.value,
-                          style: AppFonts.plusJakarta(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 14,
-                            color: stat.color,
-                          ),
-                        ),
-                        Text(
-                          stat.label,
-                          style: AppFonts.plusJakarta(
-                            fontSize: 10,
-                            color: tokens.textSecondary,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
+          ],
         );
       },
     );
@@ -145,6 +115,74 @@ class _StatItem {
     required this.value,
     required this.color,
   });
+}
+
+class _StatFloatingCard extends StatelessWidget {
+  final _StatItem item;
+
+  const _StatFloatingCard({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final empty = item.value.isEmpty;
+    final accent = empty ? tokens.textTertiary : item.color;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      decoration: BoxDecoration(
+        color: tokens.surfaceElevated,
+        borderRadius: BorderRadius.circular(tokens.cardRadius * 0.7),
+        border: Border.all(color: tokens.borderSubtle),
+        boxShadow: isDark ? null : AppElevation.soft(AppTheme.primaryDark),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: accent.withValues(alpha: empty ? 0.10 : 0.14),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(item.icon, size: 17, color: accent),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  empty ? 'No data yet' : item.value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppFonts.plusJakarta(
+                    fontSize: empty ? 11.5 : 15,
+                    fontWeight: empty ? FontWeight.w500 : FontWeight.w800,
+                    letterSpacing: -0.2,
+                    color: empty ? tokens.textTertiary : tokens.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 1),
+                Text(
+                  item.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppFonts.plusJakarta(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w500,
+                    color: tokens.textTertiary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 /// Key facts grid: city, state, ownership, type, established year.
@@ -178,7 +216,9 @@ class CollegeProfileFactsGrid extends StatelessWidget {
           runSpacing: 10,
           children: facts.map((fact) {
             return SizedBox(
-              width: wide ? (constraints.maxWidth - 10) / 2 : constraints.maxWidth,
+              width: wide
+                  ? (constraints.maxWidth - 10) / 2
+                  : constraints.maxWidth,
               child: _FactTile(icon: fact.$1, label: fact.$2, value: fact.$3),
             );
           }).toList(),
@@ -258,7 +298,10 @@ class CollegeFacilitiesSection extends StatelessWidget {
       children: [
         Text(
           'Facilities',
-          style: AppFonts.plusJakarta(fontWeight: FontWeight.w700, fontSize: 15),
+          style: AppFonts.plusJakarta(
+            fontWeight: FontWeight.w700,
+            fontSize: 15,
+          ),
         ),
         const SizedBox(height: 10),
         Wrap(
@@ -318,7 +361,9 @@ class _FacilityChip extends StatelessWidget {
         color: available ? primary.withValues(alpha: 0.1) : tokens.surfaceMuted,
         borderRadius: BorderRadius.circular(tokens.chipRadius),
         border: Border.all(
-          color: available ? primary.withValues(alpha: 0.25) : tokens.borderSubtle,
+          color: available
+              ? primary.withValues(alpha: 0.25)
+              : tokens.borderSubtle,
         ),
       ),
       child: Row(
@@ -514,9 +559,9 @@ class CollegeAdmissionLinksSection extends StatelessWidget {
     final uri = Uri.parse(url.startsWith('http') ? url : 'https://$url');
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not open link')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Could not open link')));
       }
     }
   }
@@ -550,8 +595,11 @@ class CollegeAdmissionLinksSection extends StatelessWidget {
                 leadingIcon: Icons.link,
                 iconColor: secondary,
                 title: link,
-                trailing: Icon(Icons.open_in_new,
-                    size: 18, color: tokens.textTertiary),
+                trailing: Icon(
+                  Icons.open_in_new,
+                  size: 18,
+                  color: tokens.textTertiary,
+                ),
                 onTap: () => _openUrl(context, link),
                 showChevron: false,
               ),
@@ -571,9 +619,10 @@ class CollegeCommunitySection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final feedAsync = ref.watch(
-      collegeCommunityFeedPreviewProvider(
-        (collegeId: college.id, collegeName: college.name),
-      ),
+      collegeCommunityFeedPreviewProvider((
+        collegeId: college.id,
+        collegeName: college.name,
+      )),
     );
     final tokens = context.tokens;
     final secondary = Theme.of(context).colorScheme.secondary;
@@ -623,7 +672,10 @@ class CollegeCommunitySection extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: Text(
                 'Join discussions with verified students at this college.',
-                style: AppFonts.plusJakarta(fontSize: 12, color: tokens.textSecondary),
+                style: AppFonts.plusJakarta(
+                  fontSize: 12,
+                  color: tokens.textSecondary,
+                ),
               ),
             ),
             data: (posts) {
@@ -647,8 +699,11 @@ class CollegeCommunitySection extends ConsumerWidget {
                         leading: CircleAvatar(
                           radius: 18,
                           backgroundColor: secondary.withValues(alpha: 0.15),
-                          child: Icon(Icons.chat_bubble_outline,
-                              size: 18, color: secondary),
+                          child: Icon(
+                            Icons.chat_bubble_outline,
+                            size: 18,
+                            color: secondary,
+                          ),
                         ),
                         title: post.isPoll ? post.pollQuestion : post.content,
                         subtitle:
@@ -722,12 +777,9 @@ class CollegeProfileOverviewSections extends StatelessWidget {
         const SizedBox(height: 20),
         CollegeAdmissionLinksSection(college: college),
         const SizedBox(height: 20),
-        // The single primary "talk to someone about this college" CTA.
-        // (Peer chat via ConnectStudentsSection and the public-Q&A
-        // AskStudentButton used to also appear here — removed as
-        // duplicates; Ask-a-Question still lives in its own Questions tab.)
-        TalkToVerifiedStudentCard(collegeName: college.name),
-        const SizedBox(height: 20),
+        // The primary "Talk to a Verified Student" CTA now lives in the
+        // profile hero (TalkToVerifiedStudentHero), directly under the
+        // college name / rating / location — so it is not repeated here.
         CollegeCommunitySection(college: college),
       ],
     );

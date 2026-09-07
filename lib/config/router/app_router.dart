@@ -20,6 +20,10 @@ import '../../features/profile/screens/profile_screen.dart';
 import '../../features/colleges/screens/college_browse_screen.dart';
 import '../../features/colleges/screens/college_search_screen.dart';
 import '../../features/legal/screens/legal_screens.dart';
+import '../../features/legal/screens/terms_gate_screen.dart';
+import '../../features/profile/screens/edit_profile_screen.dart';
+import '../../features/profile/screens/app_settings_screen.dart';
+import '../../features/profile/screens/help_support_screen.dart';
 import '../../features/colleges/screens/college_detail_screen.dart';
 import '../../features/colleges/screens/talk_to_students_screen.dart';
 import '../../features/assistant/screens/ai_assistant_screen.dart';
@@ -214,6 +218,9 @@ Future<String?> _resolveRedirect(
           path == RouteNames.onboarding ||
           path == RouteNames.forgotPassword)) {
     final user = await userDetail();
+    if (user != null && !user.hasAcceptedTerms) {
+      return RouteNames.termsGate;
+    }
     if (user != null && !user.displayNameSetupComplete) {
       final from = state.uri.queryParameters['from'];
       return RouteNames.displayNameSetupWithReturn(from);
@@ -227,7 +234,25 @@ Future<String?> _resolveRedirect(
     return RouteNames.home;
   }
 
-  if (isLoggedIn && path != RouteNames.displayNameSetup) {
+  // Terms & Conditions onboarding gate. The hardest gate — a logged-in user
+  // who has not accepted the current Terms cannot reach ANY route (public
+  // or protected, `/home` included) until they do. Checked before
+  // display-name setup. `userDetail()` returning null (Firestore slow or
+  // broken) deliberately does NOT trap the user here.
+  if (isLoggedIn) {
+    final user = await userDetail();
+    final accepted = user?.hasAcceptedTerms ?? true;
+    if (!accepted && path != RouteNames.termsGate) {
+      return RouteNames.termsGate;
+    }
+    if (accepted && path == RouteNames.termsGate) {
+      return RouteNames.home;
+    }
+  }
+
+  if (isLoggedIn &&
+      path != RouteNames.termsGate &&
+      path != RouteNames.displayNameSetup) {
     final user = await userDetail();
     if (user != null && !user.displayNameSetupComplete) {
       final intended = state.uri.toString();
@@ -268,8 +293,10 @@ final Provider<GoRouter> appRouterProvider = Provider<GoRouter>((ref) {
   // Ultimate backstop: whatever happens with Firebase registration, auth
   // restoration, or the first redirect, the pre-Flutter splash comes down
   // within 8s so the user can never be stuck looking at a frozen splash.
-  final splashSafetyTimer =
-      Timer(const Duration(seconds: 8), removeNativeSplashOnce);
+  final splashSafetyTimer = Timer(
+    const Duration(seconds: 8),
+    removeNativeSplashOnce,
+  );
   ref.onDispose(splashSafetyTimer.cancel);
 
   // Firebase.apps is a plain, safe list check (firebase_core_web's own
@@ -331,8 +358,12 @@ final Provider<GoRouter> appRouterProvider = Provider<GoRouter>((ref) {
         // inside are already bounded, but this guards against them
         // stacking up (or a new unbounded one slipping in) into a
         // multi-second frozen splash on a deep-link hard refresh.
-        result = await _resolveRedirect(ref, firebaseAuth, authRefresh, state)
-            .timeout(const Duration(seconds: 12));
+        result = await _resolveRedirect(
+          ref,
+          firebaseAuth,
+          authRefresh,
+          state,
+        ).timeout(const Duration(seconds: 12));
       } on TimeoutException {
         result = _fallbackRouteFor(path, firebaseAuth);
         _routerLog('redirect TIMED OUT path=$path -> ${result ?? "as-is"}');
@@ -340,7 +371,9 @@ final Provider<GoRouter> appRouterProvider = Provider<GoRouter>((ref) {
         // Auth init threw (e.g. the firebase_core_web app() JS-interop
         // crash, a provider error) — never let it wedge the router.
         result = _fallbackRouteFor(path, firebaseAuth);
-        _routerLog('redirect THREW path=$path: $e\n$st -> ${result ?? "as-is"}');
+        _routerLog(
+          'redirect THREW path=$path: $e\n$st -> ${result ?? "as-is"}',
+        );
       } finally {
         // Must fire for every entry route, not only the splash one, and
         // even when the redirect timed out or threw above — otherwise the
@@ -400,16 +433,56 @@ final Provider<GoRouter> appRouterProvider = Provider<GoRouter>((ref) {
         path: RouteNames.termsOfService,
         builder: (context, state) => const TermsOfServiceScreen(),
       ),
+      GoRoute(
+        path: RouteNames.termsGate,
+        pageBuilder: (context, state) => fadeUpPage(
+          key: state.pageKey,
+          name: state.name,
+          child: const TermsGateScreen(),
+        ),
+      ),
+      GoRoute(
+        path: RouteNames.editProfile,
+        pageBuilder: (context, state) => fadeUpPage(
+          key: state.pageKey,
+          name: state.name,
+          child: const EditProfileScreen(),
+        ),
+      ),
+      GoRoute(
+        path: RouteNames.appSettings,
+        pageBuilder: (context, state) => fadeThroughPage(
+          key: state.pageKey,
+          name: state.name,
+          child: const AppSettingsScreen(),
+        ),
+      ),
+      GoRoute(
+        path: RouteNames.helpSupport,
+        pageBuilder: (context, state) => fadeThroughPage(
+          key: state.pageKey,
+          name: state.name,
+          child: const HelpSupportScreen(),
+        ),
+      ),
       ShellRoute(
         builder: (context, state, child) => AppShell(child: child),
         routes: [
           GoRoute(
             path: RouteNames.home,
-            builder: (context, state) => const HomeScreen(),
+            pageBuilder: (context, state) => fadeSwitchPage(
+              key: state.pageKey,
+              name: state.name,
+              child: const HomeScreen(),
+            ),
           ),
           GoRoute(
             path: RouteNames.profile,
-            builder: (context, state) => const ProfileScreen(),
+            pageBuilder: (context, state) => fadeSwitchPage(
+              key: state.pageKey,
+              name: state.name,
+              child: const ProfileScreen(),
+            ),
           ),
           GoRoute(
             path: RouteNames.displayNameSetup,
@@ -417,20 +490,24 @@ final Provider<GoRouter> appRouterProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: RouteNames.collegeSearch,
-            builder: (context, state) {
+            pageBuilder: (context, state) {
               final query = state.uri.queryParameters['q'];
               final city = state.uri.queryParameters['city'];
               final stateParam = state.uri.queryParameters['state'];
               final course = state.uri.queryParameters['course'];
               final category = state.uri.queryParameters['category'];
               final filter = state.uri.queryParameters['filter'];
-              return CollegeSearchScreen(
-                initialQuery: query,
-                initialCity: city,
-                initialState: stateParam,
-                initialCourse: course,
-                initialCategory: category,
-                initialFilter: filter,
+              return fadeSwitchPage(
+                key: state.pageKey,
+                name: state.name,
+                child: CollegeSearchScreen(
+                  initialQuery: query,
+                  initialCity: city,
+                  initialState: stateParam,
+                  initialCourse: course,
+                  initialCategory: category,
+                  initialFilter: filter,
+                ),
               );
             },
           ),
@@ -440,26 +517,38 @@ final Provider<GoRouter> appRouterProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: RouteNames.assistant,
-            builder: (context, state) {
+            pageBuilder: (context, state) {
               final query = state.uri.queryParameters['q'];
               final collegeId = state.uri.queryParameters['collegeId'];
               final collegeName = state.uri.queryParameters['collegeName'];
-              return AiAssistantScreen(
-                initialQuery: query,
-                anchorCollegeId: collegeId,
-                anchorCollegeName: collegeName,
+              return fadeSwitchPage(
+                key: state.pageKey,
+                name: state.name,
+                child: AiAssistantScreen(
+                  initialQuery: query,
+                  anchorCollegeId: collegeId,
+                  anchorCollegeName: collegeName,
+                ),
               );
             },
           ),
           GoRoute(
             path: RouteNames.community,
-            builder: (context, state) => const CommunityHubScreen(),
+            pageBuilder: (context, state) => fadeSwitchPage(
+              key: state.pageKey,
+              name: state.name,
+              child: const CommunityHubScreen(),
+            ),
           ),
         ],
       ),
       GoRoute(
         path: RouteNames.verification,
-        builder: (context, state) => const VerificationScreen(),
+        pageBuilder: (context, state) => fadeThroughPage(
+          key: state.pageKey,
+          name: state.name,
+          child: const VerificationScreen(),
+        ),
       ),
       GoRoute(
         path: RouteNames.requestCollege,
@@ -847,8 +936,7 @@ final Provider<GoRouter> appRouterProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: RouteNames.adminConsultationRevenue,
-            builder: (context, state) =>
-                const AdminConsultationRevenueScreen(),
+            builder: (context, state) => const AdminConsultationRevenueScreen(),
           ),
           GoRoute(
             path: RouteNames.adminSystem,

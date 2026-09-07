@@ -17,6 +17,8 @@ class UserModel {
   final String? customDisplayName;
   final DateTime? displayNameChangedAt;
   final bool displayNameSetupComplete;
+  final bool hasAcceptedTerms;
+  final DateTime? termsAcceptedAt;
   final String? photoURL;
   final String? coverPhotoURL;
   final String userType;
@@ -54,6 +56,8 @@ class UserModel {
     this.customDisplayName,
     this.displayNameChangedAt,
     this.displayNameSetupComplete = false,
+    this.hasAcceptedTerms = false,
+    this.termsAcceptedAt,
     this.photoURL,
     this.coverPhotoURL,
     this.userType = 'student',
@@ -105,6 +109,12 @@ class UserModel {
               : DateTime.parse(json['displayNameChangedAt'] as String),
       displayNameSetupComplete:
           json['displayNameSetupComplete'] as bool? ?? false,
+      hasAcceptedTerms: json['hasAcceptedTerms'] as bool? ?? false,
+      termsAcceptedAt: json['termsAcceptedAt'] == null
+          ? null
+          : json['termsAcceptedAt'] is DateTime
+              ? json['termsAcceptedAt'] as DateTime
+              : DateTime.tryParse(json['termsAcceptedAt'] as String),
       photoURL: json['photoURL'] as String?,
       coverPhotoURL: json['coverPhotoURL'] as String?,
       userType: json['userType'] as String? ?? 'student',
@@ -166,6 +176,8 @@ class UserModel {
       'customDisplayName': customDisplayName,
       'displayNameChangedAt': displayNameChangedAt?.toIso8601String(),
       'displayNameSetupComplete': displayNameSetupComplete,
+      'hasAcceptedTerms': hasAcceptedTerms,
+      'termsAcceptedAt': termsAcceptedAt?.toIso8601String(),
       'photoURL': photoURL,
       'coverPhotoURL': coverPhotoURL,
       'userType': userType,
@@ -205,6 +217,8 @@ class UserModel {
     String? customDisplayName,
     DateTime? displayNameChangedAt,
     bool? displayNameSetupComplete,
+    bool? hasAcceptedTerms,
+    DateTime? termsAcceptedAt,
     String? photoURL,
     String? coverPhotoURL,
     String? userType,
@@ -243,6 +257,8 @@ class UserModel {
       displayNameChangedAt: displayNameChangedAt ?? this.displayNameChangedAt,
       displayNameSetupComplete:
           displayNameSetupComplete ?? this.displayNameSetupComplete,
+      hasAcceptedTerms: hasAcceptedTerms ?? this.hasAcceptedTerms,
+      termsAcceptedAt: termsAcceptedAt ?? this.termsAcceptedAt,
       photoURL: photoURL ?? this.photoURL,
       coverPhotoURL: coverPhotoURL ?? this.coverPhotoURL,
       userType: userType ?? this.userType,

@@ -9,6 +9,10 @@ class RouteNames {
   static const String collegeBrowse = '/college-browse';
   static const String privacyPolicy = '/privacy-policy';
   static const String termsOfService = '/terms-of-service';
+  // Post-login legal gate. Distinct from [termsOfService] (the public,
+  // read-only legal document): this is the blocking onboarding screen shown
+  // until the user's `hasAcceptedTerms` flag is true.
+  static const String termsGate = '/welcome/terms';
   static const String assistant = '/assistant';
   static const String compare = '/compare';
   static const String collegeDetails = '/college-details/:id';
@@ -17,6 +21,9 @@ class RouteNames {
   static const String collegeCommunityFeed = '/college-details/:id/community-feed';
   static const String submitPlacement = '/college-details/:id/submit-placement';
   static const String profile = '/profile';
+  static const String editProfile = '/profile/edit';
+  static const String appSettings = '/settings';
+  static const String helpSupport = '/help';
   static const String displayNameSetup = '/profile/display-name-setup';
   static const String myReviews = '/my-reviews';
   static const String favorites = '/favorites';

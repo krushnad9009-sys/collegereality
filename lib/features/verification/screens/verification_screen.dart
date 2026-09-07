@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
+import '../../../core/animations/app_animations.dart';
 import '../../../core/constants/verification_constants.dart';
 import '../../../core/utils/firestore_error_utils.dart';
 import '../../auth/providers/auth_provider.dart';
@@ -23,9 +24,7 @@ class VerificationScreen extends ConsumerWidget {
     final userAsync = ref.watch(currentUserDetailProvider);
 
     if (authUser == null) {
-      return const Scaffold(
-        body: Center(child: Text('Please log in')),
-      );
+      return const Scaffold(body: Center(child: Text('Please log in')));
     }
 
     return Scaffold(
@@ -44,9 +43,8 @@ class VerificationScreen extends ConsumerWidget {
       ),
       body: userAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(
-          child: Text(FirestoreErrorUtils.userMessage(e)),
-        ),
+        error: (e, _) =>
+            Center(child: Text(FirestoreErrorUtils.userMessage(e))),
         data: (user) {
           if (user == null) {
             return const Center(child: Text('User not found'));
@@ -61,75 +59,121 @@ class VerificationScreen extends ConsumerWidget {
                   Center(
                     child: Column(
                       children: [
-                        VerificationBadgeWidget(
-                          badge: user.verificationBadge,
-                          iconSize: 24,
+                        Container(
+                              padding: const EdgeInsets.all(18),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: AppTheme.accentColor.withValues(
+                                  alpha: 0.12,
+                                ),
+                              ),
+                              child: const Icon(
+                                Icons.verified_rounded,
+                                color: AppTheme.accentColor,
+                                size: 44,
+                              ),
+                            )
+                            .animate()
+                            .scaleXY(
+                              begin: 0.4,
+                              end: 1,
+                              duration: 650.ms,
+                              curve: Curves.elasticOut,
+                            )
+                            .fadeIn(duration: 250.ms),
+                        const SizedBox(height: 14),
+                        AppReveal(
+                          delayMs: 180,
+                          child: VerificationBadgeWidget(
+                            badge: user.verificationBadge,
+                            iconSize: 24,
+                          ),
                         ),
                         const SizedBox(height: 8),
-                        Text(
-                          VerificationConstants.badgeLabel(user.verificationBadge),
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 18,
+                        AppReveal(
+                          delayMs: 260,
+                          child: Text(
+                            VerificationConstants.badgeLabel(
+                              user.verificationBadge,
+                            ),
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 18,
+                            ),
                           ),
                         ),
                         const SizedBox(height: 4),
-                        Text(
-                          'You can write reviews, answer questions, and join the community.',
-                          style: GoogleFonts.poppins(color: AppTheme.gray600),
-                          textAlign: TextAlign.center,
+                        AppReveal(
+                          delayMs: 340,
+                          child: Text(
+                            'You can write reviews, answer questions, and join the community.',
+                            style: GoogleFonts.poppins(color: AppTheme.gray600),
+                            textAlign: TextAlign.center,
+                          ),
                         ),
                       ],
                     ),
                   )
                 else ...[
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryColor.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Why verify?',
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 15,
+                  AppReveal(
+                    delayMs: 0,
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryColor.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Why verify?',
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 15,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          'Verified students and alumni can write trusted reviews, '
-                          'answer questions, and participate in the community. '
-                          'Documents are private and never shown publicly.',
-                          style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            color: AppTheme.gray700,
-                            height: 1.4,
+                          const SizedBox(height: 6),
+                          Text(
+                            'Verified students and alumni can write trusted reviews, '
+                            'answer questions, and participate in the community. '
+                            'Documents are private and never shown publicly.',
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              color: AppTheme.gray700,
+                              height: 1.4,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                   const SizedBox(height: 20),
-                  EmailVerificationSection(
-                    userId: user.uid,
-                    email: user.email,
+                  AppReveal(
+                    delayMs: 90,
+                    child: EmailVerificationSection(
+                      userId: user.uid,
+                      email: user.email,
+                    ),
                   ),
                   const SizedBox(height: 16),
-                  PhoneVerificationSection(
-                    userId: user.uid,
-                    currentPhone: user.phone,
-                    isPhoneVerified: user.isPhoneVerified,
-                    onVerified: (_) {
-                      ref.invalidate(currentUserDetailProvider);
-                    },
+                  AppReveal(
+                    delayMs: 160,
+                    child: PhoneVerificationSection(
+                      userId: user.uid,
+                      currentPhone: user.phone,
+                      isPhoneVerified: user.isPhoneVerified,
+                      onVerified: (_) {
+                        ref.invalidate(currentUserDetailProvider);
+                      },
+                    ),
                   ),
                   const SizedBox(height: 24),
-                  DocumentUploadSection(user: user),
+                  AppReveal(
+                    delayMs: 230,
+                    child: DocumentUploadSection(user: user),
+                  ),
                 ],
               ],
             ),

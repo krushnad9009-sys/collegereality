@@ -11,6 +11,7 @@ import '../../../core/widgets/index.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/providers/email_otp_provider.dart';
 import '../../auth/providers/user_provider.dart';
+import 'otp_button_label.dart';
 
 /// Email verification via a 6-digit OTP emailed to the user (Cloud
 /// Functions + Resend). Replaces the old Firebase email-verification
@@ -236,12 +237,16 @@ class _EmailVerificationSectionState
         decoration: BoxDecoration(
           color: AppTheme.accentColor.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(tokens.buttonRadius),
-          border: Border.all(color: AppTheme.accentColor.withValues(alpha: 0.22)),
+          border: Border.all(
+            color: AppTheme.accentColor.withValues(alpha: 0.22),
+          ),
         ),
         child: Row(
           children: [
-            const Icon(Icons.mark_email_read_rounded,
-                color: AppTheme.accentColor),
+            const Icon(
+              Icons.mark_email_read_rounded,
+              color: AppTheme.accentColor,
+            ),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
@@ -269,7 +274,9 @@ class _EmailVerificationSectionState
       decoration: BoxDecoration(
         color: AppTheme.warningColor.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(tokens.cardRadius),
-        border: Border.all(color: AppTheme.warningColor.withValues(alpha: 0.25)),
+        border: Border.all(
+          color: AppTheme.warningColor.withValues(alpha: 0.25),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -297,8 +304,11 @@ class _EmailVerificationSectionState
             _codeSent
                 ? 'Enter the 6-digit code we emailed to ${widget.email}.'
                 : 'We\'ll email a 6-digit code to ${widget.email}. Verify to '
-                    'unlock reviews, bookmarks, and community.',
-            style: AppFonts.plusJakarta(fontSize: 12, color: tokens.textSecondary),
+                      'unlock reviews, bookmarks, and community.',
+            style: AppFonts.plusJakarta(
+              fontSize: 12,
+              color: tokens.textSecondary,
+            ),
           ),
           if (_rateLimitSeconds > 0)
             Padding(
@@ -312,44 +322,57 @@ class _EmailVerificationSectionState
                 ),
               ),
             ),
-          if (_codeSent) ...[
-            const SizedBox(height: 12),
-            CustomTextField(
-              label: 'Enter code',
-              hint: '6-digit code',
-              controller: _otpController,
-              keyboardType: TextInputType.number,
-              prefixIcon: Icons.mark_email_unread_outlined,
-              isRequired: true,
+          AnimatedSize(
+            duration: 260.ms,
+            curve: Curves.easeOutCubic,
+            alignment: Alignment.topCenter,
+            child: AnimatedOpacity(
+              opacity: _codeSent ? 1 : 0,
+              duration: 200.ms,
+              child: _codeSent
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 12),
+                        CustomTextField(
+                          label: 'Enter code',
+                          hint: '6-digit code',
+                          controller: _otpController,
+                          keyboardType: TextInputType.number,
+                          prefixIcon: Icons.mark_email_unread_outlined,
+                          isRequired: true,
+                        ),
+                        if (_resendSeconds > 0)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Text(
+                              'Resend available in $_resendSeconds s',
+                              style: AppFonts.plusJakarta(
+                                fontSize: 12,
+                                color: tokens.textTertiary,
+                              ),
+                            ),
+                          ),
+                      ],
+                    )
+                  : const SizedBox(width: double.infinity),
             ),
-            if (_resendSeconds > 0)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(
-                  'Resend available in $_resendSeconds s',
-                  style: AppFonts.plusJakarta(
-                    fontSize: 12,
-                    color: tokens.textTertiary,
-                  ),
-                ),
-              ),
-          ],
+          ),
           const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
                 child: OutlinedButton(
                   onPressed:
-                      (_isSending || _resendSeconds > 0 || _rateLimitSeconds > 0)
-                          ? null
-                          : _sendCode,
-                  child: _isSending
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Text(_codeSent ? 'Resend Code' : 'Send Code'),
+                      (_isSending ||
+                          _resendSeconds > 0 ||
+                          _rateLimitSeconds > 0)
+                      ? null
+                      : _sendCode,
+                  child: OtpButtonLabel(
+                    loading: _isSending,
+                    label: _codeSent ? 'Resend Code' : 'Send Code',
+                  ),
                 ),
               ),
               if (_codeSent) ...[
@@ -357,16 +380,11 @@ class _EmailVerificationSectionState
                 Expanded(
                   child: ElevatedButton(
                     onPressed: _isVerifying ? null : _verifyCode,
-                    child: _isVerifying
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: AppTheme.white,
-                            ),
-                          )
-                        : const Text('Verify'),
+                    child: OtpButtonLabel(
+                      loading: _isVerifying,
+                      label: 'Verify',
+                      spinnerColor: AppTheme.white,
+                    ),
                   ),
                 ),
               ],

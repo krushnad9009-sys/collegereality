@@ -103,6 +103,31 @@ class PrivacyPolicyScreen extends StatelessWidget {
   }
 }
 
+/// Canonical Terms of Service copy, shared by the read-only
+/// [TermsOfServiceScreen] and the post-login [TermsGateScreen].
+const List<LegalSection> termsOfServiceSections = [
+  LegalSection(
+    heading: 'Acceptance',
+    body:
+        'By using College Reality India, you agree to these Terms of Service and our Privacy Policy.',
+  ),
+  LegalSection(
+    heading: 'User Content',
+    body:
+        'Reviews and community posts must be honest and respectful. We may remove content that violates our community guidelines or applicable law.',
+  ),
+  LegalSection(
+    heading: 'College Information',
+    body:
+        'College listings are compiled from official AISHE data and user contributions. We strive for accuracy but do not guarantee completeness. Verify admission details with institutions directly.',
+  ),
+  LegalSection(
+    heading: 'Account Termination',
+    body:
+        'You may delete your account at any time. We may suspend accounts that abuse the platform.',
+  ),
+];
+
 class TermsOfServiceScreen extends StatelessWidget {
   const TermsOfServiceScreen({super.key});
 
@@ -110,28 +135,7 @@ class TermsOfServiceScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return const LegalDocumentScreen(
       title: 'Terms of Service',
-      sections: [
-        LegalSection(
-          heading: 'Acceptance',
-          body:
-              'By using College Reality India, you agree to these Terms of Service and our Privacy Policy.',
-        ),
-        LegalSection(
-          heading: 'User Content',
-          body:
-              'Reviews and community posts must be honest and respectful. We may remove content that violates our community guidelines or applicable law.',
-        ),
-        LegalSection(
-          heading: 'College Information',
-          body:
-              'College listings are compiled from official AISHE data and user contributions. We strive for accuracy but do not guarantee completeness. Verify admission details with institutions directly.',
-        ),
-        LegalSection(
-          heading: 'Account Termination',
-          body:
-              'You may delete your account at any time. We may suspend accounts that abuse the platform.',
-        ),
-      ],
+      sections: termsOfServiceSections,
     );
   }
 }

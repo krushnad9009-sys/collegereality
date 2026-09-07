@@ -11,6 +11,7 @@ import '../../../core/services/phone_auth_service.dart';
 import '../../auth/providers/phone_auth_provider.dart';
 import '../../auth/providers/user_provider.dart';
 import '../../auth/utils/validation_util.dart';
+import 'otp_button_label.dart';
 
 class PhoneVerificationSection extends ConsumerStatefulWidget {
   final String userId;
@@ -106,13 +107,13 @@ class _PhoneVerificationSectionState
 
   Future<void> _persistPhoneVerification() async {
     final digits = _phoneController.text.replaceAll(RegExp(r'\D'), '');
-    final normalized =
-        digits.length >= 10 ? digits.substring(digits.length - 10) : digits;
+    final normalized = digits.length >= 10
+        ? digits.substring(digits.length - 10)
+        : digits;
 
-    await ref.read(userRepositoryProvider).verifyPhone(
-          widget.userId,
-          phone: normalized,
-        );
+    await ref
+        .read(userRepositoryProvider)
+        .verifyPhone(widget.userId, phone: normalized);
     ref.invalidate(currentUserDetailProvider);
     widget.onVerified(normalized);
   }
@@ -244,10 +245,7 @@ class _PhoneVerificationSectionState
             ),
           ),
           const SizedBox(height: 2),
-          SelectableText(
-            value,
-            style: AppFonts.plusJakarta(fontSize: 13),
-          ),
+          SelectableText(value, style: AppFonts.plusJakarta(fontSize: 13)),
         ],
       ),
     );
@@ -273,9 +271,9 @@ class _PhoneVerificationSectionState
 
     setState(() => _isVerifying = true);
     try {
-      await ref.read(phoneAuthServiceProvider).verifyOtpAndLink(
-            _otpController.text.trim(),
-          );
+      await ref
+          .read(phoneAuthServiceProvider)
+          .verifyOtpAndLink(_otpController.text.trim());
       await _persistPhoneVerification();
       _resendTimer?.cancel();
       if (mounted) {
@@ -310,7 +308,9 @@ class _PhoneVerificationSectionState
         decoration: BoxDecoration(
           color: AppTheme.accentColor.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(tokens.buttonRadius),
-          border: Border.all(color: AppTheme.accentColor.withValues(alpha: 0.22)),
+          border: Border.all(
+            color: AppTheme.accentColor.withValues(alpha: 0.22),
+          ),
         ),
         child: Row(
           children: [
@@ -370,7 +370,10 @@ class _PhoneVerificationSectionState
           const SizedBox(height: 8),
           Text(
             'Verify your mobile number using a one-time password (OTP).',
-            style: AppFonts.plusJakarta(fontSize: 12, color: tokens.textSecondary),
+            style: AppFonts.plusJakarta(
+              fontSize: 12,
+              color: tokens.textSecondary,
+            ),
           ),
           const SizedBox(height: 12),
           PhoneTextField(
@@ -391,50 +394,64 @@ class _PhoneVerificationSectionState
                 ),
               ),
             ),
-          if (_otpSent) ...[
-            const SizedBox(height: 12),
-            CustomTextField(
-              label: 'Enter OTP',
-              hint: '6-digit code',
-              controller: _otpController,
-              keyboardType: TextInputType.number,
-              prefixIcon: Icons.sms_outlined,
-              isRequired: true,
+          AnimatedSize(
+            duration: 260.ms,
+            curve: Curves.easeOutCubic,
+            alignment: Alignment.topCenter,
+            child: AnimatedOpacity(
+              opacity: _otpSent ? 1 : 0,
+              duration: 200.ms,
+              child: _otpSent
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 12),
+                        CustomTextField(
+                          label: 'Enter OTP',
+                          hint: '6-digit code',
+                          controller: _otpController,
+                          keyboardType: TextInputType.number,
+                          prefixIcon: Icons.sms_outlined,
+                          isRequired: true,
+                        ),
+                        if (_resendSeconds > 0)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Text(
+                              'Resend available in $_resendSeconds s',
+                              style: AppFonts.plusJakarta(
+                                fontSize: 12,
+                                color: tokens.textTertiary,
+                              ),
+                            ),
+                          ),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: _changeNumber,
+                            child: const Text('Change number'),
+                          ),
+                        ),
+                      ],
+                    )
+                  : const SizedBox(width: double.infinity),
             ),
-            if (_resendSeconds > 0)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(
-                  'Resend available in $_resendSeconds s',
-                  style: AppFonts.plusJakarta(
-                    fontSize: 12,
-                    color: tokens.textTertiary,
-                  ),
-                ),
-              ),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: _changeNumber,
-                child: const Text('Change number'),
-              ),
-            ),
-          ],
+          ),
           const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
                 child: OutlinedButton(
-                  onPressed: (_isSending || _resendSeconds > 0 || _rateLimitSeconds > 0)
+                  onPressed:
+                      (_isSending ||
+                          _resendSeconds > 0 ||
+                          _rateLimitSeconds > 0)
                       ? null
                       : _sendOtp,
-                  child: _isSending
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Text(_otpSent ? 'Resend OTP' : 'Send OTP'),
+                  child: OtpButtonLabel(
+                    loading: _isSending,
+                    label: _otpSent ? 'Resend OTP' : 'Send OTP',
+                  ),
                 ),
               ),
               if (_otpSent) ...[
@@ -442,16 +459,11 @@ class _PhoneVerificationSectionState
                 Expanded(
                   child: ElevatedButton(
                     onPressed: _isVerifying ? null : _verifyOtp,
-                    child: _isVerifying
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: AppTheme.white,
-                            ),
-                          )
-                        : const Text('Verify OTP'),
+                    child: OtpButtonLabel(
+                      loading: _isVerifying,
+                      label: 'Verify OTP',
+                      spinnerColor: AppTheme.white,
+                    ),
                   ),
                 ),
               ],

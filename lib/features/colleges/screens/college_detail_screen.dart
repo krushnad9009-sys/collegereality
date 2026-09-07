@@ -32,9 +32,11 @@ import '../../questions/widgets/unanswered_questions_banner.dart';
 import '../../ranking/widgets/cr_score_card_widget.dart';
 import '../../ranking/widgets/cr_score_badge_widget.dart';
 import '../../ranking/utils/cr_score_engine.dart';
+import '../../../core/animations/app_animations.dart';
 import '../widgets/accreditation_badges.dart';
 import '../widgets/college_gallery_widget.dart';
 import '../widgets/college_map_section.dart';
+import '../widgets/talk_to_verified_student_card.dart';
 import '../../ecosystem/widgets/college_ecosystem_menu.dart';
 import '../../ecosystem/widgets/official_college_content_section.dart';
 import '../widgets/college_profile_widgets.dart';
@@ -92,14 +94,12 @@ class _CollegeDetailScreenState extends ConsumerState<CollegeDetailScreen>
     if (_tabController != null) return;
     final initial = _initialTabIndex();
     _loadedTabs.add(initial);
-    _tabController = TabController(
-      length: 8,
-      vsync: this,
-      initialIndex: initial,
-    )..addListener(() {
-        if (_tabController!.indexIsChanging) return;
-        setState(() => _loadedTabs.add(_tabController!.index));
-      });
+    _tabController =
+        TabController(length: 8, vsync: this, initialIndex: initial)
+          ..addListener(() {
+            if (_tabController!.indexIsChanging) return;
+            setState(() => _loadedTabs.add(_tabController!.index));
+          });
   }
 
   void _goToTab(int index) {
@@ -145,9 +145,7 @@ class _CollegeDetailScreenState extends ConsumerState<CollegeDetailScreen>
     final collegeAsync = ref.watch(collegeByIdProvider(widget.collegeId));
 
     return collegeAsync.when(
-      loading: () => const Scaffold(
-        body: Center(child: CollegeCardSkeleton()),
-      ),
+      loading: () => const Scaffold(body: Center(child: CollegeCardSkeleton())),
       error: (e, _) => Scaffold(
         appBar: AppBar(),
         body: AsyncErrorView.fromError(
@@ -180,182 +178,191 @@ class _CollegeDetailScreenState extends ConsumerState<CollegeDetailScreen>
         _ensureTabController();
 
         return Scaffold(
-            // Ask-a-Question now lives only in the Questions tab (was
-            // duplicated here as a FAB) — Write Review remains the one
-            // persistent floating action.
-            floatingActionButton: Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: WriteReviewButton(
-                collegeId: college.id,
-                collegeName: college.name,
-                extended: true,
-              ),
+          // Ask-a-Question now lives only in the Questions tab (was
+          // duplicated here as a FAB) — Write Review remains the one
+          // persistent floating action.
+          floatingActionButton: Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: WriteReviewButton(
+              collegeId: college.id,
+              collegeName: college.name,
+              extended: true,
             ),
-            body: NestedScrollView(
-              headerSliverBuilder: (context, innerBoxIsScrolled) => [
-                SliverAppBar(
-                  expandedHeight: 320,
-                  pinned: true,
-                  stretch: true,
-                  leading: IconButton(
-                    icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-                    onPressed: () {
-                      if (context.canPop()) {
-                        context.pop();
-                      } else {
-                        context.go(RouteNames.home);
+          ),
+          body: NestedScrollView(
+            headerSliverBuilder: (context, innerBoxIsScrolled) => [
+              SliverAppBar(
+                expandedHeight: 320,
+                pinned: true,
+                stretch: true,
+                leading: IconButton(
+                  icon: const Icon(Icons.arrow_back_ios_new, size: 18),
+                  onPressed: () {
+                    if (context.canPop()) {
+                      context.pop();
+                    } else {
+                      context.go(RouteNames.home);
+                    }
+                  },
+                ),
+                actions: [
+                  CollegeEcosystemMenu(
+                    collegeId: college.id,
+                    collegeName: college.name,
+                  ),
+                  IconButton(
+                    icon: Icon(
+                      isFavorite ? Icons.bookmark : Icons.bookmark_outline,
+                      color: isFavorite ? AppTheme.accentColor : null,
+                    ),
+                    tooltip: isFavorite ? 'Remove bookmark' : 'Save college',
+                    onPressed: () async {
+                      if (user == null) {
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Sign in to save colleges'),
+                          ),
+                        );
+                        context.go(
+                          RouteNames.loginWithReturn(
+                            RouteNames.collegeDetailsPath(college.id),
+                          ),
+                        );
+                        return;
                       }
+                      await ref
+                          .read(engagementRepositoryProvider)
+                          .toggleFavoriteCollege(user.uid, college.id);
                     },
                   ),
-                  actions: [
-                    CollegeEcosystemMenu(
-                      collegeId: college.id,
-                      collegeName: college.name,
+                  TextButton.icon(
+                    onPressed: () {
+                      final message = ref
+                          .read(compareBasketProvider.notifier)
+                          .toggle(college.id);
+                      if (message != null && context.mounted) {
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(SnackBar(content: Text(message)));
+                      }
+                    },
+                    icon: Icon(
+                      isInCompare
+                          ? Icons.check_circle_rounded
+                          : Icons.compare_arrows_outlined,
+                      size: 18,
+                      color: isInCompare ? AppTheme.accentColor : null,
                     ),
-                    IconButton(
-                      icon: Icon(
-                        isFavorite ? Icons.bookmark : Icons.bookmark_outline,
-                        color: isFavorite ? AppTheme.accentColor : null,
-                      ),
-                      tooltip: isFavorite ? 'Remove bookmark' : 'Save college',
-                      onPressed: () async {
-                        if (user == null) {
-                          if (!context.mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Sign in to save colleges'),
-                            ),
-                          );
-                          context.go(
-                            RouteNames.loginWithReturn(
-                              RouteNames.collegeDetailsPath(college.id),
-                            ),
-                          );
-                          return;
-                        }
-                        await ref
-                            .read(engagementRepositoryProvider)
-                            .toggleFavoriteCollege(user.uid, college.id);
-                      },
-                    ),
-                    TextButton.icon(
-                      onPressed: () {
-                        final message = ref
-                            .read(compareBasketProvider.notifier)
-                            .toggle(college.id);
-                        if (message != null && context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(message)),
-                          );
-                        }
-                      },
-                      icon: Icon(
-                        isInCompare
-                            ? Icons.check_circle_rounded
-                            : Icons.compare_arrows_outlined,
-                        size: 18,
-                        color: isInCompare ? AppTheme.accentColor : null,
-                      ),
-                      label: Text(
-                        isInCompare ? 'Added' : 'Compare',
-                        style: AppFonts.plusJakarta(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ),
-                    TextButton.icon(
-                      onPressed: () => context.go(
-                        RouteNames.assistantPath(
-                          collegeId: college.id,
-                          collegeName: college.name,
-                        ),
-                      ),
-                      icon: const Icon(Icons.auto_awesome_rounded, size: 18),
-                      label: Text(
-                        'AI Assistant',
-                        style: AppFonts.plusJakarta(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ),
-                  ],
-                  flexibleSpace: FlexibleSpaceBar(
-                    stretchModes: const [
-                      StretchMode.zoomBackground,
-                      StretchMode.blurBackground,
-                    ],
-                    title: Text(
-                      college.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    label: Text(
+                      isInCompare ? 'Added' : 'Compare',
                       style: AppFonts.plusJakarta(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
                       ),
                     ),
-                    background: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        CollegeImageWidget(
-                          collegeId: college.id,
-                          imageUrl: college.coverPhotoUrl,
-                          height: 320,
-                          fit: BoxFit.cover,
-                        ),
-                        DecoratedBox(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                Colors.black.withValues(alpha: 0.12),
-                                Colors.black.withValues(alpha: 0.68),
-                              ],
-                            ),
+                  ),
+                  TextButton.icon(
+                    onPressed: () => context.go(
+                      RouteNames.assistantPath(
+                        collegeId: college.id,
+                        collegeName: college.name,
+                      ),
+                    ),
+                    icon: const Icon(Icons.auto_awesome_rounded, size: 18),
+                    label: Text(
+                      'AI Assistant',
+                      style: AppFonts.plusJakarta(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ],
+                flexibleSpace: FlexibleSpaceBar(
+                  stretchModes: const [
+                    StretchMode.zoomBackground,
+                    StretchMode.blurBackground,
+                  ],
+                  title: Text(
+                    college.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppFonts.plusJakarta(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  background: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      CollegeImageWidget(
+                        collegeId: college.id,
+                        imageUrl: college.coverPhotoUrl,
+                        height: 320,
+                        fit: BoxFit.cover,
+                      ),
+                      DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.black.withValues(alpha: 0.12),
+                              Colors.black.withValues(alpha: 0.68),
+                            ],
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ),
-                SliverToBoxAdapter(
-                  child: _CollegeHeader(college: college),
-                ),
-                SliverPersistentHeader(
-                  pinned: true,
-                  delegate: _TabBarDelegate(
-                    TabBar(
-                      controller: _tabController,
-                      isScrollable: true,
-                      labelColor: Theme.of(context).colorScheme.primary,
-                      unselectedLabelColor: context.tokens.textTertiary,
-                      indicatorColor: Theme.of(context).colorScheme.primary,
-                      tabs: const [
-                        Tab(text: 'Overview'),
-                        Tab(text: 'Placements'),
-                        Tab(text: 'Questions'),
-                        Tab(text: 'Faculty'),
-                        Tab(text: 'Hostel'),
-                        Tab(text: 'Fees'),
-                        Tab(text: 'Ratings'),
-                        Tab(text: 'Reviews'),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-              body: TabBarView(
-                controller: _tabController,
-                children: List.generate(
-                  8,
-                  (index) => _tabChild(index, college),
                 ),
               ),
+              SliverToBoxAdapter(child: _CollegeHeader(college: college)),
+              SliverPersistentHeader(
+                pinned: true,
+                delegate: _TabBarDelegate(
+                  TabBar(
+                    controller: _tabController,
+                    isScrollable: true,
+                    tabAlignment: TabAlignment.start,
+                    dividerColor: Colors.transparent,
+                    labelColor: Theme.of(context).colorScheme.primary,
+                    unselectedLabelColor: context.tokens.textTertiary,
+                    indicatorColor: Theme.of(context).colorScheme.primary,
+                    indicatorSize: TabBarIndicatorSize.label,
+                    indicatorWeight: 2.5,
+                    labelPadding: const EdgeInsets.symmetric(horizontal: 14),
+                    splashBorderRadius: BorderRadius.circular(10),
+                    labelStyle: AppFonts.plusJakarta(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13.5,
+                    ),
+                    unselectedLabelStyle: AppFonts.plusJakarta(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13.5,
+                    ),
+                    tabs: const [
+                      Tab(text: 'Overview'),
+                      Tab(text: 'Placements'),
+                      Tab(text: 'Q&A'),
+                      Tab(text: 'Faculty'),
+                      Tab(text: 'Hostel'),
+                      Tab(text: 'Fees'),
+                      Tab(text: 'Ratings'),
+                      Tab(text: 'Reviews'),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+            body: TabBarView(
+              controller: _tabController,
+              children: List.generate(8, (index) => _tabChild(index, college)),
             ),
-            bottomNavigationBar: const CompareBasketBar(),
-          );
+          ),
+          bottomNavigationBar: const CompareBasketBar(),
+        );
       },
     );
   }
@@ -473,8 +480,11 @@ class _CollegeHeader extends StatelessWidget {
                   fontSize: 13,
                 ),
                 const SizedBox(width: AppSpacing.md),
-                const Icon(Icons.star_rounded,
-                    color: AppTheme.warningColor, size: 20),
+                const Icon(
+                  Icons.star_rounded,
+                  color: AppTheme.warningColor,
+                  size: 20,
+                ),
                 const SizedBox(width: 4),
                 Text(
                   college.aggregatedRatings.overall > 0
@@ -496,8 +506,11 @@ class _CollegeHeader extends StatelessWidget {
                 ),
                 if (college.wouldChooseAgainPercent != null) ...[
                   const SizedBox(width: AppSpacing.md),
-                  Icon(Icons.thumb_up_alt_outlined,
-                      size: 16, color: tokens.textTertiary),
+                  Icon(
+                    Icons.thumb_up_alt_outlined,
+                    size: 16,
+                    color: tokens.textTertiary,
+                  ),
                   const SizedBox(width: 4),
                   Text(
                     '${college.wouldChooseAgainPercent!.round()}% would choose again',
@@ -511,17 +524,25 @@ class _CollegeHeader extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: AppSpacing.lg),
+          // Core USP, front and centre: directly under name / rating /
+          // location, before any secondary stats or actions.
+          AppReveal(
+            child: TalkToVerifiedStudentHero(
+              collegeName: college.name,
+              verifiedCount:
+                  college.verifiedStudentCount + college.verifiedAlumniCount,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.lg),
           CollegeProfileStatsStrip(college: college),
           const SizedBox(height: 12),
           Wrap(
             spacing: 10,
             runSpacing: 10,
             children: [
-              // Ask-a-Question lives in the Questions tab; this row's
-              // primary CTA is now the college-scoped verified-student card
-              // further down the Overview tab, so only Write Review stays
-              // here at the header level.
+              // Talking to a verified student is the hero action above;
+              // Write Review is the secondary header action.
               WriteReviewButton(
                 collegeId: college.id,
                 collegeName: college.name,
@@ -538,7 +559,8 @@ class _CollegeHeader extends StatelessWidget {
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: college.displayCourses.take(8)
+            children: college.displayCourses
+                .take(8)
                 .map(
                   (c) => Chip(
                     label: Text(
@@ -578,9 +600,9 @@ class _OverviewTab extends ConsumerWidget {
     final uri = Uri.parse(url.startsWith('http') ? url : 'https://$url');
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not open link')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Could not open link')));
       }
     }
   }
@@ -675,8 +697,11 @@ class _OverviewTab extends ConsumerWidget {
                   iconColor: colorScheme.primary,
                   title: 'Website',
                   subtitle: college.website!,
-                  trailing: Icon(Icons.open_in_new,
-                      size: 18, color: tokens.textTertiary),
+                  trailing: Icon(
+                    Icons.open_in_new,
+                    size: 18,
+                    color: tokens.textTertiary,
+                  ),
                   onTap: () => _openUrl(context, college.website!),
                   showChevron: false,
                 ),
@@ -727,8 +752,11 @@ class _OverviewTab extends ConsumerWidget {
                     leadingIcon: Icons.link,
                     iconColor: colorScheme.secondary,
                     title: link,
-                    trailing: Icon(Icons.open_in_new,
-                        size: 18, color: tokens.textTertiary),
+                    trailing: Icon(
+                      Icons.open_in_new,
+                      size: 18,
+                      color: tokens.textTertiary,
+                    ),
                     onTap: () => _openUrl(context, link),
                     showChevron: false,
                   ),
@@ -791,8 +819,10 @@ class _OverviewTab extends ConsumerWidget {
                   Expanded(child: Column(children: rightColumn)),
                 ],
               )
-            else
-              ...[...leftColumn, ...rightColumn],
+            else ...[
+              ...leftColumn,
+              ...rightColumn,
+            ],
           ],
         );
       },
@@ -889,7 +919,8 @@ class _HostelTab extends StatelessWidget {
               icon: Icons.checklist_outlined,
             ),
           ],
-          if (hostel.description != null && hostel.description!.trim().isNotEmpty)
+          if (hostel.description != null &&
+              hostel.description!.trim().isNotEmpty)
             _InfoCard(
               title: 'Hostel Details',
               content: hostel.description!,
@@ -929,15 +960,12 @@ class _ReviewsTabState extends ConsumerState<_ReviewsTab> {
     if (_loadingMore || !_hasMore) return;
     setState(() => _loadingMore = true);
     try {
-      final page = await ref.read(reviewRepositoryProvider).getReviewsPage(
-            _collegeId,
-            startAfterDocumentId: _cursor,
-          );
+      final page = await ref
+          .read(reviewRepositoryProvider)
+          .getReviewsPage(_collegeId, startAfterDocumentId: _cursor);
       if (!mounted) return;
       setState(() {
-        final existingIds = {
-          ..._extraReviews.map((r) => r.id),
-        };
+        final existingIds = {..._extraReviews.map((r) => r.id)};
         _extraReviews.addAll(
           page.reviews.where((r) => !existingIds.contains(r.id)),
         );
@@ -965,10 +993,9 @@ class _ReviewsTabState extends ConsumerState<_ReviewsTab> {
   Widget build(BuildContext context) {
     ref.listen(collegeReviewsProvider(_collegeId), (previous, next) {
       next.whenData((reviews) {
-        ref.read(optimisticReviewsProvider.notifier).syncWithStream(
-              _collegeId,
-              reviews,
-            );
+        ref
+            .read(optimisticReviewsProvider.notifier)
+            .syncWithStream(_collegeId, reviews);
         if (_cursor == null && reviews.isNotEmpty) {
           _cursor = reviews.last.id;
         }
@@ -1004,12 +1031,13 @@ class _ReviewsTabState extends ConsumerState<_ReviewsTab> {
                   padding: const EdgeInsets.all(24),
                   child: Column(
                     children: [
-                      Icon(Icons.rate_review_outlined,
-                          size: 64,
-                          color: Theme.of(context)
-                              .colorScheme
-                              .primary
-                              .withValues(alpha: 0.4)),
+                      Icon(
+                        Icons.rate_review_outlined,
+                        size: 64,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.primary.withValues(alpha: 0.4),
+                      ),
                       const SizedBox(height: 16),
                       Text(
                         'No reviews yet',
@@ -1023,7 +1051,8 @@ class _ReviewsTabState extends ConsumerState<_ReviewsTab> {
                       Text(
                         'Only verified students and alumni can write reviews.',
                         style: AppFonts.plusJakarta(
-                            color: context.tokens.textTertiary),
+                          color: context.tokens.textTertiary,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 20),
@@ -1124,9 +1153,9 @@ class _ReviewsTabState extends ConsumerState<_ReviewsTab> {
                         .read(optimisticHelpfulProvider.notifier)
                         .unmark(review.id);
                     if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('$e')),
-                      );
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(SnackBar(content: Text('$e')));
                     }
                   }
                 },
@@ -1265,7 +1294,10 @@ Future<void> _showReportDialog(
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+        TextButton(
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('Cancel'),
+        ),
         TextButton(
           onPressed: () => Navigator.pop(ctx, controller.text.trim()),
           child: const Text('Report'),
@@ -1277,7 +1309,9 @@ Future<void> _showReportDialog(
   if (reason == null || reason.isEmpty) return;
 
   try {
-    await ref.read(reviewRepositoryProvider).reportReview(
+    await ref
+        .read(reviewRepositoryProvider)
+        .reportReview(
           reviewId: review.id,
           collegeId: review.collegeId,
           reporterId: user.uid,
@@ -1285,7 +1319,9 @@ Future<void> _showReportDialog(
         );
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Review reported. Our team will review it.')),
+        const SnackBar(
+          content: Text('Review reported. Our team will review it.'),
+        ),
       );
     }
   } catch (e) {
@@ -1320,10 +1356,7 @@ class _RatingsTab extends StatelessWidget {
           const SizedBox(height: 16),
           ReviewSummaryPanel(college: college),
           const SizedBox(height: 16),
-          WriteReviewButton(
-            collegeId: college.id,
-            collegeName: college.name,
-          ),
+          WriteReviewButton(collegeId: college.id, collegeName: college.name),
           const SizedBox(height: 24),
           Center(
             child: Text(
@@ -1409,9 +1442,8 @@ class _FeesTab extends StatelessWidget {
     final tokens = context.tokens;
     final colorScheme = Theme.of(context).colorScheme;
     final fees = college.fees;
-    final hasAnyFee = fees.tuitionMin > 0 ||
-        fees.tuitionMax > 0 ||
-        fees.hostelAnnual > 0;
+    final hasAnyFee =
+        fees.tuitionMin > 0 || fees.tuitionMax > 0 || fees.hostelAnnual > 0;
 
     if (!hasAnyFee && college.scholarships.isEmpty) {
       return const AsyncEmptyView(
@@ -1653,13 +1685,28 @@ class _TabBarDelegate extends SliverPersistentHeaderDelegate {
     double shrinkOffset,
     bool overlapsContent,
   ) {
-    return Material(
-      color: Theme.of(context).scaffoldBackgroundColor,
-      child: tabBar,
+    final tokens = context.tokens;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        border: Border(
+          bottom: BorderSide(color: tokens.borderSubtle, width: 1),
+        ),
+        boxShadow: overlapsContent
+            ? [
+                BoxShadow(
+                  color: AppTheme.black.withValues(alpha: 0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ]
+            : null,
+      ),
+      child: Material(color: Colors.transparent, child: tabBar),
     );
   }
 
   @override
-  bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) =>
-      false;
+  bool shouldRebuild(covariant _TabBarDelegate oldDelegate) =>
+      oldDelegate.tabBar != tabBar;
 }

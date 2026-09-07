@@ -15,3 +15,4 @@ export 'page_transitions.dart';
 export 'app_shell.dart';
 export 'status_badge.dart';
 export 'premium_list_row.dart';
+export '../animations/app_animations.dart';

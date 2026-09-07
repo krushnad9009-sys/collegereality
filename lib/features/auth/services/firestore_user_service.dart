@@ -276,6 +276,31 @@ class FirestoreUserService {
     }
   }
 
+  // Record acceptance of the Terms & Conditions onboarding gate.
+  Future<void> acceptTerms(String uid) async {
+    try {
+      await FirestoreAuthUtils.ensureAuthenticated(expectedUid: uid);
+      final now = DateTime.now().toIso8601String();
+      await _firestore.collection(usersCollection).doc(uid).update({
+        'hasAcceptedTerms': true,
+        'termsAcceptedAt': now,
+        'updatedAt': now,
+      });
+    } on FirebaseException catch (e) {
+      throw _mapFirestoreError(
+        e,
+        collectionPath: usersCollection,
+        documentPath: uid,
+        action: 'accept terms',
+      );
+    } catch (e) {
+      if (e is FirestoreException) rethrow;
+      throw FirestoreException(
+        message: 'Could not save your acceptance. Please try again.',
+      );
+    }
+  }
+
   // Delete user document (when user deletes account)
   Future<void> deleteUser(String uid) async {
     try {

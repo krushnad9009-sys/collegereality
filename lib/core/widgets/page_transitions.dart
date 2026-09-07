@@ -57,6 +57,28 @@ Page<T> fadeScalePage<T>({
   );
 }
 
+/// Plain cross-fade — for peer destinations where directional motion would
+/// imply a hierarchy that isn't there (e.g. switching bottom-nav tabs).
+Page<T> fadeSwitchPage<T>({
+  required LocalKey key,
+  required Widget child,
+  String? name,
+}) {
+  return CustomTransitionPage<T>(
+    key: key,
+    name: name,
+    transitionDuration: AppMotion.fast,
+    reverseTransitionDuration: AppMotion.instant,
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      return FadeTransition(
+        opacity: CurvedAnimation(parent: animation, curve: AppMotion.easeOut),
+        child: child,
+      );
+    },
+    child: child,
+  );
+}
+
 /// Vertical shared-axis — good for auth / onboarding stack moves.
 Page<T> fadeUpPage<T>({
   required LocalKey key,

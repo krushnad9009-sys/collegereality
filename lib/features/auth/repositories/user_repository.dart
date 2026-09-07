@@ -30,6 +30,12 @@ abstract class UserRepository {
   });
   Future<void> verifyEmail(String uid);
   Future<void> verifyPhone(String uid, {String? phone});
+
+  /// Records that the user has accepted the Terms & Conditions onboarding
+  /// gate. Sets `hasAcceptedTerms: true` and a `termsAcceptedAt` timestamp
+  /// on the owner's `users` document.
+  Future<void> acceptTerms(String uid);
+
   Future<void> deleteUser(String uid);
   Future<bool> userExists(String uid);
   Future<UserModel?> getUserByEmail(String email);
@@ -106,6 +112,11 @@ class UserRepositoryImpl implements UserRepository {
   @override
   Future<void> verifyPhone(String uid, {String? phone}) async {
     await _firestoreUserService.verifyPhone(uid, phone: phone);
+  }
+
+  @override
+  Future<void> acceptTerms(String uid) async {
+    await _firestoreUserService.acceptTerms(uid);
   }
 
   @override

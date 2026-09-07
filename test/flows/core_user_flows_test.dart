@@ -408,7 +408,7 @@ void main() {
         ],
         child: const ProfileScreen(),
       );
-      expect(find.text('My Profile'), findsOneWidget);
+      expect(find.text('Profile'), findsWidgets);
       expect(find.text('Test Student'), findsWidgets);
     });
   });
