@@ -1,5 +1,4 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -30,7 +29,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  bool _agreeToTerms = false;
 
   @override
   void dispose() {
@@ -43,14 +41,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
   Future<void> _handleSignup() async {
     if (!_formKey.currentState!.validate()) {
-      return;
-    }
-
-    if (!_agreeToTerms) {
-      SnackBarHelper.showErrorSnackBar(
-        context,
-        message: 'Please agree to the Terms & Conditions',
-      );
       return;
     }
 
@@ -299,68 +289,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                           ],
                         ),
                       ),
-                    ),
-                  ),
-
-                  const SizedBox(height: AppSpacing.xxl),
-
-                  FadeInSection(
-                    delayMs: 160,
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Checkbox(
-                          value: _agreeToTerms,
-                          onChanged: (value) {
-                            setState(() => _agreeToTerms = value ?? false);
-                          },
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          visualDensity: VisualDensity.compact,
-                        ),
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.only(top: 10),
-                            child: RichText(
-                              text: TextSpan(
-                                style: textTheme.bodySmall?.copyWith(
-                                  fontWeight: FontWeight.w500,
-                                  color: tokens.textSecondary,
-                                ),
-                                children: [
-                                  const TextSpan(text: 'I agree to the '),
-                                  TextSpan(
-                                    text: 'Terms & Conditions',
-                                    style: textTheme.bodySmall?.copyWith(
-                                      fontWeight: FontWeight.w600,
-                                      color: AppTheme.primaryColor,
-                                      decoration: TextDecoration.underline,
-                                    ),
-                                    recognizer: TapGestureRecognizer()
-                                      ..onTap = () => context.push(
-                                            RouteNames.termsOfService,
-                                          ),
-                                  ),
-                                  const TextSpan(text: ' and '),
-                                  TextSpan(
-                                    text: 'Privacy Policy',
-                                    style: textTheme.bodySmall?.copyWith(
-                                      fontWeight: FontWeight.w600,
-                                      color: AppTheme.primaryColor,
-                                      decoration: TextDecoration.underline,
-                                    ),
-                                    recognizer: TapGestureRecognizer()
-                                      ..onTap = () => context.push(
-                                            RouteNames.privacyPolicy,
-                                          ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
                     ),
                   ),
 

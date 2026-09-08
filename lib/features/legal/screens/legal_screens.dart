@@ -8,9 +8,13 @@ class LegalDocumentScreen extends StatelessWidget {
   final String title;
   final List<LegalSection> sections;
 
+  /// Optional lead-in paragraph rendered above the first section.
+  final String? intro;
+
   const LegalDocumentScreen({
     required this.title,
     required this.sections,
+    this.intro,
     super.key,
   });
 
@@ -26,6 +30,17 @@ class LegalDocumentScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
+          if (intro != null && intro!.trim().isNotEmpty) ...[
+            Text(
+              intro!,
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                height: 1.6,
+                color: AppTheme.gray700,
+              ),
+            ),
+            const SizedBox(height: 24),
+          ],
           for (final section in sections) ...[
             Text(
               section.heading,
@@ -103,28 +118,83 @@ class PrivacyPolicyScreen extends StatelessWidget {
   }
 }
 
-/// Canonical Terms of Service copy, shared by the read-only
-/// [TermsOfServiceScreen] and the post-login [TermsGateScreen].
+/// Lead-in paragraph shown above [termsOfServiceSections].
+const String termsAndConditionsIntro =
+    'Welcome to College Reality ("Platform"). By accessing or using our '
+    'services, you agree to be bound by these Terms:';
+
+/// Canonical Terms & Conditions copy, shared by the read-only
+/// [TermsOfServiceScreen] and the mandatory post-login [TermsGateScreen].
 const List<LegalSection> termsOfServiceSections = [
   LegalSection(
-    heading: 'Acceptance',
+    heading: '1. User Role & Intermediary Status',
     body:
-        'By using College Reality India, you agree to these Terms of Service and our Privacy Policy.',
+        'College Reality is a peer-to-peer informational platform connecting '
+        'prospective students with verified seniors/alumni. The views, answers, '
+        'and reviews expressed by verified users are strictly their personal '
+        'opinions and do not represent the official stance of any educational '
+        'institution or this Platform.',
   ),
   LegalSection(
-    heading: 'User Content',
+    heading: '2. Document Verification & AI Processing',
     body:
-        'Reviews and community posts must be honest and respectful. We may remove content that violates our community guidelines or applicable law.',
+        'Document upload for verification (Aadhaar/College ID/Marksheet) is '
+        'processed via automated system algorithms solely to maintain community '
+        'trust. Documents are handled securely and never sold to third parties. '
+        'Uploading fake, altered, or fraudulent documents will result in '
+        'immediate termination.',
   ),
   LegalSection(
-    heading: 'College Information',
+    heading: '3. Institutional Disclaimer',
     body:
-        'College listings are compiled from official AISHE data and user contributions. We strive for accuracy but do not guarantee completeness. Verify admission details with institutions directly.',
+        'Colleges listed on this platform are for informational and '
+        'navigational purposes only. College Reality is an independent entity '
+        'and is not directly endorsed by or affiliated with the listed '
+        'institutions.',
   ),
   LegalSection(
-    heading: 'Account Termination',
+    heading: '4. No Admission Guarantee & Counseling Disclaimer',
     body:
-        'You may delete your account at any time. We may suspend accounts that abuse the platform.',
+        'The platform, its AI prediction tools, and verified peers offer '
+        'guidance based on past data and personal experiences. The Platform '
+        'provides NO GUARANTEE for admission, seats, or official cut-offs. All '
+        'admission decisions rest solely with the student and parents.',
+  ),
+  LegalSection(
+    heading: '5. Code of Conduct & Misuse',
+    body:
+        'Harassment, abusive language, spamming, or sharing false marketing '
+        'content in chats or reviews is strictly prohibited. Any violation will '
+        'lead to immediate content removal and permanent account suspension.',
+  ),
+  LegalSection(
+    heading: '6. Account Termination Rights',
+    body:
+        'The Admin reserves the full right to suspend or permanently block any '
+        'account found violating community standards, uploading fraudulent '
+        'verification proofs, or engaging in unauthorized activity without '
+        'prior notice or refund.',
+  ),
+  LegalSection(
+    heading: '7. Data Privacy & Safety',
+    body:
+        'User data and verification documents are encrypted and managed in '
+        'accordance with applicable privacy standards. Verification records are '
+        'strictly accessed for validation purposes.',
+  ),
+  LegalSection(
+    heading: '8. Limitation of Liability',
+    body:
+        'The Platform shall not be held liable for any financial, academic, or '
+        'personal decisions made based on chats, recommendations, or reviews '
+        'hosted on the platform.',
+  ),
+  LegalSection(
+    heading: '9. Jurisdiction & Dispute Resolution',
+    body:
+        'Any legal disputes arising out of or in connection with this Platform '
+        'shall be subject to the exclusive jurisdiction of the courts located '
+        'in Pune, Maharashtra, India.',
   ),
 ];
 
@@ -134,7 +204,8 @@ class TermsOfServiceScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const LegalDocumentScreen(
-      title: 'Terms of Service',
+      title: 'Terms & Conditions',
+      intro: termsAndConditionsIntro,
       sections: termsOfServiceSections,
     );
   }

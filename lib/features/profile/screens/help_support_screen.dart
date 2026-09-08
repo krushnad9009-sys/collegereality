@@ -97,12 +97,6 @@ class HelpSupportScreen extends ConsumerWidget {
                   title: 'Privacy policy',
                   onTap: () => context.push(RouteNames.privacyPolicy),
                 ),
-                Divider(color: tokens.borderSubtle, height: 1),
-                PremiumListRow(
-                  leadingIcon: Icons.description_outlined,
-                  title: 'Terms of service',
-                  onTap: () => context.push(RouteNames.termsOfService),
-                ),
               ],
             ),
           ),

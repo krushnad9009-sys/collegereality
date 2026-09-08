@@ -9,7 +9,6 @@ import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../core/constants/verification_constants.dart';
 import '../../../core/widgets/index.dart';
-import '../../admin/providers/admin_provider.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/providers/user_provider.dart';
 import '../../auth/utils/sign_out.dart';
@@ -165,116 +164,16 @@ class ProfileScreen extends ConsumerWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: AppSpacing.lg),
-              AppReveal(
-                delayMs: 160,
-                child: _HubCard(
-                  title: 'Activity',
-                  rows: [
-                    PremiumListRow(
-                      leadingIcon: Icons.visibility_outlined,
-                      title: 'View Public Profile',
-                      subtitle: 'See how students see your profile',
-                      onTap: () => context.push(
-                        RouteNames.studentProfilePath(authUser.uid),
-                      ),
-                    ),
-                    PremiumListRow(
-                      leadingIcon: Icons.forum_outlined,
-                      title: 'My Consultations',
-                      onTap: () => context.push(RouteNames.consultationHistory),
-                    ),
-                    PremiumListRow(
-                      leadingIcon: Icons.rate_review_outlined,
-                      title: 'View My Reviews',
-                      onTap: () => context.go(RouteNames.myReviews),
-                    ),
-                    PremiumListRow(
-                      leadingIcon: Icons.verified_user_outlined,
-                      title: 'Student Verification',
-                      onTap: () => context.go(RouteNames.verification),
-                    ),
-                    PremiumListRow(
-                      leadingIcon: Icons.support_agent_outlined,
-                      title: 'Browse Guides',
-                      onTap: () => context.go(RouteNames.guidesDirectory),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              AppReveal(
-                delayMs: 210,
-                child: _HubCard(
-                  title: 'Contribute',
-                  rows: [
-                    PremiumListRow(
-                      leadingIcon: Icons.dashboard_outlined,
-                      title: 'Official College Dashboard',
-                      onTap: () =>
-                          context.push(RouteNames.officialCollegeDashboard),
-                    ),
-                    PremiumListRow(
-                      leadingIcon: Icons.add_business_outlined,
-                      title: 'Add My College',
-                      onTap: () => context.push(RouteNames.requestCollege),
-                    ),
-                    PremiumListRow(
-                      leadingIcon: Icons.school_outlined,
-                      title: 'Faculty Verification',
-                      onTap: () => context.push(RouteNames.facultyVerification),
-                    ),
-                    PremiumListRow(
-                      leadingIcon: Icons.biotech_outlined,
-                      title: 'Faculty Hub',
-                      onTap: () => context.push(RouteNames.facultyHub),
-                    ),
-                    PremiumListRow(
-                      leadingIcon: Icons.volunteer_activism_outlined,
-                      title: 'Alumni Mentorship',
-                      onTap: () => context.push(RouteNames.alumniMentorship),
-                    ),
-                  ],
-                ),
-              ),
-              Consumer(
-                builder: (context, ref, _) {
-                  final isAdminAsync = ref.watch(isAdminProvider);
-                  return isAdminAsync.maybeWhen(
-                    data: (isAdmin) {
-                      if (!isAdmin) return const SizedBox.shrink();
-                      return AppReveal(
-                        delayMs: 250,
-                        child: Padding(
-                          padding: const EdgeInsets.only(top: AppSpacing.lg),
-                          child: _HubCard(
-                            title: 'Staff',
-                            rows: [
-                              PremiumListRow(
-                                leadingIcon:
-                                    Icons.admin_panel_settings_outlined,
-                                title: 'Admin Panel',
-                                onTap: () => context.go(RouteNames.admin),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                    orElse: () => const SizedBox.shrink(),
-                  );
-                },
-              ),
               const SizedBox(height: AppSpacing.xl),
               AppReveal(
-                delayMs: 290,
+                delayMs: 160,
                 child: _SignOutTile(
                   onSignOut: () => signOutAndRedirect(context, ref),
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
               AppReveal(
-                delayMs: 320,
+                delayMs: 210,
                 child: PremiumCard(
                   radius: tokens.cardRadius,
                   padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),

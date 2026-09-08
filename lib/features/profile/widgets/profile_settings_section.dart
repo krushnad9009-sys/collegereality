@@ -97,12 +97,6 @@ class ProfileSettingsSection extends ConsumerWidget {
             dense: true,
             onTap: () => context.push(RouteNames.privacyPolicy),
           ),
-          PremiumListRow(
-            leadingIcon: Icons.description_outlined,
-            title: 'Terms of service',
-            dense: true,
-            onTap: () => context.push(RouteNames.termsOfService),
-          ),
         ],
       ),
     );

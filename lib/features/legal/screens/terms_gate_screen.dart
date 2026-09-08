@@ -13,9 +13,10 @@ import '../../auth/providers/user_provider.dart';
 import '../../auth/utils/sign_out.dart';
 import 'legal_screens.dart';
 
-/// Blocking post-login onboarding gate. Shown by the router whenever the
-/// signed-in user's `hasAcceptedTerms` flag is not `true`. The user cannot
-/// reach the rest of the app until they accept (or sign out).
+/// Blocking, mandatory post-login onboarding gate. The router shows this
+/// whenever the signed-in user's `hasAcceptedTerms` flag is not `true`, and
+/// the user cannot reach any other route (public or protected) until they
+/// tap "I Agree & Accept Terms" (or sign out).
 class TermsGateScreen extends ConsumerStatefulWidget {
   const TermsGateScreen({super.key});
 
@@ -24,7 +25,6 @@ class TermsGateScreen extends ConsumerStatefulWidget {
 }
 
 class _TermsGateScreenState extends ConsumerState<TermsGateScreen> {
-  bool _agreed = false;
   bool _isSaving = false;
 
   Future<void> _acceptAndContinue() async {
@@ -99,7 +99,7 @@ class _TermsGateScreenState extends ConsumerState<TermsGateScreen> {
                           .fadeIn(duration: 250.ms),
                       const SizedBox(height: AppSpacing.md),
                       Text(
-                        'Before you continue',
+                        'Terms & Conditions',
                         style: AppFonts.plusJakarta(
                           fontSize: 24,
                           fontWeight: FontWeight.w800,
@@ -109,7 +109,7 @@ class _TermsGateScreenState extends ConsumerState<TermsGateScreen> {
                       ),
                       const SizedBox(height: AppSpacing.xs),
                       Text(
-                        'Please review and accept our Terms & Conditions to '
+                        'Please read and accept our Terms & Conditions to '
                         'start using College Reality.',
                         style: AppFonts.plusJakarta(
                           fontSize: 14,
@@ -136,38 +136,42 @@ class _TermsGateScreenState extends ConsumerState<TermsGateScreen> {
                       border: Border.all(color: tokens.borderSubtle),
                     ),
                     child: Scrollbar(
-                      child: ListView.separated(
+                      child: ListView(
                         primary: true,
                         padding: const EdgeInsets.only(right: AppSpacing.sm),
-                        itemCount: termsOfServiceSections.length,
-                        separatorBuilder: (_, _) =>
+                        children: [
+                          Text(
+                            termsAndConditionsIntro,
+                            style: AppFonts.plusJakarta(
+                              fontSize: 13.5,
+                              height: 1.55,
+                              fontWeight: FontWeight.w500,
+                              color: tokens.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.lg),
+                          for (final section in termsOfServiceSections) ...[
+                            Text(
+                              section.heading,
+                              style: AppFonts.plusJakarta(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: tokens.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              section.body,
+                              style: AppFonts.plusJakarta(
+                                fontSize: 13.5,
+                                height: 1.55,
+                                fontWeight: FontWeight.w500,
+                                color: tokens.textSecondary,
+                              ),
+                            ),
                             const SizedBox(height: AppSpacing.lg),
-                        itemBuilder: (context, i) {
-                          final section = termsOfServiceSections[i];
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                section.heading,
-                                style: AppFonts.plusJakarta(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w700,
-                                  color: tokens.textPrimary,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                section.body,
-                                style: AppFonts.plusJakarta(
-                                  fontSize: 13.5,
-                                  height: 1.55,
-                                  fontWeight: FontWeight.w500,
-                                  color: tokens.textSecondary,
-                                ),
-                              ),
-                            ],
-                          );
-                        },
+                          ],
+                        ],
                       ),
                     ),
                   ),
@@ -185,50 +189,10 @@ class _TermsGateScreenState extends ConsumerState<TermsGateScreen> {
                   ),
                   child: Column(
                     children: [
-                      InkWell(
-                        onTap: _isSaving
-                            ? null
-                            : () => setState(() => _agreed = !_agreed),
-                        borderRadius: BorderRadius.circular(
-                          tokens.buttonRadius,
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Checkbox(
-                                value: _agreed,
-                                onChanged: _isSaving
-                                    ? null
-                                    : (v) =>
-                                          setState(() => _agreed = v ?? false),
-                              ),
-                              Expanded(
-                                child: Padding(
-                                  padding: const EdgeInsets.only(top: 12),
-                                  child: Text(
-                                    'I have read and agree to the Terms & '
-                                    'Conditions and Privacy Policy.',
-                                    style: AppFonts.plusJakarta(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                      color: tokens.textPrimary,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.sm),
                       PrimaryButton(
-                        label: 'Accept & Continue',
+                        label: 'I Agree & Accept Terms',
                         isLoading: _isSaving,
-                        onPressed: _agreed && !_isSaving
-                            ? _acceptAndContinue
-                            : null,
+                        onPressed: _isSaving ? null : _acceptAndContinue,
                       ),
                       TextButton(
                         onPressed: _isSaving
