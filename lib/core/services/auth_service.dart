@@ -67,6 +67,13 @@ abstract class AuthServiceApi {
   Future<void> updateUserProfile({String? displayName, String? photoURL});
   Future<void> sendPasswordResetEmail(String email);
 
+  /// Standard Firebase Auth email-verification **link**, used as the
+  /// fallback when the custom email-OTP Cloud Function is unreachable
+  /// (not deployed, timing out, or returning internal/unknown). Sends the
+  /// link to `currentUser.email`. Throws [FirebaseAuthException] with the
+  /// raw `code` on failure — the caller maps it to UI copy.
+  Future<void> sendEmailVerificationLink();
+
   /// Reloads the Firebase user and returns `emailVerified`. Email
   /// verification itself is now a custom OTP flow (`EmailOtpService` /
   /// `functions/src/emailOtp.js`); this just observes the flag the
@@ -186,12 +193,40 @@ class AuthService implements AuthServiceApi {
     }
   }
 
-  // Email verification is no longer a Firebase email *link*
-  // (`user.sendEmailVerification()`). It's a custom 6-digit OTP: the
+  // Email verification is normally a custom 6-digit OTP: the
   // `requestEmailOtp` / `verifyEmailOtp` Cloud Functions email a code and,
   // on success, set `emailVerified` server-side. The client sends/verifies
   // codes through `EmailOtpService`; [reloadUser] below is how it then
-  // observes the flag.
+  // observes the flag. [sendEmailVerificationLink] is the resilience
+  // fallback for when those Cloud Functions are unavailable.
+
+  @override
+  Future<void> sendEmailVerificationLink() async {
+    final user = currentUser;
+    if (user == null) {
+      throw FirebaseAuthException(
+        code: 'no-current-user',
+        message: 'You are not signed in.',
+      );
+    }
+    if (user.emailVerified) {
+      _log('sendEmailVerificationLink: already verified, no-op');
+      return;
+    }
+    try {
+      // Deliberately NO ActionCodeSettings: the default Firebase-hosted
+      // handler needs zero project setup, whereas a custom `url` /
+      // `dynamicLinkDomain` is the classic cause of a verification link
+      // that silently never arrives (`unauthorized-continue-uri`,
+      // `invalid-continue-uri`, `invalid-dynamic-link-domain` — see
+      // `_emailDiagnosticHint`).
+      await user.sendEmailVerification();
+      _log('sendEmailVerificationLink dispatched to ${user.email}');
+    } catch (e, st) {
+      _logAuthException('sendEmailVerificationLink', e, st);
+      rethrow;
+    }
+  }
 
   @override
   Future<bool> reloadUser() async {

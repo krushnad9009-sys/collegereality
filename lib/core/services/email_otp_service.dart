@@ -117,24 +117,89 @@ class EmailOtpService {
     final details = e.details is Map
         ? Map<String, dynamic>.from(e.details as Map)
         : const <String, dynamic>{};
+    final retryAfterSeconds = (details['retryAfterSeconds'] as num?)?.toInt();
+    final attemptsLeft = (details['attemptsLeft'] as num?)?.toInt();
+
+    // Log the EXACT wire code + message BEFORE it is replaced with a
+    // user-facing string — this line is what actually explains a report of
+    // "Something went wrong" on screen. The code is echoed into the
+    // Crashlytics `reason` too so it is filterable in release.
     _log('$op FAILED FirebaseFunctionsException '
         'code=${e.code} message=${e.message} details=$details\n$st');
-    AppErrorHandler.recordNonFatal(e, st, reason: 'EmailOtpService.$op');
-    // The callable's own token exchange can surface an auth internal-error
-    // wrapped as a functions `internal`.
-    if (e.code == 'internal') {
-      return EmailOtpException(
-        'Something went wrong verifying your email. Please try again in a '
-        'moment.',
-        code: 'internal-error',
-      );
-    }
-    return EmailOtpException(
-      e.message ?? 'Email verification failed. Please try again.',
-      code: e.code,
-      retryAfterSeconds: (details['retryAfterSeconds'] as num?)?.toInt(),
-      attemptsLeft: (details['attemptsLeft'] as num?)?.toInt(),
+    AppErrorHandler.recordNonFatal(
+      e,
+      st,
+      reason: 'EmailOtpService.$op [functions/${e.code}]',
     );
+
+    return EmailOtpException(
+      _friendlyFunctionsMessage(op, e, retryAfterSeconds),
+      code: e.code,
+      retryAfterSeconds: retryAfterSeconds,
+      attemptsLeft: attemptsLeft,
+    );
+  }
+
+  /// Turns a `FirebaseFunctionsException.code` into a message that is safe
+  /// to show a user. Every branch of the `requestEmailOtp` /
+  /// `verifyEmailOtp` callables (see `functions/src/emailOtp.js`) throws a
+  /// *typed* `HttpsError` with an already-readable message, so those are
+  /// passed straight through; the codes handled explicitly here are the
+  /// transport / platform failures where `e.message` is a bare token like
+  /// `UNAVAILABLE`, `internal`, or `NOT_FOUND` and must never reach the UI.
+  String _friendlyFunctionsMessage(
+    String op,
+    FirebaseFunctionsException e,
+    int? retryAfterSeconds,
+  ) {
+    final verifying = op == 'verifyEmailOtp';
+    switch (e.code) {
+      case 'unauthenticated':
+        return 'Your session expired. Sign out and back in, then try again.';
+      case 'permission-denied':
+        return 'You don\'t have permission to do that. Sign out and back in, '
+            'then try again.';
+      case 'not-found':
+        // The callable itself is unreachable (not deployed / wrong region).
+        return 'Email verification is temporarily unavailable. Please try '
+            'again later.';
+      case 'unavailable':
+        return verifying
+            ? 'Your code was correct but we couldn\'t reach the server. '
+                'Please try again in a moment.'
+            : 'Couldn\'t reach the server to send your code. Check your '
+                'connection and try again.';
+      case 'deadline-exceeded':
+        return verifying
+            ? 'This code has expired. Tap "Resend Code" to get a new one.'
+            : 'The request timed out. Please try again.';
+      case 'resource-exhausted':
+        return e.message ??
+            (retryAfterSeconds != null
+                ? 'Too many attempts. Try again in '
+                    '${(retryAfterSeconds / 60).ceil()} min.'
+                : 'Too many attempts. Please wait a bit and try again.');
+      case 'failed-precondition':
+        // e.g. "Request a code first.", "Your account has no email address.",
+        // "Email sending is not configured." — already user-readable.
+        return e.message ?? 'Please request a fresh code and try again.';
+      case 'invalid-argument':
+        return e.message ?? 'Enter the 6-digit code.';
+      case 'already-exists':
+        return e.message ?? 'Your email is already verified.';
+      case 'cancelled':
+        return 'The request was cancelled. Please try again.';
+      case 'internal':
+      case 'unknown':
+      default:
+        // The callable's own ID-token exchange can surface an auth
+        // internal-error wrapped as a functions `internal`.
+        return verifying
+            ? 'Something went wrong verifying your email. Please try again in '
+                'a moment.'
+            : 'Something went wrong sending your code. Please try again in a '
+                'moment.';
+    }
   }
 
   /// Explicit handling for a `FirebaseAuthException` reaching this layer —
@@ -149,18 +214,44 @@ class EmailOtpService {
     _log('$op FAILED FirebaseAuthException '
         'code=${e.code} message=${e.message} plugin=${e.plugin}');
     debugPrintStack(stackTrace: st, label: '[EmailOtpService] $op auth error');
-    AppErrorHandler.recordNonFatal(e, st, reason: 'EmailOtpService.$op (auth)');
-    if (e.code == 'internal-error') {
-      return EmailOtpException(
-        'Authentication is catching up — please wait a moment and try '
-        'again.',
-        code: 'internal-error',
-      );
-    }
-    return EmailOtpException(
-      e.message ?? 'Email verification failed. Please try again.',
-      code: e.code,
+    AppErrorHandler.recordNonFatal(
+      e,
+      st,
+      reason: 'EmailOtpService.$op (auth) [auth/${e.code}]',
     );
+    switch (e.code) {
+      case 'internal-error':
+        return EmailOtpException(
+          'Authentication is catching up — please wait a moment and try '
+          'again.',
+          code: 'internal-error',
+        );
+      case 'too-many-requests':
+        return EmailOtpException(
+          'Too many attempts from this device. Please wait a few minutes '
+          'and try again.',
+          code: e.code,
+        );
+      case 'network-request-failed':
+        return EmailOtpException(
+          'No connection. Check your internet and try again.',
+          code: e.code,
+        );
+      case 'user-token-expired':
+      case 'user-disabled':
+      case 'user-not-found':
+      case 'requires-recent-login':
+        return EmailOtpException(
+          'Your session is no longer valid. Sign out and back in, then try '
+          'again.',
+          code: e.code,
+        );
+      default:
+        return EmailOtpException(
+          e.message ?? 'Email verification failed. Please try again.',
+          code: e.code,
+        );
+    }
   }
 
   EmailOtpException _mapUnknown(String op, Object e, StackTrace st) {

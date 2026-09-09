@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -14,9 +15,17 @@ import '../../auth/providers/user_provider.dart';
 import 'otp_button_label.dart';
 
 /// Email verification via a 6-digit OTP emailed to the user (Cloud
-/// Functions + Resend). Replaces the old Firebase email-verification
-/// *link* flow. Structure mirrors [PhoneVerificationSection]: request a
-/// code, then enter it, with a resend cooldown and a rate-limit timer.
+/// Functions + Resend). Structure mirrors [PhoneVerificationSection]:
+/// request a code, then enter it, with a resend cooldown and a rate-limit
+/// timer.
+///
+/// Resilience fallback: if the `requestEmailOtp` callable is unreachable
+/// (not deployed, timing out, or returning `internal` / `unknown`), this
+/// automatically switches to the standard Firebase Auth verification
+/// **link** (`user.sendEmailVerification()`). In that mode there is no
+/// code to type — the user opens the link, and the section detects the
+/// flipped `emailVerified` flag on app-resume or via an "I've verified"
+/// button, then mirrors it onto `users/{uid}.isEmailVerified`.
 class EmailVerificationSection extends ConsumerStatefulWidget {
   final String userId;
   final String email;
@@ -33,23 +42,48 @@ class EmailVerificationSection extends ConsumerStatefulWidget {
 }
 
 class _EmailVerificationSectionState
-    extends ConsumerState<EmailVerificationSection> {
+    extends ConsumerState<EmailVerificationSection>
+    with WidgetsBindingObserver {
   final _otpController = TextEditingController();
 
   bool _codeSent = false;
   bool _isSending = false;
   bool _isVerifying = false;
+
+  /// True once the OTP backend failed and we sent a Firebase Auth
+  /// verification *link* instead. Mutually exclusive with [_codeSent].
+  bool _linkFallbackSent = false;
+
   int _resendSeconds = 0;
   int _rateLimitSeconds = 0;
   Timer? _resendTimer;
   Timer? _rateLimitTimer;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _resendTimer?.cancel();
     _rateLimitTimer?.cancel();
     _otpController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // After the link fallback, the user leaves to open the email and comes
+    // back — re-check the server flag on resume so verification lands
+    // without them having to tap anything.
+    if (state == AppLifecycleState.resumed &&
+        _linkFallbackSent &&
+        !_isVerifying) {
+      _checkLinkVerified(silentIfUnverified: true);
+    }
   }
 
   void _startResendTimer(int seconds) {
@@ -107,8 +141,44 @@ class _EmailVerificationSectionState
     _isVerifying = false;
   }
 
+  /// `EmailOtpException.code`s that mean "the OTP backend itself is
+  /// unavailable" — a Firebase Auth verification *link* is the right
+  /// fallback. Deliberately NOT included: `resource-exhausted` (rate
+  /// limit — a link send is throttled the same way and it's working as
+  /// designed), `already-exists` (already verified), `failed-precondition`
+  /// (e.g. account has no email — a link can't help), `invalid-argument`,
+  /// `unauthenticated` (session problem the link send would also hit).
+  static bool _shouldFallBackToLink(String? code) {
+    switch (code) {
+      case 'internal':
+      case 'internal-error':
+      case 'unknown':
+      case 'not-found':
+      case 'unavailable':
+      case 'deadline-exceeded':
+      case 'cancelled':
+        return true;
+      default:
+        return false;
+    }
+  }
+
   Future<void> _sendCode() async {
     if (_resendSeconds > 0 || _rateLimitSeconds > 0 || _isSending) return;
+
+    // Already in link-fallback mode: a "Resend Link" tap goes straight
+    // back to the link path (retrying the dead OTP callable first would
+    // just stall the user again).
+    if (_linkFallbackSent) {
+      setState(() => _isSending = true);
+      try {
+        await _sendVerificationLinkFallback(otpError: 'manual resend');
+      } finally {
+        if (mounted) setState(() => _isSending = false);
+      }
+      return;
+    }
+
     // Reset the prior OTP session BEFORE asking for a new code, so a
     // stale digit in the field or an in-flight verify can't collide with
     // the code that's about to be generated.
@@ -130,24 +200,122 @@ class _EmailVerificationSectionState
       );
     } on EmailOtpException catch (e) {
       if (!mounted) return;
+      // Raw error visibility (exact code + object) before any UI mapping.
+      debugPrint('OTP Error: $e (code=${e.code})');
       if (e.code == 'already-exists') {
         // Server says it's already verified — reconcile local state.
         await _markVerifiedLocally(showSnack: true);
+        return;
+      }
+      if (_shouldFallBackToLink(e.code)) {
+        await _sendVerificationLinkFallback(otpError: e);
         return;
       }
       if (e.code == 'resource-exhausted' && e.retryAfterSeconds != null) {
         _startRateLimitTimer(e.retryAfterSeconds!);
       }
       SnackBarHelper.showErrorSnackBar(context, message: e.message);
-    } catch (_) {
+    } catch (e, st) {
       if (!mounted) return;
-      SnackBarHelper.showErrorSnackBar(
-        context,
-        message: 'Could not send the code. Please try again.',
-      );
+      // Timeouts and anything the service layer didn't map land here —
+      // treat as "OTP backend unavailable" and fall back to the link.
+      debugPrint('OTP Error: $e\n$st');
+      await _sendVerificationLinkFallback(otpError: e);
     } finally {
+      // Point 3: the button never stays stuck on a loading state — this
+      // runs on every path (success, mapped error, fallback, throw).
       if (mounted) setState(() => _isSending = false);
     }
+  }
+
+  /// Standard Firebase Auth verification link — the resilience path when
+  /// the custom OTP callable is unreachable. On success the section drops
+  /// into "link sent" mode: no code field, and verification is picked up
+  /// on app-resume or via the "I've verified" button.
+  Future<void> _sendVerificationLinkFallback({required Object otpError}) async {
+    debugPrint(
+      'OTP Error: falling back to Firebase Auth email link (cause: $otpError)',
+    );
+    try {
+      await ref.read(authServiceProvider).sendEmailVerificationLink();
+      if (!mounted) return;
+      setState(() {
+        _codeSent = false;
+        _linkFallbackSent = true;
+        _resetOtpSession();
+      });
+      // Cooldown so the user can't hammer the link sender.
+      _startResendTimer(60);
+      SnackBarHelper.showSuccessSnackBar(
+        context,
+        message: 'Email verification link sent to your registered email address',
+      );
+    } on FirebaseAuthException catch (e, st) {
+      if (!mounted) return;
+      debugPrint('OTP Error: link fallback failed code=${e.code} $e\n$st');
+      if (e.code == 'too-many-requests') {
+        _startRateLimitTimer(120);
+      }
+      SnackBarHelper.showErrorSnackBar(
+        context,
+        message: _linkErrorMessage(e.code),
+      );
+    } catch (e, st) {
+      if (!mounted) return;
+      debugPrint('OTP Error: link fallback threw $e\n$st');
+      SnackBarHelper.showErrorSnackBar(
+        context,
+        message: 'Could not send a verification email. Please try again.',
+      );
+    }
+  }
+
+  String _linkErrorMessage(String code) {
+    switch (code) {
+      case 'too-many-requests':
+        return 'Too many attempts from this device. Wait a few minutes, then '
+            'try again.';
+      case 'network-request-failed':
+        return 'No connection. Check your internet and try again.';
+      case 'no-current-user':
+      case 'user-token-expired':
+      case 'user-disabled':
+      case 'user-not-found':
+        return 'Your session is no longer valid. Sign out and back in, then '
+            'try again.';
+      case 'unauthorized-continue-uri':
+      case 'invalid-continue-uri':
+      case 'invalid-dynamic-link-domain':
+        return 'Email verification is misconfigured for this app. Please '
+            'contact support.';
+      default:
+        return 'Could not send a verification email. Please try again.';
+    }
+  }
+
+  /// Re-check the server `emailVerified` flag after the user has (probably)
+  /// clicked the link, and mirror it onto `users/{uid}` so app gates open.
+  Future<void> _checkLinkVerified({bool silentIfUnverified = false}) async {
+    if (_isVerifying) return;
+    setState(() => _isVerifying = true);
+    bool verified = false;
+    try {
+      verified =
+          await ref.read(authProvider.notifier).refreshEmailVerificationStatus();
+    } catch (e, st) {
+      debugPrint('OTP Error: refresh after link failed $e\n$st');
+    }
+    if (!mounted) return;
+    if (verified) {
+      await _markVerifiedLocally(showSnack: true);
+    } else if (!silentIfUnverified) {
+      SnackBarHelper.showErrorSnackBar(
+        context,
+        message: 'Not verified yet. Open the link in your email, then tap '
+            '"I\'ve verified".',
+      );
+    }
+    if (mounted) setState(() => _isVerifying = false);
   }
 
   Future<void> _verifyCode() async {
@@ -214,13 +382,19 @@ class _EmailVerificationSectionState
     }
     ref.invalidate(currentUserDetailProvider);
     _resendTimer?.cancel();
+    _rateLimitTimer?.cancel();
     if (mounted && showSnack) {
       SnackBarHelper.showSuccessSnackBar(
         context,
         message: 'Email verified successfully!',
       );
     }
-    if (mounted) setState(() => _codeSent = false);
+    if (mounted) {
+      setState(() {
+        _codeSent = false;
+        _linkFallbackSent = false;
+      });
+    }
   }
 
   @override
@@ -301,7 +475,11 @@ class _EmailVerificationSectionState
           ),
           const SizedBox(height: 6),
           Text(
-            _codeSent
+            _linkFallbackSent
+                ? 'We emailed a verification link to ${widget.email}. Open it, '
+                      'then come back — we\'ll pick it up automatically, or tap '
+                      '"I\'ve verified".'
+                : _codeSent
                 ? 'Enter the 6-digit code we emailed to ${widget.email}.'
                 : 'We\'ll email a 6-digit code to ${widget.email}. Verify to '
                       'unlock reviews, bookmarks, and community.',
@@ -371,7 +549,11 @@ class _EmailVerificationSectionState
                       : _sendCode,
                   child: OtpButtonLabel(
                     loading: _isSending,
-                    label: _codeSent ? 'Resend Code' : 'Send Code',
+                    label: _linkFallbackSent
+                        ? 'Resend Link'
+                        : _codeSent
+                        ? 'Resend Code'
+                        : 'Send Code',
                   ),
                 ),
               ),
@@ -383,6 +565,18 @@ class _EmailVerificationSectionState
                     child: OtpButtonLabel(
                       loading: _isVerifying,
                       label: 'Verify',
+                      spinnerColor: AppTheme.white,
+                    ),
+                  ),
+                ),
+              ] else if (_linkFallbackSent) ...[
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: _isVerifying ? null : () => _checkLinkVerified(),
+                    child: OtpButtonLabel(
+                      loading: _isVerifying,
+                      label: 'I\'ve verified',
                       spinnerColor: AppTheme.white,
                     ),
                   ),
