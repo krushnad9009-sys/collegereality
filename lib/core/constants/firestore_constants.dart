@@ -94,4 +94,8 @@ class FirestoreConstants {
   static const String guideEarningsCollection = 'guide_earnings';
   static const String guideEarningsEntriesSubcollection = 'entries';
   static const String consultationRatingsCollection = 'consultation_ratings';
+
+  /// PII-free public copies of student→guide reviews (no raterId), read by
+  /// anyone to render a guide's public review list. Doc id = consultationId.
+  static const String guideReviewsCollection = 'guide_reviews';
 }

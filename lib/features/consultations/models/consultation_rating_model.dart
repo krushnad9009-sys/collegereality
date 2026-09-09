@@ -18,6 +18,11 @@ class ConsultationRatingModel {
   final int criterion2; // helpful | respectful
   final int criterion3; // knowledge | seriousness
   final int criterion4; // genuine | appropriate
+
+  /// Optional free-text review. Kept on the private rating doc; a PII-free
+  /// copy (no raterId) is denormalized to `guide_reviews/{consultationId}`
+  /// for the public list — see ConsultationService.submitRating.
+  final String comment;
   final DateTime createdAt;
 
   const ConsultationRatingModel({
@@ -31,6 +36,7 @@ class ConsultationRatingModel {
     required this.criterion2,
     required this.criterion3,
     required this.criterion4,
+    this.comment = '',
     required this.createdAt,
   });
 
@@ -54,6 +60,7 @@ class ConsultationRatingModel {
       criterion2: (criteria['criterion2'] as num?)?.toInt() ?? 5,
       criterion3: (criteria['criterion3'] as num?)?.toInt() ?? 5,
       criterion4: (criteria['criterion4'] as num?)?.toInt() ?? 5,
+      comment: json['comment'] as String? ?? '',
       createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
           DateTime.now(),
     );
@@ -72,6 +79,7 @@ class ConsultationRatingModel {
           'criterion3': criterion3,
           'criterion4': criterion4,
         },
+        'comment': comment,
         'createdAt': createdAt.toIso8601String(),
       };
 }

@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_spacing.dart';
+import '../../../core/constants/consultation_constants.dart';
 import '../../../core/widgets/index.dart';
+import '../../auth/providers/user_provider.dart';
 import '../models/consultation_rating_model.dart';
 import '../providers/consultation_provider.dart';
 
@@ -62,6 +64,18 @@ class _TwoWayRatingSheetState extends ConsumerState<TwoWayRatingSheet> {
   int _c3 = 5;
   int _c4 = 5;
   bool _submitting = false;
+  final _commentController = TextEditingController();
+
+  /// The written review is only published (anonymously) when a student
+  /// rates a guide — a guide's notes on a student stay private.
+  bool get _showReviewField =>
+      widget.raterRole == ConsultationConstants.raterRoleStudent;
+
+  @override
+  void dispose() {
+    _commentController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -116,6 +130,33 @@ class _TwoWayRatingSheetState extends ConsumerState<TwoWayRatingSheet> {
           _starRow(context, labels.criterion2, _c2, (v) => setState(() => _c2 = v)),
           _starRow(context, labels.criterion3, _c3, (v) => setState(() => _c3 = v)),
           _starRow(context, labels.criterion4, _c4, (v) => setState(() => _c4 = v)),
+          if (_showReviewField) ...[
+            const SizedBox(height: 16),
+            Text(
+              'Add a review (optional)',
+              style: AppFonts.plusJakarta(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: tokens.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _commentController,
+              maxLines: 4,
+              maxLength: 1000,
+              textInputAction: TextInputAction.newline,
+              decoration: InputDecoration(
+                hintText: 'What was helpful? Shown publicly without your name.',
+                filled: true,
+                fillColor: tokens.surfaceMuted,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(tokens.buttonRadius),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
           PrimaryButton(
             label: 'Submit rating',
@@ -167,6 +208,9 @@ class _TwoWayRatingSheetState extends ConsumerState<TwoWayRatingSheet> {
   Future<void> _submit() async {
     setState(() => _submitting = true);
     try {
+      final raterCollege = _showReviewField
+          ? (ref.read(currentUserDetailProvider).valueOrNull?.collegeName ?? '')
+          : '';
       await ref.read(consultationServiceProvider).submitRating(
             consultationId: widget.consultationId,
             raterId: widget.raterId,
@@ -177,6 +221,8 @@ class _TwoWayRatingSheetState extends ConsumerState<TwoWayRatingSheet> {
             criterion2: _c2,
             criterion3: _c3,
             criterion4: _c4,
+            comment: _showReviewField ? _commentController.text : '',
+            rateeCollegeName: raterCollege,
           );
       if (!mounted) return;
       Navigator.of(context).pop();

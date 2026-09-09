@@ -193,7 +193,7 @@ class _GuideListTile extends StatelessWidget {
                             height: 11,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: guide.presence.isOnline
+                              color: guide.presence.isLiveOnline
                                   ? PresenceState.online.color
                                   : tokens.textTertiary,
                             ),

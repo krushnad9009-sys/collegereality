@@ -1,3 +1,4 @@
+import '../../../core/constants/consultation_constants.dart';
 import '../../../core/constants/profile_constants.dart';
 
 class UserPresenceModel {
@@ -26,6 +27,16 @@ class UserPresenceModel {
 
   bool get isBusyNow =>
       busyUntil != null && busyUntil!.isAfter(DateTime.now());
+
+  /// The single "is this guide reachable right now" signal used by the
+  /// online dot on guide lists/profiles and by the instant-consultation
+  /// payment gate: the guide flipped their availability toggle ON **and**
+  /// their heartbeat is fresh (a force-quit app goes offline on its own
+  /// once `lastSeenAt` goes stale). Mirrored server-side in
+  /// `functions/src/consultations.js`.
+  bool get isLiveOnline =>
+      availabilityStatus == ProfileConstants.availabilityAvailable &&
+      isFresh(ConsultationConstants.presenceStaleAfter);
 
   factory UserPresenceModel.fromJson(Map<String, dynamic>? json) {
     if (json == null) return const UserPresenceModel();

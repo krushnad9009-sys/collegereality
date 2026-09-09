@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../social/models/social_models.dart';
 import '../models/consultation_model.dart';
 import '../models/consultation_rating_model.dart';
+import '../models/guide_review_model.dart';
 import '../services/call_access_service.dart';
 import '../services/consultation_service.dart';
 import '../services/payment_service.dart';
@@ -33,6 +34,12 @@ final studentConsultationSummaryProvider =
   return ref
       .watch(consultationServiceProvider)
       .getStudentConsultationSummary(studentId);
+});
+
+/// Public anonymised review list for a guide's profile / college pages.
+final guideReviewsProvider =
+    FutureProvider.family<List<GuideReviewModel>, String>((ref, guideId) {
+  return ref.watch(consultationServiceProvider).fetchGuideReviews(guideId);
 });
 
 /// First page of consultation history (student or guide side). Callers

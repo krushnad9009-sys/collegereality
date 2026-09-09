@@ -567,12 +567,35 @@ service cloud.firestore {
         data.raterId == request.auth.uid &&
         data.raterId != data.rateeId &&
         data.overall is number && data.overall >= 1 && data.overall <= 5 &&
+        (!('comment' in data) ||
+          (data.comment is string && data.comment.size() <= 1000)) &&
         (
           (raterRole == 'student' && c.studentId == request.auth.uid &&
             data.rateeId == c.guideId) ||
           (raterRole == 'guide' && c.guideId == request.auth.uid &&
             data.rateeId == c.studentId)
         );
+    }
+
+    // A `guide_reviews/{consultationId}` doc is the PII-free public mirror
+    // of the student's `consultation_ratings/{consultationId}_student` doc
+    // (which carries `raterId`). Valid only when that private rating
+    // already exists, was written by the caller, and targets the same
+    // guide — so this can't be forged without first passing
+    // isEligibleConsultationRating.
+    function isValidGuideReview(consultationId) {
+      let data = request.resource.data;
+      let ratingPath = /databases/$(database)/documents/consultation_ratings/$(consultationId + '_student');
+      return data.keys().hasOnly(
+          ['consultationId', 'guideId', 'overall', 'comment', 'collegeName', 'createdAt']
+        ) &&
+        data.consultationId == consultationId &&
+        data.overall is number && data.overall >= 1 && data.overall <= 5 &&
+        data.comment is string && data.comment.size() <= 1000 &&
+        data.collegeName is string && data.collegeName.size() <= 120 &&
+        exists(ratingPath) &&
+        get(ratingPath).data.raterId == request.auth.uid &&
+        get(ratingPath).data.rateeId == data.guideId;
     }
 
     match /users/{userId} {
@@ -765,6 +788,16 @@ service cloud.firestore {
         isEligibleConsultationRating(
           request.resource.data.consultationId, request.resource.data.raterRole
         );
+      allow update, delete: if false;
+    }
+
+    match /guide_reviews/{consultationId} {
+      // Public, PII-free review list for a guide's profile / college
+      // pages. Any signed-in user reads; only the student who filed the
+      // matching private rating may create; immutable thereafter (admins
+      // moderate via the Admin SDK / console).
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidGuideReview(consultationId);
       allow update, delete: if false;
     }
 

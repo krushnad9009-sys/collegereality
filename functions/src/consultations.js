@@ -61,6 +61,26 @@ const createConsultationOrder = onCall(
       throw new HttpsError('failed-precondition', 'Guide is not eligible.');
     }
 
+    // Instant-consultation online gate — mirrors
+    // UserPresenceModel.isLiveOnline on the client: the guide's
+    // availability toggle is ON *and* their heartbeat is fresh
+    // (ConsultationConstants.presenceStaleAfter = 100s). Blocks paying an
+    // offline guide even if the client skipped its own check.
+    const PRESENCE_STALE_AFTER_MS = 100 * 1000;
+    const presence = guide.presence || {};
+    const lastSeenMs = Date.parse(presence.lastSeenAt || '');
+    const heartbeatFresh =
+      Number.isFinite(lastSeenMs) &&
+      Date.now() - lastSeenMs < PRESENCE_STALE_AFTER_MS;
+    const guideOnline =
+      presence.availabilityStatus === 'available' && heartbeatFresh;
+    if (!guideOnline) {
+      throw new HttpsError(
+        'failed-precondition',
+        'This guide is currently offline. Please try again when they are online.',
+      );
+    }
+
     const serverPrice = resolveGuidePriceForConsultation({
       settings: guide.communicationSettings,
       type: consultation.type,

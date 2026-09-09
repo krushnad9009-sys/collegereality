@@ -18,6 +18,7 @@ import '../widgets/guide_stats_display.dart';
 import '../../verification/widgets/verification_badge_widget.dart';
 import '../../consultations/widgets/availability_badge.dart';
 import '../../consultations/widgets/guide_pricing_card.dart';
+import '../../consultations/widgets/guide_reviews_list.dart';
 
 class GuidePublicProfileScreen extends ConsumerStatefulWidget {
   final String guideUid;
@@ -241,6 +242,8 @@ class _GuidePublicProfileScreenState
                 ),
                 const SizedBox(height: 20),
                 GuidePricingCard(guide: guide),
+                const SizedBox(height: 20),
+                GuideReviewsList(guideId: guide.uid, stats: guide.stats),
                 if (guide.settings.areasOfExpertise.isNotEmpty) ...[
                   const SizedBox(height: 20),
                   _ChipSection(
@@ -379,7 +382,7 @@ class _GuideProfileHeader extends StatelessWidget {
                     height: 14,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: guide.presence.isOnline
+                      color: guide.presence.isLiveOnline
                           ? PresenceState.online.color
                           : tokens.textTertiary,
                     ),

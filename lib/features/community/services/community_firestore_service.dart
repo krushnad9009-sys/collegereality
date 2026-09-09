@@ -107,6 +107,31 @@ class CommunityFirestoreService {
     return DateTime.tryParse(raw.toString());
   }
 
+  /// Explicit "I'm online / I'm offline" toggle for guides (the quick
+  /// switch on the profile hub). Going online also refreshes `lastSeenAt`
+  /// so [UserPresenceModel.isLiveOnline] is immediately true; going
+  /// offline sets `availabilityStatus: offline` and `isOnline: false` so
+  /// the guide drops out of instant-consultation eligibility at once
+  /// rather than waiting for the heartbeat to go stale.
+  Future<void> setAvailability(
+    String userId, {
+    required bool available,
+  }) async {
+    final doc = await _firestore
+        .collection(FirestoreConstants.usersCollection)
+        .doc(userId)
+        .get();
+    final existingPresence = doc.data()?['presence'] as Map<String, dynamic>?;
+    await _writePresence(userId, {
+      'isOnline': available,
+      'lastSeenAt': DateTime.now().toIso8601String(),
+      'availabilityStatus': available
+          ? ProfileConstants.availabilityAvailable
+          : ProfileConstants.availabilityOffline,
+      'busyUntil': existingPresence?['busyUntil'],
+    });
+  }
+
   Future<UserPresenceModel?> getPresence(String userId) async {
     final doc = await _firestore
         .collection(FirestoreConstants.publicProfilesCollection)

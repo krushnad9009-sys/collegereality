@@ -8,6 +8,7 @@ import '../../communication/services/communication_firestore_service.dart';
 import '../../social/models/social_models.dart';
 import '../models/consultation_model.dart';
 import '../models/consultation_rating_model.dart';
+import '../models/guide_review_model.dart';
 import '../utils/consultation_rating_calculator.dart';
 
 class ConsultationException implements Exception {
@@ -85,6 +86,13 @@ class ConsultationService {
     }
     if (!wantsChat && !settings.callAvailable) {
       throw ConsultationException('This guide is not available for calls right now.');
+    }
+    // Instant consultations require the guide to be online right now
+    // (availability toggle ON + fresh heartbeat). Also enforced in
+    // functions/src/consultations.js createConsultationOrder so a client
+    // that skips this cannot get a payment order.
+    if (!guide.presence.isLiveOnline) {
+      throw ConsultationException('This guide is currently offline.');
     }
     if (grossPaise <= 0) {
       throw ConsultationException('Invalid consultation price.');
@@ -216,7 +224,14 @@ class ConsultationService {
     required int criterion2,
     required int criterion3,
     required int criterion4,
+    String comment = '',
+    String? rateeCollegeName,
   }) async {
+    final trimmedComment = comment.trim();
+    final safeComment = trimmedComment.length > _maxReviewCommentLength
+        ? trimmedComment.substring(0, _maxReviewCommentLength)
+        : trimmedComment;
+
     final id = ConsultationRatingModel.docId(consultationId, raterRole);
     final rating = ConsultationRatingModel(
       id: id,
@@ -229,6 +244,7 @@ class ConsultationService {
       criterion2: criterion2,
       criterion3: criterion3,
       criterion4: criterion4,
+      comment: safeComment,
       createdAt: DateTime.now(),
     );
     // Step 1: create the immutable rating doc — allowed only once the
@@ -251,8 +267,46 @@ class ConsultationService {
     // (high-read-volume: guide directory cards). Student-received ratings
     // are aggregated on demand — see getStudentConsultationSummary.
     if (raterRole == ConsultationConstants.raterRoleStudent) {
+      // Step 3: publish a PII-free copy for the guide's public review
+      // list. No raterId — the private `consultation_ratings` doc keeps
+      // that. Best-effort: the rating itself already succeeded.
+      final review = GuideReviewModel(
+        consultationId: consultationId,
+        guideId: rateeId,
+        overall: overall,
+        comment: safeComment,
+        collegeName: rateeCollegeName?.trim() ?? '',
+        createdAt: DateTime.now(),
+      );
+      try {
+        await _guideReviews.doc(consultationId).set(review.toJson());
+      } catch (_) {
+        // A rules rejection or offline write here must not surface as a
+        // rating failure — the aggregate below is the source of truth.
+      }
       await _recomputeGuideConsultationStats(rateeId);
     }
+  }
+
+  static const int _maxReviewCommentLength = 1000;
+
+  CollectionReference<Map<String, dynamic>> get _guideReviews =>
+      _firestore.collection(FirestoreConstants.guideReviewsCollection);
+
+  /// Public, anonymised reviews for a guide, newest first. Any signed-in
+  /// user may read these (see firestore.rules `guide_reviews`).
+  Future<List<GuideReviewModel>> fetchGuideReviews(
+    String guideId, {
+    int limit = 20,
+  }) async {
+    final snap = await _guideReviews
+        .where('guideId', isEqualTo: guideId)
+        .orderBy('createdAt', descending: true)
+        .limit(limit)
+        .get();
+    return snap.docs
+        .map((d) => GuideReviewModel.fromJson(d.data(), docId: d.id))
+        .toList();
   }
 
   Future<void> _recomputeGuideConsultationStats(String guideId) async {

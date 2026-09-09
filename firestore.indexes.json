@@ -1041,6 +1041,14 @@
         { "fieldPath": "isActive", "order": "ASCENDING" },
         { "fieldPath": "reviewCount", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "guide_reviews",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "guideId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

@@ -228,7 +228,19 @@ class _ConsultationCheckoutScreenState
                                 overflow: TextOverflow.ellipsis,
                               ),
                             const SizedBox(height: 4),
-                            AvailabilityBadge(presence: guide.presence),
+                            Row(
+                              children: [
+                                AvailabilityBadge(presence: guide.presence),
+                                if (!guide.presence.isLiveOnline) ...[
+                                  const SizedBox(width: 6),
+                                  StatusBadge(
+                                    label: 'Currently Offline',
+                                    icon: Icons.dark_mode_outlined,
+                                    color: AppTheme.errorColor,
+                                  ),
+                                ],
+                              ],
+                            ),
                           ],
                         ),
                       ),
@@ -288,14 +300,29 @@ class _ConsultationCheckoutScreenState
                   )
                 else
                   PrimaryButton(
-                    label: _selected == null
-                        ? 'Select an option'
-                        : 'Pay ₹${(_selected!.pricePaise / 100).toStringAsFixed(0)}',
+                    label: !guide.presence.isLiveOnline
+                        ? 'Guide is offline'
+                        : _selected == null
+                            ? 'Select an option'
+                            : 'Pay ₹${(_selected!.pricePaise / 100).toStringAsFixed(0)}',
                     isLoading: _processing,
-                    onPressed: (_selected == null || currentUser == null)
+                    onPressed: (_selected == null ||
+                            currentUser == null ||
+                            !guide.presence.isLiveOnline)
                         ? null
                         : () => _pay(currentUser.uid, guide.uid),
                   ),
+                if (!guide.presence.isLiveOnline) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    'You can only start an instant consultation while the guide '
+                    'is online. Check back later.',
+                    style: AppFonts.plusJakarta(
+                      fontSize: 12,
+                      color: tokens.textSecondary,
+                    ),
+                  ),
+                ],
               ],
             ),
           );

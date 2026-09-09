@@ -12,6 +12,7 @@ import '../../../core/widgets/index.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/providers/user_provider.dart';
 import '../../auth/utils/sign_out.dart';
+import '../../communication/widgets/guide_online_toggle_card.dart';
 import '../../verification/widgets/verification_badge_widget.dart';
 import '../models/student_trust_model.dart';
 import '../widgets/trust_score_card.dart';
@@ -136,6 +137,13 @@ class ProfileScreen extends ConsumerWidget {
                     trust: StudentTrustModel.fromUser(userDetail),
                   ),
                 ),
+                if (GuideOnlineToggleCard.isEligible(userDetail)) ...[
+                  const SizedBox(height: AppSpacing.lg),
+                  AppReveal(
+                    delayMs: 90,
+                    child: GuideOnlineToggleCard(user: userDetail),
+                  ),
+                ],
               ],
               const SizedBox(height: AppSpacing.xl),
               AppReveal(
