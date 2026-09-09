@@ -9,11 +9,27 @@ class VerificationConstants {
   static const documentFeeReceipt = 'fee_receipt';
   static const documentAdmissionLetter = 'admission_letter';
   static const documentFinalMarksheet = 'final_year_marksheet';
+  static const documentTransferCertificate = 'transfer_certificate';
+  static const documentApaarAadhaar = 'apaar_aadhaar_id';
 
   static const List<Map<String, String>> studentDocumentTypes = [
     {'id': documentCollegeId, 'label': 'College ID Card'},
     {'id': documentBonafide, 'label': 'Bonafide Certificate'},
+    {'id': documentTransferCertificate, 'label': 'Transfer Certificate (TC)'},
+    {'id': documentApaarAadhaar, 'label': 'APAAR ID / Aadhaar ID'},
+    {'id': documentFinalMarksheet, 'label': 'Marksheet'},
   ];
+
+  /// The exact menu the "Student Verification" card in Edit Profile offers.
+  /// The user must pick and upload [requiredGuideVerificationDocs] of these.
+  static const List<Map<String, String>> guideVerificationDocumentTypes = [
+    {'id': documentCollegeId, 'label': 'College ID Card'},
+    {'id': documentTransferCertificate, 'label': 'Transfer Certificate (TC)'},
+    {'id': documentApaarAadhaar, 'label': 'APAAR ID / Aadhaar ID'},
+    {'id': documentFinalMarksheet, 'label': 'Marksheet'},
+  ];
+
+  static const int requiredGuideVerificationDocs = 2;
 
   static const List<Map<String, String>> alumniDocumentTypes = [
     {'id': documentFinalMarksheet, 'label': 'Graduation Marksheet'},

@@ -11,8 +11,13 @@ class VerificationStorageService {
     required String requestId,
     required String extension,
     required Uint8List bytes,
+    int? slot,
   }) async {
-    final path = 'verification_documents/$userId/$requestId.$extension';
+    // `slot` disambiguates multiple files in one request (the 2-document
+    // "Student Verification" flow); a null slot keeps the legacy
+    // single-file path shape.
+    final name = slot == null ? requestId : '$requestId-$slot';
+    final path = 'verification_documents/$userId/$name.$extension';
     final ref = _storage.ref().child(path);
     await ref.putData(
       bytes,

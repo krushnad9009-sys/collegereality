@@ -6,6 +6,17 @@ class VerificationRequestModel {
   final String documentType;
   final String storagePath;
   final String contentHash;
+
+  /// Multi-document submissions (the "Student Verification" card in Edit
+  /// Profile requires 2). [documentType] / [storagePath] / [contentHash]
+  /// above stay populated with the FIRST entry so the single-document AI
+  /// agent and admin review UI keep working unchanged; these arrays carry
+  /// the full set for a human reviewer. Empty for legacy single-doc
+  /// submissions.
+  final List<String> documentTypes;
+  final List<String> storagePaths;
+  final List<String> contentHashes;
+
   final String status;
   final String verificationRole;
   final String? collegeId;
@@ -45,6 +56,9 @@ class VerificationRequestModel {
     required this.documentType,
     required this.storagePath,
     required this.contentHash,
+    this.documentTypes = const [],
+    this.storagePaths = const [],
+    this.contentHashes = const [],
     required this.status,
     this.verificationRole = VerificationConstants.roleStudent,
     this.collegeId,
@@ -75,6 +89,21 @@ class VerificationRequestModel {
       documentType: json['documentType'] as String? ?? '',
       storagePath: json['storagePath'] as String? ?? '',
       contentHash: json['contentHash'] as String? ?? '',
+      documentTypes:
+          (json['documentTypes'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const [],
+      storagePaths:
+          (json['storagePaths'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const [],
+      contentHashes:
+          (json['contentHashes'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const [],
       status: json['status'] as String? ?? 'pending_review',
       verificationRole:
           json['verificationRole'] as String? ??
@@ -111,6 +140,9 @@ class VerificationRequestModel {
     'documentType': documentType,
     'storagePath': storagePath,
     'contentHash': contentHash,
+    'documentTypes': documentTypes,
+    'storagePaths': storagePaths,
+    'contentHashes': contentHashes,
     'status': status,
     'verificationRole': verificationRole,
     'collegeId': collegeId,

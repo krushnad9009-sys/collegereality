@@ -190,6 +190,148 @@ class VerificationFirestoreService {
     return request;
   }
 
+  /// Multi-document submission used by the "Student Verification" card in
+  /// Edit Profile: the user picks and uploads exactly
+  /// [VerificationConstants.requiredGuideVerificationDocs] documents, which
+  /// are stored as ONE review request. The first document fills the legacy
+  /// `documentType` / `storagePath` / `contentHash` fields (so the AI agent
+  /// and admin UI are unchanged); all of them are also recorded in the
+  /// `documentTypes` / `storagePaths` / `contentHashes` arrays.
+  ///
+  /// Sets `users/{uid}.verificationStatus = 'pending_review'`. Approval
+  /// (which unblocks the "Available as a guide" toggle) still comes only
+  /// from the AI verification agent or an admin — the client cannot
+  /// self-approve (firestore.rules).
+  Future<VerificationRequestModel> submitGuideVerificationDocuments({
+    required UserModel user,
+    required String verificationRole,
+    required String collegeId,
+    required String collegeName,
+    required List<GuideVerificationDoc> documents,
+  }) async {
+    if (!user.isEmailVerified || !user.isPhoneVerified) {
+      throw VerificationException(
+        'Complete email and mobile OTP verification before uploading documents.',
+      );
+    }
+    if (collegeId.trim().isEmpty || collegeName.trim().isEmpty) {
+      throw VerificationException('Select your college before submitting.');
+    }
+
+    final required = VerificationConstants.requiredGuideVerificationDocs;
+    if (documents.length != required) {
+      throw VerificationException('Upload exactly $required documents.');
+    }
+    final distinctTypes = documents.map((d) => d.documentType).toSet();
+    if (distinctTypes.length != documents.length) {
+      throw VerificationException('Choose $required different document types.');
+    }
+    for (final doc in documents) {
+      if (!isValidDocumentForRole(verificationRole, doc.documentType)) {
+        throw VerificationException(
+          '${VerificationConstants.documentLabel(doc.documentType)} is not an '
+          'accepted document type.',
+        );
+      }
+      if (doc.bytes.isEmpty) {
+        throw VerificationException('One of the uploads is empty.');
+      }
+    }
+
+    final existing = await getActiveRequest(user.uid);
+    if (existing != null) {
+      throw VerificationException('You already have documents under review.');
+    }
+    if (user.verificationBadge != VerificationConstants.badgeNone) {
+      throw VerificationException('You are already verified.');
+    }
+
+    final requestId = _uuid.v4();
+    final storagePaths = <String>[];
+    final contentHashes = <String>[];
+    final documentTypes = <String>[];
+    final aiFlags = <String>[];
+    var minConfidence = 1.0;
+    var anyDuplicate = false;
+    final summaries = <String>[];
+
+    for (var i = 0; i < documents.length; i++) {
+      final doc = documents[i];
+      final validation = await _validationService.validate(
+        bytes: doc.bytes,
+        fileName: doc.fileName,
+        documentType: doc.documentType,
+        isDuplicateHash: _isDuplicateHash,
+      );
+      final hash = _validationService.computeHash(doc.bytes);
+      final ext = doc.fileName.split('.').last.toLowerCase();
+
+      final path = await _storageService.uploadVerificationDocument(
+        userId: user.uid,
+        requestId: requestId,
+        extension: ext,
+        bytes: doc.bytes,
+        slot: i + 1,
+      );
+      await _registerHash(hash, user.uid, requestId);
+
+      storagePaths.add(path);
+      contentHashes.add(hash);
+      documentTypes.add(doc.documentType);
+      aiFlags.addAll(validation.flags);
+      anyDuplicate = anyDuplicate || validation.isDuplicate;
+      if (validation.confidence < minConfidence) {
+        minConfidence = validation.confidence;
+      }
+      summaries.add(
+        '${VerificationConstants.documentLabel(doc.documentType)}: '
+        '${validation.summary}',
+      );
+    }
+
+    final status = anyDuplicate
+        ? VerificationConstants.statusFlagged
+        : VerificationConstants.statusPendingReview;
+
+    final request = VerificationRequestModel(
+      id: requestId,
+      userId: user.uid,
+      documentType: documentTypes.first,
+      storagePath: storagePaths.first,
+      contentHash: contentHashes.first,
+      documentTypes: documentTypes,
+      storagePaths: storagePaths,
+      contentHashes: contentHashes,
+      status: status,
+      verificationRole: verificationRole,
+      collegeId: collegeId.trim(),
+      collegeName: collegeName.trim(),
+      aiFlags: aiFlags.toSet().toList(),
+      aiConfidence: minConfidence,
+      aiSummary: summaries.join('\n'),
+      requiresManualReview: true,
+      createdAt: DateTime.now(),
+    );
+
+    await _firestore
+        .collection(FirestoreConstants.verificationRequestsCollection)
+        .doc(requestId)
+        .set(request.toJson());
+
+    await _firestore
+        .collection(FirestoreConstants.usersCollection)
+        .doc(user.uid)
+        .update({
+      'verificationStatus': status,
+      'verificationIntent': verificationRole,
+      'collegeId': collegeId.trim(),
+      'collegeName': collegeName.trim(),
+      'updatedAt': DateTime.now().toIso8601String(),
+    });
+
+    return request;
+  }
+
   Future<void> approveRequest({
     required String requestId,
     required String adminId,
@@ -330,4 +472,17 @@ class VerificationException implements Exception {
   VerificationException(this.message);
   @override
   String toString() => message;
+}
+
+/// One picked file for [VerificationFirestoreService.submitGuideVerificationDocuments].
+class GuideVerificationDoc {
+  final String documentType;
+  final Uint8List bytes;
+  final String fileName;
+
+  const GuideVerificationDoc({
+    required this.documentType,
+    required this.bytes,
+    required this.fileName,
+  });
 }

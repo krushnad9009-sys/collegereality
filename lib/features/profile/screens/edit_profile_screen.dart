@@ -17,6 +17,7 @@ import '../../colleges/widgets/college_autocomplete_field.dart';
 import '../../communication/models/guide_stats_model.dart';
 import '../../communication/widgets/language_multi_select_field.dart';
 import '../../community/models/user_presence_model.dart';
+import '../../verification/widgets/guide_verification_card.dart';
 import '../widgets/premium_profile_edit_section.dart';
 import '../widgets/display_name_settings_section.dart';
 import '../widgets/phone_verification_section.dart';
@@ -299,6 +300,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       ],
                     ),
                   ),
+                  if (userDetail != null) ...[
+                    const SizedBox(height: AppSpacing.xl),
+                    GuideVerificationCard(user: userDetail),
+                  ],
                   if (settings != null) ...[
                     const SizedBox(height: AppSpacing.xl),
                     PremiumCard(
@@ -339,23 +344,36 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                             .badgeVerifiedAlumni) &&
                                 userDetail.verificationStatus ==
                                     VerificationConstants.statusApproved;
+                            if (!isEligibleGuide) {
+                              // Disabled state: tapping the row (or the inert
+                              // switch) opens the verification sheet instead
+                              // of doing nothing.
+                              return ListTile(
+                                contentPadding: EdgeInsets.zero,
+                                onTap: userDetail != null
+                                    ? () => GuideVerificationCard.openSheet(
+                                        context, userDetail)
+                                    : null,
+                                title: const Text('Available as a guide'),
+                                subtitle: const Text(
+                                  'Only verified students/alumni can become a guide. Tap to verify.',
+                                ),
+                                trailing: const Switch(
+                                  value: false,
+                                  onChanged: null,
+                                ),
+                              );
+                            }
                             return SwitchListTile(
                               contentPadding: EdgeInsets.zero,
                               title: const Text('Available as a guide'),
-                              subtitle: isEligibleGuide
-                                  ? null
-                                  : const Text(
-                                      'Only verified students/alumni can become a guide. Complete verification first.',
-                                    ),
-                              value: settings.isGuideAvailable && isEligibleGuide,
-                              onChanged: isEligibleGuide
-                                  ? (value) {
-                                      setState(() {
-                                        _communicationSettings = settings
-                                            .copyWith(isGuideAvailable: value);
-                                      });
-                                    }
-                                  : null,
+                              value: settings.isGuideAvailable,
+                              onChanged: (value) {
+                                setState(() {
+                                  _communicationSettings = settings.copyWith(
+                                      isGuideAvailable: value);
+                                });
+                              },
                             );
                           }),
                           if ((_communicationSettings ?? settings)
