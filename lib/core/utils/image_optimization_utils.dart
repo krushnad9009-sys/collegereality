@@ -1,5 +1,17 @@
-import 'dart:typed_data';
 import 'dart:ui' as ui;
+
+import 'package:flutter/foundation.dart';
+
+/// Raised when image bytes can't be turned into an uploadable image and no
+/// retry will help. The [message] is safe to show to the user as-is.
+class ImageOptimizationException implements Exception {
+  const ImageOptimizationException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => message;
+}
 
 /// Optimized image bytes plus the MIME type they were actually encoded as.
 /// `optimizeForUpload` sometimes returns the original bytes unchanged and
@@ -22,21 +34,41 @@ class ImageOptimizationUtils {
   static const int maxEdgePx = 1600;
 
   /// Downscales large images and rejects payloads above [maxUploadBytes].
+  ///
+  /// Throws [ImageOptimizationException] for anything the caller can't fix by
+  /// retrying (bytes that aren't a decodable image, or an image that's still
+  /// over [maxUploadBytes] after downscaling). Callers should catch it, log,
+  /// and show a friendly message rather than let it surface as a raw
+  /// `Exception: Invalid image data`.
   static Future<OptimizedImage> optimizeForUpload(Uint8List bytes) async {
-    if (bytes.length <= maxUploadBytes) {
+    if (bytes.isEmpty) {
+      throw const ImageOptimizationException('The selected file is empty.');
+    }
+
+    final ui.Image image;
+    try {
       final codec = await ui.instantiateImageCodec(bytes);
       final frame = await codec.getNextFrame();
-      final image = frame.image;
+      image = frame.image;
+    } catch (e, st) {
+      // Keep a breadcrumb here even though the caller reports the failure —
+      // this is the layer that actually knows it was a decode problem.
+      debugPrint('[ImageOptimizationUtils] decode failed: $e');
+      if (kDebugMode) debugPrintStack(stackTrace: st);
+      throw const ImageOptimizationException(
+        "That file couldn't be read as an image. Please pick another photo.",
+      );
+    }
+
+    try {
       final longest = image.width > image.height ? image.width : image.height;
-      if (longest <= maxEdgePx) {
+      if (bytes.length <= maxUploadBytes && longest <= maxEdgePx) {
         return OptimizedImage(bytes, _sniffContentType(bytes));
       }
       return OptimizedImage(await _resize(image, maxEdgePx), 'image/png');
+    } finally {
+      image.dispose();
     }
-
-    final codec = await ui.instantiateImageCodec(bytes);
-    final frame = await codec.getNextFrame();
-    return OptimizedImage(await _resize(frame.image, maxEdgePx), 'image/png');
   }
 
   /// Detects the real format of passthrough (unmodified) bytes from their
@@ -88,14 +120,20 @@ class ImageOptimizationUtils {
     );
     final picture = recorder.endRecording();
     final resized = await picture.toImage(targetW, targetH);
-    final data = await resized.toByteData(format: ui.ImageByteFormat.png);
-    final optimized = data!.buffer.asUint8List();
-    if (optimized.length > maxUploadBytes) {
-      throw StateError(
-        'Image is still too large after compression (${optimized.length} bytes). '
-        'Choose a smaller photo.',
-      );
+    try {
+      final data = await resized.toByteData(format: ui.ImageByteFormat.png);
+      final optimized = data!.buffer.asUint8List();
+      if (optimized.length > maxUploadBytes) {
+        throw ImageOptimizationException(
+          'That photo is still too large after compression '
+          '(${(optimized.length / (1024 * 1024)).toStringAsFixed(1)} MB). '
+          'Please choose a smaller one.',
+        );
+      }
+      return optimized;
+    } finally {
+      resized.dispose();
+      picture.dispose();
     }
-    return optimized;
   }
 }
