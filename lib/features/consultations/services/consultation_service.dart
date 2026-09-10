@@ -212,8 +212,13 @@ class ConsultationService {
   /// completed-only, participant-only, no self-rating, one per
   /// participant/consultation (the deterministic doc ID is the dedupe key
   /// — a duplicate write is evaluated as an `update`, which is always
-  /// denied). Recomputes the ratee's aggregate the same way free-call
-  /// ratings already do.
+  /// denied).
+  ///
+  /// The client only writes the rating doc + flips its own submitted
+  /// flag. The guide's aggregate and the PII-free `guide_reviews` copy
+  /// are then produced server-side by the `onConsultationRatingCreated`
+  /// Cloud Function — serialised per rating, so concurrent raters of the
+  /// same guide can't race each other's aggregate write.
   Future<void> submitRating({
     required String consultationId,
     required String raterId,
@@ -225,7 +230,6 @@ class ConsultationService {
     required int criterion3,
     required int criterion4,
     String comment = '',
-    String? rateeCollegeName,
   }) async {
     final trimmedComment = comment.trim();
     final safeComment = trimmedComment.length > _maxReviewCommentLength
@@ -262,30 +266,9 @@ class ConsultationService {
       flagField: true,
       'updatedAt': DateTime.now().toIso8601String(),
     });
-
-    // Only ratings a *guide* receives are denormalized onto guideStats
-    // (high-read-volume: guide directory cards). Student-received ratings
-    // are aggregated on demand — see getStudentConsultationSummary.
-    if (raterRole == ConsultationConstants.raterRoleStudent) {
-      // Step 3: publish a PII-free copy for the guide's public review
-      // list. No raterId — the private `consultation_ratings` doc keeps
-      // that. Best-effort: the rating itself already succeeded.
-      final review = GuideReviewModel(
-        consultationId: consultationId,
-        guideId: rateeId,
-        overall: overall,
-        comment: safeComment,
-        collegeName: rateeCollegeName?.trim() ?? '',
-        createdAt: DateTime.now(),
-      );
-      try {
-        await _guideReviews.doc(consultationId).set(review.toJson());
-      } catch (_) {
-        // A rules rejection or offline write here must not surface as a
-        // rating failure — the aggregate below is the source of truth.
-      }
-      await _recomputeGuideConsultationStats(rateeId);
-    }
+    // No step 3: onConsultationRatingCreated (Cloud Function) now writes
+    // the PII-free guide_reviews copy and recomputes the guide's
+    // consultation aggregate from the rating doc created above.
   }
 
   static const int _maxReviewCommentLength = 1000;
@@ -309,38 +292,17 @@ class ConsultationService {
         .toList();
   }
 
-  Future<void> _recomputeGuideConsultationStats(String guideId) async {
-    final guide = await _userService.getPublicProfileByUID(guideId);
-    if (guide == null) return;
-    final snap = await _ratings
-        .where('rateeId', isEqualTo: guideId)
-        .where('raterRole', isEqualTo: ConsultationConstants.raterRoleStudent)
-        .get();
-    final updated = recomputeConsultationStats(
-      current: guide.guideStats,
-      studentRatings: snap.docs.map((d) => d.data()).toList(),
-    );
-    final statsUpdate = {
-      'guideStats': updated.toJson(),
-      'updatedAt': DateTime.now().toIso8601String(),
-    };
-    await _firestore
-        .collection(FirestoreConstants.usersCollection)
-        .doc(guideId)
-        .update(statsUpdate);
-    await _userService.syncPublicProfile(guideId, statsUpdate);
-  }
-
+  /// Reads the PII-free `student_consultation_summaries/{studentId}` doc
+  /// (maintained by the `onConsultationRatingCreated` Cloud Function). A
+  /// client can't and shouldn't query the private `consultation_ratings`
+  /// docs of a user it isn't a party to.
   Future<StudentConsultationSummary> getStudentConsultationSummary(
     String studentId,
   ) async {
-    final snap = await _ratings
-        .where('rateeId', isEqualTo: studentId)
-        .where('raterRole', isEqualTo: ConsultationConstants.raterRoleGuide)
-        .limit(200)
+    final doc = await _firestore
+        .collection('student_consultation_summaries')
+        .doc(studentId)
         .get();
-    return StudentConsultationSummary.fromRatings(
-      snap.docs.map((d) => d.data()).toList(),
-    );
+    return StudentConsultationSummary.fromJson(doc.data());
   }
 }

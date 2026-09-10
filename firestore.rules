@@ -111,35 +111,9 @@ service cloud.firestore {
         newStats.get('recommendPercent', 0) <= 100;
     }
 
-    // Non-owner write of a guide's consultation-rating aggregate (denorm'd
-    // onto guideStats for fast directory reads) — parallel to
-    // isGuideStatsRatingUpdate() but for the paid-consultation fields,
-    // which that function's exact free-call increment checks don't cover.
-    function isConsultationStatsUpdate() {
-      let oldStats = guideStatsMap(resource.data);
-      let newStats = guideStatsMap(request.resource.data);
-      return isGuideStatsOnlyUpdate() &&
-        newStats.get('overallRating', 0) == oldStats.get('overallRating', 0) &&
-        newStats.get('totalRatings', 0) == oldStats.get('totalRatings', 0) &&
-        newStats.get('totalCalls', 0) == oldStats.get('totalCalls', 0) &&
-        newStats.get('totalChats', 0) == oldStats.get('totalChats', 0) &&
-        newStats.get('badgeTier', 'none') == oldStats.get('badgeTier', 'none') &&
-        newStats.get('helpfulPercent', 0) == oldStats.get('helpfulPercent', 0) &&
-        newStats.get('respectfulPercent', 0) == oldStats.get('respectfulPercent', 0) &&
-        newStats.get('recommendPercent', 0) == oldStats.get('recommendPercent', 0) &&
-        newStats.get('completedConsultations', 0) ==
-          oldStats.get('completedConsultations', 0) + 1 &&
-        newStats.get('consultationRatingAvg', 0) >= 0 &&
-        newStats.get('consultationRatingAvg', 0) <= 5 &&
-        newStats.get('communicationAvg', 0) >= 0 &&
-        newStats.get('communicationAvg', 0) <= 5 &&
-        newStats.get('helpfulOrRespectfulAvg', 0) >= 0 &&
-        newStats.get('helpfulOrRespectfulAvg', 0) <= 5 &&
-        newStats.get('knowledgeOrSeriousnessAvg', 0) >= 0 &&
-        newStats.get('knowledgeOrSeriousnessAvg', 0) <= 5 &&
-        newStats.get('genuineOrAppropriateAvg', 0) >= 0 &&
-        newStats.get('genuineOrAppropriateAvg', 0) <= 5;
-    }
+    // (Consultation-rating aggregates on guideStats are written by the
+    // `onConsultationRatingCreated` Cloud Function via the Admin SDK, not
+    // by a client — so there is no client carve-out for them here.)
 
     function ownerAllowedVerificationStatusChange() {
       let oldStatus = resource.data.get('verificationStatus', 'incomplete');
@@ -577,27 +551,6 @@ service cloud.firestore {
         );
     }
 
-    // A `guide_reviews/{consultationId}` doc is the PII-free public mirror
-    // of the student's `consultation_ratings/{consultationId}_student` doc
-    // (which carries `raterId`). Valid only when that private rating
-    // already exists, was written by the caller, and targets the same
-    // guide — so this can't be forged without first passing
-    // isEligibleConsultationRating.
-    function isValidGuideReview(consultationId) {
-      let data = request.resource.data;
-      let ratingPath = /databases/$(database)/documents/consultation_ratings/$(consultationId + '_student');
-      return data.keys().hasOnly(
-          ['consultationId', 'guideId', 'overall', 'comment', 'collegeName', 'createdAt']
-        ) &&
-        data.consultationId == consultationId &&
-        data.overall is number && data.overall >= 1 && data.overall <= 5 &&
-        data.comment is string && data.comment.size() <= 1000 &&
-        data.collegeName is string && data.collegeName.size() <= 120 &&
-        exists(ratingPath) &&
-        get(ratingPath).data.raterId == request.auth.uid &&
-        get(ratingPath).data.rateeId == data.guideId;
-    }
-
     match /users/{userId} {
       allow read: if isAuthenticated() && canReadUserProfile(userId);
       allow create: if isSafeUserCreate(userId);
@@ -607,9 +560,6 @@ service cloud.firestore {
         (isAuthenticated() &&
           request.auth.uid != userId &&
           isGuideStatsRatingUpdate()) ||
-        (isAuthenticated() &&
-          request.auth.uid != userId &&
-          isConsultationStatsUpdate()) ||
         (isOwner(userId) && ownerCannotElevatePrivileges())
       );
       allow delete: if isOwner(userId) || isAdmin();
@@ -628,8 +578,10 @@ service cloud.firestore {
         isAdmin() ||
         (isAuthenticated() &&
           request.auth.uid != userId &&
-          (isGuideStatsRatingUpdate() || isConsultationStatsUpdate()))
-      ) && !request.resource.data.keys().hasAny(['email', 'phone']) &&
+          isGuideStatsRatingUpdate())
+      ) && !request.resource.data.keys().hasAny(
+        ['email', 'phone', 'verifiedRealName', 'metadata']
+      ) &&
         guideAvailabilityRequiresVerification(
           resource == null ? {} : resource.data, request.resource.data
         );
@@ -759,6 +711,13 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // PII-free tombstone written by the `requestAccountDeletion` Cloud
+    // Function (Admin SDK) after a self-serve account deletion — holds
+    // only the uid, a timestamp, and per-step counts. Server-only.
+    match /deleted_accounts/{uid} {
+      allow read, write: if false;
+    }
+
     // Per-guide earnings ledger — written only by trusted backend logic
     // (consultation-completion Cloud Function), readable by the guide
     // themself (their own balance) or admin.
@@ -792,13 +751,22 @@ service cloud.firestore {
     }
 
     match /guide_reviews/{consultationId} {
-      // Public, PII-free review list for a guide's profile / college
-      // pages. Any signed-in user reads; only the student who filed the
-      // matching private rating may create; immutable thereafter (admins
-      // moderate via the Admin SDK / console).
+      // Public, PII-free mirror of a student's private
+      // `consultation_ratings/{id}_student` doc. Any signed-in user reads.
+      // Written ONLY by the `onConsultationRatingCreated` Cloud Function
+      // (Admin SDK) — the client just creates the private rating and the
+      // trigger derives this copy, so there is no client write path.
       allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && isValidGuideReview(consultationId);
-      allow update, delete: if false;
+      allow write: if false;
+    }
+
+    // PII-free per-student rating summary (averages + count only, no rater
+    // identity, no comments) maintained by `onConsultationRatingCreated`.
+    // A guide reads this for context on a student they're consulting —
+    // symmetric to the student seeing a guide's aggregate before booking.
+    match /student_consultation_summaries/{studentId} {
+      allow read: if isAuthenticated();
+      allow write: if false;
     }
 
     match /user_blocks/{blockId} {
@@ -825,12 +793,21 @@ service cloud.firestore {
       // Verification Agent / an admin, via the Admin SDK — which bypasses
       // these rules. This blocks a client self-submitting a pre-approved
       // request or forging an "AI accepted" verdict.
+      //
+      // `storagePath(s)` MUST point inside this user's own upload folder —
+      // the verification trigger downloads those objects with Admin SDK
+      // privileges, so an unconstrained path would let a submitter read
+      // (and get the AI to transcribe) another user's ID document. The
+      // trigger re-checks this too (functions/src/util/safeFetch.js).
       allow create: if isAuthenticated() &&
         request.resource.data.userId == request.auth.uid &&
         request.resource.data.status in ['pending_review', 'flagged'] &&
         request.resource.data.get('aiDecision', null) == null &&
         request.resource.data.get('aiReviewedAt', null) == null &&
-        request.resource.data.get('reviewedBy', null) == null;
+        request.resource.data.get('reviewedBy', null) == null &&
+        request.resource.data.storagePath is string &&
+        request.resource.data.storagePath.split('/')[0] == 'verification_documents' &&
+        request.resource.data.storagePath.split('/')[1] == request.auth.uid;
       allow update: if isAdmin();
     }
 
@@ -1282,9 +1259,29 @@ service cloud.firestore {
     match /college_requests/{requestId} {
       allow read: if isStaff() ||
         (isAuthenticated() && resource.data.userId == request.auth.uid);
+      // `website` is fetched server-side and `photoUrl` may be a bucket
+      // path the trigger downloads with Admin privileges — constrain both
+      // (SSRF host-vetting + redirect re-checks happen in the trigger,
+      // functions/src/util/safeFetch.js):
+      //  - website: http(s) only, if present
+      //  - photoUrl: an https URL, OR this user's own college_requests/ path
       allow create: if isAuthenticated() &&
         request.resource.data.userId == request.auth.uid &&
-        request.resource.data.status == 'pending_review';
+        request.resource.data.status == 'pending_review' &&
+        (
+          !('website' in request.resource.data) ||
+          request.resource.data.website == '' ||
+          request.resource.data.website.matches('(?i)^https?://.+')
+        ) &&
+        (
+          !('photoUrl' in request.resource.data) ||
+          request.resource.data.photoUrl == '' ||
+          request.resource.data.photoUrl.matches('(?i)^https://.+') ||
+          (
+            request.resource.data.photoUrl.split('/')[0] == 'college_requests' &&
+            request.resource.data.photoUrl.split('/')[1] == request.auth.uid
+          )
+        );
       allow update: if isAdmin();
       allow delete: if false;
     }

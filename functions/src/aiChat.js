@@ -5,6 +5,7 @@ const logger = require('firebase-functions/logger');
 const { GEMINI_API_KEY } = require('./params');
 const { answerChatTurn } = require('./ai/aiChatService');
 const { AI_CHAT_CONFIG } = require('./ai/config');
+const { newCorrelationId } = require('./util/guards');
 
 function sanitizeString(value, maxLen) {
   if (typeof value !== 'string') return null;
@@ -120,12 +121,19 @@ const aiChatComplete = onCall(
       }
       // Never leak raw provider errors (could contain request internals)
       // to the client — full detail is already in the server-side log
-      // from aiChatService.js.
+      // from aiChatService.js. The correlationId is the only thing that
+      // crosses back, so a user report can be matched to this log line.
+      const correlationId = newCorrelationId();
       logger.error('[aiChatComplete] unhandled failure', {
+        correlationId,
         mode,
         errorType: err && err.constructor && err.constructor.name,
       });
-      throw new HttpsError('unavailable', 'AI assistant is temporarily unavailable.');
+      throw new HttpsError(
+        'unavailable',
+        'AI assistant is temporarily unavailable.',
+        { correlationId },
+      );
     }
   },
 );

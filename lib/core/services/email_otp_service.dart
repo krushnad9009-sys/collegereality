@@ -4,7 +4,11 @@ import 'package:flutter/foundation.dart';
 
 import '../bootstrap/app_error_handler.dart';
 
-void _log(String message) => debugPrint('[EmailOtpService] $message');
+// Debug-only console diagnostics. Release-mode error visibility comes from
+// AppErrorHandler.recordNonFatal (error codes only, no PII).
+void _log(String message) {
+  if (kDebugMode) debugPrint('[EmailOtpService] $message');
+}
 
 /// Result of a successful [EmailOtpService.requestOtp] call.
 class EmailOtpRequestResult {

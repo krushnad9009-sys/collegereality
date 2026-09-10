@@ -30,6 +30,7 @@ const {
 } = require('./verification/config');
 const { analyzeJson } = require('./verification/geminiVision');
 const { downloadObject, tryFetchImage } = require('./verification/storage');
+const { assertOwnedStoragePath } = require('./util/safeFetch');
 const { notifyUser } = require('./verification/notify');
 const studentAgent = require('./verification/studentDocAgent');
 const collegeAgent = require('./verification/collegeListingAgent');
@@ -118,7 +119,37 @@ const onVerificationRequestCreated = onDocumentCreated(
       const expectedCollege =
         (req.collegeName || user.collegeName || '').toString().trim();
 
-      const { buffer, contentType } = await downloadObject(req.storagePath);
+      // The submitter chose `storagePath`; it MUST be one of their own
+      // uploads. Without this a request could name any object in the
+      // bucket (another user's ID doc / resume) and read the extracted
+      // fields back off its own doc — see util/safeFetch.js.
+      let ownedPath;
+      try {
+        ownedPath = assertOwnedStoragePath(
+          req.storagePath,
+          req.userId,
+          ['verification_documents'],
+        );
+        for (const p of Array.isArray(req.storagePaths) ? req.storagePaths : []) {
+          assertOwnedStoragePath(p, req.userId, ['verification_documents']);
+        }
+      } catch (pathErr) {
+        logger.warn(`[verifyDoc ${requestId}] rejected foreign storagePath`, {
+          userId: req.userId,
+        });
+        await finalizeStudent(ref, req, {
+          decision: AI_DECISION.FLAG,
+          confidence: 0,
+          reason: 'Document path does not belong to the submitter.',
+          flags: ['invalid_path'],
+          checks: {},
+          extracted: {},
+          model: VERIFICATION_CONFIG.MODEL_NAME,
+        });
+        return;
+      }
+
+      const { buffer, contentType } = await downloadObject(ownedPath);
       const mimeType = contentType.startsWith('image/')
         ? contentType
         : contentType === 'application/pdf'
@@ -334,7 +365,12 @@ const onCollegeRequestCreated = onDocumentCreated(
 
       const [websiteSnippet, photo] = await Promise.all([
         collegeAgent.fetchWebsiteSnippet(req.website),
-        req.photoUrl ? tryFetchImage(req.photoUrl) : Promise.resolve(null),
+        req.photoUrl
+          ? tryFetchImage(req.photoUrl, {
+              ownerUid: req.userId,
+              roots: ['college_requests'],
+            })
+          : Promise.resolve(null),
       ]);
 
       const { systemPrompt, userPrompt, responseSchema } = collegeAgent.buildPrompt({

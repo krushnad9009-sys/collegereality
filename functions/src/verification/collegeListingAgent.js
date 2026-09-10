@@ -1,6 +1,7 @@
 'use strict';
 
 const { VERIFICATION_CONFIG, AI_DECISION } = require('./config');
+const { fetchWithHostGuard } = require('../util/safeFetch');
 
 const T = VERIFICATION_CONFIG.COLLEGE;
 
@@ -200,14 +201,14 @@ function htmlToSnippet(html, maxChars = T.WEBSITE_SNIPPET_CHARS) {
 
 async function fetchWebsiteSnippet(rawUrl) {
   if (typeof rawUrl !== 'string' || !rawUrl.trim()) return null;
-  let url = rawUrl.trim();
-  if (!/^https?:\/\//i.test(url)) url = `https://${url}`;
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), T.WEBSITE_FETCH_TIMEOUT_MS);
-    const res = await fetch(url, {
+    // The submitter chose this URL — vet it (and every redirect hop) so it
+    // can't point the fetch at localhost / a private host / cloud
+    // metadata. See util/safeFetch.js.
+    const res = await fetchWithHostGuard(rawUrl, {
       signal: controller.signal,
-      redirect: 'follow',
       headers: { 'User-Agent': 'CollegeRealityVerifier/1.0' },
     });
     clearTimeout(timer);

@@ -14,6 +14,7 @@ const {
   RAZORPAY_KEY_ID,
   RAZORPAY_KEY_SECRET,
 } = require('./params');
+const { assertConfigured } = require('./util/guards');
 
 /**
  * Student calls this after creating the `requested` consultation doc
@@ -103,8 +104,8 @@ const createConsultationOrder = onCall(
     }
 
     const razorpay = new Razorpay({
-      key_id: RAZORPAY_KEY_ID.value(),
-      key_secret: RAZORPAY_KEY_SECRET.value(),
+      key_id: assertConfigured(RAZORPAY_KEY_ID.value(), 'Payments'),
+      key_secret: assertConfigured(RAZORPAY_KEY_SECRET.value(), 'Payments'),
     });
     const order = await razorpay.orders.create({
       amount: serverPrice,
@@ -182,7 +183,7 @@ const verifyConsultationPayment = onCall(
       orderId: razorpayOrderId,
       paymentId: razorpayPaymentId,
       signature: razorpaySignature,
-      secret: RAZORPAY_KEY_SECRET.value(),
+      secret: assertConfigured(RAZORPAY_KEY_SECRET.value(), 'Payments'),
     });
     if (!validSignature) {
       throw new HttpsError('permission-denied', 'Invalid payment signature.');

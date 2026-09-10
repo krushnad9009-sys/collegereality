@@ -11,6 +11,7 @@ import '../../../core/widgets/index.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../models/consultation_model.dart';
 import '../providers/consultation_provider.dart';
+import '../widgets/two_way_rating_sheet.dart';
 
 /// Paginated consultation history for the current user, both as student
 /// and as guide (two tabs) — same cursor-pagination pattern already used
@@ -92,7 +93,11 @@ class _HistoryList extends ConsumerWidget {
         padding: const EdgeInsets.all(AppSpacing.pageH),
         itemCount: page.items.length,
         separatorBuilder: (_, _) => const SizedBox(height: 10),
-        itemBuilder: (context, i) => _ConsultationTile(consultation: page.items[i]),
+        itemBuilder: (context, i) => _ConsultationTile(
+          consultation: page.items[i],
+          currentUid: userId,
+          asGuide: asGuide,
+        ),
       ),
     );
   }
@@ -100,7 +105,34 @@ class _HistoryList extends ConsumerWidget {
 
 class _ConsultationTile extends StatelessWidget {
   final ConsultationModel consultation;
-  const _ConsultationTile({required this.consultation});
+  final String currentUid;
+  final bool asGuide;
+  const _ConsultationTile({
+    required this.consultation,
+    required this.currentUid,
+    required this.asGuide,
+  });
+
+  bool get _isCompleted =>
+      consultation.status == ConsultationConstants.statusCompleted;
+
+  String get _raterRole => asGuide
+      ? ConsultationConstants.raterRoleGuide
+      : ConsultationConstants.raterRoleStudent;
+
+  String get _rateeId =>
+      asGuide ? consultation.studentId : consultation.guideId;
+
+  Future<void> _openRatingSheet(BuildContext context) {
+    return showTwoWayRatingSheet(
+      context: context,
+      consultationId: consultation.id,
+      raterId: currentUid,
+      raterRole: _raterRole,
+      rateeId: _rateeId,
+      rateeLabel: asGuide ? 'the student' : 'the guide',
+    );
+  }
 
   Color _statusColor() {
     switch (consultation.status) {
@@ -121,10 +153,15 @@ class _ConsultationTile extends StatelessWidget {
     final tokens = context.tokens;
     final primary = Theme.of(context).colorScheme.primary;
     final statusColor = _statusColor();
+    final canRate = _isCompleted && consultation.canRate(currentUid);
+    final rated = _isCompleted && !consultation.canRate(currentUid);
     return PremiumCard(
       padding: const EdgeInsets.all(AppSpacing.md),
       onTap: () => context.push(RouteNames.consultationRoomPath(consultation.id)),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
         children: [
           Container(
             width: 38,
@@ -183,6 +220,42 @@ class _ConsultationTile extends StatelessWidget {
               ),
             ),
           ),
+            ],
+          ),
+          if (canRate) ...[
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => _openRatingSheet(context),
+                icon: const Icon(Icons.star_outline_rounded, size: 18),
+                label: Text(
+                  asGuide ? 'Rate the student' : 'Rate the guide',
+                  style: AppFonts.plusJakarta(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+          ] else if (rated) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Icon(Icons.check_circle_rounded,
+                    size: 15, color: Color(0xFF16A34A)),
+                const SizedBox(width: 5),
+                Text(
+                  'You rated this consultation',
+                  style: AppFonts.plusJakarta(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: tokens.textTertiary,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );

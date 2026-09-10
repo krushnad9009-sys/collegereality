@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -97,8 +98,10 @@ class _DisplayNameSetupScreenState extends ConsumerState<DisplayNameSetupScreen>
     });
 
     final usersPath = 'users/${user.uid}';
-    debugPrint('[DisplayName] Continue tapped mode=$_selectedMode path=$usersPath');
-    debugPrint('[DisplayName] authUid=${DisplayNameDiagnostics.authUid}');
+    if (kDebugMode) {
+      debugPrint('[DisplayName] Continue tapped mode=$_selectedMode path=$usersPath');
+      debugPrint('[DisplayName] authUid=${DisplayNameDiagnostics.authUid}');
+    }
 
     try {
       await ref.read(displayNameServiceProvider).updateDisplayNameSettings(
@@ -134,9 +137,14 @@ class _DisplayNameSetupScreenState extends ConsumerState<DisplayNameSetupScreen>
         firestorePath: usersPath,
       );
       if (mounted) {
+        // Full detail is already captured by logFailure() above; only a
+        // user-safe message goes on screen (DisplayNameException carries
+        // one, e.g. a validation hint — anything else is generic).
         SnackBarHelper.showErrorSnackBar(
           context,
-          message: '$e',
+          message: e is DisplayNameException
+              ? e.message
+              : 'Could not save your name. Please try again.',
         );
       }
     } finally {

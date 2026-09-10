@@ -1,47 +1,13 @@
-import '../../communication/models/guide_stats_model.dart';
+// Both rating aggregates are now maintained server-side by the
+// `onConsultationRatingCreated` Cloud Function
+// (functions/src/consultationRatingLogic.js), serialised per rating so
+// concurrent raters can't race the write, and (for the student side) so a
+// guide never needs read access to another user's private rating docs.
+// The client only READS the finished summaries.
 
-/// Recomputes a guide's consultation-rating aggregate from every
-/// `consultation_ratings` doc where they were the ratee (raterRole ==
-/// 'student'). Mirrors the existing recomputeGuideStats pattern in
-/// guide_stats_calculator.dart — same trust model, extended for the
-/// paid-consultation criteria set.
-GuideStatsModel recomputeConsultationStats({
-  required GuideStatsModel current,
-  required List<Map<String, dynamic>> studentRatings,
-}) {
-  final total = studentRatings.length;
-  if (total == 0) return current;
-
-  double sumOf(String Function(Map<String, dynamic>) key) {
-    var sum = 0.0;
-    for (final r in studentRatings) {
-      final criteria = r['criteria'] as Map<String, dynamic>? ?? const {};
-      sum += (criteria[key(r)] as num?)?.toDouble() ?? 0;
-    }
-    return sum;
-  }
-
-  var overallSum = 0.0;
-  for (final r in studentRatings) {
-    overallSum += (r['overall'] as num?)?.toDouble() ?? 0;
-  }
-
-  double avg(double sum) => double.parse((sum / total).toStringAsFixed(2));
-
-  return current.copyWith(
-    consultationRatingAvg: avg(overallSum),
-    completedConsultations: total,
-    communicationAvg: avg(sumOf((_) => 'communication')),
-    helpfulOrRespectfulAvg: avg(sumOf((_) => 'criterion2')),
-    knowledgeOrSeriousnessAvg: avg(sumOf((_) => 'criterion3')),
-    genuineOrAppropriateAvg: avg(sumOf((_) => 'criterion4')),
-  );
-}
-
-/// Lightweight, non-persisted summary of ratings a student has received
-/// from guides after consultations — computed on demand (low read volume:
-/// only guides reviewing a student's trust signal before/around a
-/// consultation), not denormalized like guide-facing stats.
+/// PII-free summary of the ratings a student has received from guides,
+/// read from `student_consultation_summaries/{studentId}` (written only by
+/// the Cloud Function). No rater identity, no comments — averages + count.
 class StudentConsultationSummary {
   final double overallAvg;
   final int totalRatings;
@@ -58,6 +24,21 @@ class StudentConsultationSummary {
     this.seriousnessAvg = 0,
     this.appropriateAvg = 0,
   });
+
+  /// Reads the denormalized `student_consultation_summaries/{studentId}`
+  /// document. Missing doc -> the zero summary.
+  factory StudentConsultationSummary.fromJson(Map<String, dynamic>? json) {
+    if (json == null) return const StudentConsultationSummary();
+    double d(String k) => (json[k] as num?)?.toDouble() ?? 0;
+    return StudentConsultationSummary(
+      overallAvg: d('overallAvg'),
+      totalRatings: (json['totalRatings'] as num?)?.toInt() ?? 0,
+      communicationAvg: d('communicationAvg'),
+      respectfulAvg: d('respectfulAvg'),
+      seriousnessAvg: d('seriousnessAvg'),
+      appropriateAvg: d('appropriateAvg'),
+    );
+  }
 
   factory StudentConsultationSummary.fromRatings(
     List<Map<String, dynamic>> guideRatings,

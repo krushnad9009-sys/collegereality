@@ -190,6 +190,79 @@ succeeds it calls `reloadUser()` to observe the server-set flag.
 deployed, both callables are absent and `EmailVerificationSection` shows
 `unavailable`/`internal` errors from the OTP buttons.
 
+## Account deletion (`requestAccountDeletion`)
+
+Self-serve erasure for the "Delete Account" action in Profile settings
+(`lib/features/profile/services/account_deletion_service.dart`). Callable,
+auth required, and it only ever acts on `request.auth.uid` — you cannot
+ask it to delete someone else.
+
+- **Recent-login gate:** the ID token must be < 10 minutes old (same
+  protection as Firebase's own `user.delete()`). Otherwise it throws
+  `failed-precondition` / `{ reason: 'requires-recent-login' }` and the
+  client tells the user to sign out and back in first.
+- **Policy** lives in `src/accountDeletionPlan.js` (pure, unit-tested in
+  `test/accountDeletionPlan.test.js`); `src/accountDeletion.js` executes
+  it. Best-effort and idempotent — every step is "delete if present" or
+  "overwrite with a fixed value", so a retried call is safe.
+  - **Delete:** `users`, `public_profiles`, `email_otps`,
+    `notification_preferences`, `student_resumes`, `display_names`,
+    `aiUsage`, `verification_requests` (+ Storage docs) and their hashes,
+    `college_questions` authored by the user (recursively, taking their
+    answers/replies), `college_requests`, `placement_submissions`,
+    `guide_earnings`, notifications, blocks, saved-lists, chat intents,
+    analytics events, and the Storage trees under
+    `verification_documents/<uid>/`, `profile_images/<uid>/`,
+    `review_media/<uid>/`, etc.
+  - **Anonymise (row kept for other people):** `reviews` (college score
+    stays), `consultation_ratings` (scores stay, comment blanked),
+    `user_reports` (moderation record kept), and `answers`/`replies` on
+    *other* users' questions.
+  - **Retain:** `consultations` + `payments` — financial source of truth
+    for reconciliation / refunds / disputes / tax. They hold only opaque
+    uids + amounts + gateway ids (no name/email/phone), so the uid is
+    left as an opaque key. Deliberate, documented exception.
+- Writes a PII-free `deleted_accounts/{uid}` tombstone (uid + timestamp +
+  step counts), then deletes the Firebase Auth user last.
+- **Indexes:** anonymising answers/replies across all questions needs the
+  collection-group `authorId` field overrides added to
+  `firestore.indexes.json` — deploy with
+  `firebase deploy --only firestore:indexes` before/with this function.
+
+**Deployment:** part of the same `firebase deploy --only functions`. No
+secrets. Local pure-logic tests: `npm test`.
+
+## Consultation rating aggregation (`onConsultationRatingCreated`)
+
+Firestore-create trigger on `consultation_ratings/{ratingId}`. The client
+now only writes the immutable rating doc and flips its own
+`ratingBy{Student,Guide}Submitted` flag on the consultation; everything
+derived is done here.
+
+- **student → guide rating:**
+  1. writes the PII-free public copy `guide_reviews/{consultationId}` (no
+     `raterId`; the reviewer's college is looked up from
+     `users/{raterId}.collegeName`), and
+  2. recomputes the guide's consultation aggregate from **all** their
+     student ratings (`consultationRatingLogic.js`,
+     unit-tested in `test/consultationRatingLogic.test.js`) and deep-merges
+     the `guideStats.consultation*` fields onto `users/{guideId}` and
+     `public_profiles/{guideId}` (Admin SDK).
+- **guide → student rating:** no-op — the student summary is computed
+  on demand (`ConsultationService.getStudentConsultationSummary`).
+
+Why it moved off the client: the old client path wrote the absolute
+rating count while `firestore.rules` required `completedConsultations ==
+old + 1`, so two students rating one guide within the recompute window
+made the second write fail **permanently**. This trigger is serialised per
+rating doc and recomputes from scratch → idempotent and race-free.
+`retry: true` is therefore safe. The old `isConsultationStatsUpdate` /
+`isValidGuideReview` rule helpers and the client `guide_reviews` write are
+removed; `guide_reviews` is now `allow write: if false`.
+
+**Deployment:** part of the same `firebase deploy --only functions`. No
+secrets, no new indexes (two equality filters need none). Tests: `npm test`.
+
 ## What's real vs. what's still a gap
 
 | Piece | Status |

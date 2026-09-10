@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_auth_platform_interface/firebase_auth_platform_interface.dart';
 import 'package:flutter/foundation.dart';
 
+import '../utils/log_redaction.dart';
 import 'crashlytics_service.dart';
 
 /// Hostname check for localhost web dev (testable without Firebase).
@@ -71,7 +72,10 @@ class PhoneAuthService {
   String? get pendingPhone => _pendingPhone;
 
   void _log(String message) {
-    debugPrint('$_logTag $message');
+    // Debug-only: these lines are verification-flow diagnostics and must
+    // never reach a release console. Phone numbers / emails that appear in
+    // callers are additionally passed through redactPhone/redactEmail.
+    if (kDebugMode) debugPrint('$_logTag $message');
   }
 
   void _logException(Object error, StackTrace stackTrace, {String? step}) {
@@ -230,7 +234,7 @@ class PhoneAuthService {
       _pendingPhone = _pendingPhone!.substring(2);
     }
 
-    _log('sendOtp started for $formatted (raw input=$phoneNumber)');
+    _log('sendOtp started for ${redactPhone(formatted)}');
 
     await _applyAuthSettingsOnce();
     _log(
@@ -254,7 +258,7 @@ class PhoneAuthService {
       throw PhoneAuthException('You must be logged in to verify your phone');
     }
 
-    _log('Web path: currentUser uid=${user.uid} email=${user.email}');
+    _log('Web path: currentUser uid=${user.uid} email=${redactEmail(user.email)}');
     _webConfirmationResult = null;
 
     final verifier = _resetAndCreateWebRecaptcha();
@@ -271,7 +275,7 @@ class PhoneAuthService {
       );
       _log('After Recaptcha loads — render complete, widgetId=$widgetId');
 
-      _log('Before linkWithPhoneNumber($formatted)');
+      _log('Before linkWithPhoneNumber(${redactPhone(formatted)})');
       _webConfirmationResult = await user
           .linkWithPhoneNumber(formatted, verifier)
           .timeout(
@@ -294,7 +298,7 @@ class PhoneAuthService {
   Future<void> _sendOtpNative(String formatted) async {
     final completer = Completer<void>();
 
-    _log('Before verifyPhoneNumber($formatted)');
+    _log('Before verifyPhoneNumber(${redactPhone(formatted)})');
     try {
       await _auth.verifyPhoneNumber(
         phoneNumber: formatted,

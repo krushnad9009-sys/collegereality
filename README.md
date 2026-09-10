@@ -103,6 +103,42 @@ Follow the step-by-step guide in **[FIREBASE_SETUP.md](./FIREBASE_SETUP.md)** to
 4. Update firebase_options.dart
 5. Deploy Firestore security rules
 
+## 🔐 Secrets & Security
+
+**Where secrets live**
+
+| Kind | Storage | Notes |
+|------|---------|-------|
+| Razorpay keys/webhook secret, Agora App ID/Certificate, Gemini API key, Resend API key | **Google Secret Manager** (`firebase functions:secrets:set …`) | Never in source, never in any `.env`. See [`functions/README.md`](./functions/README.md). |
+| `RESEND_FROM` (sender address, non-secret) | `functions/.env.<projectId>` (git-ignored) | Template: [`functions/.env.example`](./functions/.env.example). |
+| Firebase Admin SDK service account (`serviceAccount.json`) | Local only at `android/tools/serviceAccount.json` (git-ignored) | Used by the `tools/*.py` maintenance scripts. Keep it off shared machines; prefer a path outside the repo. |
+| Android upload keystore + `key.properties` | Local only (git-ignored) | Template: `android/key.properties.example`. |
+
+**Firebase client API keys are not secrets.** The `AIza…` keys in
+`lib/firebase_options.dart` and `android/app/google-services.json` are
+client identifiers — they ship inside every built app binary by design and
+cannot be hidden. They are the Firebase analogue of a "publishable" key.
+Your database is protected by **Firestore/Storage security rules**
+(`firestore.rules`, `storage.rules`) and **Firebase App Check**, not by
+keeping these keys private. Before launch, in Google Cloud Console →
+*APIs & Services → Credentials*, restrict each key to the specific APIs it
+needs and to your app's Android SHA-256 / iOS bundle ID / web referrers.
+
+**Server-side only, never in the Flutter client:** the Razorpay *secret*
+key, Agora *App Certificate*, Gemini API key, Resend API key, and any
+service-account private key. The client only ever receives the Razorpay
+*key id* (publishable), which the `createConsultationOrder` function
+returns at runtime.
+
+**⚠️ Rotate any secret that was ever hardcoded or committed.** A value
+removed from the working tree still lives in git history. If a real
+Razorpay / Agora / Gemini / Resend key or a service-account key was ever
+committed (check `git log -p -- <path>`), treat it as compromised: rotate
+it in the provider's dashboard and re-set it with
+`firebase functions:secrets:set`. The Firebase `AIza…` client keys above
+do not need rotation for exposure alone, but rotate them too if you want a
+clean slate, and lock them down with the API restrictions described above.
+
 ## 📁 Project Structure
 
 ```

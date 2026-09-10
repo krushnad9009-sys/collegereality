@@ -6,6 +6,7 @@ const { RtcTokenBuilder, RtcRole } = require('agora-token');
 const { db } = require('./admin');
 const { CONSULTATION_STATUS } = require('./consultationLogic');
 const { AGORA_APP_ID, AGORA_APP_CERTIFICATE } = require('./params');
+const { assertConfigured } = require('./util/guards');
 
 const TOKEN_TTL_SECONDS = 60 * 60 * 2; // 2h — comfortably covers any priced duration
 
@@ -57,10 +58,16 @@ const mintConsultationCallToken = onCall(
       parseInt(crypto.createHash('sha256').update(uid).digest('hex').slice(0, 8), 16) %
       2147483647;
 
+    const appId = assertConfigured(AGORA_APP_ID.value(), 'Calling');
+    const appCertificate = assertConfigured(
+      AGORA_APP_CERTIFICATE.value(),
+      'Calling',
+    );
+
     const expireAt = Math.floor(Date.now() / 1000) + TOKEN_TTL_SECONDS;
     const token = RtcTokenBuilder.buildTokenWithUid(
-      AGORA_APP_ID.value(),
-      AGORA_APP_CERTIFICATE.value(),
+      appId,
+      appCertificate,
       consultationId,
       numericUid,
       RtcRole.PUBLISHER,
@@ -69,7 +76,7 @@ const mintConsultationCallToken = onCall(
     );
 
     return {
-      appId: AGORA_APP_ID.value(),
+      appId,
       channelName: consultationId,
       token,
       uid: numericUid,

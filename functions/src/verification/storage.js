@@ -2,6 +2,10 @@
 
 const { getStorage } = require('firebase-admin/storage');
 const { VERIFICATION_CONFIG } = require('./config');
+const {
+  assertOwnedStoragePath,
+  fetchWithHostGuard,
+} = require('../util/safeFetch');
 
 /**
  * Downloads a Cloud Storage object (given its bucket-relative path, the
@@ -47,25 +51,32 @@ async function downloadObject(storagePath) {
  * into memory. Returns null on any failure — a missing/broken photo is a
  * verification signal, never an error that should stop the pipeline.
  *
- * Accepts:
- *   - a bucket-relative Storage path  -> downloadObject
- *   - an https:// URL                 -> plain fetch, bounded
+ * Accepts, both vetted against the client that supplied the value:
+ *   - a bucket-relative Storage path  -> must be under one of `roots`/<ownerUid>/
+ *   - an http(s):// URL               -> must resolve to a PUBLIC host
+ *                                        (no localhost / RFC1918 / link-local),
+ *                                        re-checked on every redirect hop.
+ * @param {string} urlOrPath
+ * @param {{ ownerUid?: string, roots?: string[] }} [opts]  required for the
+ *        Storage-path branch — omit only when the value can never be a path.
  * @returns {Promise<{ buffer: Buffer, contentType: string }|null>}
  */
-async function tryFetchImage(urlOrPath) {
+async function tryFetchImage(urlOrPath, opts = {}) {
   if (typeof urlOrPath !== 'string' || !urlOrPath.trim()) return null;
   const value = urlOrPath.trim();
 
   try {
     if (!/^https?:\/\//i.test(value)) {
-      const { buffer, contentType } = await downloadObject(value);
+      if (!opts.ownerUid || !Array.isArray(opts.roots)) return null;
+      const owned = assertOwnedStoragePath(value, opts.ownerUid, opts.roots);
+      const { buffer, contentType } = await downloadObject(owned);
       if (!contentType.startsWith('image/')) return null;
       return { buffer, contentType };
     }
 
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 8000);
-    const res = await fetch(value, { signal: controller.signal });
+    const res = await fetchWithHostGuard(value, { signal: controller.signal });
     clearTimeout(timer);
     if (!res.ok) return null;
     const contentType = res.headers.get('content-type') || '';

@@ -21,7 +21,7 @@ class ConsultationRatingModel {
 
   /// Optional free-text review. Kept on the private rating doc; a PII-free
   /// copy (no raterId) is denormalized to `guide_reviews/{consultationId}`
-  /// for the public list — see ConsultationService.submitRating.
+  /// for the public list by the `onConsultationRatingCreated` Cloud Function.
   final String comment;
   final DateTime createdAt;
 

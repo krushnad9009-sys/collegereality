@@ -1,8 +1,9 @@
 /// A PII-free, publicly readable copy of a student's post-consultation
-/// review of a guide. Denormalized from `consultation_ratings` on submit
-/// (see ConsultationService.submitRating) into `guide_reviews/{consultationId}`
-/// so any authenticated user can render a guide's review list without
-/// being able to read the private rating doc — which carries `raterId`.
+/// review of a guide. Denormalized from `consultation_ratings` by the
+/// `onConsultationRatingCreated` Cloud Function into
+/// `guide_reviews/{consultationId}` so any authenticated user can render a
+/// guide's review list without being able to read the private rating doc
+/// — which carries `raterId`.
 ///
 /// Deliberately carries NO reviewer identity: the public list shows
 /// "Verified student", never a name or avatar.

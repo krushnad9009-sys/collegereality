@@ -97,7 +97,17 @@ class FirestoreUserService {
   Future<void> syncPublicProfile(String uid, Map<String, dynamic> data) async {
     final safeFields = Map<String, dynamic>.from(data)
       ..remove('email')
-      ..remove('phone');
+      ..remove('phone')
+      // `verifiedRealName` is the user's legal name captured during student
+      // verification. It is NOT part of any public model (readers use
+      // `displayName` / `publicDisplayName`, which already respect the
+      // user's anonymous-vs-real-name choice), so it must never reach the
+      // authenticated-readable mirror — leaving it here would deanonymise
+      // every user who picked an alias.
+      ..remove('verifiedRealName')
+      // Opaque free-form bag — never render it publicly; keep it on the
+      // owner-only `users` doc.
+      ..remove('metadata');
     if (safeFields.isEmpty) return;
     try {
       await _firestore

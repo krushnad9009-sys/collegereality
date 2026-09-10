@@ -13,10 +13,12 @@ const { onConsultationWrite } = require('./src/triggers');
 const { expireStaleConsultations } = require('./src/scheduled');
 const { aiChatComplete } = require('./src/aiChat');
 const { requestEmailOtp, verifyEmailOtp } = require('./src/emailOtp');
+const { requestAccountDeletion } = require('./src/accountDeletion');
 const {
   onVerificationRequestCreated,
   onCollegeRequestCreated,
 } = require('./src/verificationTriggers');
+const { onConsultationRatingCreated } = require('./src/consultationRatingTriggers');
 
 module.exports = {
   createConsultationOrder,
@@ -28,7 +30,13 @@ module.exports = {
   aiChatComplete,
   requestEmailOtp,
   verifyEmailOtp,
+  // Self-serve account deletion (GDPR/DPDP erasure): deletes the caller's
+  // own data, anonymises retained content, keeps financial records.
+  requestAccountDeletion,
   // AI Automated Verification Agent (Super Admin panel background flow).
   onVerificationRequestCreated,
   onCollegeRequestCreated,
+  // Recomputes a guide's consultation-rating aggregate + the PII-free
+  // public review copy whenever a two-way rating is filed.
+  onConsultationRatingCreated,
 };

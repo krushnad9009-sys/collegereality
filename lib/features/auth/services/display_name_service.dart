@@ -42,7 +42,7 @@ class DisplayNameService {
       firestorePath: path,
       userModelUid: excludeUid,
     );
-    debugPrint('[DisplayName] authUid=${authUser.uid}');
+    if (kDebugMode) debugPrint('[DisplayName] authUid=${authUser.uid}');
 
     final doc = await _displayNames.doc(key).get();
     if (!doc.exists) return true;
@@ -67,8 +67,8 @@ class DisplayNameService {
       firestorePath: usersPath,
       userModelUid: user.uid,
     );
-    debugPrint('[DisplayName] mode=$displayNameMode isInitialSetup=$isInitialSetup');
-    debugPrint('[DisplayName] authUid=${authUser.uid}');
+    if (kDebugMode) debugPrint('[DisplayName] mode=$displayNameMode isInitialSetup=$isInitialSetup');
+    if (kDebugMode) debugPrint('[DisplayName] authUid=${authUser.uid}');
 
     if (!DisplayNameConstants.allModes.contains(displayNameMode)) {
       throw DisplayNameException(message: 'Invalid display name mode.');
@@ -249,7 +249,7 @@ class DisplayNameService {
     batch.update(userRef, updateData);
     await batch.commit();
 
-    debugPrint('[DisplayName] updateDisplayNameSettings succeeded for $usersPath');
+    if (kDebugMode) debugPrint('[DisplayName] updateDisplayNameSettings succeeded for $usersPath');
   }
 
   Future<void> setVerifiedRealName({
@@ -266,7 +266,7 @@ class DisplayNameService {
       firestorePath: path,
       userModelUid: uid,
     );
-    debugPrint('[DisplayName] authUid=${authUser.uid}');
+    if (kDebugMode) debugPrint('[DisplayName] authUid=${authUser.uid}');
 
     final validationError = ValidationUtil.validateDisplayName(realName);
     if (validationError != null) {
@@ -296,7 +296,7 @@ class DisplayNameService {
     final snap = await userRef.get();
     if (snap.exists) return;
 
-    debugPrint('[DisplayName] creating missing user doc at $path');
+    if (kDebugMode) debugPrint('[DisplayName] creating missing user doc at $path');
     await userRef.set(
       {
         'uid': user.uid,

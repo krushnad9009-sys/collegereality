@@ -12,6 +12,7 @@ import '../../auth/providers/user_provider.dart';
 import '../models/consultation_model.dart';
 import '../providers/consultation_provider.dart';
 import '../services/call_access_service.dart';
+import '../widgets/student_rating_summary_card.dart';
 import '../widgets/two_way_rating_sheet.dart';
 import 'consultation_chat_bridge_screen.dart';
 
@@ -139,6 +140,30 @@ class _CallRoomBodyState extends ConsumerState<_CallRoomBody> {
           const SizedBox(height: 8),
           _StatusStepper(status: c.status),
           const SizedBox(height: 20),
+          if (_isGuide &&
+              c.status != ConsultationConstants.statusRequested &&
+              c.status != ConsultationConstants.statusPaymentPending) ...[
+            Text(
+              'Student\'s ratings from other guides',
+              style: AppFonts.plusJakarta(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w700,
+                color: tokens.textTertiary,
+                letterSpacing: 0.2,
+              ),
+            ),
+            const SizedBox(height: 8),
+            ref.watch(studentConsultationSummaryProvider(peerId)).when(
+                  data: (summary) =>
+                      StudentRatingSummaryCard(summary: summary),
+                  loading: () => const SizedBox(
+                    height: 40,
+                    child: Center(child: CircularProgressIndicator.adaptive()),
+                  ),
+                  error: (_, _) => const SizedBox.shrink(),
+                ),
+            const SizedBox(height: 20),
+          ],
           if (_error != null) ...[
             Text(
               _error!,

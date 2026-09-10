@@ -20,6 +20,12 @@ const { RAZORPAY_WEBHOOK_SECRET } = require('./params');
 const razorpayWebhook = onRequest(
   { secrets: [RAZORPAY_WEBHOOK_SECRET] },
   async (req, res) => {
+    // This endpoint only ever returns tiny plain-text acks to Razorpay's
+    // servers (never a browser), but set the cheap hardening headers
+    // anyway: don't sniff the content type, don't cache the response.
+    res.set('X-Content-Type-Options', 'nosniff');
+    res.set('Cache-Control', 'no-store');
+
     if (req.method !== 'POST') {
       res.status(405).send('Method not allowed');
       return;
@@ -50,10 +56,37 @@ const razorpayWebhook = onRequest(
 
     try {
       if (eventType === 'payment.captured') {
-        const payment = event.payload.payment.entity;
+        const entity = event.payload.payment.entity;
+        // Defence in depth: the order was created server-side for a
+        // server-computed amount and Razorpay enforces capture == order,
+        // but confirm it here too before unlocking anything — a mismatch
+        // means something is wrong, don't finalise.
+        const { db } = require('./admin');
+        const payDoc = await db.collection('payments').doc(entity.order_id).get();
+        if (!payDoc.exists) {
+          logger.warn('razorpayWebhook: payment.captured for unknown order', {
+            orderId: entity.order_id,
+          });
+          res.status(200).send('ignored');
+          return;
+        }
+        const pay = payDoc.data();
+        if (
+          entity.order_id !== pay.gatewayOrderId ||
+          Number(entity.amount) !== Number(pay.grossAmountPaise) ||
+          (entity.currency && entity.currency !== pay.currency)
+        ) {
+          logger.error('razorpayWebhook: captured amount/order mismatch', {
+            orderId: entity.order_id,
+            capturedAmount: entity.amount,
+            expectedAmount: pay.grossAmountPaise,
+          });
+          res.status(200).send('rejected');
+          return;
+        }
         await finalizePaymentSuccess({
-          paymentDocId: payment.order_id,
-          gatewayPaymentId: payment.id,
+          paymentDocId: entity.order_id,
+          gatewayPaymentId: entity.id,
         });
       } else if (eventType === 'payment.failed') {
         const payment = event.payload.payment.entity;

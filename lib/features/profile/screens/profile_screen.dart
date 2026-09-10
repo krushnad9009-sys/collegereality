@@ -15,6 +15,7 @@ import '../../auth/utils/sign_out.dart';
 import '../../communication/widgets/guide_online_toggle_card.dart';
 import '../../verification/widgets/verification_badge_widget.dart';
 import '../models/student_trust_model.dart';
+import '../services/account_deletion_service.dart';
 import '../widgets/trust_score_card.dart';
 
 /// The Profile "hub": a professional identity header plus clean, grouped
@@ -51,14 +52,20 @@ class ProfileScreen extends ConsumerWidget {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) return;
-      await ref.read(userRepositoryProvider).deleteUser(user.uid);
-      await user.delete();
+      // The trusted Cloud Function erases this user's data, anonymises
+      // retained content (reviews/ratings/answers), keeps financial
+      // records, and deletes the Firebase Auth user. We only sign out.
+      await ref.read(accountDeletionServiceProvider).deleteMyAccount();
       if (context.mounted) await signOutAndRedirect(context, ref);
+    } on ReauthRequiredException catch (e) {
+      if (context.mounted) {
+        SnackBarHelper.showErrorSnackBar(context, message: e.message);
+      }
     } catch (_) {
       if (context.mounted) {
         SnackBarHelper.showErrorSnackBar(
           context,
-          message: 'Could not delete account. Sign in again and retry.',
+          message: 'Could not delete account. Please try again in a moment.',
         );
       }
     }

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -110,8 +111,12 @@ class _GuidePricingSetupScreenState
       SnackBarHelper.showSuccessSnackBar(context, message: 'Pricing saved.');
       Navigator.of(context).maybePop();
     } catch (e) {
+      if (kDebugMode) debugPrint('[GuidePricingSetup] save failed: $e');
       if (!mounted) return;
-      SnackBarHelper.showErrorSnackBar(context, message: 'Could not save: $e');
+      SnackBarHelper.showErrorSnackBar(
+        context,
+        message: 'Could not save your pricing. Please try again.',
+      );
     } finally {
       if (mounted) setState(() => _saving = false);
     }

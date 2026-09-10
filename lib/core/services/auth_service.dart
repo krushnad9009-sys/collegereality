@@ -3,8 +3,13 @@ import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../bootstrap/app_error_handler.dart';
+import '../utils/log_redaction.dart';
 
-void _log(String message) => debugPrint('[AuthService] $message');
+// Debug-only: auth diagnostics must not reach a release console. Any email
+// interpolated by a caller is passed through redactEmail first.
+void _log(String message) {
+  if (kDebugMode) debugPrint('[AuthService] $message');
+}
 
 /// Actionable next step for the FirebaseAuthException codes that mean an
 /// email-auth **project misconfiguration** rather than user error — so a
@@ -186,7 +191,7 @@ class AuthService implements AuthServiceApi {
       // needs zero setup; a bad `url`/`dynamicLinkDomain` is the classic
       // cause of a reset email that silently never arrives.
       await _firebaseAuth.sendPasswordResetEmail(email: email);
-      _log('sendPasswordResetEmail dispatched to $email');
+      _log('sendPasswordResetEmail dispatched to ${redactEmail(email)}');
     } catch (e, st) {
       _logAuthException('sendPasswordResetEmail', e, st);
       rethrow;
@@ -221,7 +226,7 @@ class AuthService implements AuthServiceApi {
       // `invalid-continue-uri`, `invalid-dynamic-link-domain` — see
       // `_emailDiagnosticHint`).
       await user.sendEmailVerification();
-      _log('sendEmailVerificationLink dispatched to ${user.email}');
+      _log('sendEmailVerificationLink dispatched to ${redactEmail(user.email)}');
     } catch (e, st) {
       _logAuthException('sendEmailVerificationLink', e, st);
       rethrow;

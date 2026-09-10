@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -6,7 +7,6 @@ import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../core/constants/consultation_constants.dart';
 import '../../../core/widgets/index.dart';
-import '../../auth/providers/user_provider.dart';
 import '../models/consultation_rating_model.dart';
 import '../providers/consultation_provider.dart';
 
@@ -208,9 +208,6 @@ class _TwoWayRatingSheetState extends ConsumerState<TwoWayRatingSheet> {
   Future<void> _submit() async {
     setState(() => _submitting = true);
     try {
-      final raterCollege = _showReviewField
-          ? (ref.read(currentUserDetailProvider).valueOrNull?.collegeName ?? '')
-          : '';
       await ref.read(consultationServiceProvider).submitRating(
             consultationId: widget.consultationId,
             raterId: widget.raterId,
@@ -222,14 +219,17 @@ class _TwoWayRatingSheetState extends ConsumerState<TwoWayRatingSheet> {
             criterion3: _c3,
             criterion4: _c4,
             comment: _showReviewField ? _commentController.text : '',
-            rateeCollegeName: raterCollege,
           );
       if (!mounted) return;
       Navigator.of(context).pop();
       SnackBarHelper.showSuccessSnackBar(context, message: 'Thanks for rating!');
     } catch (e) {
+      if (kDebugMode) debugPrint('[TwoWayRatingSheet] submit failed: $e');
       if (!mounted) return;
-      SnackBarHelper.showErrorSnackBar(context, message: 'Could not submit rating: $e');
+      SnackBarHelper.showErrorSnackBar(
+        context,
+        message: 'Could not submit your rating. Please try again.',
+      );
     } finally {
       if (mounted) setState(() => _submitting = false);
     }

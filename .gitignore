@@ -54,6 +54,19 @@ android/tools/serviceAccount.json
 android/key.properties
 android/upload-keystore.jks
 *.jks
+
+# Secrets / local environment — never commit real values.
+# Committed exceptions: *.example files (placeholders only).
+.env
+.env.*
+!.env.example
+!*.env.example
+*.serviceAccount.json
+serviceAccount.json
+**/serviceAccount.json
+!**/serviceAccount.example.json
+google-services.local.json
+GoogleService-Info.plist
 # Local analyze/test dump logs
 analyze_*.txt
 flutter_analyze_*.txt
