@@ -37,17 +37,56 @@ class ConsultationService {
   CollectionReference<Map<String, dynamic>> get _ratings =>
       _firestore.collection(FirestoreConstants.consultationRatingsCollection);
 
-  Future<void> _checkSpam(String studentId) async {
-    final hourAgo = DateTime.now().subtract(const Duration(hours: 1));
-    final snap = await _consultations
-        .where('studentId', isEqualTo: studentId)
-        .where('createdAt', isGreaterThan: hourAgo.toIso8601String())
-        .get();
-    if (snap.docs.length >= ConsultationConstants.maxConsultationRequestsPerHour) {
-      throw ConsultationException(
-        'Too many consultation requests. Please wait before trying again.',
-      );
-    }
+  CollectionReference<Map<String, dynamic>> get _consultationRequestWindows =>
+      _firestore.collection('consultation_request_windows');
+
+  /// Atomically checks-and-bumps this student's rolling-hour request
+  /// counter in the SAME transaction as the consultation create, so the
+  /// cap is enforced by firestore.rules' consultationRequestRateOk()
+  /// (getAfter()) — not just by this client. A client that skips this
+  /// counter write (or writes `consultations` directly) is rejected by
+  /// the rule regardless of what this method does.
+  ///
+  /// Throws [ConsultationException] before attempting the write if the
+  /// cap is already hit, so the UI gets a fast, friendly error instead of
+  /// a raw permission-denied from the rule.
+  Future<void> _writeWithRateLimit(
+    String studentId,
+    Map<String, dynamic> consultationJson,
+    String consultationId,
+  ) async {
+    await _firestore.runTransaction((tx) async {
+      final counterRef = _consultationRequestWindows.doc(studentId);
+      final counterSnap = await tx.get(counterRef);
+
+      final data = counterSnap.data();
+      // Kept as the raw Timestamp (not round-tripped through DateTime) —
+      // the rule requires writing back the EXACT same value when the
+      // window hasn't reset, and Timestamp has sub-microsecond precision
+      // that a DateTime round-trip would silently truncate.
+      final existingWindowStart = data?['windowStart'] as Timestamp?;
+      final existingCount = (data?['count'] as num?)?.toInt() ?? 0;
+      final windowStillOpen = existingWindowStart != null &&
+          DateTime.now().difference(existingWindowStart.toDate()) <
+              const Duration(hours: 1);
+
+      final count = windowStillOpen ? existingCount + 1 : 1;
+      if (count > ConsultationConstants.maxConsultationRequestsPerHour) {
+        throw ConsultationException(
+          'Too many consultation requests. Please wait before trying again.',
+        );
+      }
+
+      tx.set(counterRef, {
+        'count': count,
+        // Reset (or first-ever write) pins the clock to the server's own
+        // time — never a client-supplied value; otherwise the exact same
+        // stored Timestamp is passed straight through, unchanged.
+        'windowStart':
+            windowStillOpen ? existingWindowStart : FieldValue.serverTimestamp(),
+      });
+      tx.set(_consultations.doc(consultationId), consultationJson);
+    });
   }
 
   /// Creates the initial `requested` consultation doc. No money moves here
@@ -69,7 +108,6 @@ class ConsultationService {
         await _communicationService.isBlocked(guideId, studentId)) {
       throw ConsultationException('Unable to connect with this guide.');
     }
-    await _checkSpam(studentId);
 
     final guide = await _userService.getPublicProfileByUID(guideId);
     if (guide == null) {
@@ -110,7 +148,7 @@ class ConsultationService {
       durationMinutes: durationMinutes,
       createdAt: DateTime.now(),
     );
-    await _consultations.doc(id).set(consultation.toJson());
+    await _writeWithRateLimit(studentId, consultation.toJson(), id);
     return consultation;
   }
 

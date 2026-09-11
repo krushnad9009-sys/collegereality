@@ -400,8 +400,6 @@ class CommunityFirestoreService {
     String? attachmentName,
     String? replyToMessageId,
   }) async {
-    await _assertMessageRateLimit(conversationId: conversationId, senderId: sender.uid);
-
     final conversationDoc = await _conversations.doc(conversationId).get();
     if (!conversationDoc.exists) {
       throw CommunityException('Conversation not found.');
@@ -459,7 +457,12 @@ class CommunityFirestoreService {
       createdAt: DateTime.now(),
     );
 
-    await _messages.doc(messageId).set(message.toJson());
+    await _writeMessageWithRateLimit(
+      conversationId: conversationId,
+      senderId: sender.uid,
+      messageId: messageId,
+      messageJson: message.toJson(),
+    );
 
     final preview = _previewText(message);
     await _conversations.doc(conversationId).update({
@@ -486,28 +489,60 @@ class CommunityFirestoreService {
     return message;
   }
 
-  Future<void> _assertMessageRateLimit({
+  CollectionReference<Map<String, dynamic>> get _messageRateWindows =>
+      _firestore.collection('message_rate_windows');
+
+  /// Atomically checks-and-bumps the (conversationId, senderId) send-rate
+  /// counter in the SAME batch as the message write, so the cap is
+  /// enforced by firestore.rules' messageRateOk() (getAfter()) — not just
+  /// by this client. Uses a WriteBatch rather than a transaction so a
+  /// message typed while offline still queues locally the way Firestore's
+  /// offline persistence expects (transactions require a live round trip;
+  /// batches don't).
+  ///
+  /// Throws [CommunityException] before attempting the write if the cap
+  /// is already hit client-side, so the UI gets a fast, friendly error —
+  /// firestore.rules is the actual enforcement, this is just fast-fail.
+  Future<void> _writeMessageWithRateLimit({
     required String conversationId,
     required String senderId,
+    required String messageId,
+    required Map<String, dynamic> messageJson,
   }) async {
-    final cutoff = DateTime.now().subtract(const Duration(minutes: 1));
-    final recent = await _messages
-        .where('conversationId', isEqualTo: conversationId)
-        .where('senderId', isEqualTo: senderId)
-        .orderBy('createdAt', descending: true)
-        .limit(SocialConstants.maxMessagesPerMinute)
-        .get();
+    final windowId = '${conversationId}_$senderId';
+    final counterRef = _messageRateWindows.doc(windowId);
+    final counterSnap = await counterRef.get();
 
-    final recentCount = recent.docs.where((doc) {
-      final created = DateTime.tryParse(doc.data()['createdAt']?.toString() ?? '');
-      return created != null && created.isAfter(cutoff);
-    }).length;
+    final data = counterSnap.data();
+    // Kept as the raw Timestamp (not round-tripped through DateTime) — the
+    // rule requires writing back the EXACT same value when the window
+    // hasn't reset; a DateTime round-trip would silently truncate the
+    // sub-microsecond precision Timestamp carries.
+    final existingWindowStart = data?['windowStart'] as Timestamp?;
+    final existingCount = (data?['count'] as num?)?.toInt() ?? 0;
+    final windowStillOpen = existingWindowStart != null &&
+        DateTime.now().difference(existingWindowStart.toDate()) <
+            const Duration(minutes: 1);
 
-    if (recentCount >= SocialConstants.maxMessagesPerMinute) {
+    final count = windowStillOpen ? existingCount + 1 : 1;
+    if (count > SocialConstants.maxMessagesPerMinute) {
       throw CommunityException(
         'Too many messages. Please wait a moment before sending more.',
       );
     }
+
+    final batch = _firestore.batch();
+    batch.set(counterRef, {
+      'conversationId': conversationId,
+      'senderId': senderId,
+      'count': count,
+      // Reset (or first-ever write) pins the clock to the server's own
+      // time; otherwise the exact same stored Timestamp passes through.
+      'windowStart':
+          windowStillOpen ? existingWindowStart : FieldValue.serverTimestamp(),
+    });
+    batch.set(_messages.doc(messageId), messageJson);
+    await batch.commit();
   }
 
   Future<List<ChatMessageModel>> searchMessagesInConversation({

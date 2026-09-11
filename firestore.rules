@@ -383,6 +383,17 @@ service cloud.firestore {
         );
     }
 
+    // Server-enforced counterpart of
+    // CommunityFirestoreService._assertMessageRateLimit (client-side-only,
+    // trivially bypassed by writing `community_messages` directly). Mirrors
+    // consultationRequestRateOk()'s getAfter()/fixed-window pattern —
+    // see match /message_rate_windows below for the counter's own rules.
+    function messageRateOk(conversationId, uid) {
+      return getAfter(
+        /databases/$(database)/documents/message_rate_windows/$(conversationId + '_' + uid)
+      ).data.count <= 15;
+    }
+
     // ---- Paid consultations ("Talk to a Verified Student/Alumni") ----
 
     function isConsultationParticipant(data) {
@@ -423,7 +434,24 @@ service cloud.firestore {
         price.get('grossPaise', 0) is int &&
         price.get('grossPaise', 0) > 0 &&
         price.get('platformFeePaise', 0) == 0 &&
-        price.get('guideAmountPaise', 0) == 0;
+        price.get('guideAmountPaise', 0) == 0 &&
+        consultationRequestRateOk(request.auth.uid);
+    }
+
+    // Server-enforced counterpart of ConsultationService._checkSpam (a
+    // client-side-only pre-check is trivially bypassed by writing
+    // `consultations` directly). The client must, in the SAME batch/
+    // transaction as the consultation create, upsert its own
+    // `consultation_request_windows/{uid}` counter — see
+    // isSafeConsultationRequestWindowWrite below for the fixed-window
+    // increment/reset rules that make the counter itself untamperable.
+    // `getAfter` reads that sibling doc's value AFTER this batch is
+    // applied, so a create that skips writing the counter (or lies about
+    // it) fails here rather than silently bypassing the cap.
+    function consultationRequestRateOk(studentId) {
+      return getAfter(
+        /databases/$(database)/documents/consultation_request_windows/$(studentId)
+      ).data.count <= 6;
     }
 
     // Fields only a trusted backend (Cloud Functions via Admin SDK, which
@@ -657,6 +685,40 @@ service cloud.firestore {
         request.resource.data.raterId == request.auth.uid;
     }
 
+    // Fixed-window (1h) request-rate counter, one doc per student, read by
+    // consultationRequestRateOk() above via getAfter(). The increment/reset
+    // arithmetic is verified here — not by the client — so the cap (6/hour,
+    // ConsultationConstants.maxConsultationRequestsPerHour) holds even
+    // against a client that skips ConsultationService entirely.
+    match /consultation_request_windows/{studentId} {
+      allow read: if isOwner(studentId) || isAdmin();
+      allow create: if isOwner(studentId) &&
+        request.resource.data.keys().hasOnly(['count', 'windowStart']) &&
+        request.resource.data.count == 1 &&
+        request.resource.data.windowStart == request.time;
+      allow update: if isOwner(studentId) &&
+        request.resource.data.keys().hasOnly(['count', 'windowStart']) &&
+        (
+          // Still inside the current hour AND under the cap -> +1, window
+          // start unchanged (a fresh timestamp here would let a client
+          // keep resetting the clock to dodge the cap).
+          (
+            request.time < resource.data.windowStart + duration.value(1, 'h') &&
+            resource.data.count < 6 &&
+            request.resource.data.windowStart == resource.data.windowStart &&
+            request.resource.data.count == resource.data.count + 1
+          ) ||
+          // Window expired -> resets to 1, windowStart pinned to the
+          // server's own clock (request.time), never a client-chosen value.
+          (
+            request.time >= resource.data.windowStart + duration.value(1, 'h') &&
+            request.resource.data.windowStart == request.time &&
+            request.resource.data.count == 1
+          )
+        );
+      allow delete: if false;
+    }
+
     // Paid consultation record — the source of truth for the whole
     // "Talk to a Verified Student/Alumni" flow. See helper functions above.
     match /consultations/{consultationId} {
@@ -850,12 +912,47 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // Fixed-window (1 min) send-rate counter, one doc per
+    // (conversationId, senderId) — doc ID pinned to that pair (checked
+    // below) so a sender can't dodge the cap by writing to a fresh
+    // arbitrary doc ID per message. Same increment/reset shape as
+    // consultation_request_windows above (SocialConstants.maxMessagesPerMinute).
+    match /message_rate_windows/{windowId} {
+      allow read: if isAuthenticated() && resource.data.senderId == request.auth.uid;
+      allow create: if isAuthenticated() &&
+        request.resource.data.senderId == request.auth.uid &&
+        windowId == (request.resource.data.conversationId + '_' + request.auth.uid) &&
+        request.resource.data.keys().hasOnly(['conversationId', 'senderId', 'count', 'windowStart']) &&
+        request.resource.data.count == 1 &&
+        request.resource.data.windowStart == request.time;
+      allow update: if isAuthenticated() &&
+        resource.data.senderId == request.auth.uid &&
+        request.resource.data.senderId == request.auth.uid &&
+        request.resource.data.conversationId == resource.data.conversationId &&
+        request.resource.data.keys().hasOnly(['conversationId', 'senderId', 'count', 'windowStart']) &&
+        (
+          (
+            request.time < resource.data.windowStart + duration.value(1, 'm') &&
+            resource.data.count < 15 &&
+            request.resource.data.windowStart == resource.data.windowStart &&
+            request.resource.data.count == resource.data.count + 1
+          ) ||
+          (
+            request.time >= resource.data.windowStart + duration.value(1, 'm') &&
+            request.resource.data.windowStart == request.time &&
+            request.resource.data.count == 1
+          )
+        );
+      allow delete: if false;
+    }
+
     match /community_messages/{messageId} {
       allow read: if isAuthenticated() &&
         canAccessConversationById(resource.data.conversationId);
       allow create: if isAuthenticated() &&
         request.resource.data.senderId == request.auth.uid &&
-        canAccessConversationById(request.resource.data.conversationId);
+        canAccessConversationById(request.resource.data.conversationId) &&
+        messageRateOk(request.resource.data.conversationId, request.auth.uid);
       allow update: if isAdmin() ||
         (
           isAuthenticated() &&

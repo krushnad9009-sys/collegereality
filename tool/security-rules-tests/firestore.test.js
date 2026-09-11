@@ -6,7 +6,15 @@ import {
   assertSucceeds,
   initializeTestEnvironment,
 } from '@firebase/rules-unit-testing';
-import { doc, getDoc, setDoc, updateDoc, writeBatch } from 'firebase/firestore';
+import {
+  doc,
+  getDoc,
+  serverTimestamp,
+  setDoc,
+  Timestamp,
+  updateDoc,
+  writeBatch,
+} from 'firebase/firestore';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectId = 'demo-college-reality';
@@ -632,8 +640,22 @@ describe('H6 paid consultations', () => {
   });
 
   it('allows booking a consultation with an eligible verified guide', async () => {
-    await assertSucceeds(
-      setDoc(doc(authDb('student1'), 'consultations/c1'), requestPayload()),
+    // consultationRequestRateOk() requires the SAME batch to also upsert
+    // consultation_request_windows/{studentId} — see "I1 consultation
+    // request rate limit" below for the counter's own rules.
+    const db = authDb('student1');
+    const batch = writeBatch(db);
+    batch.set(doc(db, 'consultation_request_windows/student1'), {
+      count: 1,
+      windowStart: serverTimestamp(),
+    });
+    batch.set(doc(db, 'consultations/c1'), requestPayload());
+    await assertSucceeds(batch.commit());
+  });
+
+  it('denies booking that skips the request-rate counter entirely', async () => {
+    await assertFails(
+      setDoc(doc(authDb('student1'), 'consultations/c1b'), requestPayload()),
     );
   });
 
@@ -829,6 +851,195 @@ describe('H6 paid consultations', () => {
         consultationId: 'fake',
         amountPaise: 999999,
         status: 'payable',
+      }),
+    );
+  });
+});
+
+// Server-enforced counterpart of ConsultationService._checkSpam — see
+// consultationRequestRateOk() / match /consultation_request_windows in
+// firestore.rules. A client-side-only rate check is trivially bypassed by
+// writing `consultations` directly with a valid ID token; these rules
+// make the cap hold regardless of what the calling client does.
+describe('I1 consultation request rate limit', () => {
+  it('denies creating another student\'s counter doc', async () => {
+    await assertFails(
+      setDoc(doc(authDb('attacker'), 'consultation_request_windows/student1'), {
+        count: 1,
+        windowStart: serverTimestamp(),
+      }),
+    );
+  });
+
+  it('denies a first-write that does not start at count 1', async () => {
+    await assertFails(
+      setDoc(doc(authDb('student1'), 'consultation_request_windows/student1'), {
+        count: 3,
+        windowStart: serverTimestamp(),
+      }),
+    );
+  });
+
+  it('denies a first-write with a client-chosen (non-server) windowStart', async () => {
+    await assertFails(
+      setDoc(doc(authDb('student1'), 'consultation_request_windows/student1'), {
+        count: 1,
+        windowStart: Timestamp.fromMillis(Date.now()),
+      }),
+    );
+  });
+
+  it('allows the very first counter write', async () => {
+    await assertSucceeds(
+      setDoc(doc(authDb('student1'), 'consultation_request_windows/student1'), {
+        count: 1,
+        windowStart: serverTimestamp(),
+      }),
+    );
+  });
+
+  it('allows a +1 increment within the same hour, same windowStart', async () => {
+    const windowStart = Timestamp.fromMillis(Date.now() - 5 * 60 * 1000); // 5 min ago
+    await seed({ 'consultation_request_windows/student1': { count: 3, windowStart } });
+    await assertSucceeds(
+      updateDoc(doc(authDb('student1'), 'consultation_request_windows/student1'), {
+        count: 4,
+        windowStart,
+      }),
+    );
+  });
+
+  it('denies incrementing past the cap (6) inside the same window', async () => {
+    const windowStart = Timestamp.fromMillis(Date.now() - 5 * 60 * 1000);
+    await seed({ 'consultation_request_windows/student1': { count: 6, windowStart } });
+    await assertFails(
+      updateDoc(doc(authDb('student1'), 'consultation_request_windows/student1'), {
+        count: 7,
+        windowStart,
+      }),
+    );
+  });
+
+  it('denies jumping the count by more than 1 in one write', async () => {
+    const windowStart = Timestamp.fromMillis(Date.now() - 5 * 60 * 1000);
+    await seed({ 'consultation_request_windows/student1': { count: 1, windowStart } });
+    await assertFails(
+      updateDoc(doc(authDb('student1'), 'consultation_request_windows/student1'), {
+        count: 3,
+        windowStart,
+      }),
+    );
+  });
+
+  it('denies resetting the clock while still inside the current window', async () => {
+    const windowStart = Timestamp.fromMillis(Date.now() - 5 * 60 * 1000);
+    await seed({ 'consultation_request_windows/student1': { count: 2, windowStart } });
+    await assertFails(
+      updateDoc(doc(authDb('student1'), 'consultation_request_windows/student1'), {
+        count: 3,
+        windowStart: serverTimestamp(), // moving the goalposts to dodge the cap later
+      }),
+    );
+  });
+
+  it('allows a reset to count 1 once the hour has elapsed', async () => {
+    const expired = Timestamp.fromMillis(Date.now() - 65 * 60 * 1000); // 65 min ago
+    await seed({ 'consultation_request_windows/student1': { count: 6, windowStart: expired } });
+    await assertSucceeds(
+      updateDoc(doc(authDb('student1'), 'consultation_request_windows/student1'), {
+        count: 1,
+        windowStart: serverTimestamp(),
+      }),
+    );
+  });
+
+  it('denies a fresh-looking reset that is not actually expired yet', async () => {
+    const windowStart = Timestamp.fromMillis(Date.now() - 5 * 60 * 1000);
+    await seed({ 'consultation_request_windows/student1': { count: 6, windowStart } });
+    await assertFails(
+      updateDoc(doc(authDb('student1'), 'consultation_request_windows/student1'), {
+        count: 1,
+        windowStart: serverTimestamp(),
+      }),
+    );
+  });
+});
+
+// Server-enforced counterpart of
+// CommunityFirestoreService._assertMessageRateLimit — see messageRateOk() /
+// match /message_rate_windows in firestore.rules.
+describe('I2 message send rate limit', () => {
+  const windowId = 'conv1_student1';
+
+  it('denies a windowId that does not match conversationId_uid', async () => {
+    await assertFails(
+      setDoc(doc(authDb('student1'), 'message_rate_windows/conv2_student1'), {
+        conversationId: 'conv1',
+        senderId: 'student1',
+        count: 1,
+        windowStart: serverTimestamp(),
+      }),
+    );
+  });
+
+  it('denies impersonating another sender', async () => {
+    await assertFails(
+      setDoc(doc(authDb('attacker'), `message_rate_windows/${windowId}`), {
+        conversationId: 'conv1',
+        senderId: 'student1',
+        count: 1,
+        windowStart: serverTimestamp(),
+      }),
+    );
+  });
+
+  it('allows the first counter write for a conversation', async () => {
+    await assertSucceeds(
+      setDoc(doc(authDb('student1'), `message_rate_windows/${windowId}`), {
+        conversationId: 'conv1',
+        senderId: 'student1',
+        count: 1,
+        windowStart: serverTimestamp(),
+      }),
+    );
+  });
+
+  it('denies incrementing past the cap (15) inside the same minute', async () => {
+    const windowStart = Timestamp.fromMillis(Date.now() - 10 * 1000); // 10s ago
+    await seed({
+      [`message_rate_windows/${windowId}`]: {
+        conversationId: 'conv1',
+        senderId: 'student1',
+        count: 15,
+        windowStart,
+      },
+    });
+    await assertFails(
+      updateDoc(doc(authDb('student1'), `message_rate_windows/${windowId}`), {
+        conversationId: 'conv1',
+        senderId: 'student1',
+        count: 16,
+        windowStart,
+      }),
+    );
+  });
+
+  it('allows a reset to count 1 once the minute has elapsed', async () => {
+    const expired = Timestamp.fromMillis(Date.now() - 90 * 1000); // 90s ago
+    await seed({
+      [`message_rate_windows/${windowId}`]: {
+        conversationId: 'conv1',
+        senderId: 'student1',
+        count: 15,
+        windowStart: expired,
+      },
+    });
+    await assertSucceeds(
+      updateDoc(doc(authDb('student1'), `message_rate_windows/${windowId}`), {
+        conversationId: 'conv1',
+        senderId: 'student1',
+        count: 1,
+        windowStart: serverTimestamp(),
       }),
     );
   });
