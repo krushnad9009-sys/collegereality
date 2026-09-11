@@ -49,9 +49,11 @@
 - [ ] Full admin CRUD device QA (follow-up)
 
 ## Quality gates
-- [x] flutter analyze clean
-- [x] flutter test all green
-- [ ] flutter build apk --release success
-- [ ] flutter build web --release success
+- [x] flutter analyze clean (2 pre-existing warnings in firestore_college_service.dart, unrelated to current work)
+- [ ] flutter test all green — 4 pre-existing failures found 2026-09-11, unrelated to the current branch's changes: `admission_models_serialization_test.dart` (ScholarshipModel round-trip), `flows/core_user_flows_test.dart` (2x signup-flow), `widgets/signup_screen_test.dart` (terms checkbox). Reproduce on a clean checkout before assuming this branch caused them.
+- [x] flutter build apk --release success (verified 2026-09-11, debug-signed fallback — real Play Store upload still needs the owner's upload keystore, see android/key.properties.example)
+- [x] flutter build appbundle --release success (verified 2026-09-11, same signing caveat)
+- [x] flutter build web --release success (verified 2026-09-11)
+- [x] tool/security-rules-tests passing (69/69 — 64 Firestore + 5 Storage, verified 2026-09-11 incl. new consultation/message rate-limit rules)
 - [ ] Reports committed
 - [ ] Pushed to main

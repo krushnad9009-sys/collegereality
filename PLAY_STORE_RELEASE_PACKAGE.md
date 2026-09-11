@@ -148,7 +148,13 @@ Capture on release build (`flutter build apk --release`):
 - [ ] Countries: India (primary), expand later
 
 ### Firebase (before release)
-- [ ] Deploy Firestore rules: `firebase deploy --only firestore:rules,firestore:indexes,storage`
+- [ ] Deploy Firestore rules + indexes + Storage rules + functions:
+  `firebase deploy --only firestore:rules,firestore:indexes,storage,functions`
+  (functions now includes `requestAccountDeletion` and
+  `onConsultationRatingCreated` — see functions/README.md)
+- [ ] Set every secret in `functions/README.md`'s "Required secrets" before
+  deploying functions — nothing in that directory works with a placeholder
+- [ ] Run `cd tool/security-rules-tests && npm install && npx firebase emulators:exec --project demo-college-reality --only firestore,storage "npm test"` — must be 69/69 before deploying rules (verified passing 2026-09-11)
 - [ ] Enable Crashlytics in Firebase Console
 - [ ] Enable Analytics in Firebase Console
 - [ ] Add SHA-1/SHA-256 fingerprints for Google Sign-In
@@ -162,6 +168,17 @@ Output:
 - `build/app/outputs/bundle/release/app-release.aab`
 - `build/app/outputs/flutter-apk/app-release.apk`
 
+Both verified building successfully 2026-09-11 (R8/ProGuard minification
+included — `android/app/proguard-rules.pro` now also keeps
+`com.razorpay.**` and the `onPayment*` callback methods Razorpay's SDK
+invokes via reflection; without that rule a release build's checkout
+could silently never return a result). These local builds used the
+debug-signing fallback (`android/key.properties` isn't present in this
+environment) — before uploading to Play Console, build again with a real
+upload keystore in place (`android/key.properties`, from
+`key.properties.example`) and confirm `app-release.aab` is genuinely
+release-signed, not debug-signed.
+
 ---
 
 ## Play Store Requirements Verification
@@ -170,9 +187,9 @@ Output:
 |-------------|--------|
 | Target API 34+ | ✅ Via Flutter SDK |
 | 64-bit support | ✅ Flutter default |
-| App Bundle (AAB) | ✅ Build configured |
+| App Bundle (AAB) | ✅ Builds successfully (verified 2026-09-11) |
 | Unique applicationId | ✅ `com.collegereality.india` |
-| Signed release | ⚠️ Needs upload keystore (`key.properties`) |
+| Signed release | ⚠️ Build pipeline verified; still needs the owner's real upload keystore in `android/key.properties` |
 | Privacy policy URL | ⚠️ Host publicly |
 | Data safety | ⚠️ Complete in Play Console |
 | Content rating | ⚠️ Complete IARC questionnaire |
