@@ -347,7 +347,7 @@ class FirestoreCollegeService {
 
     try {
       if (intent.hasCity && !intent.hasRetrievalQuery) {
-        return _queryStructuredPage(
+        return await _queryStructuredPage(
           cityFilter: intent.city,
           state: intent.state,
           category: intent.category,
@@ -363,7 +363,7 @@ class FirestoreCollegeService {
       }
 
       if (!intent.hasRetrievalQuery) {
-        return _queryStructuredPage(
+        return await _queryStructuredPage(
           state: intent.state,
           category: intent.category,
           course: intent.course,
