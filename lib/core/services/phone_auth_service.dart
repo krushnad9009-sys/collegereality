@@ -95,7 +95,16 @@ class PhoneAuthService {
         '$prefix: FirebaseAuthException '
         'code=${error.code} '
         'message=${error.message} '
-        'plugin=${error.plugin}'
+        'plugin=${error.plugin} '
+        'credential=${error.credential} '
+        'email=${redactEmail(error.email)} '
+        'phoneNumber=${redactPhone(error.phoneNumber)} '
+        // The raw toString() of the exception object itself, verbatim --
+        // in case it ever carries anything the fields above don't (it
+        // normally doesn't; firebase_auth_web's mapping already unpacks
+        // everything Google's JS SDK exposes into code/message above, so
+        // this is a completeness net, not a source of hidden detail).
+        'raw=$error'
         '${hint == null ? '' : '\n  ↳ FIX: $hint'}\n$stackTrace',
       );
     } else {
@@ -119,15 +128,46 @@ class PhoneAuthService {
     switch (code) {
       case 'invalid-app-credential':
       case 'missing-client-identifier':
+        if (kIsWeb) {
+          // NOT the same checklist as Android attestation below. This is a
+          // server-side rejection of a reCAPTCHA token that WAS generated
+          // and sent -- so "Authorized domains" and the API key already
+          // being fine (the usual first two things people check) do not
+          // rule this out. Two separate, easy-to-miss config surfaces:
+          return 'Web reCAPTCHA/app-credential check rejected by Google\'s '
+              'backend (the token was sent -- this is not a missing-'
+              'initialization bug). Neither Authentication -> Settings -> '
+              'Authorized domains nor the API key alone control this: '
+              '(1) Google Cloud Console -> Security -> reCAPTCHA Enterprise '
+              '-> the key Firebase auto-created for Phone Auth -> Settings '
+              '-> Domains -- this has ITS OWN allowlist, separate from '
+              'Authorized domains; add "localhost" (and your prod domain). '
+              '(2) If the API key has HTTP-referrer restrictions, they need '
+              'an explicit "http://localhost:*/*"-style pattern -- local '
+              'Flutter web runs over plain http, so a pattern covering only '
+              'your https:// domain silently rejects localhost. '
+              '(3) Confirm "Identity Toolkit API" is enabled under APIs & '
+              'Services (a separate toggle from enabling Phone in the '
+              'Firebase Authentication console). '
+              'For the precise rejection reason, open DevTools -> Network, '
+              'find the failing identitytoolkit.googleapis.com request, and '
+              'read its response body -- Google\'s exact message there is '
+              'more specific than the generic code the SDK surfaces here.';
+        }
         return 'Android app attestation failed. Add this build\'s SHA-1 AND '
             'SHA-256 to Firebase Console -> Project Settings -> your Android '
             'app, re-download google-services.json, and enable the Play '
             'Integrity API. Or (default in debug) let PHONE_AUTH_FORCE_'
             'RECAPTCHA=true use the reCAPTCHA fallback instead.';
       case 'captcha-check-failed':
-        return 'reCAPTCHA token rejected. Web: add this origin under '
-            'Authentication -> Settings -> Authorized domains, and check the '
-            'API key HTTP-referrer restrictions in Google Cloud Console.';
+        return 'reCAPTCHA token rejected. Check, in order: (1) this origin '
+            'is under Authentication -> Settings -> Authorized domains; '
+            '(2) Google Cloud Console -> Security -> reCAPTCHA Enterprise -> '
+            'the Phone Auth key -> Settings -> Domains -- a SEPARATE '
+            'allowlist from Authorized domains, must also include this '
+            'origin (e.g. localhost); (3) the API key\'s HTTP-referrer '
+            'restrictions, which need an explicit http://localhost:*/* '
+            'pattern for local web dev, not just your https:// prod domain.';
       case 'too-many-requests':
       case 'quota-exceeded':
         return 'SMS/verification quota hit for this project/device/number. '
