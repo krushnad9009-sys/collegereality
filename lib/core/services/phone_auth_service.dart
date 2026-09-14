@@ -72,10 +72,19 @@ class PhoneAuthService {
   String? get pendingPhone => _pendingPhone;
 
   void _log(String message) {
-    // Debug-only: these lines are verification-flow diagnostics and must
-    // never reach a release console. Phone numbers / emails that appear in
-    // callers are additionally passed through redactPhone/redactEmail.
-    if (kDebugMode) debugPrint('$_logTag $message');
+    // Native: debug-only console noise -- Crashlytics is the release
+    // diagnostic channel there (see _logException below), and a real
+    // user's device log must never carry this in production.
+    //
+    // Web is different: CrashlyticsService is a documented no-op on web
+    // (Crashlytics has no web SDK support), so it is the ONLY diagnostic
+    // channel for a release/production Flutter Web build -- without this,
+    // a failed OTP send on a deployed web build produces zero visibility
+    // anywhere. So this is unconditionally logged on web, release build
+    // included. FirebaseAuthException codes/messages carry no secrets;
+    // phone numbers/emails that appear in callers are always passed
+    // through redactPhone/redactEmail first.
+    if (kDebugMode || kIsWeb) debugPrint('$_logTag $message');
   }
 
   void _logException(Object error, StackTrace stackTrace, {String? step}) {
@@ -194,6 +203,18 @@ class PhoneAuthService {
 
   /// Each web OTP attempt needs a fresh reCAPTCHA verifier. Reusing one causes
   /// Firebase's internal verify() future to be completed twice.
+  ///
+  /// Deliberately no `container:` argument -- omitting it is what makes
+  /// this an *invisible* reCAPTCHA (Firebase's own recommended default for
+  /// phone auth): the SDK auto-creates its own hidden DOM node and, when
+  /// Google's risk check needs an actual human challenge, shows it as an
+  /// on-top modal on its own. A `RecaptchaVerifierSize` (normal/compact)
+  /// only exists for a caller-supplied `container`, i.e. an always-visible
+  /// checkbox widget docked to a specific chunk of the page -- not what
+  /// "attach it to the Send OTP flow" means here. This verifier is instead
+  /// (re)created and `render()`-ed synchronously inside the same button
+  /// tap that calls `sendOtp` (see `PhoneVerificationSection._sendOtp`),
+  /// which is the correct way to wire it to the button.
   RecaptchaVerifier _resetAndCreateWebRecaptcha() {
     _log(
       'Before creating RecaptchaVerifier '
@@ -420,15 +441,40 @@ class PhoneAuthService {
     }
   }
 
+  /// Formats a raw, user-entered number as E.164 with the +91 (India)
+  /// country code -- the shape `verifyPhoneNumber`/`linkWithPhoneNumber`
+  /// require. `PhoneVerificationSection` already runs `ValidationUtil
+  /// .validatePhone` (exactly 10 digits, [6-9] prefix) before ever calling
+  /// [sendOtp], so in practice `digits.length == 10` below is the only
+  /// branch that fires; the rest exist so this service degrades safely
+  /// (logs + a best-effort +91 number, never a crash) if ever called with
+  /// unvalidated input.
   String _formatPhone(String phone) {
-    final digits = phone.replaceAll(RegExp(r'\D'), '');
+    var digits = phone.replaceAll(RegExp(r'\D'), '');
+
+    // A stray leading trunk "0" (e.g. "09876543210", a common dialing
+    // habit) would otherwise fall through to the fallback below and be
+    // sent to Firebase as "+9109876543210" -- an 11-digit, invalid number.
+    if (digits.length == 11 && digits.startsWith('0')) {
+      digits = digits.substring(1);
+    }
+
     if (digits.startsWith('91') && digits.length == 12) {
       return '+$digits';
     }
     if (digits.length == 10) {
       return '+91$digits';
     }
-    if (phone.startsWith('+')) return phone;
+    // Already E.164 (e.g. a non-Indian number typed with its own country
+    // code) -- pass through rather than double-prefixing +91.
+    if (phone.trim().startsWith('+')) return phone.trim();
+
+    _log(
+      'Phone format fallback: "${redactPhone(phone)}" -> $digits digits '
+      'matched no known shape (expected 10 digits, or 12 starting with 91). '
+      'Defaulting to +91$digits, which Firebase will likely reject as '
+      'invalid-phone-number.',
+    );
     return '+91$digits';
   }
 
