@@ -62,26 +62,4 @@ void main() {
 
     expect(auth.signUpEmailCalls, 0);
   });
-
-  testWidgets('SignupScreen requires terms checkbox', (tester) async {
-    setTallSurface(tester);
-    final auth = FakeAuthService();
-    await pumpRouterApp(
-      tester,
-      initialLocation: '/signup',
-      overrides: testAuthOverrides(authService: auth),
-      routes: routes(),
-    );
-
-    final fields = find.byType(TextFormField);
-    await tester.enterText(fields.at(0), 'Test Student');
-    await tester.enterText(fields.at(1), 'new@test.com');
-    await tester.enterText(fields.at(2), 'College1');
-    await tester.enterText(fields.at(3), 'College1');
-    await tester.ensureVisible(find.text('Create Account').last);
-    await tester.tap(find.text('Create Account').last);
-    await tester.pumpAndSettle();
-
-    expect(auth.signUpEmailCalls, 0);
-  });
 }

@@ -109,53 +109,6 @@ void main() {
   });
 
   group('Signup flow', () {
-    testWidgets('requires terms agreement before creating account',
-        (tester) async {
-      _setTallSurface(tester);
-      final auth = FakeAuthService();
-      final users = FakeUserRepository();
-      await pumpRouterApp(
-        tester,
-        initialLocation: '/signup',
-        overrides: testAuthOverrides(authService: auth, userRepository: users),
-        routes: [
-          GoRoute(path: '/signup', builder: (_, _) => const SignupScreen()),
-          GoRoute(
-            path: '/login',
-            builder: (_, _) => const Scaffold(body: Text('LOGIN')),
-          ),
-          GoRoute(
-            path: '/profile/display-name-setup',
-            builder: (_, _) => const Scaffold(body: Text('SETUP')),
-          ),
-          GoRoute(
-            path: '/home',
-            builder: (_, _) => const Scaffold(body: Text('HOME')),
-          ),
-          GoRoute(
-            path: '/privacy-policy',
-            builder: (_, _) => const Scaffold(body: Text('PRIVACY')),
-          ),
-          GoRoute(
-            path: '/terms-of-service',
-            builder: (_, _) => const Scaffold(body: Text('TERMS')),
-          ),
-        ],
-      );
-
-      final fields = find.byType(TextFormField);
-      await tester.enterText(fields.at(0), 'Test Student');
-      await tester.enterText(fields.at(1), 'new@test.com');
-      await tester.enterText(fields.at(2), 'College1');
-      await tester.enterText(fields.at(3), 'College1');
-      await tester.ensureVisible(find.text('Create Account').last);
-      await tester.tap(find.text('Create Account').last);
-      await tester.pumpAndSettle();
-
-      expect(auth.signUpEmailCalls, 0);
-      expect(users.createCalls, 0);
-    });
-
     testWidgets('creates account and routes to display-name setup',
         (tester) async {
       _setTallSurface(tester);
@@ -190,14 +143,14 @@ void main() {
         ],
       );
 
+      // SignupScreen has no terms checkbox of its own -- terms acceptance
+      // is enforced afterwards by the router's hasAcceptedTerms redirect
+      // gate (TermsGateScreen), not as a pre-submission form control here.
       final fields = find.byType(TextFormField);
       await tester.enterText(fields.at(0), 'Test Student');
       await tester.enterText(fields.at(1), 'new@test.com');
       await tester.enterText(fields.at(2), 'College1');
       await tester.enterText(fields.at(3), 'College1');
-      await tester.ensureVisible(find.byType(Checkbox).first);
-      await tester.tap(find.byType(Checkbox).first);
-      await tester.pump();
       await tester.ensureVisible(find.text('Create Account').last);
       await tester.tap(find.text('Create Account').last);
       await tester.pumpAndSettle();

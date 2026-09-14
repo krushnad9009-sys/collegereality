@@ -7,7 +7,11 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   final now = DateTime(2026, 1, 20);
-  final deadline = DateTime(2026, 8, 31);
+  // Relative to the real clock (not the fixed `now` above) so this stays
+  // in the future -- ScholarshipModel.isExpired compares against
+  // DateTime.now(), and a hardcoded calendar date eventually becomes a
+  // past date and makes this test fail on its own.
+  final deadline = DateTime.now().add(const Duration(days: 365));
 
   group('ScholarshipModel JSON', () {
     test('round-trip preserves eligibility and documents', () {
