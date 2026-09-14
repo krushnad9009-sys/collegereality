@@ -82,4 +82,3 @@ flutter:
   assets:
     - assets/data/
     - assets/icons/splash_logo.png
-    - assets/icons/app_icon.png
