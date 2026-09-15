@@ -310,7 +310,7 @@ class _ReviewCardWidgetState extends ConsumerState<ReviewCardWidget> {
                   ),
                 if (widget.onEditContent != null)
                   IconButton(
-                    tooltip: 'Edit content',
+                    tooltip: 'Edit (Super Admin)',
                     onPressed: widget.onEditContent,
                     icon: const Icon(Icons.edit_outlined),
                   ),

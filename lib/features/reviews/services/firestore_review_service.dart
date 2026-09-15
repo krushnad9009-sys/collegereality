@@ -126,6 +126,40 @@ class FirestoreReviewService {
     });
   }
 
+  /// Super Admin override: identical persistence/aggregate-delta behavior to
+  /// [updateReview], but deliberately skips the two guards in there that
+  /// exist for the *self-service* student edit flow -- the verified-student
+  /// requirement (an admin must be able to fix/override a review from a
+  /// user who isn't (yet) verified, e.g. while moderating it) and the
+  /// [ReviewConstants.editCooldownDays] cooldown (that cooldown is about
+  /// rate-limiting a student re-editing their own review, not about
+  /// limiting admin moderation actions).
+  Future<void> adminUpdateReview(
+    ReviewModel review, {
+    ReviewModel? previous,
+  }) async {
+    final data = review.copyWith(updatedAt: DateTime.now()).toJson();
+    await _firestore.runTransaction((transaction) async {
+      transaction.update(_reviews.doc(review.id), data);
+      if (previous != null && previous.isPublicVisible) {
+        await _applyReviewDeltaInTransaction(
+          transaction,
+          collegeId: review.collegeId.trim(),
+          review: previous,
+          deltaSign: -1,
+        );
+      }
+      if (review.isPublicVisible) {
+        await _applyReviewDeltaInTransaction(
+          transaction,
+          collegeId: review.collegeId.trim(),
+          review: review,
+          deltaSign: 1,
+        );
+      }
+    });
+  }
+
   Future<void> updateReviewStatus(String reviewId, String status) async {
     final review = await getReviewById(reviewId);
     if (review == null) return;

@@ -8,9 +8,11 @@ import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/widgets/index.dart';
+import '../../../core/constants/rating_parameters.dart';
 import '../../reviews/models/review_model.dart';
 import '../../reviews/providers/review_provider.dart';
 import '../../reviews/widgets/review_card_widget.dart';
+import '../../reviews/widgets/star_rating_widget.dart';
 import '../providers/admin_provider.dart';
 import '../services/admin_action_logger.dart';
 import '../utils/admin_permissions.dart';
@@ -69,39 +71,141 @@ class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
     }
   }
 
-  Future<void> _editContent(ReviewModel review) async {
-    final controller = TextEditingController(text: review.textReview);
-    final next = await showDialog<String>(
+  /// Super Admin full-control edit: review content, every numeric rating
+  /// the review carries (including legacy keys like `infrastructure` that
+  /// no longer appear in [RatingParameters.categories] but still exist on
+  /// older documents), and status -- including Delete, which reuses the
+  /// existing confirmed [_moderate] delete path rather than writing an
+  /// invalid status string.
+  Future<void> _openFullEditDialog(ReviewModel review) async {
+    final contentController = TextEditingController(text: review.textReview);
+    final ratings = Map<String, double>.from(review.ratings);
+    // Keep current-schema keys in their canonical order, then append any
+    // legacy/unknown keys the review still carries so nothing is hidden.
+    final ratingKeys = [
+      ...RatingParameters.allKeys.where(ratings.containsKey),
+      ...ratings.keys.where((k) => !RatingParameters.allKeys.contains(k)),
+    ];
+    var status = ReviewModel.normalizeStatus(review.status);
+
+    final result = await showDialog<_ReviewEditResult>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Edit review content'),
-        content: TextField(
-          controller: controller,
-          maxLines: 8,
-          decoration: const InputDecoration(border: OutlineInputBorder()),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
-            child: const Text('Save'),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: const Text('Edit Review (Super Admin)'),
+          content: SizedBox(
+            width: 480,
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Review content',
+                    style: AppFonts.plusJakarta(fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  TextField(
+                    controller: contentController,
+                    maxLines: 6,
+                    decoration: const InputDecoration(border: OutlineInputBorder()),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  Text(
+                    'Ratings',
+                    style: AppFonts.plusJakarta(fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  ...ratingKeys.map(
+                    (key) => RatingInputRow(
+                      label: RatingParameters.labelFor(key),
+                      value: ratings[key] ?? 0,
+                      onChanged: (v) => setDialogState(() => ratings[key] = v),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  Text(
+                    'Status',
+                    style: AppFonts.plusJakarta(fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  DropdownButtonFormField<String>(
+                    initialValue: status,
+                    decoration: const InputDecoration(border: OutlineInputBorder()),
+                    items: const [
+                      DropdownMenuItem(
+                        value: ReviewModel.statusPublished,
+                        child: Text('Publish'),
+                      ),
+                      DropdownMenuItem(
+                        value: ReviewModel.statusPending,
+                        child: Text('Pending'),
+                      ),
+                      DropdownMenuItem(
+                        value: ReviewModel.statusHidden,
+                        child: Text('Hide'),
+                      ),
+                      DropdownMenuItem(
+                        value: ReviewModel.statusRejected,
+                        child: Text('Reject'),
+                      ),
+                      DropdownMenuItem(
+                        value: _ReviewEditResult.deleteSentinel,
+                        child: Text('Delete', style: TextStyle(color: AppTheme.errorColor)),
+                      ),
+                    ],
+                    onChanged: (v) => setDialogState(() => status = v ?? status),
+                  ),
+                ],
+              ),
+            ),
           ),
-        ],
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+            FilledButton(
+              onPressed: () => Navigator.pop(
+                ctx,
+                _ReviewEditResult(
+                  textReview: contentController.text.trim(),
+                  ratings: ratings,
+                  status: status,
+                ),
+              ),
+              child: const Text('Save'),
+            ),
+          ],
+        ),
       ),
     );
-    controller.dispose();
-    if (next == null) return;
+    contentController.dispose();
+    if (result == null) return;
+
+    if (result.status == _ReviewEditResult.deleteSentinel) {
+      await _moderate(review, review.status, delete: true);
+      return;
+    }
+
     try {
       final repository = ref.read(reviewRepositoryProvider);
-      await repository.updateReview(review.copyWith(textReview: next));
+      await repository.adminUpdateReview(
+        review.copyWith(
+          textReview: result.textReview,
+          ratings: result.ratings,
+          status: result.status,
+        ),
+      );
       await ref.read(adminActionLoggerProvider).log(
-            action: 'review.edit_content',
+            action: 'review.admin_override',
             targetId: review.id,
             targetType: 'review',
+            metadata: {
+              'status': result.status,
+              'collegeId': review.collegeId,
+            },
           );
       ref.invalidate(allReviewsAdminProvider(_statusFilter));
+      ref.invalidate(collegeReviewsProvider(review.collegeId));
       if (mounted) {
-        SnackBarHelper.showSuccessSnackBar(context, message: 'Review content updated');
+        SnackBarHelper.showSuccessSnackBar(context, message: 'Review updated');
       }
     } catch (e) {
       if (mounted) {
@@ -222,7 +326,7 @@ class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
                                 ReviewModel.statusPublished,
                               ),
                       onEditContent:
-                          canEdit ? () => _editContent(review) : null,
+                          canEdit ? () => _openFullEditDialog(review) : null,
                       onDelete: () => _moderate(
                         review,
                         review.status,
@@ -238,6 +342,22 @@ class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
       ),
     );
   }
+}
+
+/// Local holder for the full edit dialog's result -- avoids threading three
+/// separate return values out of [showDialog].
+class _ReviewEditResult {
+  static const String deleteSentinel = '__delete__';
+
+  final String textReview;
+  final Map<String, double> ratings;
+  final String status;
+
+  const _ReviewEditResult({
+    required this.textReview,
+    required this.ratings,
+    required this.status,
+  });
 }
 
 class _FilterChip extends StatelessWidget {

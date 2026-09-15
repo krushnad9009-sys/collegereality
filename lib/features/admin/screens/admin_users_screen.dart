@@ -21,7 +21,24 @@ class AdminUsersScreen extends ConsumerStatefulWidget {
 
 class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
   final _searchController = TextEditingController();
-  String _query = '';
+
+  // Two independent data modes, mirroring AdminCollegesScreen:
+  //  * no filter text -> paginated listing of ALL users (this list + cursor)
+  //  * filter text present -> one-shot searchUsers() results (unpaginated,
+  //    already capped at AdminConstants.maxSearchUsers -- unchanged)
+  String? _cursor;
+  bool _hasMore = false;
+  List<AdminUserSearchResult> _users = [];
+  bool _loading = false;
+  String? _error;
+
+  bool get _isFiltering => _searchController.text.trim().isNotEmpty;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _load());
+  }
 
   @override
   void dispose() {
@@ -29,14 +46,48 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
     super.dispose();
   }
 
-  void _search() {
-    setState(() => _query = _searchController.text.trim());
+  Future<void> _load({bool loadMore = false}) async {
+    if (_loading) return;
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final query = _searchController.text.trim();
+      if (query.isNotEmpty) {
+        final results =
+            await ref.read(adminUserSearchProvider(query).future);
+        if (!mounted) return;
+        setState(() {
+          _users = results;
+          _cursor = null;
+          _hasMore = false;
+        });
+        return;
+      }
+
+      final page = await ref.read(
+        adminUserPageProvider(
+          AdminUserPageParams(startAfterDocumentId: loadMore ? _cursor : null),
+        ).future,
+      );
+      if (!mounted) return;
+      setState(() {
+        _users = loadMore ? [..._users, ...page.items] : page.items;
+        _cursor = page.lastDocumentId;
+        _hasMore = page.hasMore;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _error = e.toString());
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    final usersAsync = ref.watch(adminUserSearchProvider(_query));
     final isAdminUser = ref.watch(isAdminUserProvider).maybeWhen(data: (v) => v, orElse: () => false);
 
     return AdminShellLayout(
@@ -51,55 +102,75 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                 Expanded(
                   child: TextField(
                     controller: _searchController,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      hintText: 'Search by email or name',
-                      prefixIcon: Icon(Icons.search),
+                    decoration: InputDecoration(
+                      border: const OutlineInputBorder(),
+                      hintText: 'Search by email or name (optional)',
+                      prefixIcon: const Icon(Icons.search),
+                      suffixIcon: _isFiltering
+                          ? IconButton(
+                              icon: const Icon(Icons.clear),
+                              onPressed: () {
+                                _searchController.clear();
+                                _load();
+                              },
+                            )
+                          : null,
                     ),
-                    onSubmitted: (_) => _search(),
+                    onSubmitted: (_) => _load(),
                   ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
-                FilledButton(onPressed: _search, child: const Text('Search')),
+                FilledButton(onPressed: () => _load(), child: const Text('Search')),
+                const SizedBox(width: AppSpacing.sm),
+                IconButton(
+                  tooltip: 'Refresh',
+                  onPressed: _loading ? null : () => _load(),
+                  icon: const Icon(Icons.refresh),
+                ),
               ],
             ),
           ),
           Expanded(
-            child: _query.isEmpty
-                ? Center(
-                    child: Text(
-                      'Enter an email or name to search users',
-                      style: AppFonts.plusJakarta(color: tokens.textSecondary),
-                    ),
-                  )
-                : usersAsync.when(
-                    loading: () => const Center(child: CircularProgressIndicator()),
-                    error: (e, _) => Center(
-                      child: Text(
-                        'Search failed: $e',
-                        style: AppFonts.plusJakarta(color: tokens.textSecondary),
-                      ),
-                    ),
-                    data: (users) {
-                      if (users.isEmpty) {
-                        return Center(
-                          child: Text(
-                            'No users found',
-                            style: AppFonts.plusJakarta(color: tokens.textSecondary),
-                          ),
-                        );
-                      }
-                      return ListView.separated(
-                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                        itemCount: users.length,
-                        separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
-                        itemBuilder: (context, index) => _UserCard(
-                          user: users[index],
-                          onChanged: () => ref.invalidate(adminUserSearchProvider(_query)),
+            child: _loading && _users.isEmpty
+                ? const Center(child: CircularProgressIndicator())
+                : _error != null
+                    ? Center(
+                        child: Text(
+                          'Failed to load users: $_error',
+                          style: AppFonts.plusJakarta(color: tokens.textSecondary),
                         ),
-                      );
-                    },
-                  ),
+                      )
+                    : _users.isEmpty
+                        ? Center(
+                            child: Text(
+                              'No users found',
+                              style: AppFonts.plusJakarta(color: tokens.textSecondary),
+                            ),
+                          )
+                        : ListView.separated(
+                            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                            itemCount: _users.length + (_hasMore ? 1 : 0),
+                            separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
+                            itemBuilder: (context, index) {
+                              if (index == _users.length) {
+                                return Center(
+                                  child: _loading
+                                      ? const Padding(
+                                          padding: EdgeInsets.all(AppSpacing.sm),
+                                          child: CircularProgressIndicator(),
+                                        )
+                                      : TextButton(
+                                          onPressed: () => _load(loadMore: true),
+                                          child: const Text('Load more'),
+                                        ),
+                                );
+                              }
+                              return _UserCard(
+                                user: _users[index],
+                                onChanged: () => _load(),
+                              );
+                            },
+                          ),
           ),
         ],
       ),

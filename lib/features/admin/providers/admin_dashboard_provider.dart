@@ -50,6 +50,31 @@ final adminUserSearchProvider =
   return ref.watch(adminUserModerationServiceProvider).searchUsers(query);
 });
 
+/// Cursor for one page of [adminUserPageProvider]. `null` means "first page".
+class AdminUserPageParams {
+  final String? startAfterDocumentId;
+
+  const AdminUserPageParams({this.startAfterDocumentId});
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AdminUserPageParams &&
+          startAfterDocumentId == other.startAfterDocumentId;
+
+  @override
+  int get hashCode => startAfterDocumentId.hashCode;
+}
+
+/// Paginated "all users" listing for the User Management page's default
+/// (no search filter) view -- see [AdminUserModerationService.listUsersPage].
+final adminUserPageProvider = FutureProvider.family<AdminPageResult<AdminUserSearchResult>,
+    AdminUserPageParams>((ref, params) async {
+  return ref.watch(adminUserModerationServiceProvider).listUsersPage(
+        startAfterDocumentId: params.startAfterDocumentId,
+      );
+});
+
 final adminCollegeStatsExportProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
   return ref.watch(adminAnalyticsServiceProvider).fetchCollegeStatsForExport();
 });

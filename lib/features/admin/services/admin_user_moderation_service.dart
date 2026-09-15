@@ -61,6 +61,34 @@ class AdminUserModerationService {
     return results.take(AdminConstants.maxSearchUsers).toList();
   }
 
+  /// Paginated listing of ALL registered users, newest-updated first --
+  /// used for the User Management page's default (no search filter) view
+  /// so admins land on a populated list instead of an empty "type
+  /// something" prompt.
+  Future<AdminPageResult<AdminUserSearchResult>> listUsersPage({
+    String? startAfterDocumentId,
+    int limit = AdminConstants.defaultPageSize,
+  }) async {
+    Query<Map<String, dynamic>> q =
+        _users.orderBy('updatedAt', descending: true).limit(limit + 1);
+    if (startAfterDocumentId != null && startAfterDocumentId.isNotEmpty) {
+      final cursor = await _users.doc(startAfterDocumentId).get();
+      if (cursor.exists) {
+        q = q.startAfterDocument(cursor);
+      }
+    }
+
+    final snap = await q.get();
+    final docs = snap.docs;
+    final hasMore = docs.length > limit;
+    final pageDocs = hasMore ? docs.sublist(0, limit) : docs;
+    return AdminPageResult(
+      items: pageDocs.map(_mapUser).toList(),
+      lastDocumentId: pageDocs.isEmpty ? null : pageDocs.last.id,
+      hasMore: hasMore,
+    );
+  }
+
   Future<List<AdminUserSearchResult>> listStaffUsers() async {
     final results = <AdminUserSearchResult>[];
     final seen = <String>{};
