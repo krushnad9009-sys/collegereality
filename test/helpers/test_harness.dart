@@ -114,6 +114,25 @@ class FakeUserRepository implements UserRepository {
   }
 
   @override
+  Future<void> completePermissionsOnboarding(
+    String uid, {
+    required String state,
+    required String city,
+    required bool locationGranted,
+  }) async {
+    final existing = users[uid];
+    if (existing != null) {
+      users[uid] = existing.copyWith(
+        hasCompletedPermissionsOnboarding: true,
+        permissionsOnboardingCompletedAt: DateTime.now(),
+        state: state,
+        city: city,
+        locationGranted: locationGranted,
+      );
+    }
+  }
+
+  @override
   Future<void> deleteUser(String uid) async {
     users.remove(uid);
   }

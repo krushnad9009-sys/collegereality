@@ -19,6 +19,16 @@ class UserModel {
   final bool displayNameSetupComplete;
   final bool hasAcceptedTerms;
   final DateTime? termsAcceptedAt;
+  // Post-login onboarding permissions screen (gallery/location/notifications),
+  // shown once right before the user first reaches Home.
+  final bool hasCompletedPermissionsOnboarding;
+  final DateTime? permissionsOnboardingCompletedAt;
+  // Set from the permissions screen's location step -- 'Not Provided' (with
+  // locationGranted: false) when denied/skipped or reverse geocoding isn't
+  // available (e.g. Flutter Web), otherwise the reverse-geocoded values.
+  final String? state;
+  final String? city;
+  final bool? locationGranted;
   final String? photoURL;
   final String? coverPhotoURL;
   final String userType;
@@ -58,6 +68,11 @@ class UserModel {
     this.displayNameSetupComplete = false,
     this.hasAcceptedTerms = false,
     this.termsAcceptedAt,
+    this.hasCompletedPermissionsOnboarding = false,
+    this.permissionsOnboardingCompletedAt,
+    this.state,
+    this.city,
+    this.locationGranted,
     this.photoURL,
     this.coverPhotoURL,
     this.userType = 'student',
@@ -115,6 +130,18 @@ class UserModel {
           : json['termsAcceptedAt'] is DateTime
               ? json['termsAcceptedAt'] as DateTime
               : DateTime.tryParse(json['termsAcceptedAt'] as String),
+      hasCompletedPermissionsOnboarding:
+          json['hasCompletedPermissionsOnboarding'] as bool? ?? false,
+      permissionsOnboardingCompletedAt:
+          json['permissionsOnboardingCompletedAt'] == null
+              ? null
+              : json['permissionsOnboardingCompletedAt'] is DateTime
+                  ? json['permissionsOnboardingCompletedAt'] as DateTime
+                  : DateTime.tryParse(
+                      json['permissionsOnboardingCompletedAt'] as String),
+      state: json['state'] as String?,
+      city: json['city'] as String?,
+      locationGranted: json['locationGranted'] as bool?,
       photoURL: json['photoURL'] as String?,
       coverPhotoURL: json['coverPhotoURL'] as String?,
       userType: json['userType'] as String? ?? 'student',
@@ -178,6 +205,12 @@ class UserModel {
       'displayNameSetupComplete': displayNameSetupComplete,
       'hasAcceptedTerms': hasAcceptedTerms,
       'termsAcceptedAt': termsAcceptedAt?.toIso8601String(),
+      'hasCompletedPermissionsOnboarding': hasCompletedPermissionsOnboarding,
+      'permissionsOnboardingCompletedAt':
+          permissionsOnboardingCompletedAt?.toIso8601String(),
+      'state': state,
+      'city': city,
+      'locationGranted': locationGranted,
       'photoURL': photoURL,
       'coverPhotoURL': coverPhotoURL,
       'userType': userType,
@@ -219,6 +252,11 @@ class UserModel {
     bool? displayNameSetupComplete,
     bool? hasAcceptedTerms,
     DateTime? termsAcceptedAt,
+    bool? hasCompletedPermissionsOnboarding,
+    DateTime? permissionsOnboardingCompletedAt,
+    String? state,
+    String? city,
+    bool? locationGranted,
     String? photoURL,
     String? coverPhotoURL,
     String? userType,
@@ -259,6 +297,13 @@ class UserModel {
           displayNameSetupComplete ?? this.displayNameSetupComplete,
       hasAcceptedTerms: hasAcceptedTerms ?? this.hasAcceptedTerms,
       termsAcceptedAt: termsAcceptedAt ?? this.termsAcceptedAt,
+      hasCompletedPermissionsOnboarding: hasCompletedPermissionsOnboarding ??
+          this.hasCompletedPermissionsOnboarding,
+      permissionsOnboardingCompletedAt: permissionsOnboardingCompletedAt ??
+          this.permissionsOnboardingCompletedAt,
+      state: state ?? this.state,
+      city: city ?? this.city,
+      locationGranted: locationGranted ?? this.locationGranted,
       photoURL: photoURL ?? this.photoURL,
       coverPhotoURL: coverPhotoURL ?? this.coverPhotoURL,
       userType: userType ?? this.userType,

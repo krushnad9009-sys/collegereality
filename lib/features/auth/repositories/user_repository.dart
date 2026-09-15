@@ -36,6 +36,18 @@ abstract class UserRepository {
   /// on the owner's `users` document.
   Future<void> acceptTerms(String uid);
 
+  /// Records the result of the one-time post-login permissions onboarding
+  /// screen. [state]/[city] are the reverse-geocoded values when location
+  /// was granted and resolved, or `'Not Provided'` when denied/skipped/
+  /// unresolvable. Sets `hasCompletedPermissionsOnboarding: true` so the
+  /// router's redirect gate never shows this screen again.
+  Future<void> completePermissionsOnboarding(
+    String uid, {
+    required String state,
+    required String city,
+    required bool locationGranted,
+  });
+
   Future<void> deleteUser(String uid);
   Future<bool> userExists(String uid);
   Future<UserModel?> getUserByEmail(String email);
@@ -117,6 +129,21 @@ class UserRepositoryImpl implements UserRepository {
   @override
   Future<void> acceptTerms(String uid) async {
     await _firestoreUserService.acceptTerms(uid);
+  }
+
+  @override
+  Future<void> completePermissionsOnboarding(
+    String uid, {
+    required String state,
+    required String city,
+    required bool locationGranted,
+  }) async {
+    await _firestoreUserService.completePermissionsOnboarding(
+      uid,
+      state: state,
+      city: city,
+      locationGranted: locationGranted,
+    );
   }
 
   @override

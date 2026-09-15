@@ -13,6 +13,10 @@ class RouteNames {
   // read-only legal document): this is the blocking onboarding screen shown
   // until the user's `hasAcceptedTerms` flag is true.
   static const String termsGate = '/welcome/terms';
+  // One-time post-login onboarding: gallery/location/notification
+  // permissions. Shown after the terms gate and display-name setup (if
+  // needed), immediately before the user first reaches Home.
+  static const String permissionsOnboarding = '/welcome/permissions';
   static const String assistant = '/assistant';
   static const String compare = '/compare';
   static const String collegeDetails = '/college-details/:id';

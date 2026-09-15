@@ -1,6 +1,18 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- Location: onboarding permissions screen detects state/city for
+         localized college content. Coarse alone is enough for city-level
+         accuracy; fine is requested too since geolocator asks for both
+         together on Android and a coarse-only grant still satisfies it. -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <!-- Photos: Android 13+ (API 33+) split READ_EXTERNAL_STORAGE into
+         per-media-type permissions; READ_MEDIA_IMAGES is the one relevant
+         to profile/college photo uploads. READ_EXTERNAL_STORAGE is kept for
+         API < 33, where READ_MEDIA_IMAGES doesn't exist. -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
     <application
         android:label="College Reality"
         android:name="${applicationName}"

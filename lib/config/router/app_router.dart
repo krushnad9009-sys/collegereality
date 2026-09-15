@@ -21,6 +21,7 @@ import '../../features/colleges/screens/college_browse_screen.dart';
 import '../../features/colleges/screens/college_search_screen.dart';
 import '../../features/legal/screens/legal_screens.dart';
 import '../../features/legal/screens/terms_gate_screen.dart';
+import '../../features/onboarding/screens/permissions_onboarding_screen.dart';
 import '../../features/profile/screens/edit_profile_screen.dart';
 import '../../features/profile/screens/app_settings_screen.dart';
 import '../../features/profile/screens/help_support_screen.dart';
@@ -225,6 +226,9 @@ Future<String?> _resolveRedirect(
       final from = state.uri.queryParameters['from'];
       return RouteNames.displayNameSetupWithReturn(from);
     }
+    if (user != null && !user.hasCompletedPermissionsOnboarding) {
+      return RouteNames.permissionsOnboarding;
+    }
     if (path == RouteNames.login || path == RouteNames.signup) {
       final returnTo = RouteNames.safeReturnPath(
         state.uri.queryParameters['from'],
@@ -257,6 +261,25 @@ Future<String?> _resolveRedirect(
     if (user != null && !user.displayNameSetupComplete) {
       final intended = state.uri.toString();
       return RouteNames.displayNameSetupWithReturn(intended);
+    }
+  }
+
+  // Onboarding permissions gate — the last of the three (terms, display
+  // name, permissions), so by the time this runs both earlier gates have
+  // already either redirected away and returned, or are satisfied. Shown
+  // exactly once per account; never blocks reaching /home beyond that.
+  if (isLoggedIn &&
+      path != RouteNames.termsGate &&
+      path != RouteNames.displayNameSetup) {
+    final user = await userDetail();
+    final completed = user?.hasCompletedPermissionsOnboarding ?? true;
+    if (!completed && path != RouteNames.permissionsOnboarding) {
+      return RouteNames.permissionsOnboarding;
+    }
+    // Already completed but landed here anyway (stale bookmark/back
+    // button) — don't re-show it, same symmetry as the terms gate above.
+    if (completed && path == RouteNames.permissionsOnboarding) {
+      return RouteNames.home;
     }
   }
 
@@ -439,6 +462,14 @@ final Provider<GoRouter> appRouterProvider = Provider<GoRouter>((ref) {
           key: state.pageKey,
           name: state.name,
           child: const TermsGateScreen(),
+        ),
+      ),
+      GoRoute(
+        path: RouteNames.permissionsOnboarding,
+        pageBuilder: (context, state) => fadeUpPage(
+          key: state.pageKey,
+          name: state.name,
+          child: const PermissionsOnboardingScreen(),
         ),
       ),
       GoRoute(

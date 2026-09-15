@@ -311,6 +311,43 @@ class FirestoreUserService {
     }
   }
 
+  // Record the result of the one-time post-login permissions onboarding
+  // screen (gallery/location/notifications). Always sets
+  // hasCompletedPermissionsOnboarding: true regardless of what the user
+  // chose -- this gate is about the screen having been shown and dismissed
+  // once, not about every permission having been granted.
+  Future<void> completePermissionsOnboarding(
+    String uid, {
+    required String state,
+    required String city,
+    required bool locationGranted,
+  }) async {
+    try {
+      await FirestoreAuthUtils.ensureAuthenticated(expectedUid: uid);
+      final now = DateTime.now().toIso8601String();
+      await _firestore.collection(usersCollection).doc(uid).update({
+        'hasCompletedPermissionsOnboarding': true,
+        'permissionsOnboardingCompletedAt': now,
+        'state': state,
+        'city': city,
+        'locationGranted': locationGranted,
+        'updatedAt': now,
+      });
+    } on FirebaseException catch (e) {
+      throw _mapFirestoreError(
+        e,
+        collectionPath: usersCollection,
+        documentPath: uid,
+        action: 'save permissions onboarding',
+      );
+    } catch (e) {
+      if (e is FirestoreException) rethrow;
+      throw FirestoreException(
+        message: 'Could not save your preferences. Please try again.',
+      );
+    }
+  }
+
   // Delete user document (when user deletes account)
   Future<void> deleteUser(String uid) async {
     try {
