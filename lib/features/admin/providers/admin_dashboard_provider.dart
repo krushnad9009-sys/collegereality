@@ -54,16 +54,20 @@ final adminUserSearchProvider =
 class AdminUserPageParams {
   final String? startAfterDocumentId;
 
-  const AdminUserPageParams({this.startAfterDocumentId});
+  /// null = All, true = Verified only, false = Unverified only.
+  final bool? verifiedFilter;
+
+  const AdminUserPageParams({this.startAfterDocumentId, this.verifiedFilter});
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is AdminUserPageParams &&
-          startAfterDocumentId == other.startAfterDocumentId;
+          startAfterDocumentId == other.startAfterDocumentId &&
+          verifiedFilter == other.verifiedFilter;
 
   @override
-  int get hashCode => startAfterDocumentId.hashCode;
+  int get hashCode => Object.hash(startAfterDocumentId, verifiedFilter);
 }
 
 /// Paginated "all users" listing for the User Management page's default
@@ -72,6 +76,7 @@ final adminUserPageProvider = FutureProvider.family<AdminPageResult<AdminUserSea
     AdminUserPageParams>((ref, params) async {
   return ref.watch(adminUserModerationServiceProvider).listUsersPage(
         startAfterDocumentId: params.startAfterDocumentId,
+        verifiedFilter: params.verifiedFilter,
       );
 });
 

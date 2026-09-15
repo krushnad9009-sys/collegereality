@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_spacing.dart';
+import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/admin_constants.dart';
 import '../../../core/constants/verification_constants.dart';
 import '../../../core/widgets/premium_components.dart';
@@ -32,6 +33,9 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
   bool _loading = false;
   String? _error;
 
+  // null = All, true = Verified only, false = Unverified only.
+  bool? _verifiedFilter;
+
   bool get _isFiltering => _searchController.text.trim().isNotEmpty;
 
   @override
@@ -55,8 +59,21 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
     try {
       final query = _searchController.text.trim();
       if (query.isNotEmpty) {
-        final results =
-            await ref.read(adminUserSearchProvider(query).future);
+        var results = await ref.read(adminUserSearchProvider(query).future);
+        // searchUsers() has no server-side verified filter of its own (it's
+        // already a small, bounded in-memory list, capped at
+        // AdminConstants.maxSearchUsers) -- filter client-side instead of
+        // adding one.
+        if (_verifiedFilter != null) {
+          results = results
+              .where((u) =>
+                  VerificationConstants.isApprovedStudentOrAlumni(
+                    u.verificationBadge,
+                    u.verificationStatus,
+                  ) ==
+                  _verifiedFilter)
+              .toList();
+        }
         if (!mounted) return;
         setState(() {
           _users = results;
@@ -68,7 +85,10 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
 
       final page = await ref.read(
         adminUserPageProvider(
-          AdminUserPageParams(startAfterDocumentId: loadMore ? _cursor : null),
+          AdminUserPageParams(
+            startAfterDocumentId: loadMore ? _cursor : null,
+            verifiedFilter: _verifiedFilter,
+          ),
         ).future,
       );
       if (!mounted) return;
@@ -96,7 +116,12 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(AppSpacing.lg),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.lg,
+              AppSpacing.lg,
+              0,
+            ),
             child: Row(
               children: [
                 Expanded(
@@ -128,6 +153,32 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                   icon: const Icon(Icons.refresh),
                 ),
               ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.sm,
+              AppSpacing.lg,
+              AppSpacing.md,
+            ),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: DropdownButton<bool?>(
+                value: _verifiedFilter,
+                underline: const SizedBox.shrink(),
+                items: const [
+                  DropdownMenuItem(value: null, child: Text('All')),
+                  DropdownMenuItem(value: true, child: Text('Verified Only')),
+                  DropdownMenuItem(value: false, child: Text('Unverified Only')),
+                ],
+                onChanged: _loading
+                    ? null
+                    : (value) {
+                        setState(() => _verifiedFilter = value);
+                        _load();
+                      },
+              ),
             ),
           ),
           Expanded(
@@ -239,7 +290,10 @@ class _UserCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final service = ref.watch(adminUserModerationServiceProvider);
     final status = user.accountStatus;
-    final isVerified = user.verificationStatus == VerificationConstants.statusApproved;
+    final isVerified = VerificationConstants.isApprovedStudentOrAlumni(
+      user.verificationBadge,
+      user.verificationStatus,
+    );
 
     Color statusColor;
     switch (status) {
@@ -271,10 +325,18 @@ class _UserCard extends ConsumerWidget {
           Row(
             children: [
               StatusBadge(label: status, color: statusColor),
-              if (isVerified) ...[
-                const SizedBox(width: 6),
-                const StatusBadge(label: 'Verified', color: Colors.green, icon: Icons.verified_user),
-              ],
+              const SizedBox(width: 6),
+              isVerified
+                  ? const StatusBadge(
+                      label: 'Verified',
+                      color: AppTheme.verifiedBlue,
+                      icon: Icons.verified,
+                    )
+                  : StatusBadge(
+                      label: 'Unverified',
+                      color: Colors.grey.shade500,
+                      icon: Icons.remove_circle_outline,
+                    ),
             ],
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -314,15 +376,23 @@ class _UserCard extends ConsumerWidget {
                       onChanged();
                     },
                   ),
-                if (!isVerified)
-                  ActionChip(
-                    avatar: const Icon(Icons.verified_user, size: 16),
-                    label: const Text('Verify Student'),
-                    onPressed: () async {
-                      await service.verifyStudentManually(user.uid);
-                      onChanged();
-                    },
+                ActionChip(
+                  avatar: Icon(
+                    isVerified ? Icons.remove_circle_outline : Icons.verified,
+                    size: 16,
+                    color: isVerified ? null : AppTheme.verifiedBlue,
                   ),
+                  label: Text(
+                    isVerified ? 'Revoke Verified Badge' : 'Grant Verified Badge',
+                  ),
+                  onPressed: () async {
+                    await service.setStudentVerified(
+                      user.uid,
+                      verified: !isVerified,
+                    );
+                    onChanged();
+                  },
+                ),
                 ActionChip(
                   avatar: const Icon(Icons.delete_forever, size: 16),
                   label: const Text('Delete'),

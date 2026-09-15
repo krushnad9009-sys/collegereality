@@ -29,6 +29,18 @@ final userStreamProvider =
   return userRepository.getUserStream(uid);
 });
 
+/// Live "is this user currently verified" badge for CROSS-USER display
+/// (e.g. ReviewCardWidget showing the review author's badge) -- see
+/// FirestoreUserService.watchPublicVerificationBadge. Returns one of
+/// VerificationConstants.badgeNone/badgeVerifiedStudent/badgeVerifiedAlumni.
+/// Unlike userStreamProvider (owner/staff-only `users` doc), this reads the
+/// PII-free `public_profiles` mirror that any authenticated user may read.
+final publicVerificationBadgeStreamProvider =
+    StreamProvider.family<String, String>((ref, uid) {
+  final service = ref.watch(firestoreUserServiceProvider);
+  return service.watchPublicVerificationBadge(uid);
+});
+
 // Cross-user-safe profile lookup (public_profiles, no PII) — use this
 // (not userByUIDProvider, which reads the owner/staff-only `users` doc)
 // whenever displaying *another* user's info, e.g. a consultation peer.

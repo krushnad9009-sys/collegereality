@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../core/constants/display_name_constants.dart';
 import '../../../core/constants/firestore_constants.dart';
+import '../../../core/constants/verification_constants.dart';
 import '../../../core/utils/firestore_auth_utils.dart';
 import '../../../core/utils/firestore_error_utils.dart';
 import '../models/user_model.dart';
@@ -118,6 +119,32 @@ class FirestoreUserService {
       // Best-effort mirror; the source-of-truth `users` write already
       // succeeded, so a mirror hiccup should not fail the caller's action.
     }
+  }
+
+  // Live "is this user currently verified" signal for CROSS-USER display
+  // (review cards, etc. -- anywhere showing another user's badge, not just
+  // their own profile). Reads the PII-free `public_profiles` mirror, which
+  // any authenticated user may read; Firestore rules restrict the full
+  // `users` doc to the owner or staff. Deliberately reads the two raw
+  // fields directly rather than UserModel.fromJson(doc.data()) -- a
+  // public_profiles doc never carries `email`, which UserModel.fromJson
+  // requires non-nullably, so parsing it as a full UserModel would throw.
+  Stream<String> watchPublicVerificationBadge(String uid) {
+    if (uid.isEmpty) return Stream.value(VerificationConstants.badgeNone);
+    return _firestore
+        .collection(FirestoreConstants.publicProfilesCollection)
+        .doc(uid)
+        .snapshots()
+        .map((doc) {
+      final data = doc.data();
+      if (data == null) return VerificationConstants.badgeNone;
+      final badge = data['verificationBadge'] as String?;
+      final status = data['verificationStatus'] as String?;
+      if (badge == null) return VerificationConstants.badgeNone;
+      return VerificationConstants.isApprovedStudentOrAlumni(badge, status)
+          ? badge
+          : VerificationConstants.badgeNone;
+    });
   }
 
   // Get user stream

@@ -21,7 +21,7 @@ class VerificationBadgeWidget extends StatelessWidget {
 
     final isAlumni = badge == VerificationConstants.badgeVerifiedAlumni;
     final color =
-        isAlumni ? const Color(0xFF7C3AED) : AppTheme.accentColor;
+        isAlumni ? const Color(0xFF7C3AED) : AppTheme.verifiedBlue;
     final label = VerificationConstants.badgeLabel(badge);
 
     return Container(

@@ -17,6 +17,12 @@ class AppTheme {
   static const Color accentColor = Color(0xFF059669);
   static const Color warningColor = Color(0xFFD97706);
   static const Color errorColor = Color(0xFFDC2626);
+  // Dedicated to the verified-student badge specifically (profile header,
+  // review cards, admin user list) -- the familiar "blue checkmark"
+  // convention. Deliberately its own constant, not accentColor (used in ~40
+  // other unrelated places across the app), so this stays scoped to
+  // verification UI only.
+  static const Color verifiedBlue = Color(0xFF1D9BF0);
 
   static const Color white = Color(0xFFFFFFFF);
   static const Color black = Color(0xFF000000);

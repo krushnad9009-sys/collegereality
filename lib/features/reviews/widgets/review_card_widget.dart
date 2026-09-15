@@ -4,8 +4,10 @@ import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/rating_parameters.dart';
+import '../../../core/constants/verification_constants.dart';
 import '../../../core/widgets/premium_components.dart';
 import '../../../core/widgets/status_badge.dart';
+import '../../auth/providers/user_provider.dart';
 import '../models/review_model.dart';
 import '../providers/review_provider.dart';
 import 'review_media_gallery.dart';
@@ -57,6 +59,23 @@ class _ReviewCardWidgetState extends ConsumerState<ReviewCardWidget> {
     final displayHelpfulCount =
         review.helpfulCount + (optimisticMarked ? 1 : 0);
 
+    // Live verification badge -- reflects the author's CURRENT status, not
+    // review.isVerifiedStudent/reviewerBadge (a fixed snapshot from
+    // submission time, used only to gate aggregate rating counting so a
+    // later admin action can't retroactively change a published review's
+    // contribution to a college's rating). This is purely the cosmetic
+    // badge shown on the card, and updates in real time if a Super Admin
+    // grants or revokes verification. Seeded with the submission-time
+    // snapshot so the badge doesn't flicker in/out while the live stream's
+    // first value is still loading; self-corrects the instant it resolves.
+    final liveBadgeAsync =
+        ref.watch(publicVerificationBadgeStreamProvider(review.userId));
+    final liveBadge = liveBadgeAsync.valueOrNull ??
+        (review.isVerifiedStudent
+            ? VerificationConstants.badgeVerifiedStudent
+            : VerificationConstants.badgeNone);
+    final showVerifiedChip = liveBadge != VerificationConstants.badgeNone;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: PremiumCard(
@@ -103,7 +122,10 @@ class _ReviewCardWidgetState extends ConsumerState<ReviewCardWidget> {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          _VerifiedChip(label: review.reviewerBadge ?? 'Verified'),
+                          if (showVerifiedChip)
+                            _VerifiedChip(
+                              label: VerificationConstants.badgeLabel(liveBadge),
+                            ),
                         ],
                       ),
                       if (review.course != null || review.batchYear != null)
@@ -346,7 +368,7 @@ class _VerifiedChip extends StatelessWidget {
     return StatusBadge(
       label: label,
       icon: Icons.verified,
-      color: AppTheme.accentColor,
+      color: AppTheme.verifiedBlue,
       fontSize: 10,
       iconSize: 12,
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),

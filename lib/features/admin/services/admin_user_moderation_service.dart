@@ -4,6 +4,7 @@ import '../../../core/constants/admin_constants.dart';
 import '../../../core/constants/firestore_constants.dart';
 import '../../../core/constants/role_constants.dart';
 import '../../../core/constants/verification_constants.dart';
+import '../../auth/services/firestore_user_service.dart';
 import '../models/admin_models.dart';
 import '../utils/admin_permissions.dart';
 import 'admin_action_logger.dart';
@@ -12,11 +13,18 @@ class AdminUserModerationService {
   AdminUserModerationService({
     FirebaseFirestore? firestore,
     AdminActionLogger? logger,
+    FirestoreUserService? userService,
   })  : _firestore = firestore ?? FirebaseFirestore.instance,
-        _logger = logger ?? AdminActionLogger();
+        _logger = logger ?? AdminActionLogger(),
+        _userService = userService ?? FirestoreUserService();
 
   final FirebaseFirestore _firestore;
   final AdminActionLogger _logger;
+  // Reused only for its syncPublicProfile mirror -- the PII-free
+  // `public_profiles` copy that ReviewCardWidget/other users' clients read
+  // (Firestore rules only let the owner or staff read the full `users`
+  // doc), so a badge grant/revoke here is visible to everyone in real time.
+  final FirestoreUserService _userService;
 
   CollectionReference<Map<String, dynamic>> get _users =>
       _firestore.collection(FirestoreConstants.usersCollection);
@@ -65,12 +73,22 @@ class AdminUserModerationService {
   /// used for the User Management page's default (no search filter) view
   /// so admins land on a populated list instead of an empty "type
   /// something" prompt.
+  /// [verifiedFilter]: null = All, true = Verified only, false = Unverified
+  /// only. When set, this is a plain single-field equality query with NO
+  /// `orderBy` -- combining an equality filter on one field with an
+  /// `orderBy` on a different field needs a composite Firestore index that
+  /// isn't defined for this collection, and adding one is a separate
+  /// deploy step. Firestore's default (stable, but unspecified) document
+  /// order is an acceptable trade-off here; the unfiltered "All" case below
+  /// keeps the newest-updated-first order since it doesn't need one.
   Future<AdminPageResult<AdminUserSearchResult>> listUsersPage({
     String? startAfterDocumentId,
+    bool? verifiedFilter,
     int limit = AdminConstants.defaultPageSize,
   }) async {
-    Query<Map<String, dynamic>> q =
-        _users.orderBy('updatedAt', descending: true).limit(limit + 1);
+    Query<Map<String, dynamic>> q = verifiedFilter == null
+        ? _users.orderBy('updatedAt', descending: true).limit(limit + 1)
+        : _users.where('isVerified', isEqualTo: verifiedFilter).limit(limit + 1);
     if (startAfterDocumentId != null && startAfterDocumentId.isNotEmpty) {
       final cursor = await _users.doc(startAfterDocumentId).get();
       if (cursor.exists) {
@@ -220,17 +238,39 @@ class AdminUserModerationService {
     );
   }
 
-  Future<void> verifyStudentManually(String uid, {bool alumni = false}) async {
-    await _users.doc(uid).update({
-      'verificationStatus': VerificationConstants.statusApproved,
-      'verificationBadge': alumni
-          ? VerificationConstants.badgeVerifiedAlumni
-          : VerificationConstants.badgeVerifiedStudent,
-      'isVerified': true,
-      'updatedAt': DateTime.now().toIso8601String(),
-    });
+  /// Manual Super Admin override of a user's verified-student badge --
+  /// independent of (and does not touch) the AI document-verification
+  /// pipeline's own request/decision records; this only flips the same
+  /// `isVerified`/`verificationBadge`/`verificationStatus` fields that
+  /// pipeline writes, so every existing "is this user verified?" check in
+  /// the app (profile badge, review card, guide directory, etc.) picks up
+  /// either path identically. Also stamps `verifiedByAdminAt` and mirrors
+  /// the change into `public_profiles` so any viewer -- not just the user
+  /// themselves or staff -- sees the update, since Firestore rules only
+  /// let the owner or staff read the full `users` doc.
+  Future<void> setStudentVerified(
+    String uid, {
+    required bool verified,
+    bool alumni = false,
+  }) async {
+    final now = DateTime.now().toIso8601String();
+    final update = {
+      'verificationStatus': verified
+          ? VerificationConstants.statusApproved
+          : VerificationConstants.statusRejected,
+      'verificationBadge': verified
+          ? (alumni
+              ? VerificationConstants.badgeVerifiedAlumni
+              : VerificationConstants.badgeVerifiedStudent)
+          : VerificationConstants.badgeNone,
+      'isVerified': verified,
+      'verifiedByAdminAt': now,
+      'updatedAt': now,
+    };
+    await _users.doc(uid).update(update);
+    await _userService.syncPublicProfile(uid, update);
     await _logger.log(
-      action: 'user.verify',
+      action: verified ? 'user.verify' : 'user.unverify',
       targetId: uid,
       targetType: 'user',
       metadata: {'alumni': alumni},
