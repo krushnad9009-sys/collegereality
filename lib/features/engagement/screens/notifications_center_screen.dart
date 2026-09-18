@@ -265,6 +265,8 @@ class _NotificationsCenterScreenState
         return 'Careers';
       case EngagementConstants.categoryCommunity:
         return 'Community';
+      case EngagementConstants.categoryCalls:
+        return 'Calls';
       case EngagementConstants.categoryAdmin:
         return 'Admin';
       default:

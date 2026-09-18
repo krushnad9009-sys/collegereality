@@ -19,6 +19,11 @@ const {
   onCollegeRequestCreated,
 } = require('./src/verificationTriggers');
 const { onConsultationRatingCreated } = require('./src/consultationRatingTriggers');
+const {
+  onUserVerificationBadgeGranted,
+  onChatMessageCreated,
+  onCallSessionCreated,
+} = require('./src/pushNotificationTriggers');
 
 module.exports = {
   createConsultationOrder,
@@ -39,4 +44,9 @@ module.exports = {
   // Recomputes a guide's consultation-rating aggregate + the PII-free
   // public review copy whenever a two-way rating is filed.
   onConsultationRatingCreated,
+  // FCM push notifications: verified badge granted, 1-on-1 chat message,
+  // incoming voice/video call. See src/push.js for the actual send call.
+  onUserVerificationBadgeGranted,
+  onChatMessageCreated,
+  onCallSessionCreated,
 };

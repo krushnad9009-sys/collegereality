@@ -25,6 +25,13 @@ class EngagementConstants {
   static const String typeNewInternship = 'new_internship';
   static const String typeApplicationUpdate = 'application_update';
   static const String typeVerificationUpdate = 'verification_update';
+  // Distinct from typeVerificationUpdate (used for the rejection case,
+  // functions/src/verificationTriggers.js) -- the celebratory badge-granted
+  // push, sent by functions/src/pushNotificationTriggers.js on the
+  // false -> true transition of users/{uid}.isVerified, from either the
+  // Super Admin panel's manual override or the AI agent's auto-accept.
+  static const String typeVerificationApproved = 'verification_approved';
+  static const String typeIncomingCall = 'incoming_call';
   static const String typeCollegeRequestUpdate = 'college_request_update';
   static const String typeEditSuggestionUpdate = 'edit_suggestion_update';
   static const String typeClaimUpdate = 'college_claim_update';
@@ -48,6 +55,7 @@ class EngagementConstants {
   static const String categoryAdmission = 'admission';
   static const String categoryCareers = 'careers';
   static const String categoryCommunity = 'community';
+  static const String categoryCalls = 'calls';
 
   // Calendar categories
   static const String calendarCapRound = 'cap_round';
@@ -70,6 +78,7 @@ class EngagementConstants {
     categoryAdmission,
     categoryCareers,
     categoryCommunity,
+    categoryCalls,
     categoryAdmin,
   ];
 
@@ -134,6 +143,10 @@ class EngagementConstants {
         return 'Application Update';
       case typeVerificationUpdate:
         return 'Verification Update';
+      case typeVerificationApproved:
+        return 'Badge Verified';
+      case typeIncomingCall:
+        return 'Incoming Call';
       case typeReviewApproved:
         return 'Review Approved';
       case typeReviewComment:
