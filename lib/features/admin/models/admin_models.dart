@@ -138,6 +138,11 @@ class AdminUserSearchResult {
   final String email;
   final String? displayName;
   final String? photoURL;
+  final String? phone;
+  final String? collegeName;
+  final String? collegeId;
+  final String? city;
+  final String? state;
   final String accountStatus;
   final String verificationStatus;
   final String verificationBadge;
@@ -149,11 +154,61 @@ class AdminUserSearchResult {
     required this.email,
     this.displayName,
     this.photoURL,
+    this.phone,
+    this.collegeName,
+    this.collegeId,
+    this.city,
+    this.state,
     this.accountStatus = 'active',
     this.verificationStatus = '',
     this.verificationBadge = '',
     this.userType = 'student',
     this.lastSeenAt,
+  });
+
+  /// Used for the optimistic local update after Grant/Revoke Verified
+  /// Badge -- flips the badge in the in-memory list immediately, without
+  /// waiting on a re-fetch from Firestore.
+  AdminUserSearchResult copyWith({
+    String? verificationStatus,
+    String? verificationBadge,
+  }) {
+    return AdminUserSearchResult(
+      uid: uid,
+      email: email,
+      displayName: displayName,
+      photoURL: photoURL,
+      phone: phone,
+      collegeName: collegeName,
+      collegeId: collegeId,
+      city: city,
+      state: state,
+      accountStatus: accountStatus,
+      verificationStatus: verificationStatus ?? this.verificationStatus,
+      verificationBadge: verificationBadge ?? this.verificationBadge,
+      userType: userType,
+      lastSeenAt: lastSeenAt,
+    );
+  }
+}
+
+/// Total vs. currently-active registered students for a State/City
+/// selection -- see AdminUserModerationService.getRegionStudentStats.
+/// [active] is computed over a bounded sample (see [sampleCapped]) since
+/// "isOnline OR seen in the last 7 days" can't be expressed as a single
+/// Firestore query alongside state/city equality filters without a
+/// composite index; [total] is an exact server-side aggregate count.
+class RegionStudentStats {
+  final int total;
+  final int active;
+  final int sampled;
+  final bool sampleCapped;
+
+  const RegionStudentStats({
+    required this.total,
+    required this.active,
+    required this.sampled,
+    required this.sampleCapped,
   });
 }
 

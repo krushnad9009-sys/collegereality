@@ -49,6 +49,11 @@ class AdminUserModerationService {
       await addFrom(_users.where('email', isEqualTo: trimmed));
     }
 
+    // Phone numbers are searched as digits-only so "98765" matches a
+    // stored "+91 98765-43210" regardless of how it was typed on either
+    // side of the comparison.
+    final trimmedDigits = trimmed.replaceAll(RegExp(r'\D'), '');
+
     if (results.length < AdminConstants.maxSearchUsers) {
       final snap = await _users
           .orderBy('updatedAt', descending: true)
@@ -59,7 +64,15 @@ class AdminUserModerationService {
         final data = doc.data();
         final email = data['email']?.toString().toLowerCase() ?? '';
         final name = data['displayName']?.toString().toLowerCase() ?? '';
-        if (email.contains(trimmed) || name.contains(trimmed)) {
+        final collegeName = data['collegeName']?.toString().toLowerCase() ?? '';
+        final phoneDigits =
+            data['phone']?.toString().replaceAll(RegExp(r'\D'), '') ?? '';
+        final matchesPhone =
+            trimmedDigits.isNotEmpty && phoneDigits.contains(trimmedDigits);
+        if (email.contains(trimmed) ||
+            name.contains(trimmed) ||
+            collegeName.contains(trimmed) ||
+            matchesPhone) {
           seen.add(doc.id);
           results.add(_mapUser(doc));
         }
@@ -107,6 +120,73 @@ class AdminUserModerationService {
     );
   }
 
+  /// Distinct city values among registered users in [state], for the City
+  /// dropdown in the region analytics panel -- dynamic (reflects where
+  /// students have actually registered) rather than a static gazetteer.
+  /// Sampled over up to 500 matching docs rather than every user in the
+  /// state; a single equality filter needs no composite index. Excludes
+  /// the 'Not Provided' sentinel the permissions-onboarding screen writes
+  /// when a user denies/skips location.
+  Future<List<String>> getCitiesForState(String state) async {
+    final snap = await _users.where('state', isEqualTo: state).limit(500).get();
+    final cities = <String>{};
+    for (final doc in snap.docs) {
+      final city = doc.data()['city']?.toString().trim();
+      if (city != null && city.isNotEmpty && city != 'Not Provided') {
+        cities.add(city);
+      }
+    }
+    final list = cities.toList()..sort();
+    return list;
+  }
+
+  /// Total vs. active registered-student counts for a State/City selection
+  /// (both optional -- omit either/both for "All"). [total] is an exact
+  /// `.count()` aggregate over plain equality filters (no composite index
+  /// needed). [active] ("isOnline OR seen in the last 7 days") can't be
+  /// expressed as one Firestore query alongside those same equality
+  /// filters without OR support + a composite index, so it's computed
+  /// client-side over a bounded sample -- see RegionStudentStats.sampleCapped,
+  /// which the UI should surface honestly rather than presenting an
+  /// [active] count that quietly stopped being exact past 500 users.
+  Future<RegionStudentStats> getRegionStudentStats({
+    String? state,
+    String? city,
+  }) async {
+    Query<Map<String, dynamic>> q = _users;
+    if (state != null && state.isNotEmpty) {
+      q = q.where('state', isEqualTo: state);
+    }
+    if (city != null && city.isNotEmpty) {
+      q = q.where('city', isEqualTo: city);
+    }
+
+    final countSnap = await q.count().get();
+    final total = countSnap.count ?? 0;
+
+    const sampleLimit = 500;
+    final sampleSnap = await q.limit(sampleLimit).get();
+    final cutoff = DateTime.now().subtract(const Duration(days: 7));
+    var active = 0;
+    for (final doc in sampleSnap.docs) {
+      final data = doc.data();
+      final presence = data['presence'] as Map<String, dynamic>?;
+      final isOnline = presence?['isOnline'] as bool? ?? false;
+      final lastSeenRaw = presence?['lastSeenAt']?.toString();
+      final lastSeen = lastSeenRaw != null ? DateTime.tryParse(lastSeenRaw) : null;
+      if (isOnline || (lastSeen != null && lastSeen.isAfter(cutoff))) {
+        active++;
+      }
+    }
+
+    return RegionStudentStats(
+      total: total,
+      active: active,
+      sampled: sampleSnap.docs.length,
+      sampleCapped: sampleSnap.docs.length >= sampleLimit,
+    );
+  }
+
   Future<List<AdminUserSearchResult>> listStaffUsers() async {
     final results = <AdminUserSearchResult>[];
     final seen = <String>{};
@@ -134,6 +214,11 @@ class AdminUserModerationService {
       email: data['email']?.toString() ?? '',
       displayName: data['displayName']?.toString(),
       photoURL: data['photoURL']?.toString(),
+      phone: data['phone']?.toString(),
+      collegeName: data['collegeName']?.toString(),
+      collegeId: data['collegeId']?.toString(),
+      city: data['city']?.toString(),
+      state: data['state']?.toString(),
       accountStatus:
           data['accountStatus']?.toString() ?? AdminConstants.accountStatusActive,
       verificationStatus: data['verificationStatus']?.toString() ?? '',

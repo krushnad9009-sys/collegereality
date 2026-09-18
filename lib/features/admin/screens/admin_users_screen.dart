@@ -6,9 +6,10 @@ import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/admin_constants.dart';
+import '../../../core/constants/college_constants.dart';
 import '../../../core/constants/verification_constants.dart';
-import '../../../core/widgets/premium_components.dart';
-import '../../../core/widgets/status_badge.dart';
+import '../../../core/utils/firestore_error_utils.dart';
+import '../../../core/widgets/index.dart';
 import '../models/admin_models.dart';
 import '../providers/admin_dashboard_provider.dart';
 import '../providers/admin_provider.dart';
@@ -36,6 +37,10 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
 
   // null = All, true = Verified only, false = Unverified only.
   bool? _verifiedFilter;
+
+  // Region analytics panel selection -- '' means "All" for either.
+  String _regionState = '';
+  String _regionCity = '';
 
   bool get _isFiltering => _searchController.text.trim().isNotEmpty;
 
@@ -106,6 +111,52 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
     }
   }
 
+  /// Grant/Revoke Verified Badge. Two things this fixes vs. before:
+  ///  1. The write is wrapped in try/catch with a visible error SnackBar --
+  ///     previously a failed write (permission/network) threw uncaught out
+  ///     of the button's onPressed, which Flutter just logs to console in
+  ///     release builds. From the admin's side that read as "clicking the
+  ///     button does nothing at all", indistinguishable from the button
+  ///     being broken.
+  ///  2. The badge flips in `_users` immediately on success, rather than
+  ///     waiting on a full re-fetch from Firestore (_load()) to reflect
+  ///     it -- true "instant", not just "fast".
+  Future<void> _toggleVerified(AdminUserSearchResult user, bool nowVerified) async {
+    try {
+      await ref.read(adminUserModerationServiceProvider).setStudentVerified(
+            user.uid,
+            verified: nowVerified,
+          );
+      if (!mounted) return;
+      setState(() {
+        _users = [
+          for (final u in _users)
+            if (u.uid == user.uid)
+              u.copyWith(
+                verificationStatus: nowVerified
+                    ? VerificationConstants.statusApproved
+                    : VerificationConstants.statusRejected,
+                verificationBadge: nowVerified
+                    ? VerificationConstants.badgeVerifiedStudent
+                    : VerificationConstants.badgeNone,
+              )
+            else
+              u,
+        ];
+      });
+      SnackBarHelper.showSuccessSnackBar(
+        context,
+        message: nowVerified ? 'Verified badge granted' : 'Verified badge revoked',
+      );
+    } catch (e) {
+      if (!mounted) return;
+      SnackBarHelper.showErrorSnackBar(
+        context,
+        message: 'Could not update verification: ${FirestoreErrorUtils.userMessage(e)}',
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
@@ -130,7 +181,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                     controller: _searchController,
                     decoration: InputDecoration(
                       border: const OutlineInputBorder(),
-                      hintText: 'Search by email or name (optional)',
+                      hintText: 'Search by name, email, mobile, or college (optional)',
                       prefixIcon: const Icon(Icons.search),
                       suffixIcon: _isFiltering
                           ? IconButton(
@@ -182,6 +233,17 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
               ),
             ),
           ),
+          _RegionAnalyticsPanel(
+            state: _regionState,
+            city: _regionCity,
+            onStateChanged: (value) {
+              setState(() {
+                _regionState = value;
+                _regionCity = ''; // city belongs to the previous state
+              });
+            },
+            onCityChanged: (value) => setState(() => _regionCity = value),
+          ),
           Expanded(
             child: _loading && _users.isEmpty
                 ? const Center(child: CircularProgressIndicator())
@@ -220,6 +282,8 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                               return _UserCard(
                                 user: _users[index],
                                 onChanged: () => _load(),
+                                onToggleVerified: (nowVerified) =>
+                                    _toggleVerified(_users[index], nowVerified),
                               );
                             },
                           ),
@@ -233,7 +297,31 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
 class _UserCard extends ConsumerWidget {
   final AdminUserSearchResult user;
   final VoidCallback onChanged;
-  const _UserCard({required this.user, required this.onChanged});
+  final ValueChanged<bool> onToggleVerified;
+  const _UserCard({
+    required this.user,
+    required this.onChanged,
+    required this.onToggleVerified,
+  });
+
+  static bool _isRealValue(String? v) => v != null && v.isNotEmpty && v != 'Not Provided';
+
+  /// Prefer the human-readable name; fall back to the raw ID only if the
+  /// name is genuinely absent (not just empty).
+  String? get _collegeLabel =>
+      _isRealValue(user.collegeName) ? user.collegeName : (_isRealValue(user.collegeId) ? user.collegeId : null);
+
+  bool get _hasContactDetails =>
+      (user.phone?.isNotEmpty ?? false) || _collegeLabel != null || _cityState.isNotEmpty;
+
+  /// 'City, State' when both are known/provided, just one when only that
+  /// one is, or '' when neither is -- 'Not Provided' is the sentinel the
+  /// permissions-onboarding screen writes when a user denies/skips
+  /// location, filtered out here rather than displayed literally.
+  String get _cityState {
+    final parts = [user.city, user.state].where(_isRealValue).toList();
+    return parts.join(', ');
+  }
 
   Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
     final confirmed = await showDialog<bool>(
@@ -337,6 +425,22 @@ class _UserCard extends ConsumerWidget {
               ),
             ],
           ),
+          if (_hasContactDetails)
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.sm),
+              child: Wrap(
+                spacing: AppSpacing.md,
+                runSpacing: 2,
+                children: [
+                  if (user.phone != null && user.phone!.isNotEmpty)
+                    _DetailChip(icon: Icons.phone_outlined, text: user.phone!),
+                  if (_collegeLabel != null)
+                    _DetailChip(icon: Icons.school_outlined, text: _collegeLabel!),
+                  if (_cityState.isNotEmpty)
+                    _DetailChip(icon: Icons.location_on_outlined, text: _cityState),
+                ],
+              ),
+            ),
           const SizedBox(height: AppSpacing.sm),
           Row(
             children: [
@@ -401,13 +505,7 @@ class _UserCard extends ConsumerWidget {
                   label: Text(
                     isVerified ? 'Revoke Verified Badge' : 'Grant Verified Badge',
                   ),
-                  onPressed: () async {
-                    await service.setStudentVerified(
-                      user.uid,
-                      verified: !isVerified,
-                    );
-                    onChanged();
-                  },
+                  onPressed: () => onToggleVerified(!isVerified),
                 ),
                 ActionChip(
                   avatar: const Icon(Icons.delete_forever, size: 16),
@@ -465,6 +563,177 @@ class _UserAvatar extends StatelessWidget {
     final trimmed = name.trim();
     final initial = trimmed.isNotEmpty ? trimmed[0].toUpperCase() : '?';
     return Text(initial, style: AppFonts.plusJakarta(fontWeight: FontWeight.w700, color: Colors.white));
+  }
+}
+
+/// Small icon+text pill for a user card's contact-detail row (mobile,
+/// college, city/state) -- deliberately plainer than [StatusBadge] (no
+/// tinted pill background) since these are informational, not statuses.
+class _DetailChip extends StatelessWidget {
+  final IconData icon;
+  final String text;
+
+  const _DetailChip({required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 13, color: tokens.textTertiary),
+        const SizedBox(width: 3),
+        Text(
+          text,
+          style: AppFonts.plusJakarta(fontSize: 12, color: tokens.textSecondary),
+        ),
+      ],
+    );
+  }
+}
+
+/// State/City dropdown filters + Total/Active registered-student counts
+/// for the selected region. State options come from the static
+/// CollegeConstants.indianStates list (comprehensive regardless of
+/// registration data); City options are loaded dynamically per selected
+/// state from AdminUserModerationService.getCitiesForState -- the
+/// distinct city values students in that state have actually registered
+/// with, not a static gazetteer.
+class _RegionAnalyticsPanel extends ConsumerWidget {
+  final String state;
+  final String city;
+  final ValueChanged<String> onStateChanged;
+  final ValueChanged<String> onCityChanged;
+
+  const _RegionAnalyticsPanel({
+    required this.state,
+    required this.city,
+    required this.onStateChanged,
+    required this.onCityChanged,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tokens = context.tokens;
+    final citiesAsync = state.isEmpty
+        ? const AsyncValue<List<String>>.data([])
+        : ref.watch(adminCitiesForStateProvider(state));
+    final statsAsync = ref.watch(
+      adminRegionStudentStatsProvider((state: state, city: city)),
+    );
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.md),
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: tokens.surfaceElevated,
+        borderRadius: BorderRadius.circular(tokens.cardRadius),
+        border: Border.all(color: tokens.borderSubtle),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Region Analytics',
+            style: AppFonts.plusJakarta(fontWeight: FontWeight.w700, color: tokens.textPrimary),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Wrap(
+            spacing: AppSpacing.md,
+            runSpacing: AppSpacing.sm,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              DropdownButton<String>(
+                value: state,
+                hint: const Text('All States'),
+                underline: const SizedBox.shrink(),
+                items: [
+                  const DropdownMenuItem(value: '', child: Text('All States')),
+                  ...CollegeConstants.indianStates.map(
+                    (s) => DropdownMenuItem(value: s, child: Text(s)),
+                  ),
+                ],
+                onChanged: (value) => onStateChanged(value ?? ''),
+              ),
+              citiesAsync.when(
+                loading: () => const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                error: (_, _) => const SizedBox.shrink(),
+                data: (cities) => DropdownButton<String>(
+                  value: cities.contains(city) ? city : '',
+                  hint: const Text('All Cities'),
+                  underline: const SizedBox.shrink(),
+                  // Disabled (not hidden) until a state is picked -- a
+                  // city search only makes sense scoped to one state, and
+                  // a disabled-but-visible control says why more clearly
+                  // than the control just not being there yet.
+                  onChanged: state.isEmpty
+                      ? null
+                      : (value) => onCityChanged(value ?? ''),
+                  items: [
+                    const DropdownMenuItem(value: '', child: Text('All Cities')),
+                    ...cities.map((c) => DropdownMenuItem(value: c, child: Text(c))),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          statsAsync.when(
+            loading: () => const Padding(
+              padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
+              child: LinearProgressIndicator(),
+            ),
+            error: (e, _) => Text(
+              'Could not load region stats: $e',
+              style: AppFonts.plusJakarta(fontSize: 12, color: tokens.textTertiary),
+            ),
+            data: (stats) => Wrap(
+              spacing: AppSpacing.xl,
+              runSpacing: AppSpacing.sm,
+              children: [
+                _StatPair(label: 'Total Registered', value: '${stats.total}'),
+                _StatPair(
+                  label: 'Active (online or last 7 days)',
+                  value: stats.sampleCapped ? '~${stats.active}' : '${stats.active}',
+                  hint: stats.sampleCapped
+                      ? 'Based on the first ${stats.sampled} matching students'
+                      : null,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatPair extends StatelessWidget {
+  final String label;
+  final String value;
+  final String? hint;
+
+  const _StatPair({required this.label, required this.value, this.hint});
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          value,
+          style: AppFonts.plusJakarta(fontSize: 22, fontWeight: FontWeight.w800, color: tokens.textPrimary),
+        ),
+        Text(label, style: AppFonts.plusJakarta(fontSize: 11.5, color: tokens.textSecondary)),
+        if (hint != null)
+          Text(hint!, style: AppFonts.plusJakarta(fontSize: 10, color: tokens.textTertiary)),
+      ],
+    );
   }
 }
 

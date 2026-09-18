@@ -91,3 +91,24 @@ final adminVerificationExportProvider = FutureProvider<List<Map<String, dynamic>
 final adminUserReportsExportProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
   return ref.watch(adminAnalyticsServiceProvider).fetchUserReportExport();
 });
+
+/// City dropdown options for the region analytics panel -- empty state key
+/// ('') means "no state selected yet", not "All States".
+final adminCitiesForStateProvider =
+    FutureProvider.family<List<String>, String>((ref, state) async {
+  if (state.isEmpty) return [];
+  return ref.watch(adminUserModerationServiceProvider).getCitiesForState(state);
+});
+
+/// Cursor for [adminRegionStudentStatsProvider]. Empty string = "All" for
+/// either field (a plain `String` family key can't itself be null-checked
+/// for equality/caching the way this record can).
+typedef AdminRegionParams = ({String state, String city});
+
+final adminRegionStudentStatsProvider =
+    FutureProvider.family<RegionStudentStats, AdminRegionParams>((ref, params) async {
+  return ref.watch(adminUserModerationServiceProvider).getRegionStudentStats(
+        state: params.state.isEmpty ? null : params.state,
+        city: params.city.isEmpty ? null : params.city,
+      );
+});
