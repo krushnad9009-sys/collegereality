@@ -21,6 +21,14 @@ abstract class ReviewRepository {
   Stream<List<ReviewModel>> watchReviewsByCollege(String collegeId);
   Future<List<ReviewModel>> getReviewsByUser(String userId);
   Future<List<ReviewModel>> getAllReviews({int limit = 100, String? statusFilter});
+
+  /// Cursor-paginated counterpart to [getAllReviews] -- see
+  /// [FirestoreReviewService.getAllReviewsPage].
+  Future<ReviewPage> getAllReviewsPage({
+    String? statusFilter,
+    String? startAfterDocumentId,
+    int limit = 20,
+  });
   Future<bool> hasMarkedHelpful(String reviewId, String userId);
   Future<void> markHelpful(String reviewId, String userId);
   Future<void> reportReview({
@@ -108,6 +116,19 @@ class ReviewRepositoryImpl implements ReviewRepository {
     String? statusFilter,
   }) {
     return _service.getAllReviews(limit: limit, statusFilter: statusFilter);
+  }
+
+  @override
+  Future<ReviewPage> getAllReviewsPage({
+    String? statusFilter,
+    String? startAfterDocumentId,
+    int limit = 20,
+  }) {
+    return _service.getAllReviewsPage(
+      statusFilter: statusFilter,
+      startAfterDocumentId: startAfterDocumentId,
+      limit: limit,
+    );
   }
 
   @override

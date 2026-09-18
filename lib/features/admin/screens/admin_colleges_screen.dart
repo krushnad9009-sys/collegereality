@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../config/theme/app_spacing.dart';
+import '../../../core/widgets/college_logo_widget.dart';
 import '../../../core/widgets/premium_components.dart';
 import '../../../core/widgets/premium_list_row.dart';
 import '../utils/admin_route_resolver.dart';
@@ -124,7 +125,12 @@ class _AdminCollegesScreenState extends ConsumerState<AdminCollegesScreen> {
                       return PremiumCard(
                         padding: EdgeInsets.zero,
                         child: PremiumListRow(
-                          leadingIcon: Icons.school_outlined,
+                          leading: CollegeLogoWidget(
+                            collegeId: college.id,
+                            collegeName: college.name,
+                            logoUrl: college.logoUrl,
+                            radius: 18,
+                          ),
                           title: college.name,
                           subtitle: '${college.city}, ${college.state} · '
                               '${college.isActive ? 'Active' : 'Inactive'}',

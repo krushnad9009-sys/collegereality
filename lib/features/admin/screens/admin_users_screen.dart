@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../config/theme/app_design_tokens.dart';
@@ -312,14 +313,29 @@ class _UserCard extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            user.displayName ?? user.email,
-            style: AppFonts.plusJakarta(fontWeight: FontWeight.w700, color: tokens.textPrimary),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            user.email,
-            style: AppFonts.plusJakarta(fontSize: 12, color: tokens.textTertiary),
+          Row(
+            children: [
+              _UserAvatar(photoURL: user.photoURL, name: user.displayName ?? user.email),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      user.displayName ?? user.email,
+                      style: AppFonts.plusJakarta(fontWeight: FontWeight.w700, color: tokens.textPrimary),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      user.email,
+                      style: AppFonts.plusJakarta(fontSize: 12, color: tokens.textTertiary),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: AppSpacing.sm),
           Row(
@@ -403,6 +419,52 @@ class _UserCard extends ConsumerWidget {
           ],
         ),
     );
+  }
+}
+
+/// Lightweight cached circular avatar for the user list -- decodes at the
+/// display size (memCacheWidth/Height), not full resolution, and falls
+/// back to initials on a missing photoURL or a failed/slow load rather
+/// than leaving a blank circle or blocking the row on the image.
+class _UserAvatar extends StatelessWidget {
+  static const double _radius = 18;
+
+  final String? photoURL;
+  final String name;
+
+  const _UserAvatar({required this.photoURL, required this.name});
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final url = photoURL;
+    if (url == null || url.isEmpty) {
+      // Solid, non-muted background here (unlike the has-a-URL branch
+      // below) since this is the only content in the circle -- white
+      // initials need real contrast, not the page's muted surface tint.
+      return CircleAvatar(radius: _radius, backgroundColor: AppTheme.primaryColor, child: _initials());
+    }
+    return CircleAvatar(
+      radius: _radius,
+      backgroundColor: tokens.surfaceMuted,
+      child: ClipOval(
+        child: CachedNetworkImage(
+          imageUrl: url,
+          width: _radius * 2,
+          height: _radius * 2,
+          fit: BoxFit.cover,
+          memCacheWidth: (_radius * 2 * 2).round(),
+          placeholder: (_, _) => _initials(),
+          errorWidget: (_, _, _) => _initials(),
+        ),
+      ),
+    );
+  }
+
+  Widget _initials() {
+    final trimmed = name.trim();
+    final initial = trimmed.isNotEmpty ? trimmed[0].toUpperCase() : '?';
+    return Text(initial, style: AppFonts.plusJakarta(fontWeight: FontWeight.w700, color: Colors.white));
   }
 }
 

@@ -326,6 +326,51 @@ class FirestoreReviewService {
     }
   }
 
+  /// Cursor-paginated admin listing (all statuses, no publicOnly/isActive
+  /// gating -- unlike getReviewsPage, which is the public per-college feed).
+  /// Used by AdminReviewsScreen so opening Moderate Reviews fetches one
+  /// page (default 20) instead of every review up front.
+  Future<ReviewPage> getAllReviewsPage({
+    String? statusFilter,
+    String? startAfterDocumentId,
+    int limit = 20,
+  }) async {
+    try {
+      Query<Map<String, dynamic>> query =
+          _reviews.orderBy('createdAt', descending: true);
+      if (statusFilter != null) {
+        query = query.where(
+          'status',
+          isEqualTo: ReviewModel.normalizeStatus(statusFilter),
+        );
+      }
+      if (startAfterDocumentId != null && startAfterDocumentId.isNotEmpty) {
+        final cursor = await _reviews.doc(startAfterDocumentId).get();
+        if (cursor.exists) {
+          query = query.startAfterDocument(cursor);
+        }
+      }
+      final snapshot = await query.limit(limit).get();
+      return ReviewPage(
+        reviews: _parseReviews(snapshot),
+        lastDocumentId: snapshot.docs.isEmpty ? null : snapshot.docs.last.id,
+        hasMore: snapshot.docs.length >= limit,
+      );
+    } on FirebaseException {
+      // Same missing/still-building composite index fallback as
+      // getAllReviews -- unpaginated (a cursor is meaningless without the
+      // index-backed order), but still bounded and still usable rather
+      // than the screen just failing outright.
+      final snapshot = await _reviews.limit(limit).get();
+      var reviews = _parseReviews(snapshot);
+      if (statusFilter != null) {
+        final normalized = ReviewModel.normalizeStatus(statusFilter);
+        reviews = reviews.where((r) => r.status == normalized).toList();
+      }
+      return ReviewPage(reviews: reviews.take(limit).toList(), hasMore: false);
+    }
+  }
+
   Future<List<ReviewModel>> getAllReviews({
     int limit = 100,
     String? statusFilter,

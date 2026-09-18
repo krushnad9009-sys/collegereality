@@ -27,6 +27,54 @@ class AdminReviewsScreen extends ConsumerStatefulWidget {
 class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
   String? _statusFilter;
 
+  // Cursor-paginated (20/page) instead of allReviewsAdminProvider's
+  // one-shot 200-doc fetch -- mirrors AdminUsersScreen/AdminCollegesScreen.
+  String? _cursor;
+  bool _hasMore = false;
+  List<ReviewModel> _reviews = [];
+  bool _loading = false;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _load());
+  }
+
+  Future<void> _load({bool loadMore = false}) async {
+    if (_loading) return;
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final page = await ref.read(
+        adminReviewPageProvider(
+          AdminReviewPageParams(
+            statusFilter: _statusFilter,
+            startAfterDocumentId: loadMore ? _cursor : null,
+          ),
+        ).future,
+      );
+      if (!mounted) return;
+      setState(() {
+        _reviews = loadMore ? [..._reviews, ...page.reviews] : page.reviews;
+        _cursor = page.lastDocumentId;
+        _hasMore = page.hasMore;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _error = e.toString());
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  void _setFilter(String? filter) {
+    setState(() => _statusFilter = filter);
+    _load();
+  }
+
   Future<void> _moderate(
     ReviewModel review,
     String status, {
@@ -56,14 +104,13 @@ class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
           metadata: {'status': status, 'collegeId': review.collegeId},
         );
       }
-      ref.invalidate(allReviewsAdminProvider(_statusFilter));
       ref.invalidate(collegeReviewsProvider(review.collegeId));
-      if (mounted) {
-        SnackBarHelper.showSuccessSnackBar(
-          context,
-          message: delete ? 'Review deleted' : 'Review updated to $status',
-        );
-      }
+      if (!mounted) return;
+      SnackBarHelper.showSuccessSnackBar(
+        context,
+        message: delete ? 'Review deleted' : 'Review updated to $status',
+      );
+      await _load();
     } catch (e) {
       if (mounted) {
         SnackBarHelper.showErrorSnackBar(context, message: e.toString());
@@ -202,11 +249,10 @@ class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
               'collegeId': review.collegeId,
             },
           );
-      ref.invalidate(allReviewsAdminProvider(_statusFilter));
       ref.invalidate(collegeReviewsProvider(review.collegeId));
-      if (mounted) {
-        SnackBarHelper.showSuccessSnackBar(context, message: 'Review updated');
-      }
+      if (!mounted) return;
+      SnackBarHelper.showSuccessSnackBar(context, message: 'Review updated');
+      await _load();
     } catch (e) {
       if (mounted) {
         SnackBarHelper.showErrorSnackBar(context, message: e.toString());
@@ -216,7 +262,6 @@ class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final reviewsAsync = ref.watch(allReviewsAdminProvider(_statusFilter));
     final actor = ref.watch(currentUserModelProvider).valueOrNull;
     final canOverride = AdminPermissions.canOverrideReviews(actor?.userType);
     final canEdit = AdminPermissions.canEditReviewContent(actor?.userType);
@@ -239,104 +284,103 @@ class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
                 _FilterChip(
                   label: 'All',
                   selected: _statusFilter == null,
-                  onTap: () => setState(() => _statusFilter = null),
+                  onTap: () => _setFilter(null),
                 ),
                 _FilterChip(
                   label: 'Published',
                   selected: _statusFilter == ReviewModel.statusPublished,
-                  onTap: () => setState(
-                    () => _statusFilter = ReviewModel.statusPublished,
-                  ),
+                  onTap: () => _setFilter(ReviewModel.statusPublished),
                 ),
                 _FilterChip(
                   label: 'Pending',
                   selected: _statusFilter == ReviewModel.statusPending,
-                  onTap: () => setState(
-                    () => _statusFilter = ReviewModel.statusPending,
-                  ),
+                  onTap: () => _setFilter(ReviewModel.statusPending),
                 ),
                 _FilterChip(
                   label: 'Hidden',
                   selected: _statusFilter == ReviewModel.statusHidden,
-                  onTap: () => setState(
-                    () => _statusFilter = ReviewModel.statusHidden,
-                  ),
+                  onTap: () => _setFilter(ReviewModel.statusHidden),
                 ),
                 _FilterChip(
                   label: 'Rejected',
                   selected: _statusFilter == ReviewModel.statusRejected,
-                  onTap: () => setState(
-                    () => _statusFilter = ReviewModel.statusRejected,
-                  ),
+                  onTap: () => _setFilter(ReviewModel.statusRejected),
                 ),
               ],
             ),
           ),
           Expanded(
-            child: reviewsAsync.when(
-              loading: () => const ReviewListSkeleton(),
-              error: (e, _) => AsyncErrorView.fromError(
-                e,
-                onRetry: () =>
-                    ref.invalidate(allReviewsAdminProvider(_statusFilter)),
-              ),
-              data: (reviews) {
-                if (reviews.isEmpty) {
-                  final tokens = context.tokens;
-                  return Center(
-                    child: Text(
-                      'No reviews in this category',
-                      style: AppFonts.plusJakarta(color: tokens.textTertiary),
-                    ),
-                  );
-                }
-                return ListView.builder(
-                  padding: const EdgeInsets.all(AppSpacing.lg),
-                  itemCount: reviews.length,
-                  itemBuilder: (context, index) {
-                    final review = reviews[index];
-                    final isPublished =
-                        review.status == ReviewModel.statusPublished;
-                    final isHidden = review.status == ReviewModel.statusHidden;
-                    return ReviewCardWidget(
-                      review: review,
-                      showCollegeName: true,
-                      onApprove: isPublished
-                          ? null
-                          : () => _moderate(
-                                review,
-                                ReviewModel.statusPublished,
-                              ),
-                      onReject: review.status == ReviewModel.statusRejected
-                          ? null
-                          : () => _moderate(
-                                review,
-                                ReviewModel.statusRejected,
-                              ),
-                      onHide: !canOverride || isHidden
-                          ? null
-                          : () => _moderate(
-                                review,
-                                ReviewModel.statusHidden,
-                              ),
-                      onRestore: !canOverride || !isHidden
-                          ? null
-                          : () => _moderate(
-                                review,
-                                ReviewModel.statusPublished,
-                              ),
-                      onEditContent:
-                          canEdit ? () => _openFullEditDialog(review) : null,
-                      onDelete: () => _moderate(
-                        review,
-                        review.status,
-                        delete: true,
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
+            child: _loading && _reviews.isEmpty
+                ? const ReviewListSkeleton()
+                : _error != null
+                    ? AsyncErrorView.fromError(_error!, onRetry: _load)
+                    : _reviews.isEmpty
+                        ? Center(
+                            child: Text(
+                              'No reviews in this category',
+                              style: AppFonts.plusJakarta(color: context.tokens.textTertiary),
+                            ),
+                          )
+                        : ListView.builder(
+                            padding: const EdgeInsets.all(AppSpacing.lg),
+                            itemCount: _reviews.length + (_hasMore ? 1 : 0),
+                            itemBuilder: (context, index) {
+                              if (index == _reviews.length) {
+                                return Center(
+                                  child: _loading
+                                      ? const Padding(
+                                          padding: EdgeInsets.all(AppSpacing.sm),
+                                          child: CircularProgressIndicator(),
+                                        )
+                                      : TextButton(
+                                          onPressed: () => _load(loadMore: true),
+                                          child: const Text('Load more'),
+                                        ),
+                                );
+                              }
+                              final review = _reviews[index];
+                              final isPublished =
+                                  review.status == ReviewModel.statusPublished;
+                              final isHidden =
+                                  review.status == ReviewModel.statusHidden;
+                              return ReviewCardWidget(
+                                review: review,
+                                showCollegeName: true,
+                                onApprove: isPublished
+                                    ? null
+                                    : () => _moderate(
+                                          review,
+                                          ReviewModel.statusPublished,
+                                        ),
+                                onReject: review.status == ReviewModel.statusRejected
+                                    ? null
+                                    : () => _moderate(
+                                          review,
+                                          ReviewModel.statusRejected,
+                                        ),
+                                onHide: !canOverride || isHidden
+                                    ? null
+                                    : () => _moderate(
+                                          review,
+                                          ReviewModel.statusHidden,
+                                        ),
+                                onRestore: !canOverride || !isHidden
+                                    ? null
+                                    : () => _moderate(
+                                          review,
+                                          ReviewModel.statusPublished,
+                                        ),
+                                onEditContent: canEdit
+                                    ? () => _openFullEditDialog(review)
+                                    : null,
+                                onDelete: () => _moderate(
+                                  review,
+                                  review.status,
+                                  delete: true,
+                                ),
+                              );
+                            },
+                          ),
           ),
         ],
       ),

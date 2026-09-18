@@ -35,8 +35,20 @@ final userStreamProvider =
 /// VerificationConstants.badgeNone/badgeVerifiedStudent/badgeVerifiedAlumni.
 /// Unlike userStreamProvider (owner/staff-only `users` doc), this reads the
 /// PII-free `public_profiles` mirror that any authenticated user may read.
+///
+/// `.autoDispose` matters here specifically -- unlike userStreamProvider
+/// (one listener, for whichever single account is signed in), this is
+/// keyed by review AUTHOR uid, so scrolling through reviews from N distinct
+/// authors opens N live Firestore listeners. Without autoDispose, every one
+/// of those stays open for the rest of the app's process lifetime even
+/// after the review card that opened it is long gone -- a strictly
+/// growing pile of live snapshot listeners across a session that never
+/// closes, which is exactly the kind of thing that presents as the app
+/// (or, since this same widget is reused in AdminReviewsScreen, the Super
+/// Admin panel) gradually becoming laggier/unresponsive the longer it's
+/// used, not slow from the very first frame.
 final publicVerificationBadgeStreamProvider =
-    StreamProvider.family<String, String>((ref, uid) {
+    StreamProvider.family.autoDispose<String, String>((ref, uid) {
   final service = ref.watch(firestoreUserServiceProvider);
   return service.watchPublicVerificationBadge(uid);
 });

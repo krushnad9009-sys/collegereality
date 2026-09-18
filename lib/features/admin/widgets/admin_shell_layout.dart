@@ -169,13 +169,13 @@ class _Sidebar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final panel = SuperAdminScope.maybeOf(context);
-    final items = panel != null
-        ? panel.navItems
-            .map(
-              (i) => AdminNavItem(title: i.title, icon: i.icon, route: i.route),
-            )
-            .toList()
-        : adminNavItems.where((i) => !i.adminOnly || isAdminUser).toList();
+    // panel.navItems is already List<AdminNavItem> (see
+    // SuperAdminPanelConfig) -- no remapping needed. The non-panel branch
+    // still filters adminNavItems (a module-level const list) by
+    // isAdminUser on every build since that depends on the signed-in
+    // user's role, which can only be known at build time.
+    final items =
+        panel?.navItems ?? adminNavItems.where((i) => !i.adminOnly || isAdminUser).toList();
 
     final isPanel = panel != null;
     final tokens = context.tokens;

@@ -1,16 +1,13 @@
-import 'package:flutter/material.dart';
+import '../widgets/admin_shell_layout.dart' show AdminNavItem;
 
-class SuperAdminNavItem {
-  final String title;
-  final IconData icon;
-  final String route;
-
-  const SuperAdminNavItem({
-    required this.title,
-    required this.icon,
-    required this.route,
-  });
-}
+// SuperAdminNavItem used to be its own class here, structurally identical
+// to AdminNavItem (title/icon/route). AdminShellLayout's _Sidebar remapped
+// every SuperAdminNavItem into a fresh AdminNavItem on every single build
+// -- and since AdminShellLayout is a plain StatelessWidget re-wrapped
+// around each admin screen, that "every build" is every navigation. Purely
+// wasted allocations for identical data; now the panel config just uses
+// AdminNavItem directly so there's nothing to remap.
+typedef SuperAdminNavItem = AdminNavItem;
 
 class SuperAdminPanelConfig {
   final String dashboardRoute;
@@ -19,7 +16,7 @@ class SuperAdminPanelConfig {
   final String collegeNewRoute;
   final String brandTitle;
   final String brandSubtitle;
-  final List<SuperAdminNavItem> navItems;
+  final List<AdminNavItem> navItems;
 
   const SuperAdminPanelConfig({
     required this.dashboardRoute,

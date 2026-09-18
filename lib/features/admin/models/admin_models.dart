@@ -137,6 +137,7 @@ class AdminUserSearchResult {
   final String uid;
   final String email;
   final String? displayName;
+  final String? photoURL;
   final String accountStatus;
   final String verificationStatus;
   final String verificationBadge;
@@ -147,6 +148,7 @@ class AdminUserSearchResult {
     required this.uid,
     required this.email,
     this.displayName,
+    this.photoURL,
     this.accountStatus = 'active',
     this.verificationStatus = '',
     this.verificationBadge = '',

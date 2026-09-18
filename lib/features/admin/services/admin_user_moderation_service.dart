@@ -133,6 +133,7 @@ class AdminUserModerationService {
       uid: doc.id,
       email: data['email']?.toString() ?? '',
       displayName: data['displayName']?.toString(),
+      photoURL: data['photoURL']?.toString(),
       accountStatus:
           data['accountStatus']?.toString() ?? AdminConstants.accountStatusActive,
       verificationStatus: data['verificationStatus']?.toString() ?? '',

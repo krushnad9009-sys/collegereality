@@ -3,6 +3,7 @@ import '../../auth/providers/auth_provider.dart';
 import '../../auth/providers/user_provider.dart';
 import '../../../core/constants/review_verification.dart';
 import '../models/review_model.dart';
+import '../models/review_page_model.dart';
 import '../repositories/review_repository.dart';
 import '../services/firestore_review_service.dart';
 
@@ -160,6 +161,39 @@ final allReviewsAdminProvider =
     FutureProvider.family<List<ReviewModel>, String?>((ref, statusFilter) async {
   final repository = ref.watch(reviewRepositoryProvider);
   return repository.getAllReviews(limit: 200, statusFilter: statusFilter);
+});
+
+/// Cursor for one page of [adminReviewPageProvider]. `null` cursor = first
+/// page.
+class AdminReviewPageParams {
+  final String? statusFilter;
+  final String? startAfterDocumentId;
+
+  const AdminReviewPageParams({this.statusFilter, this.startAfterDocumentId});
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AdminReviewPageParams &&
+          statusFilter == other.statusFilter &&
+          startAfterDocumentId == other.startAfterDocumentId;
+
+  @override
+  int get hashCode => Object.hash(statusFilter, startAfterDocumentId);
+}
+
+/// Paginated (20/page) admin review listing -- used by AdminReviewsScreen
+/// instead of allReviewsAdminProvider, which fetches 200 full review docs
+/// (text, ratings, media URLs, everything) in one shot on every screen
+/// open/filter change.
+final adminReviewPageProvider =
+    FutureProvider.family<ReviewPage, AdminReviewPageParams>((ref, params) async {
+  final repository = ref.watch(reviewRepositoryProvider);
+  return repository.getAllReviewsPage(
+    statusFilter: params.statusFilter,
+    startAfterDocumentId: params.startAfterDocumentId,
+    limit: 20,
+  );
 });
 
 final reviewCountProvider = FutureProvider<int>((ref) async {
