@@ -221,6 +221,11 @@ class SuperAdminDashboardScreen extends ConsumerWidget {
                       route: SuperAdminRouteNames.analytics,
                     ),
                     _ActionChipButton(
+                      label: 'Weekly Leads',
+                      icon: Icons.trending_up_outlined,
+                      route: SuperAdminRouteNames.leadAnalytics,
+                    ),
+                    _ActionChipButton(
                       label: 'Settings',
                       icon: Icons.settings_outlined,
                       route: SuperAdminRouteNames.settings,

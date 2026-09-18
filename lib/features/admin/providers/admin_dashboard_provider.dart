@@ -4,6 +4,7 @@ import '../../../core/cache/admin_session_cache.dart';
 import '../models/admin_models.dart';
 import '../services/admin_action_logger.dart';
 import '../services/admin_analytics_service.dart';
+import '../services/admin_lead_analytics_service.dart';
 import '../services/admin_user_moderation_service.dart';
 
 final adminAnalyticsServiceProvider = Provider<AdminAnalyticsService>((ref) {
@@ -111,4 +112,15 @@ final adminRegionStudentStatsProvider =
         state: params.state.isEmpty ? null : params.state,
         city: params.city.isEmpty ? null : params.city,
       );
+});
+
+final adminLeadAnalyticsServiceProvider = Provider<AdminLeadAnalyticsService>((ref) {
+  return AdminLeadAnalyticsService();
+});
+
+/// Weekly Lead Analytics (Super Admin panel) -- see
+/// AdminLeadAnalyticsService.getWeeklyLeads. State/City/Faculty filtering
+/// happens client-side in the screen over this one fetch, not here.
+final adminWeeklyLeadsProvider = FutureProvider<List<LeadSummary>>((ref) async {
+  return ref.watch(adminLeadAnalyticsServiceProvider).getWeeklyLeads();
 });

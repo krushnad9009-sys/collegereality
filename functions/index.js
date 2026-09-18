@@ -24,6 +24,7 @@ const {
   onChatMessageCreated,
   onCallSessionCreated,
 } = require('./src/pushNotificationTriggers');
+const { onLeadActivityEventCreated } = require('./src/leadActivityTriggers');
 
 module.exports = {
   createConsultationOrder,
@@ -49,4 +50,7 @@ module.exports = {
   onUserVerificationBadgeGranted,
   onChatMessageCreated,
   onCallSessionCreated,
+  // Weekly Lead Analytics (Super Admin panel): rolls each
+  // lead_activity_events doc into lead_summaries/{uid}.
+  onLeadActivityEventCreated,
 };

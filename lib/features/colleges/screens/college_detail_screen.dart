@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -18,6 +20,7 @@ import '../../../core/widgets/premium_list_row.dart';
 import '../../../core/widgets/skeleton_loader.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../engagement/providers/engagement_provider.dart';
+import '../../leads/providers/lead_activity_provider.dart';
 import '../../reviews/models/review_model.dart';
 import '../../reviews/providers/review_provider.dart';
 import '../../reviews/widgets/review_card_widget.dart';
@@ -62,6 +65,26 @@ class _CollegeDetailScreenState extends ConsumerState<CollegeDetailScreen>
     with SingleTickerProviderStateMixin {
   TabController? _tabController;
   final Set<int> _loadedTabs = {0};
+
+  // Weekly Lead Analytics (Super Admin panel): log a college-detail view
+  // exactly once per collegeId this widget instance shows, not on every
+  // rebuild `data:` re-runs for (tab switches, provider refreshes, etc).
+  String? _viewLoggedForCollegeId;
+
+  void _logViewOnce(CollegeModel college) {
+    if (_viewLoggedForCollegeId == college.id) return;
+    _viewLoggedForCollegeId = college.id;
+    final userId = ref.read(currentUserProvider)?.uid;
+    if (userId == null) return;
+    unawaited(
+      ref.read(leadActivityServiceProvider).logCollegeView(
+            userId: userId,
+            collegeId: college.id,
+            collegeName: college.name,
+            faculty: college.category,
+          ),
+    );
+  }
 
   int _initialTabIndex() {
     switch (widget.initialTab) {
@@ -168,6 +191,8 @@ class _CollegeDetailScreenState extends ConsumerState<CollegeDetailScreen>
             ),
           );
         }
+
+        _logViewOnce(college);
 
         final basket = ref.watch(compareBasketProvider);
         final isInCompare = basket.contains(college.id);
@@ -607,7 +632,7 @@ class _OverviewTab extends ConsumerWidget {
     }
   }
 
-  Future<void> _openPhone(BuildContext context, String phone) async {
+  Future<void> _openPhone(BuildContext context, WidgetRef ref, String phone) async {
     final digits = phone.replaceAll(RegExp(r'[^\d+]'), '');
     final uri = Uri.parse('tel:$digits');
     if (!await launchUrl(uri)) {
@@ -616,6 +641,20 @@ class _OverviewTab extends ConsumerWidget {
           const SnackBar(content: Text('Could not open phone dialer')),
         );
       }
+      return;
+    }
+    // Weekly Lead Analytics signal -- a student actually dialing a
+    // college's number is a stronger interest signal than a page view.
+    final userId = ref.read(currentUserProvider)?.uid;
+    if (userId != null) {
+      unawaited(
+        ref.read(leadActivityServiceProvider).logCallCollege(
+              userId: userId,
+              collegeId: college.id,
+              collegeName: college.name,
+              faculty: college.category,
+            ),
+      );
     }
   }
 
@@ -718,7 +757,7 @@ class _OverviewTab extends ConsumerWidget {
                   iconColor: colorScheme.primary,
                   title: 'Phone',
                   subtitle: college.phone!,
-                  onTap: () => _openPhone(context, college.phone!),
+                  onTap: () => _openPhone(context, ref, college.phone!),
                   showChevron: false,
                 ),
               ),

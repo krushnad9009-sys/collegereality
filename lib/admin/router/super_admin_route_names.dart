@@ -25,6 +25,7 @@ class SuperAdminRouteNames {
   static const String auditLogs = '/panel/audit-logs';
   static const String consultations = '/panel/consultations';
   static const String consultationRevenue = '/panel/consultation-revenue';
+  static const String leadAnalytics = '/panel/lead-analytics';
 
   static String collegeEditPath(String id) => '/panel/colleges/$id/edit';
 }

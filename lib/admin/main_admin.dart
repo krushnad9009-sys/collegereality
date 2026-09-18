@@ -78,6 +78,11 @@ const superAdminPanelConfig = SuperAdminPanelConfig(
       route: SuperAdminRouteNames.export,
     ),
     SuperAdminNavItem(
+      title: 'Lead Analytics',
+      icon: Icons.trending_up_outlined,
+      route: SuperAdminRouteNames.leadAnalytics,
+    ),
+    SuperAdminNavItem(
       title: 'Settings',
       icon: Icons.settings_outlined,
       route: SuperAdminRouteNames.settings,

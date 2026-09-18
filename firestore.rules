@@ -1353,6 +1353,26 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // Weekly Lead Analytics (Super Admin panel). lead_activity_events is a
+    // per-event log a student's own client writes (search-by-faculty,
+    // college view, calling a college) -- same shape as
+    // college_analytics_events above, client can create their own, never
+    // read/update/delete. lead_summaries is the per-user rollup
+    // (functions/src/leadActivityTriggers.js, Admin SDK -- bypasses these
+    // rules) the admin panel actually queries; no client write path at
+    // all, since nothing but that trigger should ever set it.
+    match /lead_activity_events/{eventId} {
+      allow read: if isStaff();
+      allow create: if isAuthenticated() &&
+        request.resource.data.userId == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    match /lead_summaries/{uid} {
+      allow read: if isStaff();
+      allow write: if false;
+    }
+
     match /college_requests/{requestId} {
       allow read: if isStaff() ||
         (isAuthenticated() && resource.data.userId == request.auth.uid);

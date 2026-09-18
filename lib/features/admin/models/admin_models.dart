@@ -223,3 +223,29 @@ class AdminPageResult<T> {
     this.hasMore = false,
   });
 }
+
+/// One row of the Weekly Lead Analytics table -- a `lead_summaries/{uid}`
+/// doc, maintained by functions/src/leadActivityTriggers.js from the
+/// student's own search-by-faculty/college-view/call-college activity.
+/// See AdminLeadAnalyticsService.getWeeklyLeads.
+class LeadSummary {
+  final String uid;
+  final String name;
+  final String phone;
+  final String email;
+  final String city;
+  final String state;
+  final String? topFaculty;
+  final DateTime? lastActiveAt;
+
+  const LeadSummary({
+    required this.uid,
+    required this.name,
+    required this.phone,
+    required this.email,
+    required this.city,
+    required this.state,
+    this.topFaculty,
+    this.lastActiveAt,
+  });
+}

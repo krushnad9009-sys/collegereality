@@ -16,9 +16,11 @@ import '../../../core/widgets/premium_components.dart';
 import '../../../core/widgets/premium_list_row.dart';
 import '../../../core/widgets/searchable_text_form_field.dart';
 import '../../../core/widgets/skeleton_loader.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../../home/widgets/college_card_widget.dart';
 import '../../compare/providers/compare_basket_provider.dart';
 import '../../compare/widgets/compare_basket_bar.dart';
+import '../../leads/providers/lead_activity_provider.dart';
 import '../models/college_model.dart';
 import '../providers/college_provider.dart';
 import '../utils/college_suggestion_utils.dart';
@@ -48,6 +50,18 @@ class CollegeSearchScreen extends ConsumerStatefulWidget {
 }
 
 class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
+  /// Weekly Lead Analytics (Super Admin panel) signal -- a student
+  /// deliberately narrowing search to one faculty is exactly the
+  /// "interested in Engineering/MBA/..." intent that screen surfaces.
+  /// Fire-and-forget: LeadActivityService swallows its own errors, and
+  /// this must never block or delay the actual search.
+  void _logFacultyInterest(String? category) {
+    if (category == null || category.isEmpty) return;
+    final userId = ref.read(currentUserProvider)?.uid;
+    if (userId == null) return;
+    ref.read(leadActivityServiceProvider).logSearch(userId: userId, faculty: category);
+  }
+
   late final TextEditingController _searchController;
   late final TextEditingController _cityController;
   late final TextEditingController _universityController;
@@ -938,6 +952,7 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
                           ],
                           onChanged: (v) {
                             setState(() => _selectedCategory = v);
+                            _logFacultyInterest(v);
                             _runSearch();
                           },
                         );

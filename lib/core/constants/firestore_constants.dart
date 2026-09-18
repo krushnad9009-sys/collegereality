@@ -98,4 +98,13 @@ class FirestoreConstants {
   /// PII-free public copies of student→guide reviews (no raterId), read by
   /// anyone to render a guide's public review list. Doc id = consultationId.
   static const String guideReviewsCollection = 'guide_reviews';
+
+  // Weekly Lead Analytics (Super Admin panel): a per-event interest log
+  // written by the client (search-by-faculty, college-detail view,
+  // call-college) -- functions/src/leadActivityTriggers.js rolls each new
+  // event into a per-user summary doc so the admin panel query never has
+  // to join across collections. See lib/features/leads/ and
+  // lib/admin/screens/super_admin_lead_analytics_screen.dart.
+  static const String leadActivityEventsCollection = 'lead_activity_events';
+  static const String leadSummariesCollection = 'lead_summaries';
 }
