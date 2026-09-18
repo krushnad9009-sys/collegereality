@@ -12,6 +12,7 @@ import '../../auth/providers/auth_provider.dart';
 import '../../colleges/models/college_model.dart';
 import '../../colleges/providers/college_provider.dart';
 import '../../colleges/utils/college_search_utils.dart';
+import '../widgets/admin_review_manager_section.dart';
 
 class AdminCollegeEditScreen extends ConsumerStatefulWidget {
   final String? collegeId;
@@ -414,6 +415,15 @@ class _AdminCollegeEditScreenState extends ConsumerState<AdminCollegeEditScreen>
                 isLoading: _isSaving,
                 onPressed: _save,
               ),
+              if (isEdit) ...[
+                const SizedBox(height: 32),
+                const Divider(),
+                const SizedBox(height: 16),
+                AdminReviewManagerSection(
+                  collegeId: widget.collegeId!,
+                  collegeName: _nameController.text.trim(),
+                ),
+              ],
             ],
           ),
         ),

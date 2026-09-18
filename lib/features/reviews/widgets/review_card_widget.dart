@@ -68,12 +68,25 @@ class _ReviewCardWidgetState extends ConsumerState<ReviewCardWidget> {
     // grants or revokes verification. Seeded with the submission-time
     // snapshot so the badge doesn't flicker in/out while the live stream's
     // first value is still loading; self-corrects the instant it resolves.
-    final liveBadgeAsync =
-        ref.watch(publicVerificationBadgeStreamProvider(review.userId));
-    final liveBadge = liveBadgeAsync.valueOrNull ??
-        (review.isVerifiedStudent
-            ? VerificationConstants.badgeVerifiedStudent
-            : VerificationConstants.badgeNone);
+    //
+    // Admin-created reviews (Edit College screen's "Manage & Add Reviews")
+    // have no real backing account behind review.userId -- a live lookup
+    // there would resolve to "not verified" every time and permanently
+    // hide a badge the admin explicitly checked, so skip the live stream
+    // entirely for these and trust the static snapshot as final.
+    final String liveBadge;
+    if (review.isAdminCreated) {
+      liveBadge = review.isVerifiedStudent
+          ? VerificationConstants.badgeVerifiedStudent
+          : VerificationConstants.badgeNone;
+    } else {
+      final liveBadgeAsync =
+          ref.watch(publicVerificationBadgeStreamProvider(review.userId));
+      liveBadge = liveBadgeAsync.valueOrNull ??
+          (review.isVerifiedStudent
+              ? VerificationConstants.badgeVerifiedStudent
+              : VerificationConstants.badgeNone);
+    }
     final showVerifiedChip = liveBadge != VerificationConstants.badgeNone;
 
     return Padding(

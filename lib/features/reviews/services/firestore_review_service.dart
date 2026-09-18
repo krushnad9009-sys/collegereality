@@ -85,6 +85,40 @@ class FirestoreReviewService {
     return saved;
   }
 
+  /// Super Admin's "Manage & Add Reviews" section on the Edit College
+  /// screen. Deliberately bypasses BOTH of [createReview]'s guards, not
+  /// just the verified-student one: the duplicate-review-per-userId check
+  /// would otherwise reject every custom review after the first one
+  /// injected for a college once they share a synthetic (non-real-account)
+  /// userId, and the admin must be able to choose whether the injected
+  /// review counts as "verified" at all (unlike a real submission, which
+  /// always must be). Preserves the admin's chosen [review.createdAt]
+  /// exactly (backdating is the point) rather than overwriting it with
+  /// `DateTime.now()` the way [createReview] does. Only applies the
+  /// college aggregate-rating delta when [ReviewModel.isPublicVisible] is
+  /// true -- an admin who left "Verified Student" unchecked gets a saved
+  /// but non-counting review, matching what that flag means everywhere
+  /// else in the app.
+  Future<ReviewModel> adminCreateReview(ReviewModel review) async {
+    final id = review.id.isEmpty ? _uuid.v4() : review.id;
+    final saved = review.copyWith(id: id, collegeId: review.collegeId.trim());
+    final data = saved.toJson();
+
+    await _firestore.runTransaction((transaction) async {
+      transaction.set(_reviews.doc(id), data);
+      if (saved.isPublicVisible) {
+        await _applyReviewDeltaInTransaction(
+          transaction,
+          collegeId: saved.collegeId,
+          review: saved,
+          deltaSign: 1,
+        );
+      }
+    });
+
+    return saved;
+  }
+
   Future<void> updateReview(ReviewModel review, {ReviewModel? previous}) async {
     if (!review.isVerifiedStudent) {
       throw ReviewFirestoreException(

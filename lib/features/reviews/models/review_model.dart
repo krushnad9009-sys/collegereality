@@ -29,6 +29,15 @@ class ReviewModel {
   final DateTime createdAt;
   final DateTime updatedAt;
 
+  /// True only for a review a Super Admin injected directly via the Edit
+  /// College screen's "Manage & Add Reviews" section (no real backing
+  /// user account) -- see FirestoreReviewService.adminCreateReview. Lets
+  /// ReviewCardWidget skip its live-verification-badge lookup (keyed by
+  /// [userId], which is a synthetic id here) and trust [isVerifiedStudent]
+  /// /[reviewerBadge] as-is instead, since there's no real account for a
+  /// live lookup to ever resolve.
+  final bool isAdminCreated;
+
   const ReviewModel({
     required this.id,
     required this.collegeId,
@@ -51,6 +60,7 @@ class ReviewModel {
     this.status = statusPublished,
     required this.createdAt,
     required this.updatedAt,
+    this.isAdminCreated = false,
   });
 
   bool get isPublicVisible {
@@ -138,6 +148,7 @@ class ReviewModel {
       status: normalizeStatus(json['status'] as String?),
       createdAt: _parseDate(json['createdAt']),
       updatedAt: _parseDate(json['updatedAt']),
+      isAdminCreated: json['isAdminCreated'] as bool? ?? false,
     );
   }
 
@@ -164,6 +175,7 @@ class ReviewModel {
       'status': normalizeStatus(status),
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
+      'isAdminCreated': isAdminCreated,
     };
   }
 
@@ -189,6 +201,7 @@ class ReviewModel {
     String? status,
     DateTime? createdAt,
     DateTime? updatedAt,
+    bool? isAdminCreated,
   }) {
     return ReviewModel(
       id: id ?? this.id,
@@ -212,6 +225,7 @@ class ReviewModel {
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      isAdminCreated: isAdminCreated ?? this.isAdminCreated,
     );
   }
 

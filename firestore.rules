@@ -642,10 +642,16 @@ service cloud.firestore {
 
     match /reviews/{reviewId} {
       allow read: if isAuthenticated();
-      allow create: if isAuthenticated() &&
-        isVerifiedStudent() &&
-        request.resource.data.userId == request.auth.uid &&
-        request.resource.data.isVerifiedStudent == true;
+      // Super Admin's "Manage & Add Reviews" (Edit College screen) needs
+      // to create a review with an arbitrary userId (no real backing
+      // account) and choose isVerifiedStudent itself -- neither of which
+      // the self-service branch below permits. Mirrors the isAdmin() OR
+      // already on update/delete just below.
+      allow create: if isAdmin() ||
+        (isAuthenticated() &&
+          isVerifiedStudent() &&
+          request.resource.data.userId == request.auth.uid &&
+          request.resource.data.isVerifiedStudent == true);
       allow update: if isAdmin() ||
         (isAuthenticated() && isOwnerReviewContentUpdate()) ||
         (isAuthenticated() && isHelpfulCountOnlyUpdate(reviewId));

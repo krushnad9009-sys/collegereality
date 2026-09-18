@@ -10,6 +10,10 @@ abstract class ReviewRepository {
   /// Bypasses the verified-student + edit-cooldown guards that [updateReview]
   /// enforces for a student's own self-service edit.
   Future<void> adminUpdateReview(ReviewModel review);
+
+  /// Super Admin's "Manage & Add Reviews" (Edit College screen) -- see
+  /// [FirestoreReviewService.adminCreateReview].
+  Future<ReviewModel> adminCreateReview(ReviewModel review);
   Future<void> updateReviewStatus(String reviewId, String collegeId, String status);
   Future<void> deleteReview(String reviewId, String collegeId);
   Future<ReviewModel?> getUserReviewForCollege(String userId, String collegeId);
@@ -63,6 +67,11 @@ class ReviewRepositoryImpl implements ReviewRepository {
   Future<void> adminUpdateReview(ReviewModel review) async {
     final previous = await _service.getReviewById(review.id);
     await _service.adminUpdateReview(review, previous: previous);
+  }
+
+  @override
+  Future<ReviewModel> adminCreateReview(ReviewModel review) {
+    return _service.adminCreateReview(review);
   }
 
   @override
