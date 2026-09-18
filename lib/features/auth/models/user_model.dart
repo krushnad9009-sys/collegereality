@@ -105,8 +105,24 @@ class UserModel {
             communicationSettings ?? const GuideCommunicationSettings(),
         presence = presence ?? const UserPresenceModel();
 
-  factory UserModel.fromJson(Map<String, dynamic> json) {
-    final uid = json['uid'] as String;
+  /// [docId] is the Firestore document ID -- pass it (almost always
+  /// `doc.id`) so a document that's missing its own `uid` FIELD (e.g. a
+  /// hand-edited doc that has `id` instead of `uid` -- exactly the shape a
+  /// document typed directly into the Firebase Console by hand tends to
+  /// end up in, versus one created by the app's own signup flow) still
+  /// resolves to a real uid instead of throwing. This is deliberately the
+  /// ONLY field this relaxes: email/createdAt/updatedAt stay strict (see
+  /// the 'must be strings, not Firestore Timestamps' test group in
+  /// test/user_model_test.dart) -- that test exists because a prior
+  /// version of tools/set_super_admin.py once wrote a native Firestore
+  /// Timestamp into `updatedAt`, and the considered decision then was to
+  /// fix the WRITER and keep the reader strict, not to make parsing
+  /// swallow bad data silently. A defaulted date would have quietly hidden
+  /// exactly the kind of corruption that bug was; the docId fallback here
+  /// doesn't have that problem since the Firestore document ID is already
+  /// the authoritative source of truth for identity, not a guess.
+  factory UserModel.fromJson(Map<String, dynamic> json, {String? docId}) {
+    final uid = json['uid'] as String? ?? docId ?? '';
     return UserModel(
       uid: uid,
       email: json['email'] as String,

@@ -85,4 +85,25 @@ void main() {
       );
     });
   });
+
+  // A document hand-typed into the Firebase Console (rather than created
+  // by the app's own signup flow) is exactly the shape most likely to be
+  // missing its own `uid` FIELD -- e.g. using `id` instead, as happened
+  // here. Every UserModel.fromJson call site now passes docId: doc.id so
+  // this falls back to the Firestore document ID instead of throwing (and
+  // isSuperAdminProvider turning that into a silent "not admin"), while
+  // deliberately NOT extending the same leniency to email/createdAt/
+  // updatedAt -- see the group above.
+  test('fromJson falls back to docId when the uid field is absent', () {
+    final user = UserModel.fromJson({
+      'id': 'LM8ZkpaxUWEwM66UJfP99HuqFl1',
+      'email': 'krushnad9009@gmail.com',
+      'userType': RoleConstants.userTypeSuperAdmin,
+      'verificationStatus': 'approved',
+      'createdAt': now.toIso8601String(),
+      'updatedAt': now.toIso8601String(),
+    }, docId: 'LM8ZkpaxUWEwM66UJfP99HuqFl1');
+    expect(user.uid, 'LM8ZkpaxUWEwM66UJfP99HuqFl1');
+    expect(AdminPermissions.isSuperAdmin(user.userType), isTrue);
+  });
 }

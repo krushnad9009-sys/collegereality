@@ -44,7 +44,7 @@ class FirestoreUserService {
       final doc =
           await _firestore.collection(usersCollection).doc(uid).get();
       if (doc.exists) {
-        return UserModel.fromJson(doc.data() as Map<String, dynamic>);
+        return UserModel.fromJson(doc.data() as Map<String, dynamic>, docId: doc.id);
       }
       return null;
     } on FirebaseException catch (e) {
@@ -73,7 +73,7 @@ class FirestoreUserService {
           .doc(uid)
           .get();
       if (doc.exists) {
-        return UserModel.fromJson(doc.data() as Map<String, dynamic>);
+        return UserModel.fromJson(doc.data() as Map<String, dynamic>, docId: doc.id);
       }
       return null;
     } on FirebaseException catch (e) {
@@ -156,7 +156,7 @@ class FirestoreUserService {
           .snapshots()
           .map((doc) {
         if (doc.exists) {
-          return UserModel.fromJson(doc.data()!);
+          return UserModel.fromJson(doc.data()!, docId: doc.id);
         }
         return null;
       });
@@ -428,7 +428,8 @@ class FirestoreUserService {
           .get();
 
       if (querySnapshot.docs.isNotEmpty) {
-        return UserModel.fromJson(querySnapshot.docs.first.data());
+        final doc = querySnapshot.docs.first;
+        return UserModel.fromJson(doc.data(), docId: doc.id);
       }
       return null;
     } catch (e) {
