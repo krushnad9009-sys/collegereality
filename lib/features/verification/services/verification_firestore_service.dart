@@ -149,6 +149,8 @@ class VerificationFirestoreService {
       requestId: requestId,
       extension: ext,
       bytes: bytes,
+      documentType: documentType,
+      fileName: fileName,
     );
 
     await _registerHash(hash, user.uid, requestId);

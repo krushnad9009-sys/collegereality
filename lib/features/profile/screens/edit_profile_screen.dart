@@ -18,6 +18,7 @@ import '../../communication/models/guide_stats_model.dart';
 import '../../communication/widgets/language_multi_select_field.dart';
 import '../../community/models/user_presence_model.dart';
 import '../../verification/widgets/guide_verification_card.dart';
+import '../../verification/widgets/student_verification_documents_section.dart';
 import '../widgets/premium_profile_edit_section.dart';
 import '../widgets/display_name_settings_section.dart';
 import '../widgets/phone_verification_section.dart';
@@ -257,6 +258,15 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       });
                     },
                   ),
+                  if (userDetail != null) ...[
+                    const SizedBox(height: AppSpacing.md),
+                    StudentVerificationDocumentsSection(
+                      user: userDetail,
+                      isPhoneVerified: _isPhoneVerified || userDetail.isPhoneVerified,
+                      collegeId: _selectedCollegeId,
+                      collegeName: _selectedCollegeName,
+                    ),
+                  ],
                   const SizedBox(height: AppSpacing.sm),
                   PremiumCard(
                     radius: tokens.cardRadius,

@@ -31,6 +31,18 @@ class VerificationConstants {
 
   static const int requiredGuideVerificationDocs = 2;
 
+  /// The single-document "Student Verification Documents" section in Edit
+  /// Profile: one proof is enough to request the verified-student badge.
+  static const List<Map<String, String>> badgeProofDocumentTypes = [
+    {'id': documentCollegeId, 'label': 'College ID Card'},
+    {'id': documentFinalMarksheet, 'label': 'Marksheet / Transcript'},
+    {'id': documentApaarAadhaar, 'label': 'APAAR ID'},
+  ];
+
+  /// Client-side cap for that section. Stricter than [maxFileBytes] (which is
+  /// what storage.rules enforces at 10 MB).
+  static const int maxBadgeProofBytes = 5 * 1024 * 1024;
+
   static const List<Map<String, String>> alumniDocumentTypes = [
     {'id': documentFinalMarksheet, 'label': 'Graduation Marksheet'},
     {'id': documentBonafide, 'label': 'Bonafide Certificate'},
