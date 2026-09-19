@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart' show PlatformException;
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../bootstrap/app_error_handler.dart';
@@ -100,8 +101,13 @@ class AuthService implements AuthServiceApi {
   final FirebaseAuth _firebaseAuth;
   final GoogleSignIn _googleSignIn;
 
-  static const String _webClientId =
-      '244446156099-bb6c7e0dabe7a5efbf0bf6.apps.googleusercontent.com';
+  // OAuth *Web application* client ID (Google Cloud Console -> Credentials).
+  // Override per build with --dart-define=GOOGLE_WEB_CLIENT_ID=<id>.
+  static const String _webClientId = String.fromEnvironment(
+    'GOOGLE_WEB_CLIENT_ID',
+    defaultValue:
+        '244446156099-bb6c7e0dabe7a5efbf0bf6.apps.googleusercontent.com',
+  );
 
   @override
   User? get currentUser => _firebaseAuth.currentUser;
@@ -139,23 +145,46 @@ class AuthService implements AuthServiceApi {
     }
   }
 
+  // Credential-based on every platform. Never use signInWithPopup /
+  // signInWithRedirect here: they open Firebase's /__/auth/handler page with
+  // the project apiKey in the URL query string.
   @override
   Future<UserCredential?> signInWithGoogle() async {
-    if (kIsWeb) {
-      final provider = GoogleAuthProvider();
-      return _firebaseAuth.signInWithPopup(provider);
+    try {
+      final googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) return null;
+
+      final googleAuth = await googleUser.authentication;
+      // On web, signIn() yields only an accessToken (idToken is null);
+      // Firebase accepts either token for a Google credential.
+      if (googleAuth.idToken == null && googleAuth.accessToken == null) {
+        throw FirebaseAuthException(
+          code: 'invalid-credential',
+          message: 'Google returned no ID token or access token.',
+        );
+      }
+
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+      return await _firebaseAuth.signInWithCredential(credential);
+    } catch (e, st) {
+      if (_isGoogleSignInCancelled(e)) return null;
+      _logAuthException('signInWithGoogle', e, st);
+      rethrow;
     }
+  }
 
-    final googleUser = await _googleSignIn.signIn();
-    if (googleUser == null) return null;
-
-    final googleAuth = await googleUser.authentication;
-    final credential = GoogleAuthProvider.credential(
-      accessToken: googleAuth.accessToken,
-      idToken: googleAuth.idToken,
-    );
-
-    return _firebaseAuth.signInWithCredential(credential);
+  // google_sign_in_web surfaces a closed popup as a bare 'popup_closed'
+  // String (or PlatformException), not as a null account like on mobile.
+  static bool _isGoogleSignInCancelled(Object e) {
+    const webPopupClosed = 'popup_closed';
+    if (e is PlatformException) {
+      return e.code == GoogleSignIn.kSignInCanceledError ||
+          e.code == webPopupClosed;
+    }
+    return e == webPopupClosed;
   }
 
   @override
@@ -164,12 +193,10 @@ class AuthService implements AuthServiceApi {
     // in with Google, or if the plugin isn't initialised, and that must
     // NOT abort (or, via Future.wait, block) the Firebase sign-out that
     // actually ends the session.
-    if (!kIsWeb) {
-      try {
-        await _googleSignIn.signOut();
-      } catch (e) {
-        _log('Google signOut failed (ignored): $e');
-      }
+    try {
+      await _googleSignIn.signOut();
+    } catch (e) {
+      _log('Google signOut failed (ignored): $e');
     }
     await _firebaseAuth.signOut();
   }
