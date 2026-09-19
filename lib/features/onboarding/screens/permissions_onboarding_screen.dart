@@ -2,8 +2,6 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:geocoding/geocoding.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -15,28 +13,10 @@ import '../../../core/services/crashlytics_service.dart';
 import '../../../core/widgets/index.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/providers/user_provider.dart';
+import '../services/onboarding_location_resolver.dart';
 
 /// Per-card state shown next to each permission row.
 enum _PermissionState { pending, requesting, granted, denied }
-
-/// Result of the location step -- always produced, whether granted, denied,
-/// or unresolvable, since the caller must persist *something* either way.
-class _LocationResult {
-  final bool granted;
-  final String state;
-  final String city;
-
-  const _LocationResult({
-    required this.granted,
-    required this.state,
-    required this.city,
-  });
-
-  const _LocationResult.notProvided()
-      : granted = false,
-        state = 'Not Provided',
-        city = 'Not Provided';
-}
 
 /// One-time post-login onboarding: gallery/location/notification
 /// permissions. The router's redirect gate (`app_router.dart`) shows this
@@ -58,11 +38,15 @@ class PermissionsOnboardingScreen extends ConsumerStatefulWidget {
 class _PermissionsOnboardingScreenState
     extends ConsumerState<PermissionsOnboardingScreen> {
   bool _isProcessing = false;
+  // Set once _finish starts, so a slow Allow All and a Skip tap can never
+  // both save and navigate.
+  bool _finished = false;
   _PermissionState _photos = _PermissionState.pending;
   _PermissionState _location = _PermissionState.pending;
   _PermissionState _notifications = _PermissionState.pending;
 
   Future<void> _requestPhotos() async {
+    if (!mounted) return;
     setState(() => _photos = _PermissionState.requesting);
     try {
       // Flutter Web's file picker is a plain <input type=file> -- there is
@@ -72,6 +56,7 @@ class _PermissionsOnboardingScreenState
         return;
       }
       final status = await Permission.photos.request();
+      if (!mounted) return;
       setState(() {
         _photos = status.isGranted || status.isLimited
             ? _PermissionState.granted
@@ -84,6 +69,7 @@ class _PermissionsOnboardingScreenState
   }
 
   Future<void> _requestNotifications() async {
+    if (!mounted) return;
     setState(() => _notifications = _PermissionState.requesting);
     try {
       // Mirrors FirebaseMessagingService.initialize(), which also only
@@ -101,6 +87,7 @@ class _PermissionsOnboardingScreenState
       final granted = settings.authorizationStatus ==
               AuthorizationStatus.authorized ||
           settings.authorizationStatus == AuthorizationStatus.provisional;
+      if (!mounted) return;
       setState(() {
         _notifications =
             granted ? _PermissionState.granted : _PermissionState.denied;
@@ -115,114 +102,69 @@ class _PermissionsOnboardingScreenState
     }
   }
 
-  Future<_LocationResult> _requestLocation() async {
-    setState(() => _location = _PermissionState.requesting);
-    try {
-      var permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-      }
-      if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) {
-        setState(() => _location = _PermissionState.denied);
-        return const _LocationResult.notProvided();
-      }
-
-      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        setState(() => _location = _PermissionState.denied);
-        return const _LocationResult.notProvided();
-      }
-
-      final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.medium,
-          timeLimit: Duration(seconds: 10),
-        ),
-      );
-
-      // geocoding has no web implementation at all -- calling it there
-      // throws. Location itself is still genuinely granted on web (the
-      // browser's own geolocation prompt), we just can't resolve it to a
-      // state/city name client-side.
-      if (kIsWeb) {
-        setState(() => _location = _PermissionState.granted);
-        return const _LocationResult(
-          granted: true,
-          state: 'Not Provided',
-          city: 'Not Provided',
-        );
-      }
-
-      final placemarks = await placemarkFromCoordinates(
-        position.latitude,
-        position.longitude,
-      );
-      final placemark = placemarks.isNotEmpty ? placemarks.first : null;
-      final resolvedState = placemark?.administrativeArea?.trim();
-      final resolvedCity = _firstNonEmpty([
-        placemark?.locality,
-        placemark?.subAdministrativeArea,
-      ]);
-
-      setState(() => _location = _PermissionState.granted);
-      return _LocationResult(
-        granted: true,
-        state: (resolvedState == null || resolvedState.isEmpty)
-            ? 'Not Provided'
-            : resolvedState,
-        city: resolvedCity ?? 'Not Provided',
-      );
-    } catch (e, st) {
-      CrashlyticsService.recordError(
-        e,
-        st,
-        reason: 'PermissionsOnboarding (location)',
-      );
-      if (mounted) setState(() => _location = _PermissionState.denied);
-      return const _LocationResult.notProvided();
+  Future<OnboardingLocationResult> _requestLocation() async {
+    if (mounted) setState(() => _location = _PermissionState.requesting);
+    // Never throws and never hangs -- every failure or timeout degrades to
+    // "Not Provided" so the spinner below always stops.
+    final result = await resolveOnboardingLocation();
+    if (mounted) {
+      setState(() {
+        _location =
+            result.granted ? _PermissionState.granted : _PermissionState.denied;
+      });
     }
-  }
-
-  static String? _firstNonEmpty(List<String?> values) {
-    for (final v in values) {
-      if (v != null && v.trim().isNotEmpty) return v.trim();
-    }
-    return null;
+    return result;
   }
 
   Future<void> _allowAll() async {
-    if (_isProcessing) return;
+    if (_isProcessing || _finished) return;
     setState(() => _isProcessing = true);
-    // Sequential, not parallel: on iOS, showing two native permission
-    // dialogs back-to-back without waiting can silently drop the second.
-    await _requestPhotos();
-    final locationResult = await _requestLocation();
-    await _requestNotifications();
+    var locationResult = OnboardingLocationResult.notProvided;
+    try {
+      // Sequential, not parallel: on iOS, showing two native permission
+      // dialogs back-to-back without waiting can silently drop the second.
+      await _requestPhotos();
+      locationResult = await _requestLocation();
+      await _requestNotifications();
+    } catch (e, st) {
+      // Each step already catches its own errors; this is the backstop so
+      // an unexpected throw can never leave the spinner running.
+      CrashlyticsService.recordError(
+        e,
+        st,
+        reason: 'PermissionsOnboarding (allow all)',
+      );
+    }
     await _finish(locationResult);
   }
 
-  Future<void> _skip() async {
-    if (_isProcessing) return;
-    setState(() => _isProcessing = true);
-    await _finish(const _LocationResult.notProvided());
-  }
+  Future<void> _skip() => _finish(OnboardingLocationResult.notProvided);
 
-  Future<void> _finish(_LocationResult locationResult) async {
+  Future<void> _finish(OnboardingLocationResult locationResult) async {
+    if (_finished) return;
+    setState(() {
+      _finished = true;
+      _isProcessing = true;
+    });
     final uid = ref.read(currentUserProvider)?.uid;
     try {
       if (uid != null) {
-        await ref.read(userRepositoryProvider).completePermissionsOnboarding(
-              uid,
-              state: locationResult.state,
-              city: locationResult.city,
-              locationGranted: locationResult.granted,
-            );
-        ref.invalidate(currentUserDetailProvider);
-        // Wait for the refreshed doc so the router's redirect sees
-        // hasCompletedPermissionsOnboarding: true on the very next
-        // navigation -- same pattern as TermsGateScreen.
-        await ref.read(currentUserDetailProvider.future);
+        // Bounded: on web a Firestore write doesn't resolve while offline,
+        // which would otherwise leave the spinner running forever.
+        await () async {
+          await ref.read(userRepositoryProvider).completePermissionsOnboarding(
+                uid,
+                state: locationResult.state,
+                city: locationResult.city,
+                locationGranted: locationResult.granted,
+              );
+          ref.invalidate(currentUserDetailProvider);
+          // Wait for the refreshed doc so the router's redirect sees
+          // hasCompletedPermissionsOnboarding: true on the very next
+          // navigation -- same pattern as TermsGateScreen.
+          await ref.read(currentUserDetailProvider.future);
+        }()
+            .timeout(const Duration(seconds: 10));
       }
     } catch (e, st) {
       CrashlyticsService.recordError(
@@ -381,7 +323,7 @@ class _PermissionsOnboardingScreenState
                       SecondaryButton(
                         label: 'Skip for Now',
                         isLoading: false,
-                        onPressed: _isProcessing ? null : _skip,
+                        onPressed: _finished ? null : _skip,
                       ),
                     ],
                   ),
