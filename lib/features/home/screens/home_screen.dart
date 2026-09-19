@@ -12,7 +12,6 @@ import '../../../config/theme/app_theme.dart';
 import '../../../core/bootstrap/startup_bootstrap.dart';
 import '../../../core/cache/college_session_cache.dart';
 import '../../../core/cache/firestore_quota_guard.dart';
-import '../../../core/config/release_config.dart';
 import '../../../core/providers/firestore_quota_provider.dart';
 import '../../../core/widgets/premium_components.dart';
 import '../../auth/providers/auth_provider.dart';
@@ -21,12 +20,12 @@ import '../../colleges/providers/college_provider.dart';
 import '../../admin/providers/platform_settings_provider.dart';
 import '../../admin/services/admin_ads_service.dart';
 import '../providers/home_content_provider.dart';
+import '../widgets/app_header.dart';
 import '../widgets/deferred_incoming_call_banner.dart';
 import '../widgets/explore_by_city_section.dart';
 import '../widgets/explore_category_section.dart';
 import '../widgets/home_college_discovery_card.dart';
 import '../widgets/home_core_features_grid.dart';
-import '../widgets/home_header_widget.dart';
 import '../widgets/home_hero_panel.dart';
 import '../widgets/home_more_section.dart';
 import '../widgets/home_trending_section.dart';
@@ -78,7 +77,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     ref.watch(firestoreQuotaCoordinatorProvider);
     final quotaBlocked = ref.watch(firestoreQuotaBlockedProvider);
-    final isMobile = MediaQuery.of(context).size.width < 600;
+    final gutter = homeContentGutter(context);
     final authState = ref.watch(authProvider);
     final currentUser = authState.user ?? FirebaseAuth.instance.currentUser;
     final userDetail = ref.watch(currentUserDetailProvider).valueOrNull;
@@ -100,7 +99,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       backgroundColor: context.tokens.surfaceMuted,
       // `context` here sits above this Scaffold, so Scaffold.of resolves to
       // the app shell's scaffold, which owns the navigation drawer.
-      appBar: _HomeAppBar(
+      appBar: HomeAppHeader(
         user: currentUser,
         onMenuPressed: () => Scaffold.maybeOf(context)?.openDrawer(),
       ),
@@ -121,12 +120,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       maxWidth: AppSpacing.maxContentWidth,
                     ),
                     child: Padding(
-                      padding: EdgeInsets.fromLTRB(
-                        isMobile ? AppSpacing.lg : AppSpacing.xxl,
-                        AppSpacing.md,
-                        isMobile ? AppSpacing.lg : AppSpacing.xxl,
-                        0,
-                      ),
+                      // No top padding: the header's own bottom padding
+                      // provides the gap above the hero card.
+                      padding: EdgeInsets.fromLTRB(gutter, 0, gutter, 0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -241,54 +237,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ),
       ),
-    );
-  }
-}
-
-/// Home app bar: hamburger (opens the shell's [HomeNavigationDrawer]) on the left, the
-/// notification bell + profile avatar (opens the quick-profile sheet) on the
-/// right. Signed-out visitors get the hamburger only.
-class _HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
-  final User? user;
-  final VoidCallback onMenuPressed;
-
-  const _HomeAppBar({required this.user, required this.onMenuPressed});
-
-  @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = context.tokens;
-    final primary = Theme.of(context).colorScheme.primary;
-
-    return AppBar(
-      backgroundColor: tokens.surfaceMuted,
-      surfaceTintColor: Colors.transparent,
-      elevation: 0,
-      scrolledUnderElevation: 0,
-      centerTitle: false,
-      automaticallyImplyLeading: false,
-      titleSpacing: 0,
-      leading: IconButton(
-        icon: const Icon(Icons.menu),
-        color: primary,
-        tooltip: 'Open navigation menu',
-        onPressed: onMenuPressed,
-      ),
-      title: Text(
-        ReleaseConfig.appName,
-        style: AppFonts.plusJakarta(
-          fontSize: 17,
-          fontWeight: FontWeight.w800,
-          letterSpacing: -0.2,
-          color: tokens.textPrimary,
-        ),
-      ),
-      actions: [
-        if (user != null) HomeHeaderActions(user: user!, onDark: false),
-        const SizedBox(width: AppSpacing.lg),
-      ],
     );
   }
 }
