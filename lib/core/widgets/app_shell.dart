@@ -16,7 +16,12 @@ import '../../features/community/providers/presence_heartbeat_provider.dart';
 class AppShell extends ConsumerStatefulWidget {
   final Widget child;
 
-  const AppShell({required this.child, super.key});
+  /// Optional side drawer for the current route. It lives on the shell's
+  /// scaffold (not the page's) so it, and its scrim, cover the floating
+  /// bottom navigation instead of sitting underneath it.
+  final Widget? drawer;
+
+  const AppShell({required this.child, this.drawer, super.key});
 
   @override
   ConsumerState<AppShell> createState() => _AppShellState();
@@ -71,6 +76,7 @@ class _AppShellState extends ConsumerState<AppShell> {
 
     return Scaffold(
       body: child,
+      drawer: widget.drawer,
       extendBody: true,
       bottomNavigationBar: showNav
           ? Padding(

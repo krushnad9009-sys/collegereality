@@ -6,7 +6,6 @@ import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_spacing.dart';
-import 'home_header_widget.dart';
 
 /// Compact, light-surface home header — replaces the old full-bleed dark
 /// gradient hero. Communicates "find the right college with real student
@@ -78,11 +77,12 @@ class PremiumHomeHeader extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(width: AppSpacing.md),
-        if (user != null)
-          HomeHeaderActions(user: user!, onDark: false)
-        else
+        // Signed-in bell + avatar live in the Home app bar; only the guest
+        // call-to-action stays in the hero.
+        if (user == null) ...[
+          const SizedBox(width: AppSpacing.md),
           _SignInChip(colorScheme: colorScheme),
+        ],
       ],
     );
   }

@@ -16,6 +16,7 @@ import '../../features/auth/screens/signup_screen.dart';
 import '../../features/auth/screens/display_name_setup_screen.dart';
 import '../../features/auth/screens/forgot_password_screen.dart';
 import '../../features/home/screens/home_screen.dart';
+import '../../features/home/widgets/home_navigation_drawer.dart';
 import '../../features/profile/screens/profile_screen.dart';
 import '../../features/colleges/screens/college_browse_screen.dart';
 import '../../features/colleges/screens/college_search_screen.dart';
@@ -497,7 +498,12 @@ final Provider<GoRouter> appRouterProvider = Provider<GoRouter>((ref) {
         ),
       ),
       ShellRoute(
-        builder: (context, state, child) => AppShell(child: child),
+        builder: (context, state, child) => AppShell(
+          drawer: state.uri.path == RouteNames.home
+              ? const HomeNavigationDrawer()
+              : null,
+          child: child,
+        ),
         routes: [
           GoRoute(
             path: RouteNames.home,

@@ -12,6 +12,7 @@ import '../../../config/theme/app_theme.dart';
 import '../../../core/bootstrap/startup_bootstrap.dart';
 import '../../../core/cache/college_session_cache.dart';
 import '../../../core/cache/firestore_quota_guard.dart';
+import '../../../core/config/release_config.dart';
 import '../../../core/providers/firestore_quota_provider.dart';
 import '../../../core/widgets/premium_components.dart';
 import '../../auth/providers/auth_provider.dart';
@@ -25,6 +26,7 @@ import '../widgets/explore_by_city_section.dart';
 import '../widgets/explore_category_section.dart';
 import '../widgets/home_college_discovery_card.dart';
 import '../widgets/home_core_features_grid.dart';
+import '../widgets/home_header_widget.dart';
 import '../widgets/home_hero_panel.dart';
 import '../widgets/home_more_section.dart';
 import '../widgets/home_trending_section.dart';
@@ -96,6 +98,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // instead of tinting the whole page.
     return Scaffold(
       backgroundColor: context.tokens.surfaceMuted,
+      // `context` here sits above this Scaffold, so Scaffold.of resolves to
+      // the app shell's scaffold, which owns the navigation drawer.
+      appBar: _HomeAppBar(
+        user: currentUser,
+        onMenuPressed: () => Scaffold.maybeOf(context)?.openDrawer(),
+      ),
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _onRefresh,
@@ -233,6 +241,54 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Home app bar: hamburger (opens the shell's [HomeNavigationDrawer]) on the left, the
+/// notification bell + profile avatar (opens the quick-profile sheet) on the
+/// right. Signed-out visitors get the hamburger only.
+class _HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
+  final User? user;
+  final VoidCallback onMenuPressed;
+
+  const _HomeAppBar({required this.user, required this.onMenuPressed});
+
+  @override
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final primary = Theme.of(context).colorScheme.primary;
+
+    return AppBar(
+      backgroundColor: tokens.surfaceMuted,
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      centerTitle: false,
+      automaticallyImplyLeading: false,
+      titleSpacing: 0,
+      leading: IconButton(
+        icon: const Icon(Icons.menu),
+        color: primary,
+        tooltip: 'Open navigation menu',
+        onPressed: onMenuPressed,
+      ),
+      title: Text(
+        ReleaseConfig.appName,
+        style: AppFonts.plusJakarta(
+          fontSize: 17,
+          fontWeight: FontWeight.w800,
+          letterSpacing: -0.2,
+          color: tokens.textPrimary,
+        ),
+      ),
+      actions: [
+        if (user != null) HomeHeaderActions(user: user!, onDark: false),
+        const SizedBox(width: AppSpacing.lg),
+      ],
     );
   }
 }

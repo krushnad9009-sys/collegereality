@@ -5,19 +5,17 @@ import 'package:go_router/go_router.dart';
 import '../../../config/theme/app_fonts.dart';
 
 import '../../../config/router/route_names.dart';
-import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_theme.dart';
-import '../../../core/widgets/index.dart';
-import '../../admin/providers/admin_provider.dart';
 import '../../auth/providers/user_provider.dart';
-import '../../auth/utils/sign_out.dart';
 import '../../engagement/providers/engagement_provider.dart';
+import 'user_quick_profile_sheet.dart';
 
-/// Compact profile + notification actions for the home header.
+/// Notification bell + profile avatar shown at the right of the Home app bar.
+/// The avatar opens the simplified quick-profile sheet.
 ///
-/// [onDark] controls whether the bell/avatar chrome is styled for a dark or
-/// gradient background (translucent white glass) or for a light surface
-/// (tokens-based tint) — the menu content/logic is identical either way.
+/// [onDark] controls whether the chrome is styled for a dark or gradient
+/// background (translucent white glass) or for a light surface (tokens-based
+/// tint).
 class HomeHeaderActions extends ConsumerWidget {
   final User user;
   final bool onDark;
@@ -50,7 +48,7 @@ class HomeHeaderActions extends ConsumerWidget {
         Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: () => _showProfileMenu(context, ref),
+            onTap: () => showUserQuickProfileSheet(context),
             borderRadius: BorderRadius.circular(50),
             child: Container(
               width: 42,
@@ -88,166 +86,6 @@ class HomeHeaderActions extends ConsumerWidget {
         ),
       ),
     );
-  }
-
-  void _showProfileMenu(BuildContext context, WidgetRef ref) {
-    final userDetail = ref.read(currentUserDetailProvider).valueOrNull;
-    final displayName =
-        userDetail?.effectivePublicDisplayName ?? user.displayName ?? 'Student';
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      // `sheetContext` is only for closing the sheet. Everything that runs
-      // AFTER `Navigator.pop` (navigation, the async sign-out dialog) must
-      // use the outer `context`, which stays mounted — the old code reused
-      // the popped sheet context, so `context.mounted` was already false
-      // by the time the sign-out confirmation resolved and nothing ran.
-      builder: (sheetContext) {
-        final tokens = sheetContext.tokens;
-        return SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: tokens.borderStrong,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 18),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: Text(
-                    displayName,
-                    style: AppFonts.plusJakarta(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w800,
-                      color: tokens.textPrimary,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: Text(
-                    'Your account',
-                    style: AppFonts.plusJakarta(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w500,
-                      color: tokens.textTertiary,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Divider(height: 1, color: tokens.borderSubtle),
-                const SizedBox(height: 4),
-                PremiumListRow(
-                  leadingIcon: Icons.person_outline_rounded,
-                  title: 'My Profile',
-                  onTap: () {
-                    Navigator.pop(sheetContext);
-                    context.go(RouteNames.profile);
-                  },
-                ),
-                PremiumListRow(
-                  leadingIcon: Icons.search_rounded,
-                  title: 'Search Colleges',
-                  onTap: () {
-                    Navigator.pop(sheetContext);
-                    context.go(RouteNames.collegeSearch);
-                  },
-                ),
-                PremiumListRow(
-                  leadingIcon: Icons.rate_review_outlined,
-                  title: 'My Reviews',
-                  onTap: () {
-                    Navigator.pop(sheetContext);
-                    context.go(RouteNames.myReviews);
-                  },
-                ),
-                PremiumListRow(
-                  leadingIcon: Icons.bookmark_outline_rounded,
-                  title: 'Bookmarks',
-                  onTap: () {
-                    Navigator.pop(sheetContext);
-                    context.go(RouteNames.favorites);
-                  },
-                ),
-                PremiumListRow(
-                  leadingIcon: Icons.notifications_outlined,
-                  title: 'Notifications',
-                  onTap: () {
-                    Navigator.pop(sheetContext);
-                    context.go(RouteNames.notifications);
-                  },
-                ),
-                Consumer(
-                  builder: (consumerContext, consumerRef, _) {
-                    final isAdminAsync = consumerRef.watch(isAdminProvider);
-                    return isAdminAsync.when(
-                      loading: () => const SizedBox.shrink(),
-                      error: (_, _) => const SizedBox.shrink(),
-                      data: (isAdmin) {
-                        if (!isAdmin) return const SizedBox.shrink();
-                        return PremiumListRow(
-                          leadingIcon: Icons.admin_panel_settings_outlined,
-                          title: 'Admin Panel',
-                          onTap: () {
-                            Navigator.pop(sheetContext);
-                            context.go(RouteNames.admin);
-                          },
-                        );
-                      },
-                    );
-                  },
-                ),
-                const SizedBox(height: 8),
-                Divider(height: 1, color: tokens.borderSubtle),
-                const SizedBox(height: 8),
-                PremiumListRow(
-                  leadingIcon: Icons.logout_rounded,
-                  iconColor: AppTheme.errorColor,
-                  title: 'Sign Out',
-                  titleColor: AppTheme.errorColor,
-                  showChevron: false,
-                  onTap: () {
-                    Navigator.pop(sheetContext);
-                    _showSignOutConfirmation(context, ref);
-                  },
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Future<void> _showSignOutConfirmation(
-    BuildContext context,
-    WidgetRef ref,
-  ) async {
-    final confirmed = await DialogHelper.showConfirmDialog(
-      context,
-      title: 'Sign Out',
-      message: 'Are you sure you want to sign out?',
-      confirmText: 'Yes, Sign Out',
-      cancelText: 'Cancel',
-    );
-    if (confirmed != true || !context.mounted) return;
-    await signOutAndRedirect(context, ref);
   }
 }
 
