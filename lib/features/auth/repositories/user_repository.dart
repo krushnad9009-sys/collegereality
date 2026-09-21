@@ -48,6 +48,17 @@ abstract class UserRepository {
     required bool locationGranted,
   });
 
+  /// Counts one search/click on [category] and stores the recomputed
+  /// favourite ([preferredCategory]) on the owner's `users` document.
+  Future<void> recordCategoryInteraction(
+    String uid, {
+    required String category,
+    required String preferredCategory,
+  });
+
+  /// Stores the state the user explicitly selected as `preferredState`.
+  Future<void> updatePreferredState(String uid, String state);
+
   Future<void> deleteUser(String uid);
   Future<bool> userExists(String uid);
   Future<UserModel?> getUserByEmail(String email);
@@ -144,6 +155,24 @@ class UserRepositoryImpl implements UserRepository {
       city: city,
       locationGranted: locationGranted,
     );
+  }
+
+  @override
+  Future<void> recordCategoryInteraction(
+    String uid, {
+    required String category,
+    required String preferredCategory,
+  }) {
+    return _firestoreUserService.recordCategoryInteraction(
+      uid,
+      category: category,
+      preferredCategory: preferredCategory,
+    );
+  }
+
+  @override
+  Future<void> updatePreferredState(String uid, String state) {
+    return _firestoreUserService.updatePreferredState(uid, state);
   }
 
   @override

@@ -29,6 +29,15 @@ class UserModel {
   final String? state;
   final String? city;
   final bool? locationGranted;
+  // Personalization tags for the Home recommendation feeds. [preferredState]
+  // is the state the user picked (search filter) or the one detected at
+  // onboarding; [preferredCategory] is their most frequently searched
+  // stream, derived from [categoryInteractionCounts] (see
+  // UserPreferencesNotifier). Both are private to the owner's `users` doc
+  // and are deliberately NOT mirrored into public_profiles.
+  final String? preferredState;
+  final String? preferredCategory;
+  final Map<String, int> categoryInteractionCounts;
   final String? photoURL;
   final String? coverPhotoURL;
   final String userType;
@@ -73,6 +82,9 @@ class UserModel {
     this.state,
     this.city,
     this.locationGranted,
+    this.preferredState,
+    this.preferredCategory,
+    this.categoryInteractionCounts = const {},
     this.photoURL,
     this.coverPhotoURL,
     this.userType = 'student',
@@ -158,6 +170,10 @@ class UserModel {
       state: json['state'] as String?,
       city: json['city'] as String?,
       locationGranted: json['locationGranted'] as bool?,
+      preferredState: json['preferredState'] as String?,
+      preferredCategory: json['preferredCategory'] as String?,
+      categoryInteractionCounts:
+          _parseCategoryCounts(json['categoryInteractionCounts']),
       photoURL: json['photoURL'] as String?,
       coverPhotoURL: json['coverPhotoURL'] as String?,
       userType: json['userType'] as String? ?? 'student',
@@ -227,6 +243,9 @@ class UserModel {
       'state': state,
       'city': city,
       'locationGranted': locationGranted,
+      'preferredState': preferredState,
+      'preferredCategory': preferredCategory,
+      'categoryInteractionCounts': categoryInteractionCounts,
       'photoURL': photoURL,
       'coverPhotoURL': coverPhotoURL,
       'userType': userType,
@@ -273,6 +292,9 @@ class UserModel {
     String? state,
     String? city,
     bool? locationGranted,
+    String? preferredState,
+    String? preferredCategory,
+    Map<String, int>? categoryInteractionCounts,
     String? photoURL,
     String? coverPhotoURL,
     String? userType,
@@ -320,6 +342,10 @@ class UserModel {
       state: state ?? this.state,
       city: city ?? this.city,
       locationGranted: locationGranted ?? this.locationGranted,
+      preferredState: preferredState ?? this.preferredState,
+      preferredCategory: preferredCategory ?? this.preferredCategory,
+      categoryInteractionCounts:
+          categoryInteractionCounts ?? this.categoryInteractionCounts,
       photoURL: photoURL ?? this.photoURL,
       coverPhotoURL: coverPhotoURL ?? this.coverPhotoURL,
       userType: userType ?? this.userType,
@@ -347,6 +373,17 @@ class UserModel {
       updatedAt: updatedAt ?? this.updatedAt,
       metadata: metadata ?? this.metadata,
     );
+  }
+
+  /// Tolerant parse: Firestore may hand back int or double for counters, and
+  /// a malformed/legacy value must never break loading the whole profile.
+  static Map<String, int> _parseCategoryCounts(Object? raw) {
+    if (raw is! Map) return const {};
+    final counts = <String, int>{};
+    raw.forEach((key, value) {
+      if (value is num && value > 0) counts[key.toString()] = value.toInt();
+    });
+    return counts;
   }
 
   String get effectivePublicDisplayName => resolvePublicDisplayNameFromUser(this);

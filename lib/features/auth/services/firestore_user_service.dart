@@ -6,6 +6,8 @@ import '../../../core/constants/verification_constants.dart';
 import '../../../core/utils/firestore_auth_utils.dart';
 import '../../../core/utils/firestore_error_utils.dart';
 import '../models/user_model.dart';
+import '../../onboarding/services/onboarding_location_resolver.dart'
+    show kLocationNotProvided;
 import '../../communication/models/guide_stats_model.dart';
 import '../../community/models/user_presence_model.dart';
 
@@ -108,7 +110,12 @@ class FirestoreUserService {
       ..remove('verifiedRealName')
       // Opaque free-form bag — never render it publicly; keep it on the
       // owner-only `users` doc.
-      ..remove('metadata');
+      ..remove('metadata')
+      // Browsing-behaviour tags used only to personalise the owner's own
+      // Home feed — no reason for any other user to be able to read them.
+      ..remove('preferredState')
+      ..remove('preferredCategory')
+      ..remove('categoryInteractionCounts');
     if (safeFields.isEmpty) return;
     try {
       await _firestore
@@ -338,6 +345,61 @@ class FirestoreUserService {
     }
   }
 
+  // Record one search/click on a stream (Engineering, Arts, ...) and refresh
+  // the derived favourite. [category] MUST come from
+  // CollegeConstants.collegeCategories: it is used as a Firestore field-path
+  // segment, so it must never contain '.' or other path characters.
+  // [preferredCategory] is the argmax the caller computed from the counts.
+  // Deliberately leaves `updatedAt` alone -- this is behavioural telemetry,
+  // not a profile edit.
+  Future<void> recordCategoryInteraction(
+    String uid, {
+    required String category,
+    required String preferredCategory,
+  }) async {
+    try {
+      await FirestoreAuthUtils.ensureAuthenticated(expectedUid: uid);
+      await _firestore.collection(usersCollection).doc(uid).update({
+        'categoryInteractionCounts.$category': FieldValue.increment(1),
+        'preferredCategory': preferredCategory,
+      });
+    } on FirebaseException catch (e) {
+      throw _mapFirestoreError(
+        e,
+        collectionPath: usersCollection,
+        documentPath: uid,
+        action: 'record category interaction',
+      );
+    } catch (e) {
+      if (e is FirestoreException) rethrow;
+      throw FirestoreException(
+        message: 'Could not save your preferences. Please try again.',
+      );
+    }
+  }
+
+  // Persist the state the user explicitly picked (e.g. in the search filter).
+  Future<void> updatePreferredState(String uid, String state) async {
+    try {
+      await FirestoreAuthUtils.ensureAuthenticated(expectedUid: uid);
+      await _firestore.collection(usersCollection).doc(uid).update({
+        'preferredState': state,
+      });
+    } on FirebaseException catch (e) {
+      throw _mapFirestoreError(
+        e,
+        collectionPath: usersCollection,
+        documentPath: uid,
+        action: 'save preferred state',
+      );
+    } catch (e) {
+      if (e is FirestoreException) rethrow;
+      throw FirestoreException(
+        message: 'Could not save your preferences. Please try again.',
+      );
+    }
+  }
+
   // Record the result of the one-time post-login permissions onboarding
   // screen (gallery/location/notifications). Always sets
   // hasCompletedPermissionsOnboarding: true regardless of what the user
@@ -358,6 +420,12 @@ class FirestoreUserService {
         'state': state,
         'city': city,
         'locationGranted': locationGranted,
+        // Seed the Home "Colleges Near You" preference from the detected
+        // state. Never overwrite with the 'Not Provided' sentinel.
+        if (locationGranted &&
+            state.trim().isNotEmpty &&
+            state != kLocationNotProvided)
+          'preferredState': state,
         'updatedAt': now,
       });
     } on FirebaseException catch (e) {

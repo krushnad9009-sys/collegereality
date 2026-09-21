@@ -133,6 +133,31 @@ class FakeUserRepository implements UserRepository {
   }
 
   @override
+  Future<void> recordCategoryInteraction(
+    String uid, {
+    required String category,
+    required String preferredCategory,
+  }) async {
+    final existing = users[uid];
+    if (existing == null) return;
+    users[uid] = existing.copyWith(
+      preferredCategory: preferredCategory,
+      categoryInteractionCounts: {
+        ...existing.categoryInteractionCounts,
+        category: (existing.categoryInteractionCounts[category] ?? 0) + 1,
+      },
+    );
+  }
+
+  @override
+  Future<void> updatePreferredState(String uid, String state) async {
+    final existing = users[uid];
+    if (existing != null) {
+      users[uid] = existing.copyWith(preferredState: state);
+    }
+  }
+
+  @override
   Future<void> deleteUser(String uid) async {
     users.remove(uid);
   }

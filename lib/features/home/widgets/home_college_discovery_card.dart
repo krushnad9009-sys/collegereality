@@ -29,9 +29,35 @@ class FeaturedCollegesSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final collegesAsync = ref.watch(homeFeaturedCollegesProvider);
+    return CollegeDiscoveryCarousel(
+      colleges: ref.watch(homeFeaturedCollegesProvider),
+      onRetry: () => ref.invalidate(homeFeaturedCollegesProvider),
+      emptyTitle: 'No recommended colleges yet',
+      emptySubtitle: 'Colleges will appear here once the directory is seeded.',
+    );
+  }
+}
 
-    return collegesAsync.when(
+/// Horizontal college-card rail with the shared loading skeleton, compact
+/// error view (with retry) and empty state. Used by every Home college
+/// carousel so they all load/fail/empty identically.
+class CollegeDiscoveryCarousel extends StatelessWidget {
+  final AsyncValue<List<CollegeModel>> colleges;
+  final VoidCallback onRetry;
+  final String emptyTitle;
+  final String emptySubtitle;
+
+  const CollegeDiscoveryCarousel({
+    required this.colleges,
+    required this.onRetry,
+    required this.emptyTitle,
+    required this.emptySubtitle,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return colleges.when(
       loading: () => SizedBox(
         height: _kCardHeight,
         child: ListView.separated(
@@ -47,18 +73,14 @@ class FeaturedCollegesSection extends ConsumerWidget {
       ),
       error: (e, _) => SizedBox(
         height: _kCardHeight,
-        child: AsyncErrorView.fromError(
-          e,
-          compact: true,
-          onRetry: () => ref.invalidate(homeFeaturedCollegesProvider),
-        ),
+        child: AsyncErrorView.fromError(e, compact: true, onRetry: onRetry),
       ),
-      data: (colleges) {
-        if (colleges.isEmpty) {
-          return const AsyncEmptyView(
+      data: (list) {
+        if (list.isEmpty) {
+          return AsyncEmptyView(
             icon: Icons.school_outlined,
-            title: 'No recommended colleges yet',
-            subtitle: 'Colleges will appear here once the directory is seeded.',
+            title: emptyTitle,
+            subtitle: emptySubtitle,
           );
         }
         return SizedBox(
@@ -66,10 +88,10 @@ class FeaturedCollegesSection extends ConsumerWidget {
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             clipBehavior: Clip.none,
-            itemCount: colleges.length,
+            itemCount: list.length,
             separatorBuilder: (_, _) => const SizedBox(width: 14),
             itemBuilder: (context, index) =>
-                HomeCollegeDiscoveryCard(college: colleges[index]),
+                HomeCollegeDiscoveryCard(college: list[index]),
           ),
         );
       },

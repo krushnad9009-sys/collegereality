@@ -19,15 +19,16 @@ import '../../auth/providers/user_provider.dart';
 import '../../colleges/providers/college_provider.dart';
 import '../../admin/providers/platform_settings_provider.dart';
 import '../../admin/services/admin_ads_service.dart';
+import '../../personalization/providers/personalized_colleges_provider.dart';
 import '../providers/home_content_provider.dart';
 import '../widgets/app_header.dart';
 import '../widgets/deferred_incoming_call_banner.dart';
 import '../widgets/explore_by_city_section.dart';
 import '../widgets/explore_category_section.dart';
-import '../widgets/home_college_discovery_card.dart';
 import '../widgets/home_core_features_grid.dart';
 import '../widgets/home_hero_panel.dart';
 import '../widgets/home_more_section.dart';
+import '../widgets/home_personalized_sections.dart';
 import '../widgets/home_trending_section.dart';
 
 /// Home screen information hierarchy — one purpose per section, no
@@ -37,8 +38,10 @@ import '../widgets/home_trending_section.dart';
 ///   3. Trending        → live carousel of the most searched/reviewed colleges
 ///   4. Explore by City → modern location pills
 ///   5. Explore Colleges→ browse by stream
-///   6. Recommended     → the personalized college carousel
-///   7. More            → secondary, genuinely useful links only
+///   6. Recommended     → colleges in the user's most-searched stream
+///                        (global top-rated until a stream is known)
+///   7. Near You        → colleges in the user's state (hidden if unknown)
+///   8. More            → secondary, genuinely useful links only
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
@@ -62,6 +65,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     await FirestoreQuotaGuard.instance.retryNowIfAllowed();
     ref.invalidate(collegeSeedProvider);
     ref.invalidate(homeFeaturedCollegesProvider);
+    ref.invalidate(recommendedCollegesProvider);
+    ref.invalidate(collegesNearYouProvider);
     ref.invalidate(featuredCollegesProvider);
     ref.invalidate(trendingCollegesProvider);
     ref.invalidate(topRatedCollegesProvider);
@@ -71,6 +76,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     ref.invalidate(homePlacementHighlightsProvider);
     await ref.read(collegeSeedProvider.future);
     await ref.read(homeFeaturedCollegesProvider.future);
+    await ref.read(recommendedCollegesProvider.future);
   }
 
   @override
@@ -192,25 +198,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           ),
                           const SizedBox(height: AppSpacing.sectionLg),
 
-                          // ── 6. Recommended for You ───────────────────────
+                          // ── 6. Recommended for You (by stream) ───────────
+                          // Owns its header + trailing gap: the title flips
+                          // between "Recommended for You" and the honest
+                          // "Top Rated Colleges" fallback.
                           FadeInSection(
                             delayMs: 300,
-                            child: SectionHeader(
-                              title: 'Recommended for You',
-                              subtitle:
-                                  'Real colleges, real ratings — picked for you',
-                              actionLabel: 'View all',
-                              onAction: () =>
-                                  context.go(RouteNames.collegeSearch),
-                            ),
+                            child: const RecommendedCollegesSection(),
                           ),
+
+                          // ── 7. Colleges Near You (by state) ──────────────
+                          // Collapses entirely when the state is unknown.
                           FadeInSection(
                             delayMs: 320,
-                            child: const FeaturedCollegesSection(),
+                            child: const CollegesNearYouSection(),
                           ),
-                          const SizedBox(height: AppSpacing.sectionLg),
 
-                          // ── 7. More to Explore ────────────────────────────
+                          // ── 8. More to Explore ────────────────────────────
                           FadeInSection(
                             delayMs: 360,
                             child: const SectionHeader(

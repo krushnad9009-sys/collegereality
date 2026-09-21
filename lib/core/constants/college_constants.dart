@@ -106,6 +106,35 @@ class CollegeConstants {
     'MCA',
   ];
 
+  /// Stream a popular course belongs to, so a course-only filter (e.g. the
+  /// user picks "B.Tech" without choosing a Faculty) still counts as interest
+  /// in that stream. Null for courses that don't map cleanly.
+  static String? categoryForCourse(String? course) {
+    if (course == null || course.trim().isEmpty) return null;
+    return _courseCategories[course.trim().toLowerCase()];
+  }
+
+  static const Map<String, String> _courseCategories = {
+    'b.tech': 'Engineering',
+    'b.e.': 'Engineering',
+    'm.tech': 'Engineering',
+    'bba': 'MBA',
+    'mba': 'MBA',
+    'bca': 'Science',
+    'mca': 'Science',
+    'b.sc': 'Science',
+    'b.com': 'Commerce',
+    'b.sc nursing': 'Nursing',
+    'gnm': 'Nursing',
+    'anm': 'Nursing',
+    'mbbs': 'Medical',
+    'bds': 'Medical',
+    'b.pharm': 'Pharmacy',
+    'ba': 'Arts',
+    'b.arch': 'Architecture',
+    'llb': 'Law',
+  };
+
   /// Indian states & UTs for filters (no full-college scan required).
   static const List<String> indianStates = [
     'Andaman and Nicobar Islands',

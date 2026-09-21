@@ -56,6 +56,62 @@ class FirestoreCollegeService {
     return [];
   }
 
+  /// Best-rated active colleges in one stream (`category == [category]`),
+  /// for the Home "Recommended for You" feed. Needs the composite index
+  /// (isActive, category, aggregatedRatings.overall desc); if it isn't
+  /// deployed yet, or no college in the stream has a rating yet, falls back
+  /// to name order so the feed is never empty for a stream that has colleges.
+  Future<List<CollegeModel>> getTopRatedInCategory(
+    String category, {
+    int limit = 10,
+  }) {
+    return _topRated(
+      (q) => q.where('category', isEqualTo: category),
+      limit: limit,
+    );
+  }
+
+  /// Best-rated active colleges in one state, for "Colleges Near You".
+  /// Matches on `stateLower` (aliases like "Orissa" → "odisha" resolved by
+  /// [CollegeSearchUtils.normalizeState]) -- the same field structured
+  /// search uses, so both agree on what "in Maharashtra" means.
+  Future<List<CollegeModel>> getTopRatedInState(
+    String state, {
+    int limit = 10,
+  }) {
+    final key = CollegeSearchUtils.normalizeState(state);
+    return _topRated(
+      (q) => q.where('stateLower', isEqualTo: key),
+      limit: limit,
+    );
+  }
+
+  Future<List<CollegeModel>> _topRated(
+    Query<Map<String, dynamic>> Function(Query<Map<String, dynamic>>) filter, {
+    required int limit,
+  }) async {
+    Query<Map<String, dynamic>> base() =>
+        filter(_colleges.where('isActive', isEqualTo: true));
+
+    final ladder = <Query<Map<String, dynamic>> Function()>[
+      () => base()
+          .orderBy('aggregatedRatings.overall', descending: true)
+          .limit(limit),
+      () => base().orderBy('nameLower').limit(limit),
+    ];
+
+    for (final buildQuery in ladder) {
+      try {
+        final snapshot = await buildQuery().get();
+        final colleges = _mapDocs(snapshot.docs);
+        if (colleges.isNotEmpty) return colleges;
+      } on FirebaseException catch (e) {
+        if (e.code != 'failed-precondition') rethrow;
+      }
+    }
+    return [];
+  }
+
   List<CollegeModel> _prioritizeFeaturedColleges(
     List<CollegeModel> colleges,
     int limit,

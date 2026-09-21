@@ -21,6 +21,7 @@ import '../../home/widgets/college_card_widget.dart';
 import '../../compare/providers/compare_basket_provider.dart';
 import '../../compare/widgets/compare_basket_bar.dart';
 import '../../leads/providers/lead_activity_provider.dart';
+import '../../personalization/providers/user_preferences_provider.dart';
 import '../models/college_model.dart';
 import '../providers/college_provider.dart';
 import '../utils/college_suggestion_utils.dart';
@@ -203,6 +204,16 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
     // these fresher results — avoids duplicate/out-of-order query effects.
     final generation = ++_searchGeneration;
     final params = _buildParams();
+    // Feeds Home's "Recommended for You" / "Colleges Near You". Every stream
+    // entry point (Home tiles, discovery chips, browse, the filter panel)
+    // ends up here, so this is the one place a search is counted -- fresh
+    // searches only, never pagination (_loadMoreResults).
+    ref.read(userPreferencesProvider.notifier).recordSearch(
+          query: params.query,
+          state: params.state,
+          course: params.course,
+          category: params.category,
+        );
     setState(() {
       _results = [];
       _isSearching = true;
