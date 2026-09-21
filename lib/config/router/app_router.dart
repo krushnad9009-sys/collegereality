@@ -504,6 +504,7 @@ final Provider<GoRouter> appRouterProvider = Provider<GoRouter>((ref) {
               final course = state.uri.queryParameters['course'];
               final category = state.uri.queryParameters['category'];
               final filter = state.uri.queryParameters['filter'];
+              final showFilters = state.uri.queryParameters['filters'] == '1';
               return fadeSwitchPage(
                 key: state.pageKey,
                 name: state.name,
@@ -514,6 +515,7 @@ final Provider<GoRouter> appRouterProvider = Provider<GoRouter>((ref) {
                   initialCourse: course,
                   initialCategory: category,
                   initialFilter: filter,
+                  initialShowFilters: showFilters,
                 ),
               );
             },

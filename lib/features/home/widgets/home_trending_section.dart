@@ -91,7 +91,7 @@ class _TrendingHeaderWrap extends StatelessWidget {
                       'Trending Colleges',
                       style: AppFonts.plusJakarta(
                         fontSize: 21,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: tokens.headingWeight,
                         letterSpacing: -0.4,
                         height: 1.15,
                         color: tokens.textPrimary,
@@ -102,7 +102,7 @@ class _TrendingHeaderWrap extends StatelessWidget {
                       'Most searched & reviewed right now',
                       style: AppFonts.plusJakarta(
                         fontSize: 13.5,
-                        fontWeight: FontWeight.w500,
+                        fontWeight: tokens.bodyWeight,
                         color: tokens.textTertiary,
                         height: 1.3,
                       ),
@@ -131,10 +131,10 @@ class _SkeletonRow extends StatelessWidget {
         clipBehavior: Clip.none,
         itemCount: 3,
         separatorBuilder: (_, _) => const SizedBox(width: 12),
-        itemBuilder: (_, _) => const SkeletonBox(
+        itemBuilder: (_, _) => SkeletonBox(
           width: _kCardWidth,
           height: _kCardHeight,
-          borderRadius: BorderRadius.all(Radius.circular(18)),
+          borderRadius: BorderRadius.circular(context.tokens.cardRadius),
         ),
       ),
     );
@@ -175,17 +175,18 @@ class _TrendingCardState extends State<_TrendingCard> {
           height: _kCardHeight,
           decoration: BoxDecoration(
             color: tokens.surfaceElevated,
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(tokens.cardRadius),
             border: Border.all(color: tokens.borderSubtle),
             boxShadow: isDark
                 ? null
-                : [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
+                : (tokens.cardShadow ??
+                      [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.05),
+                          blurRadius: 16,
+                          offset: const Offset(0, 6),
+                        ),
+                      ]),
           ),
           clipBehavior: Clip.antiAlias,
           child: Column(
@@ -253,7 +254,7 @@ class _TrendingCardState extends State<_TrendingCard> {
                               'CR ${crScore.toStringAsFixed(0)}',
                               style: AppFonts.plusJakarta(
                                 fontSize: 10.5,
-                                fontWeight: FontWeight.w800,
+                                fontWeight: tokens.headingWeight,
                                 color: const Color(0xFF0F172A),
                               ),
                             ),
@@ -275,7 +276,7 @@ class _TrendingCardState extends State<_TrendingCard> {
                         overflow: TextOverflow.ellipsis,
                         style: AppFonts.plusJakarta(
                           fontSize: 13.5,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: tokens.headingWeight,
                           height: 1.2,
                           letterSpacing: -0.2,
                           color: tokens.textPrimary,
@@ -297,7 +298,7 @@ class _TrendingCardState extends State<_TrendingCard> {
                               overflow: TextOverflow.ellipsis,
                               style: AppFonts.plusJakarta(
                                 fontSize: 11.5,
-                                fontWeight: FontWeight.w500,
+                                fontWeight: tokens.bodyWeight,
                                 color: tokens.textTertiary,
                               ),
                             ),
@@ -308,8 +309,8 @@ class _TrendingCardState extends State<_TrendingCard> {
                               '${c.reviewCount} reviews',
                               style: AppFonts.plusJakarta(
                                 fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: const Color(0xFF64748B),
+                                fontWeight: FontWeight.w600,
+                                color: tokens.textTertiary,
                               ),
                             ),
                           ],
@@ -356,7 +357,7 @@ class _RankBadge extends StatelessWidget {
             '#$rank',
             style: AppFonts.plusJakarta(
               fontSize: 11,
-              fontWeight: FontWeight.w800,
+              fontWeight: context.tokens.headingWeight,
               color: Colors.white,
             ),
           ),

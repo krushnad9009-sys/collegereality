@@ -2,9 +2,9 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
-import 'package:college_reality_india/config/theme/app_design_tokens.dart';
 import 'package:college_reality_india/config/theme/app_fonts.dart';
 import 'package:college_reality_india/config/theme/app_spacing.dart';
+import 'package:college_reality_india/config/theme/premium_home_theme.dart';
 import 'package:college_reality_india/core/widgets/premium_components.dart';
 import 'package:college_reality_india/features/home/widgets/explore_by_city_section.dart';
 import 'package:college_reality_india/features/home/widgets/explore_category_section.dart';
@@ -47,67 +47,67 @@ void main() {
         authService: FakeAuthService(initialUser: mockUser),
         firebaseUser: mockUser,
       ),
+      // Mirrors HomeScreen: everything sits inside PremiumHomeTheme and the
+      // page background is the theme's plain canvas (no tinted wash).
       child: RepaintBoundary(
         key: boundaryKey,
-        child: Builder(
-          builder: (context) {
-            final tokens = context.tokens;
-            return Scaffold(
-              backgroundColor: Color.alphaBlend(
-                Theme.of(context).colorScheme.primary.withValues(alpha: 0.035),
-                tokens.surfaceMuted,
-              ),
-              body: SafeArea(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(AppSpacing.lg),
+        child: PremiumHomeTheme(
+          child: Builder(
+            builder: (context) {
+              return Scaffold(
+                body: SingleChildScrollView(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       HomeHeroPanel(
                         user: mockUser,
-                        displayName: 'Aisha Verma',
+                        displayName: 'dk007',
                         subtitle:
                             'Real reviews & verified CR Scores, personalized for you',
+                        onMenuPressed: () {},
                       ),
-                      const SizedBox(height: AppSpacing.section),
-                      const HomeCoreFeaturesGrid(),
-                      const SizedBox(height: AppSpacing.sectionLg),
-                      const HomeTrendingSection(),
-                      const SizedBox(height: AppSpacing.sectionLg),
-                      const SectionHeader(
-                        title: 'Explore by City',
-                        subtitle: 'Find colleges near you',
+                      Padding(
+                        padding: const EdgeInsets.all(AppSpacing.lg),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Mirrors HomeScreen's section order.
+                            const ExploreCategoryChips(),
+                            const SizedBox(height: AppSpacing.section),
+                            const SectionHeader(
+                              title: 'Explore by City',
+                              subtitle: 'Find colleges near you',
+                            ),
+                            const ExploreCityCarousel(),
+                            const SizedBox(height: AppSpacing.sectionXl),
+                            const HomeCoreFeaturesGrid(),
+                            const SizedBox(height: AppSpacing.sectionXl),
+                            const HomeTrendingSection(),
+                            const SizedBox(height: AppSpacing.sectionXl),
+                            SectionHeader(
+                              title: 'Recommended for You',
+                              subtitle:
+                                  'Real colleges, real ratings — picked for you',
+                              actionLabel: 'View all',
+                              onAction: () {},
+                            ),
+                            const FeaturedCollegesSection(),
+                            const SizedBox(height: AppSpacing.sectionLg),
+                            const SectionHeader(
+                              title: 'More to Explore',
+                              subtitle:
+                                  'A few other ways to use College Reality',
+                            ),
+                            const HomeMoreSection(),
+                          ],
+                        ),
                       ),
-                      const ExploreCityCarousel(),
-                      const SizedBox(height: AppSpacing.sectionLg),
-                      SectionHeader(
-                        title: 'Explore Colleges',
-                        subtitle: 'Pick a stream to get started',
-                        actionLabel: 'All categories',
-                        onAction: () {},
-                      ),
-                      const ExploreCategoryGrid(),
-                      const SizedBox(height: AppSpacing.sectionLg),
-                      SectionHeader(
-                        title: 'Recommended for You',
-                        subtitle:
-                            'Real colleges, real ratings — picked for you',
-                        actionLabel: 'View all',
-                        onAction: () {},
-                      ),
-                      const FeaturedCollegesSection(),
-                      const SizedBox(height: AppSpacing.sectionLg),
-                      const SectionHeader(
-                        title: 'More to Explore',
-                        subtitle: 'A few other ways to use College Reality',
-                      ),
-                      const HomeMoreSection(),
                     ],
                   ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
       ),
     );

@@ -169,7 +169,7 @@ class _HomeCollegeDiscoveryCardState
             height: _kCardHeight,
             decoration: BoxDecoration(
               color: tokens.surfaceElevated,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(tokens.cardRadius),
               border: Border.all(color: tokens.borderSubtle),
               // Idle shadow stays the original soft/low resting state; on
               // hover (web/desktop pointer) it darkens and lifts further,
@@ -178,20 +178,22 @@ class _HomeCollegeDiscoveryCardState
               boxShadow: isDark
                   ? null
                   : _hovered
-                  ? [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.14),
-                        blurRadius: 24,
-                        offset: const Offset(0, 10),
-                      ),
-                    ]
-                  : [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 16,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
+                  ? (tokens.cardShadowHover ??
+                        [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.14),
+                            blurRadius: 24,
+                            offset: const Offset(0, 10),
+                          ),
+                        ])
+                  : (tokens.cardShadow ??
+                        [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.05),
+                            blurRadius: 16,
+                            offset: const Offset(0, 6),
+                          ),
+                        ]),
             ),
             clipBehavior: Clip.none,
             child: Stack(
@@ -202,8 +204,9 @@ class _HomeCollegeDiscoveryCardState
                   right: 0,
                   top: 0,
                   child: ClipRRect(
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(20),
+                    // 1px inside the card radius (its hairline border).
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(tokens.cardRadius - 1),
                     ),
                     child: SizedBox(
                       height: _kMediaHeight,
@@ -279,7 +282,7 @@ class _HomeCollegeDiscoveryCardState
                   child: Padding(
                     // Extra top padding clears the initials badge, which
                     // overlaps ~14px below the cover image at this point.
-                    padding: const EdgeInsets.fromLTRB(13, 22, 13, 12),
+                    padding: const EdgeInsets.fromLTRB(16, 22, 16, 14),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
@@ -290,7 +293,7 @@ class _HomeCollegeDiscoveryCardState
                           overflow: TextOverflow.ellipsis,
                           style: AppFonts.plusJakarta(
                             fontSize: 15,
-                            fontWeight: FontWeight.w800,
+                            fontWeight: tokens.headingWeight,
                             height: 1.2,
                             letterSpacing: -0.2,
                             color: tokens.textPrimary,
@@ -300,10 +303,12 @@ class _HomeCollegeDiscoveryCardState
                         Row(
                           children: [
                             if (isVerified) ...[
-                              const Icon(
+                              // Verification status: the cool accent
+                              // (electric indigo in the premium look).
+                              Icon(
                                 Icons.verified_rounded,
                                 size: 13,
-                                color: Color(0xFF0F766E),
+                                color: tokens.accentCool,
                               ),
                               const SizedBox(width: 3),
                             ],
@@ -314,7 +319,7 @@ class _HomeCollegeDiscoveryCardState
                                 overflow: TextOverflow.ellipsis,
                                 style: AppFonts.plusJakarta(
                                   fontSize: 12.5,
-                                  fontWeight: FontWeight.w500,
+                                  fontWeight: tokens.bodyWeight,
                                   color: tokens.textTertiary,
                                 ),
                               ),
@@ -327,7 +332,7 @@ class _HomeCollegeDiscoveryCardState
                           runSpacing: 6,
                           children: [
                             if (crScore > 0) HomeCrScoreBadge(score: crScore),
-                            ..._metricChips(college),
+                            ..._metricChips(college, tokens),
                           ],
                         ),
                       ],
@@ -345,7 +350,15 @@ class _HomeCollegeDiscoveryCardState
   /// Up to two compact metric chips, in priority order — whichever real
   /// signals actually exist for this college. Never fabricated; a college
   /// with none of these simply shows the CR Score badge alone.
-  List<Widget> _metricChips(CollegeModel college) {
+  List<Widget> _metricChips(CollegeModel college, AppDesignTokens tokens) {
+    // Premium: restrained monochrome slate chips (the CR Score badge carries
+    // the colour). Legacy: green / blue / grey by meaning.
+    final flat = tokens.flatSurfaces;
+    final placementColor = flat
+        ? tokens.textSecondary
+        : const Color(0xFF15803D);
+    final feeColor = flat ? tokens.textSecondary : const Color(0xFF0369A1);
+    final reviewColor = flat ? tokens.textSecondary : const Color(0xFF64748B);
     final chips = <Widget>[];
     if (college.placements.placementPercentage > 0) {
       chips.add(
@@ -353,7 +366,7 @@ class _HomeCollegeDiscoveryCardState
           icon: Icons.trending_up_rounded,
           label:
               '${college.placements.placementPercentage.toStringAsFixed(0)}% placed',
-          color: const Color(0xFF15803D),
+          color: placementColor,
         ),
       );
     } else if (college.placements.averagePackageLpa > 0) {
@@ -362,7 +375,7 @@ class _HomeCollegeDiscoveryCardState
           icon: Icons.trending_up_rounded,
           label:
               '₹${college.placements.averagePackageLpa.toStringAsFixed(1)}L avg',
-          color: const Color(0xFF15803D),
+          color: placementColor,
         ),
       );
     }
@@ -374,7 +387,7 @@ class _HomeCollegeDiscoveryCardState
           label: lakh >= 1
               ? '₹${lakh.toStringAsFixed(1)}L/yr'
               : '₹${(college.fees.tuitionMin / 1000).toStringAsFixed(0)}k/yr',
-          color: const Color(0xFF0369A1),
+          color: feeColor,
         ),
       );
     }
@@ -383,7 +396,7 @@ class _HomeCollegeDiscoveryCardState
         _MetricChip(
           icon: Icons.forum_outlined,
           label: '${college.reviewCount} reviews',
-          color: const Color(0xFF64748B),
+          color: reviewColor,
         ),
       );
     }
@@ -419,7 +432,9 @@ class _MetricChip extends StatelessWidget {
             label,
             style: AppFonts.plusJakarta(
               fontSize: 11,
-              fontWeight: FontWeight.w700,
+              fontWeight: context.tokens.flatSurfaces
+                  ? FontWeight.w600
+                  : FontWeight.w700,
               color: color,
             ),
           ),
@@ -458,7 +473,12 @@ class _BookmarkButton extends StatelessWidget {
           child: Icon(
             isSaved ? Icons.bookmark_rounded : Icons.bookmark_outline_rounded,
             size: 16,
-            color: isSaved ? const Color(0xFF059669) : const Color(0xFF334155),
+            color: isSaved
+                // Active state: the primary (deep slate in the premium look).
+                ? (context.tokens.flatSurfaces
+                      ? Theme.of(context).colorScheme.primary
+                      : const Color(0xFF059669))
+                : const Color(0xFF334155),
           ),
         ),
       ),
@@ -494,7 +514,7 @@ class HomeCrScoreBadge extends StatelessWidget {
             'CR ${score.toStringAsFixed(0)}',
             style: AppFonts.plusJakarta(
               fontSize: 11,
-              fontWeight: FontWeight.w800,
+              fontWeight: context.tokens.headingWeight,
               color: color,
             ),
           ),

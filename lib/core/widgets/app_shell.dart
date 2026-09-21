@@ -5,8 +5,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../config/router/route_names.dart';
 import '../../config/theme/app_design_tokens.dart';
-import '../../config/theme/app_elevation.dart';
 import '../../config/theme/app_theme.dart';
+import '../../config/theme/premium_home_theme.dart';
 import '../../features/community/providers/presence_heartbeat_provider.dart';
 
 /// Premium bottom navigation shell for primary app destinations. Also hosts
@@ -70,57 +70,73 @@ class _AppShellState extends ConsumerState<AppShell> {
     final location = GoRouterState.of(context).uri.path;
     final showNav = _showBottomNav(location);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final tokens = context.tokens;
-    final width = MediaQuery.sizeOf(context).width;
-    final isTablet = width >= 600;
+    // On Home the active tab wears the hero's royal blue; on the other tabs
+    // it keeps the brand teal.
+    final isHome = location == RouteNames.home;
+    final navTheme = isHome
+        ? PremiumHomeTheme.resolve(Theme.of(context))
+        : Theme.of(context);
 
     return Scaffold(
       body: child,
       drawer: widget.drawer,
+      // Screens already reserve room for the bar through the bottom
+      // MediaQuery padding; keeping the body extended preserves that.
       extendBody: true,
       bottomNavigationBar: showNav
-          ? Padding(
-              padding: EdgeInsets.fromLTRB(
-                isTablet ? 32 : 16,
-                0,
-                isTablet ? 32 : 16,
-                isTablet ? 16 : 12,
-              ),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(tokens.navBarRadius),
-                  boxShadow: isDark
-                      ? AppElevation.none
-                      : AppElevation.floating(AppTheme.primaryDark),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(tokens.navBarRadius),
-                  child: NavigationBar(
-                    selectedIndex: _selectedIndex(location),
-                    onDestinationSelected: (index) => _onTap(context, index),
-                    height: isTablet ? 72 : 68,
-                    backgroundColor: isDark
-                        ? AppTheme.gray800.withValues(alpha: 0.95)
-                        : AppTheme.white.withValues(alpha: 0.96),
-                    indicatorColor: AppTheme.primaryColor.withValues(
-                      alpha: 0.14,
-                    ),
-                    labelBehavior:
-                        NavigationDestinationLabelBehavior.alwaysShow,
-                    animationDuration: const Duration(milliseconds: 280),
-                    destinations: [
-                      _destination(Icons.home_rounded, 'Home'),
-                      _destination(Icons.search_rounded, 'Search'),
-                      _destination(Icons.auto_awesome_rounded, 'Assistant'),
-                      _destination(
-                        Icons.chat_bubble_rounded,
-                        'Chats',
-                        unselectedIcon: Icons.chat_bubble_outline_rounded,
+          ? Theme(
+              data: navTheme,
+              child: Builder(
+                builder: (navContext) {
+                  final navTokens = navContext.tokens;
+                  final accent = isHome
+                      ? navTokens.heroColor
+                      : AppTheme.primaryColor;
+                  final surface = isDark ? AppTheme.gray800 : AppTheme.white;
+
+                  // A minimal, docked bar: solid white, full width, one
+                  // hairline on top. No blur, no floating pill, no shadow.
+                  return DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: surface,
+                      border: Border(
+                        top: BorderSide(
+                          color: isDark
+                              ? AppTheme.gray700
+                              : navTokens.borderSubtle,
+                        ),
                       ),
-                      _destination(Icons.person_rounded, 'Profile'),
-                    ],
-                  ),
-                ),
+                    ),
+                    child: NavigationBar(
+                      selectedIndex: _selectedIndex(location),
+                      onDestinationSelected: (index) => _onTap(context, index),
+                      height: 64,
+                      backgroundColor: surface,
+                      surfaceTintColor: Colors.transparent,
+                      elevation: 0,
+                      indicatorColor: accent.withValues(alpha: 0.10),
+                      labelBehavior:
+                          NavigationDestinationLabelBehavior.alwaysShow,
+                      animationDuration: const Duration(milliseconds: 280),
+                      destinations: [
+                        _destination(Icons.home_rounded, 'Home', accent),
+                        _destination(Icons.search_rounded, 'Search', accent),
+                        _destination(
+                          Icons.auto_awesome_rounded,
+                          'Assistant',
+                          accent,
+                        ),
+                        _destination(
+                          Icons.chat_bubble_rounded,
+                          'Chats',
+                          accent,
+                          unselectedIcon: Icons.chat_bubble_outline_rounded,
+                        ),
+                        _destination(Icons.person_rounded, 'Profile', accent),
+                      ],
+                    ),
+                  );
+                },
               ),
             )
           : null,
@@ -129,12 +145,13 @@ class _AppShellState extends ConsumerState<AppShell> {
 
   NavigationDestination _destination(
     IconData icon,
-    String label, {
+    String label,
+    Color accent, {
     IconData? unselectedIcon,
   }) {
     return NavigationDestination(
       icon: Icon(unselectedIcon ?? icon, size: 22),
-      selectedIcon: Icon(icon, size: 24, color: AppTheme.primaryColor),
+      selectedIcon: Icon(icon, size: 24, color: accent),
       label: label,
     );
   }

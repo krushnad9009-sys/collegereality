@@ -14,16 +14,28 @@ import '../../../core/animations/app_animations.dart';
 class HomeCoreFeaturesGrid extends StatelessWidget {
   const HomeCoreFeaturesGrid({super.key});
 
+  // Premium action-card gradients. Both ends of each are dark enough for
+  // white text (all >= 4.5:1): indigo->violet, royal blue->deep sky,
+  // emerald->teal.
+  static const _uspGradient = [Color(0xFF4F46E5), Color(0xFF7C3AED)];
+  static const _aiGradient = [Color(0xFF1D4ED8), Color(0xFF0369A1)];
+  static const _compareGradient = [Color(0xFF047857), Color(0xFF0F766E)];
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final tokens = context.tokens;
+    // Premium: all three cards are bold, saturated gradients with white text
+    // (each a different hue so they read as three distinct actions); legacy
+    // keeps the one bold USP card and two tinted-white cards.
+    final flat = tokens.flatSurfaces;
 
     final features = <_Feature>[
       _Feature(
         title: 'Talk to a\nVerified Student',
         caption: 'Real answers',
         icon: Icons.support_agent_rounded,
-        gradient: [scheme.primary, scheme.secondary],
+        gradient: flat ? _uspGradient : [scheme.primary, scheme.secondary],
         onWhite: false,
         onTap: () => context.go(RouteNames.guidesDirectory),
       ),
@@ -31,11 +43,13 @@ class HomeCoreFeaturesGrid extends StatelessWidget {
         title: 'AI\nAssistant',
         caption: 'Ask anything',
         icon: Icons.auto_awesome_rounded,
-        gradient: [
-          scheme.primary.withValues(alpha: 0.12),
-          scheme.primary.withValues(alpha: 0.04),
-        ],
-        onWhite: true,
+        gradient: flat
+            ? _aiGradient
+            : [
+                scheme.primary.withValues(alpha: 0.12),
+                scheme.primary.withValues(alpha: 0.04),
+              ],
+        onWhite: !flat,
         accent: const Color(0xFF0369A1),
         onTap: () => context.go(RouteNames.assistant),
       ),
@@ -43,11 +57,13 @@ class HomeCoreFeaturesGrid extends StatelessWidget {
         title: 'Compare\nColleges',
         caption: 'Side by side',
         icon: Icons.compare_arrows_rounded,
-        gradient: [
-          const Color(0xFF15803D).withValues(alpha: 0.12),
-          const Color(0xFF15803D).withValues(alpha: 0.04),
-        ],
-        onWhite: true,
+        gradient: flat
+            ? _compareGradient
+            : [
+                const Color(0xFF15803D).withValues(alpha: 0.12),
+                const Color(0xFF15803D).withValues(alpha: 0.04),
+              ],
+        onWhite: !flat,
         accent: const Color(0xFF15803D),
         onTap: () => context.go(RouteNames.compare),
       ),
@@ -136,9 +152,9 @@ class _FeatureCardState extends State<_FeatureCard> {
         duration: const Duration(milliseconds: 130),
         curve: Curves.easeOutCubic,
         child: Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(tokens.cardRadius),
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -152,13 +168,22 @@ class _FeatureCardState extends State<_FeatureCard> {
             ),
             boxShadow: isDark
                 ? null
+                : (f.onWhite && tokens.cardShadow != null)
+                ? tokens.cardShadow
                 : [
                     BoxShadow(
                       color:
                           (f.onWhite
                                   ? Colors.black
-                                  : Theme.of(context).colorScheme.primary)
-                              .withValues(alpha: f.onWhite ? 0.05 : 0.28),
+                                  // Premium: each card glows in its own hue.
+                                  : (tokens.flatSurfaces
+                                        ? f.gradient.first
+                                        : Theme.of(context).colorScheme.primary))
+                              .withValues(
+                                alpha: f.onWhite
+                                    ? 0.05
+                                    : (tokens.flatSurfaces ? 0.30 : 0.28),
+                              ),
                       blurRadius: 16,
                       offset: const Offset(0, 8),
                     ),
@@ -185,7 +210,7 @@ class _FeatureCardState extends State<_FeatureCard> {
                 style: AppFonts.plusJakarta(
                   fontSize: 13,
                   height: 1.2,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: tokens.headingWeight,
                   letterSpacing: -0.2,
                   color: fg,
                 ),
@@ -200,7 +225,9 @@ class _FeatureCardState extends State<_FeatureCard> {
                   fontWeight: FontWeight.w600,
                   color: f.onWhite
                       ? tokens.textTertiary
-                      : Colors.white.withValues(alpha: 0.85),
+                      : Colors.white.withValues(
+                          alpha: tokens.flatSurfaces ? 0.92 : 0.85,
+                        ),
                 ),
               ),
             ],

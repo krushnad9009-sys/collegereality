@@ -44,7 +44,7 @@ class RecommendedCollegesSection extends ConsumerWidget {
           emptySubtitle:
               'Colleges will appear here once the directory is seeded.',
         ),
-        const SizedBox(height: AppSpacing.sectionLg),
+        const SizedBox(height: AppSpacing.sectionXl),
       ],
     );
   }
@@ -91,7 +91,7 @@ class CollegesNearYouSection extends ConsumerWidget {
           emptyTitle: 'No colleges found nearby',
           emptySubtitle: 'Try exploring by city or stream instead.',
         ),
-        const SizedBox(height: AppSpacing.sectionLg),
+        const SizedBox(height: AppSpacing.sectionXl),
       ],
     );
   }

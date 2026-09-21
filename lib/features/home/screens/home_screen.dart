@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -9,6 +10,7 @@ import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_theme.dart';
+import '../../../config/theme/premium_home_theme.dart';
 import '../../../core/bootstrap/startup_bootstrap.dart';
 import '../../../core/cache/college_session_cache.dart';
 import '../../../core/cache/firestore_quota_guard.dart';
@@ -33,11 +35,12 @@ import '../widgets/home_trending_section.dart';
 
 /// Home screen information hierarchy — one purpose per section, no
 /// conceptual duplication:
-///   1. Hero            → greeting + avatar + notifications + dominant search
-///   2. Core features   → Talk to a Verified Student · AI Assistant · Compare
-///   3. Trending        → live carousel of the most searched/reviewed colleges
-///   4. Explore by City → modern location pills
-///   5. Explore Colleges→ browse by stream
+///   1. Hero            → full-bleed royal-blue header: top bar (menu, title,
+///                        search, filter, bell, avatar), greeting, search bar
+///   2. Category chips  → one scrolling row of compact tinted pills
+///   3. Explore by City → circular city badges
+///   4. Core features   → Talk to a Verified Student · AI Assistant · Compare
+///   5. Trending        → live carousel of the most searched/reviewed colleges
 ///   6. Recommended     → colleges in the user's most-searched stream
 ///                        (global top-rated until a stream is known)
 ///   7. Near You        → colleges in the user's state (hidden if unknown)
@@ -97,147 +100,190 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ? 'Real reviews & verified CR Scores, personalized for you'
         : 'Find the right college with real student information';
 
-    // Near-white / soft neutral base, no colour wash — a tinted background
-    // was the #1 complaint ("looks unfinished"); depth now comes from the
-    // hero panel's one deliberately tinted surface and card elevation
-    // instead of tinting the whole page.
-    return Scaffold(
-      backgroundColor: context.tokens.surfaceMuted,
-      // `context` here sits above this Scaffold, so Scaffold.of resolves to
-      // the app shell's scaffold, which owns the navigation drawer.
-      appBar: HomeAppHeader(
-        user: currentUser,
-        onMenuPressed: () => Scaffold.maybeOf(context)?.openDrawer(),
-      ),
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: _onRefresh,
-          color: Theme.of(context).colorScheme.primary,
-          edgeOffset: 8,
-          child: CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(
-              parent: BouncingScrollPhysics(),
-            ),
-            slivers: [
-              SliverToBoxAdapter(
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(
-                      maxWidth: AppSpacing.maxContentWidth,
-                    ),
-                    child: Padding(
-                      // No top padding: the header's own bottom padding
-                      // provides the gap above the hero card.
-                      padding: EdgeInsets.fromLTRB(gutter, 0, gutter, 0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // ── 1. Unified hero: greeting + search + chips ──
-                          FadeInSection(
-                            delayMs: 0,
-                            child: HomeHeroPanel(
-                              user: currentUser,
-                              displayName: displayName,
-                              subtitle: headerSubtitle,
-                            ),
-                          ),
-                          const DeferredIncomingCallBanner(),
-                          if (quotaBlocked) ...[
-                            const SizedBox(height: AppSpacing.sm),
-                            _QuotaNoticeBanner(),
-                          ],
-                          const _PlatformAnnouncementBanner(),
-                          const _HomePromoAdsStrip(),
-                          const SizedBox(height: AppSpacing.section),
-
-                          // ── 2. Core features — the three primary actions ─
-                          FadeInSection(
-                            delayMs: 60,
-                            child: const HomeCoreFeaturesGrid(),
-                          ),
-                          const SizedBox(height: AppSpacing.sectionLg),
-
-                          // ── 3. Trending colleges (live carousel) ─────────
-                          FadeInSection(
-                            delayMs: 120,
-                            child: const HomeTrendingSection(),
-                          ),
-                          const SizedBox(height: AppSpacing.sectionLg),
-
-                          // ── 4. Explore by City ────────────────────────────
-                          FadeInSection(
-                            delayMs: 180,
-                            child: SectionHeader(
-                              title: 'Explore by City',
-                              subtitle: 'Find colleges near you',
-                              actionLabel: 'All cities',
-                              onAction: () =>
-                                  context.go(RouteNames.collegeBrowse),
-                            ),
-                          ),
-                          FadeInSection(
-                            delayMs: 200,
-                            child: const ExploreCityCarousel(),
-                          ),
-                          const SizedBox(height: AppSpacing.sectionLg),
-
-                          // ── 5. Explore Colleges (by stream) ─────────────
-                          FadeInSection(
-                            delayMs: 240,
-                            child: SectionHeader(
-                              title: 'Explore Colleges',
-                              subtitle: 'Pick a stream to get started',
-                              actionLabel: 'All categories',
-                              onAction: () =>
-                                  context.go(RouteNames.collegeBrowse),
-                            ),
-                          ),
-                          FadeInSection(
-                            delayMs: 260,
-                            child: const ExploreCategoryGrid(),
-                          ),
-                          const SizedBox(height: AppSpacing.sectionLg),
-
-                          // ── 6. Recommended for You (by stream) ───────────
-                          // Owns its header + trailing gap: the title flips
-                          // between "Recommended for You" and the honest
-                          // "Top Rated Colleges" fallback.
-                          FadeInSection(
-                            delayMs: 300,
-                            child: const RecommendedCollegesSection(),
-                          ),
-
-                          // ── 7. Colleges Near You (by state) ──────────────
-                          // Collapses entirely when the state is unknown.
-                          FadeInSection(
-                            delayMs: 320,
-                            child: const CollegesNearYouSection(),
-                          ),
-
-                          // ── 8. More to Explore ────────────────────────────
-                          FadeInSection(
-                            delayMs: 360,
-                            child: const SectionHeader(
-                              title: 'More to Explore',
-                              subtitle:
-                                  'A few other ways to use College Reality',
-                            ),
-                          ),
-                          FadeInSection(
-                            delayMs: 380,
-                            child: const HomeMoreSection(),
-                          ),
-
-                          SizedBox(
-                            height: MediaQuery.of(context).padding.bottom + 96,
-                          ),
-                        ],
+    // The screen is one confident block of royal blue (the hero header, with
+    // the top bar inside it) over an off-white page. Everything sits inside
+    // [PremiumHomeTheme]; cards get their depth from a hairline border and a
+    // soft shadow rather than a tinted wash.
+    return PremiumHomeTheme(
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        // White status-bar icons: the hero is dark blue.
+        value: SystemUiOverlayStyle.light,
+        child: Scaffold(
+          // Default background = the theme's canvas (off-white).
+          body: Builder(
+            builder: (context) {
+              final tokens = context.tokens;
+              final topInset = MediaQuery.paddingOf(context).top;
+              return Stack(
+                children: [
+                  RefreshIndicator(
+                    onRefresh: _onRefresh,
+                    color: tokens.heroColor,
+                    edgeOffset: topInset + 8,
+                    child: CustomScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(
+                        parent: BouncingScrollPhysics(),
                       ),
+                      slivers: [
+                        // ── 1. Royal-blue hero header (full-bleed) ────────
+                        SliverToBoxAdapter(
+                          child: HomeHeroPanel(
+                            user: currentUser,
+                            displayName: displayName,
+                            subtitle: headerSubtitle,
+                            // `this.context` sits above this Scaffold, so
+                            // Scaffold.of resolves to the app shell's
+                            // scaffold, which owns the navigation drawer.
+                            onMenuPressed: () =>
+                                Scaffold.maybeOf(this.context)?.openDrawer(),
+                          ),
+                        ),
+                        SliverToBoxAdapter(
+                          child: SafeArea(
+                            top: false,
+                            bottom: false,
+                            child: Center(
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(
+                                  maxWidth: AppSpacing.maxContentWidth,
+                                ),
+                                child: Padding(
+                                  // 20px sides (see homeContentGutter), with
+                                  // air above the first row and below the last.
+                                  padding: EdgeInsets.fromLTRB(
+                                    gutter,
+                                    AppSpacing.xl,
+                                    gutter,
+                                    AppSpacing.lg,
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const DeferredIncomingCallBanner(),
+                                      if (quotaBlocked) ...[
+                                        _QuotaNoticeBanner(),
+                                        const SizedBox(height: AppSpacing.lg),
+                                      ],
+
+                                      // ── 2. Category chips: one compact,
+                                      // horizontally scrolling row ─────────
+                                      FadeInSection(
+                                        delayMs: 40,
+                                        child: const ExploreCategoryChips(),
+                                      ),
+                                      const SizedBox(
+                                        height: AppSpacing.section,
+                                      ),
+
+                                      // ── 3. Explore by City ────────────────
+                                      FadeInSection(
+                                        delayMs: 80,
+                                        child: SectionHeader(
+                                          title: 'Explore by City',
+                                          subtitle: 'Find colleges near you',
+                                          actionLabel: 'All cities',
+                                          onAction: () => context.go(
+                                            RouteNames.collegeBrowse,
+                                          ),
+                                        ),
+                                      ),
+                                      FadeInSection(
+                                        delayMs: 100,
+                                        child: const ExploreCityCarousel(),
+                                      ),
+
+                                      // Announcement + promo strips (usually
+                                      // empty) sit below the browse rows.
+                                      const _PlatformAnnouncementBanner(),
+                                      const _HomePromoAdsStrip(),
+                                      const SizedBox(
+                                        height: AppSpacing.sectionXl,
+                                      ),
+
+                                      // ── 4. Core features — the three
+                                      // primary actions ────────────────────
+                                      FadeInSection(
+                                        delayMs: 140,
+                                        child: const HomeCoreFeaturesGrid(),
+                                      ),
+                                      const SizedBox(
+                                        height: AppSpacing.sectionXl,
+                                      ),
+
+                                      // ── 5. Trending colleges ──────────────
+                                      FadeInSection(
+                                        delayMs: 180,
+                                        child: const HomeTrendingSection(),
+                                      ),
+                                      const SizedBox(
+                                        height: AppSpacing.sectionXl,
+                                      ),
+
+                                      // ── 6. Recommended for You (by stream) ─
+                                      // Owns its header + trailing gap: the
+                                      // title flips between "Recommended for
+                                      // You" and the honest "Top Rated
+                                      // Colleges" fallback.
+                                      FadeInSection(
+                                        delayMs: 220,
+                                        child:
+                                            const RecommendedCollegesSection(),
+                                      ),
+
+                                      // ── 7. Colleges Near You (by state) ────
+                                      // Collapses entirely when the state is
+                                      // unknown.
+                                      FadeInSection(
+                                        delayMs: 240,
+                                        child: const CollegesNearYouSection(),
+                                      ),
+
+                                      // ── 8. More to Explore ─────────────────
+                                      FadeInSection(
+                                        delayMs: 260,
+                                        child: const SectionHeader(
+                                          title: 'More to Explore',
+                                          subtitle:
+                                              'A few other ways to use College Reality',
+                                        ),
+                                      ),
+                                      FadeInSection(
+                                        delayMs: 280,
+                                        child: const HomeMoreSection(),
+                                      ),
+
+                                      // The bottom bar is docked; this inset
+                                      // already includes its height.
+                                      SizedBox(
+                                        height:
+                                            MediaQuery.paddingOf(
+                                              context,
+                                            ).bottom +
+                                            AppSpacing.xl,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-              ),
-            ],
+                  // Keeps the status bar sitting on blue (with its white
+                  // icons) while the page scrolls underneath it.
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: topInset,
+                    child: ColoredBox(color: tokens.heroColor),
+                  ),
+                ],
+              );
+            },
           ),
         ),
       ),
@@ -373,6 +419,7 @@ class _HomePromoAdsStrip extends ConsumerWidget {
         return Padding(
           padding: const EdgeInsets.only(top: AppSpacing.sm),
           child: PremiumCard(
+            radius: tokens.cardRadius,
             padding: const EdgeInsets.all(AppSpacing.md),
             onTap: ad.ctaUrl.isEmpty
                 ? null

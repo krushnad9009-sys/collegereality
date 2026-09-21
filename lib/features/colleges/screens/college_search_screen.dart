@@ -35,6 +35,10 @@ class CollegeSearchScreen extends ConsumerStatefulWidget {
   final String? initialCategory;
   final String? initialFilter;
 
+  /// Open with the advanced filter panel already expanded (does not start a
+  /// search by itself).
+  final bool initialShowFilters;
+
   const CollegeSearchScreen({
     super.key,
     this.initialQuery,
@@ -43,6 +47,7 @@ class CollegeSearchScreen extends ConsumerStatefulWidget {
     this.initialCourse,
     this.initialCategory,
     this.initialFilter,
+    this.initialShowFilters = false,
   });
 
   @override
@@ -123,7 +128,8 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
         oldWidget.initialState != widget.initialState ||
         oldWidget.initialCourse != widget.initialCourse ||
         oldWidget.initialCategory != widget.initialCategory ||
-        oldWidget.initialFilter != widget.initialFilter;
+        oldWidget.initialFilter != widget.initialFilter ||
+        oldWidget.initialShowFilters != widget.initialShowFilters;
     if (!changed) return;
     _applyInitialFilters();
     if (_shouldAutoSearchFromInitials()) {
@@ -134,7 +140,7 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
         _results = [];
         _hasSearched = false;
         _searchError = null;
-        _showFilters = false;
+        _showFilters = widget.initialShowFilters;
         _cursorDocumentId = null;
         _hasMore = false;
         _isLoadingMore = false;
@@ -155,8 +161,9 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
     // Reset stale advanced filters that are not deep-linked.
     _selectedType = null;
     _universityController.clear();
-    // Advanced filter form opens only via the Filters icon.
-    _showFilters = false;
+    // Advanced filter form opens via the Filters icon, or when deep-linked
+    // with `?filters=1` (the Home header's Filter button).
+    _showFilters = widget.initialShowFilters;
   }
 
   bool _shouldAutoSearchFromInitials() {

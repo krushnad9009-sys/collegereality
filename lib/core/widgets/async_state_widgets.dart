@@ -62,6 +62,11 @@ class AsyncEmptyView extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    // Brand teal everywhere, except inside the premium theme (Home), where
+    // the icon follows that theme's primary instead.
+    final accent = tokens.flatSurfaces
+        ? Theme.of(context).colorScheme.primary
+        : AppTheme.primaryColor;
 
     return Center(
       child: Padding(
@@ -73,10 +78,10 @@ class AsyncEmptyView extends StatelessWidget {
               width: 88,
               height: 88,
               decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withValues(alpha: isDark ? 0.15 : 0.08),
+                color: accent.withValues(alpha: isDark ? 0.15 : 0.08),
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, size: 40, color: AppTheme.primaryColor),
+              child: Icon(icon, size: 40, color: accent),
             ),
             const SizedBox(height: 24),
             Text(

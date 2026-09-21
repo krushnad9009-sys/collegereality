@@ -45,7 +45,7 @@ class PremiumCard extends StatelessWidget {
         borderRadius: borderRadius,
         boxShadow: isDark
             ? AppElevation.none
-            : AppElevation.soft(AppTheme.primaryDark),
+            : (tokens.cardShadow ?? AppElevation.soft(AppTheme.primaryDark)),
         border: Border.all(
           color: isDark
               ? tokens.borderSubtle.withValues(alpha: 0.6)
@@ -95,7 +95,7 @@ class SectionHeader extends StatelessWidget {
                   title,
                   style: AppFonts.plusJakarta(
                     fontSize: 21,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: tokens.headingWeight,
                     letterSpacing: -0.4,
                     height: 1.15,
                     color: tokens.textPrimary,
@@ -107,7 +107,7 @@ class SectionHeader extends StatelessWidget {
                     subtitle!,
                     style: AppFonts.plusJakarta(
                       fontSize: 13.5,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: tokens.bodyWeight,
                       color: tokens.textTertiary,
                       height: 1.35,
                     ),
@@ -131,7 +131,9 @@ class SectionHeader extends StatelessWidget {
                     actionLabel!,
                     style: AppFonts.plusJakarta(
                       fontSize: 13,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: tokens.flatSurfaces
+                          ? FontWeight.w600
+                          : FontWeight.w700,
                       color: primary,
                     ),
                   ),

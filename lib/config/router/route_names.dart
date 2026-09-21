@@ -6,6 +6,9 @@ class RouteNames {
   static const String forgotPassword = '/forgot-password';
   static const String home = '/home';
   static const String collegeSearch = '/college-search';
+  // Search screen with its advanced filter panel already open (the Home
+  // header's Filter button).
+  static const String collegeSearchFilters = '/college-search?filters=1';
   static const String collegeBrowse = '/college-browse';
   static const String privacyPolicy = '/privacy-policy';
   static const String termsOfService = '/terms-of-service';

@@ -11,6 +11,8 @@ class AppSpacing {
   static const double xxl = 24;
   static const double section = 32;
   static const double sectionLg = 40;
+  // Home's premium rhythm: extra air between major sections.
+  static const double sectionXl = 44;
   static const double pageH = 20;
   static const double pageHWide = 28;
   static const double maxContentWidth = 720;

@@ -20,7 +20,15 @@ class HomeHeaderActions extends ConsumerWidget {
   final User user;
   final bool onDark;
 
-  const HomeHeaderActions({required this.user, this.onDark = true, super.key});
+  /// Edge length of the bell and avatar buttons.
+  final double size;
+
+  const HomeHeaderActions({
+    required this.user,
+    this.onDark = true,
+    this.size = 42,
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -43,16 +51,16 @@ class HomeHeaderActions extends ConsumerWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _NotificationBell(userId: user.uid, onDark: onDark),
-        const SizedBox(width: 8),
+        _NotificationBell(userId: user.uid, onDark: onDark, size: size),
+        const SizedBox(width: 6),
         Material(
           color: Colors.transparent,
           child: InkWell(
             onTap: () => showUserQuickProfileSheet(context),
             borderRadius: BorderRadius.circular(50),
             child: Container(
-              width: 42,
-              height: 42,
+              width: size,
+              height: size,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: chipBg,
@@ -103,8 +111,13 @@ class HomeHeaderWidget extends ConsumerWidget {
 class _NotificationBell extends ConsumerWidget {
   final String userId;
   final bool onDark;
+  final double size;
 
-  const _NotificationBell({required this.userId, this.onDark = true});
+  const _NotificationBell({
+    required this.userId,
+    this.onDark = true,
+    this.size = 42,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -128,8 +141,8 @@ class _NotificationBell extends ConsumerWidget {
         onTap: () => context.go(RouteNames.notifications),
         borderRadius: BorderRadius.circular(14),
         child: Container(
-          width: 42,
-          height: 42,
+          width: size,
+          height: size,
           decoration: BoxDecoration(
             color: bg,
             borderRadius: BorderRadius.circular(14),

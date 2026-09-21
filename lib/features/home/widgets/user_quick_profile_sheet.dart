@@ -53,7 +53,8 @@ class UserQuickProfileSheet extends ConsumerWidget {
     final firebaseUser = ref.watch(currentUserProvider);
     final detail = ref.watch(currentUserDetailProvider).valueOrNull;
 
-    final accountName = _firstNonEmpty([
+    final accountName =
+        _firstNonEmpty([
           detail?.verifiedRealName,
           detail?.displayName,
           firebaseUser?.displayName,
@@ -133,11 +134,7 @@ class UserQuickProfileSheet extends ConsumerWidget {
               value: email,
             ),
             const SizedBox(height: AppSpacing.sm),
-            _InfoRow(
-              icon: Icons.phone_outlined,
-              label: 'Mobile',
-              value: phone,
-            ),
+            _InfoRow(icon: Icons.phone_outlined, label: 'Mobile', value: phone),
             const SizedBox(height: AppSpacing.lg),
             _VerifyBadgeAction(
               state: badge,
@@ -168,7 +165,8 @@ class UserQuickProfileSheet extends ConsumerWidget {
 
   static _BadgeState _badgeStateFor(UserModel? user) {
     if (user == null) return _BadgeState.unverified;
-    final approved = user.verificationStatus == VerificationConstants.statusApproved;
+    final approved =
+        user.verificationStatus == VerificationConstants.statusApproved;
     if (approved &&
         VerificationConstants.badgeLabel(user.verificationBadge).isNotEmpty) {
       return _BadgeState.verified;
@@ -231,7 +229,10 @@ class _ProfileAvatar extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: primary.withValues(alpha: 0.1),
-              border: Border.all(color: primary.withValues(alpha: 0.18), width: 2),
+              border: Border.all(
+                color: primary.withValues(alpha: 0.18),
+                width: 2,
+              ),
             ),
             child: photoUrl != null
                 ? ClipOval(
@@ -255,9 +256,9 @@ class _ProfileAvatar extends StatelessWidget {
                   color: Theme.of(context).colorScheme.surface,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.verified_rounded,
-                  color: AppTheme.verifiedBlue,
+                  color: context.tokens.accentCool,
                   size: 22,
                 ),
               ),
@@ -273,7 +274,11 @@ class _InfoRow extends StatelessWidget {
   final String label;
   final String? value;
 
-  const _InfoRow({required this.icon, required this.label, required this.value});
+  const _InfoRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -362,7 +367,7 @@ class _VerifyBadgeAction extends StatelessWidget {
       case _BadgeState.verified:
         return _StatusTile(
           icon: Icons.verified_rounded,
-          color: AppTheme.verifiedBlue,
+          color: context.tokens.accentCool,
           title: verifiedLabel,
           subtitle: 'Your badge is active',
         );

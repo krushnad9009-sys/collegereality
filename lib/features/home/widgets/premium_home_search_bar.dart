@@ -5,11 +5,13 @@ import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_fonts.dart';
 
-/// The single dominant search affordance on Home — lives inside
-/// [HomeHeroPanel]'s one elevated surface, so it carries no card chrome of
-/// its own (no nested "card inside a card"), just a tappable content row.
+/// The Home search input: a rounded, full-width white bar that sits on the
+/// royal-blue hero. Tapping it opens the college search screen (which has
+/// the real text field, filters and results).
 class PremiumHomeSearchBar extends StatefulWidget {
   const PremiumHomeSearchBar({super.key});
+
+  static const String hint = 'Find the right college';
 
   @override
   State<PremiumHomeSearchBar> createState() => _PremiumHomeSearchBarState();
@@ -21,70 +23,59 @@ class _PremiumHomeSearchBarState extends State<PremiumHomeSearchBar> {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    final colorScheme = Theme.of(context).colorScheme;
 
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapUp: (_) => setState(() => _pressed = false),
-      onTapCancel: () => setState(() => _pressed = false),
-      onTap: () => context.go(RouteNames.collegeSearch),
-      child: AnimatedScale(
-        scale: _pressed ? 0.985 : 1,
-        duration: const Duration(milliseconds: 120),
-        curve: Curves.easeOutCubic,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
-          decoration: BoxDecoration(
-            // White, so the search field pops as a card floating on the
-            // hero panel's tinted surface behind it, per the "search should
-            // feel premium and prominent" direction.
-            color: tokens.surfaceElevated,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: tokens.borderSubtle),
-            boxShadow: [
-              BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 3)),
-            ],
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [colorScheme.primary, colorScheme.secondary],
+    return Semantics(
+      button: true,
+      label: 'Search colleges',
+      excludeSemantics: true,
+      child: GestureDetector(
+        onTapDown: (_) => setState(() => _pressed = true),
+        onTapUp: (_) => setState(() => _pressed = false),
+        onTapCancel: () => setState(() => _pressed = false),
+        onTap: () => context.go(RouteNames.collegeSearch),
+        child: AnimatedScale(
+          scale: _pressed ? 0.985 : 1,
+          duration: const Duration(milliseconds: 120),
+          curve: Curves.easeOutCubic,
+          child: Container(
+            height: 52,
+            padding: const EdgeInsets.symmetric(horizontal: 18),
+            decoration: BoxDecoration(
+              // Solid white: the brightest thing on the blue card.
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(999),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.10),
+                  blurRadius: 14,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.search_rounded,
+                  size: 22,
+                  color: tokens.textSecondary,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    PremiumHomeSearchBar.hint,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppFonts.plusJakarta(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w400,
+                      // Slate 600 on white is ~7:1 -- clear, but reads as a
+                      // placeholder rather than typed text.
+                      color: const Color(0xFF475569),
+                    ),
                   ),
-                  borderRadius: BorderRadius.circular(13),
                 ),
-                child: const Icon(Icons.search_rounded, color: Colors.white, size: 20),
-              ),
-              const SizedBox(width: 13),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Find the right college',
-                      style: AppFonts.plusJakarta(
-                        fontSize: 15.5,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: -0.2,
-                        color: tokens.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'College, city, course or exam',
-                      style: AppFonts.plusJakarta(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: tokens.textTertiary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(Icons.tune_rounded, color: tokens.textTertiary, size: 20),
-            ],
+              ],
+            ),
           ),
         ),
       ),
