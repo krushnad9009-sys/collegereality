@@ -13,7 +13,6 @@ import '../../../core/utils/firestore_error_utils.dart';
 import '../../../core/services/search_history_service.dart';
 import '../../../core/widgets/async_state_widgets.dart';
 import '../../../core/widgets/premium_components.dart';
-import '../../../core/widgets/premium_list_row.dart';
 import '../../../core/widgets/searchable_text_form_field.dart';
 import '../../../core/widgets/skeleton_loader.dart';
 import '../../auth/providers/auth_provider.dart';
@@ -23,8 +22,10 @@ import '../../compare/widgets/compare_basket_bar.dart';
 import '../../leads/providers/lead_activity_provider.dart';
 import '../../personalization/providers/user_preferences_provider.dart';
 import '../models/college_model.dart';
+import '../providers/college_name_suggestion_provider.dart';
 import '../providers/college_provider.dart';
 import '../utils/college_suggestion_utils.dart';
+import '../widgets/college_suggestions_panel.dart';
 import '../widgets/premium_search_discovery_panel.dart';
 
 class CollegeSearchScreen extends ConsumerStatefulWidget {
@@ -203,6 +204,19 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
       type: _selectedType,
       startAfterDocumentId: startAfter,
     );
+  }
+
+  /// The user picked a dropdown row: put its text in the field, close the
+  /// dropdown and search for it.
+  void _applySuggestion(String text) {
+    _searchController.text = text;
+    _searchController.selection = TextSelection.fromPosition(
+      TextPosition(offset: text.length),
+    );
+    _debounce?.cancel();
+    setState(() => _liveQuery = '');
+    ref.read(collegeNameSuggestionsProvider.notifier).setQuery('');
+    _runSearch();
   }
 
   Future<void> _runSearch() async {
@@ -473,9 +487,6 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
     final coursesAsync = ref.watch(indianCoursesProvider);
     final countAsync = ref.watch(collegeCountProvider);
     final basket = ref.watch(compareBasketProvider);
-    final searchSuggestions = _liveQuery.trim().isEmpty
-        ? const <String>[]
-        : CollegeSuggestionUtils.searchSuggestions(_liveQuery.trim());
 
     return Scaffold(
       backgroundColor: Theme.of(context).brightness == Brightness.dark
@@ -590,6 +601,9 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
                   _debounce = Timer(const Duration(milliseconds: 250), () {
                     if (!mounted) return;
                     setState(() => _liveQuery = value);
+                    ref
+                        .read(collegeNameSuggestionsProvider.notifier)
+                        .setQuery(value);
                   });
                 },
                 onSubmitted: (_) => _runSearch(),
@@ -767,50 +781,13 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
                 ],
               ),
             ),
-          if (searchSuggestions.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              child: PremiumCard(
-                radius: tokens.buttonRadius,
-                padding: EdgeInsets.zero,
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxHeight: 220),
-                  child: ListView.separated(
-                    shrinkWrap: true,
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    itemCount: searchSuggestions.length,
-                    separatorBuilder: (_, _) => Divider(
-                      height: 1,
-                      indent: 52,
-                      color: tokens.borderSubtle,
-                    ),
-                    itemBuilder: (context, index) {
-                      final suggestion = searchSuggestions[index];
-                      return PremiumListRow(
-                        dense: true,
-                        leadingIcon: Icons.search_rounded,
-                        iconColor: Theme.of(context).colorScheme.primary,
-                        title: suggestion,
-                        showChevron: false,
-                        trailing: Icon(
-                          Icons.north_west_rounded,
-                          size: 16,
-                          color: tokens.textTertiary,
-                        ),
-                        onTap: () {
-                          _searchController.text = suggestion;
-                          _searchController.selection = TextSelection.fromPosition(
-                            TextPosition(offset: suggestion.length),
-                          );
-                          setState(() => _liveQuery = '');
-                          _runSearch();
-                        },
-                      );
-                    },
-                  ),
-                ),
-              ),
-            ),
+          // College names first ("City, State" beneath each); matching
+          // states/cities only when no name matches.
+          CollegeSuggestionsPanel(
+            query: _liveQuery,
+            onCollegeTap: (college) => _applySuggestion(college.name),
+            onPlaceTap: (place) => _applySuggestion(place.label),
+          ),
           if (_showFilters)
             Flexible(
               child: SingleChildScrollView(

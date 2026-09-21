@@ -7,6 +7,9 @@ class CollegeConstants {
   /// Batch size when exhausting all matching pages from live Firestore.
   static const int searchExhaustBatchSize = 500;
   static const int autocompleteLimit = 15;
+
+  /// Max college-name rows in the search dropdown.
+  static const int nameSuggestionLimit = 8;
   static const int featuredLimit = 12;
   static const int adminPageSize = 30;
   static const int minSearchChars = 1;

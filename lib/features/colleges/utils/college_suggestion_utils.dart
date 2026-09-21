@@ -1,5 +1,27 @@
 ﻿import '../../../core/constants/college_constants.dart';
 
+/// What a non-college dropdown row stands for.
+enum SuggestionKind { state, city, topic }
+
+/// A fallback suggestion: a state or city (or, last resort, a course /
+/// stream / university topic) that matches what the user typed.
+class PlaceSuggestion {
+  final String label;
+  final SuggestionKind kind;
+
+  const PlaceSuggestion(this.label, this.kind);
+
+  @override
+  bool operator ==(Object other) =>
+      other is PlaceSuggestion && other.label == label && other.kind == kind;
+
+  @override
+  int get hashCode => Object.hash(label, kind);
+
+  @override
+  String toString() => 'PlaceSuggestion($label, ${kind.name})';
+}
+
 class CollegeSuggestionUtils {
   CollegeSuggestionUtils._();
 
@@ -65,6 +87,52 @@ class CollegeSuggestionUtils {
     return filterSuggestions(query, normalized);
   }
 
+  /// The fallback shown ONLY when no college name matches the query: matching
+  /// states and cities, best match first. If neither matches, it falls back to
+  /// the broader topic list (courses, streams, universities) so typing e.g.
+  /// "mba" still suggests something.
+  static List<PlaceSuggestion> placeSuggestions(String query, {int limit = 6}) {
+    final trimmed = query.trim();
+    if (trimmed.isEmpty) return const [];
+    final normalizedQuery = _normalize(trimmed);
+
+    final scored = <({PlaceSuggestion suggestion, int score})>[];
+    final seen = <String>{};
+    void collect(Iterable<String> values, SuggestionKind kind) {
+      for (final raw in values) {
+        final value = raw.trim();
+        if (value.isEmpty) continue;
+        final normalized = _normalize(value);
+        // A name that is both a state and a city (Delhi) is listed once.
+        if (!seen.add(normalized)) continue;
+        final score = _score(normalizedQuery, normalized);
+        // Only names that START with the text (or a word of them does): a
+        // stray substring ("mba" inside "Mumbai") is not a useful suggestion.
+        if (score >= _wordStartScore) {
+          scored.add((suggestion: PlaceSuggestion(value, kind), score: score));
+        }
+      }
+    }
+
+    collect(CollegeConstants.indianStates, SuggestionKind.state);
+    collect(popularCities, SuggestionKind.city);
+
+    scored.sort((a, b) {
+      if (a.score != b.score) return b.score.compareTo(a.score);
+      return a.suggestion.label.toLowerCase().compareTo(
+        b.suggestion.label.toLowerCase(),
+      );
+    });
+
+    if (scored.isNotEmpty) {
+      return scored.take(limit).map((e) => e.suggestion).toList();
+    }
+    return searchSuggestions(trimmed)
+        .take(limit)
+        .map((label) => PlaceSuggestion(label, SuggestionKind.topic))
+        .toList();
+  }
+
   static List<String> searchSuggestions(String query) {
     final corpus = <String>[
       ...popularSearchSuggestions,
@@ -115,6 +183,10 @@ class CollegeSuggestionUtils {
       yield value.trim();
     }
   }
+
+  /// `_score` of "some word of the value starts with the query" -- the
+  /// weakest match still considered a real place suggestion.
+  static const int _wordStartScore = 750;
 
   static int _score(String query, String value) {
     if (value == query) return 1000;

@@ -3,6 +3,7 @@ import '../../../core/constants/college_constants.dart';
 import '../../../core/constants/firestore_constants.dart';
 import '../../../core/data/college_bundled_data_source.dart';
 import '../models/college_model.dart';
+import '../utils/college_name_matcher.dart';
 import '../utils/college_search_ranker.dart';
 import '../utils/college_search_utils.dart';
 
@@ -803,6 +804,67 @@ class FirestoreCollegeService {
     final resultsList = results.values.toList();
     CollegeSearchRanker.rankResults(resultsList, query: trimmed);
     return resultsList.take(CollegeConstants.autocompleteLimit).toList();
+  }
+
+  /// Colleges whose NAME matches [query], best match first -- the data source
+  /// of the search dropdown.
+  ///
+  /// Deliberately different from [autocompleteColleges], which also pulls in
+  /// colleges that merely sit in a matching city/district/state and ranks
+  /// city matches first. Here only the name counts:
+  ///
+  ///  1. names that START with the query (one indexed range read on
+  ///     `nameLower`) -- the strongest signal, and the only one that works at
+  ///     one or two letters ("ja");
+  ///  2. names with the query at a LATER word ("nehru eng…") via the
+  ///     prefix-token index, which only holds prefixes of 3+ letters, so it is
+  ///     tried once the query has a word that long. Hits are kept only if the
+  ///     NAME matches, so a city/state token hit never sneaks in.
+  Future<List<CollegeModel>> suggestCollegesByName(
+    String query, {
+    int limit = CollegeConstants.nameSuggestionLimit,
+  }) async {
+    final trimmed = query.trim();
+    if (trimmed.isEmpty) return [];
+    final lower = trimmed.toLowerCase();
+    final found = <String, CollegeModel>{};
+
+    try {
+      final snap = await _colleges
+          .where('isActive', isEqualTo: true)
+          .where('nameLower', isGreaterThanOrEqualTo: lower)
+          .where('nameLower', isLessThan: '$lower\uf8ff')
+          .orderBy('nameLower')
+          .limit(limit * 3)
+          .get();
+      for (final doc in snap.docs) {
+        found[doc.id] = CollegeModel.fromJson(doc.data(), docId: doc.id);
+      }
+    } on FirebaseException catch (e) {
+      // A missing index just skips this pass; the token pass may still help.
+      if (e.code != 'failed-precondition') rethrow;
+    }
+
+    final tokens = CollegeSearchUtils.queryTokens(trimmed);
+    if (found.length < limit && tokens.any((t) => t.length >= 3)) {
+      try {
+        final snap = await _colleges
+            .where('isActive', isEqualTo: true)
+            .where('searchTokens', arrayContainsAny: tokens)
+            .limit(limit * 8)
+            .get();
+        for (final doc in snap.docs) {
+          final college = CollegeModel.fromJson(doc.data(), docId: doc.id);
+          if (CollegeNameMatcher.matches(trimmed, college)) {
+            found.putIfAbsent(doc.id, () => college);
+          }
+        }
+      } on FirebaseException catch (e) {
+        if (e.code != 'failed-precondition') rethrow;
+      }
+    }
+
+    return CollegeNameMatcher.rank(trimmed, found.values, limit: limit);
   }
 
   Future<List<CollegeModel>> instantSearchColleges(String query) async {
