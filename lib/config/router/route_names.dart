@@ -10,6 +10,14 @@ class RouteNames {
   // header's Filter button).
   static const String collegeSearchFilters = '/college-search?filters=1';
   static const String collegeBrowse = '/college-browse';
+
+  /// Browse limited to one city: `/college-browse?city=Pune`. The Browse
+  /// screen then lists only the streams that exist in that city, with the
+  /// exact number of colleges in each.
+  static String collegeBrowseForCity(String city) => Uri(
+    path: collegeBrowse,
+    queryParameters: {'city': city.trim()},
+  ).toString();
   static const String privacyPolicy = '/privacy-policy';
   static const String termsOfService = '/terms-of-service';
   // The single post-login onboarding step: full Terms & Conditions plus the

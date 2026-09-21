@@ -7,24 +7,24 @@ import '../../../config/theme/app_fonts.dart';
 
 class _CityDef {
   final String city;
-  final String state;
 
-  const _CityDef(this.city, this.state);
+  const _CityDef(this.city);
 }
 
 /// "Explore by City" — a horizontally scrolling row of circular badges: a
 /// solid blue city icon inside a tinted, outlined circle, with the city name
-/// underneath. Each badge routes into search with the city (and its state).
+/// underneath. Each badge opens Browse for that city (`?city=Pune`), which
+/// lists that city's streams with their exact college counts.
 class ExploreCityCarousel extends StatelessWidget {
   const ExploreCityCarousel({super.key});
 
   static const _cities = [
-    _CityDef('Mumbai', 'Maharashtra'),
-    _CityDef('Pune', 'Maharashtra'),
-    _CityDef('Delhi', 'Delhi'),
-    _CityDef('Bengaluru', 'Karnataka'),
-    _CityDef('Chennai', 'Tamil Nadu'),
-    _CityDef('Hyderabad', 'Telangana'),
+    _CityDef('Mumbai'),
+    _CityDef('Pune'),
+    _CityDef('Delhi'),
+    _CityDef('Bengaluru'),
+    _CityDef('Chennai'),
+    _CityDef('Hyderabad'),
   ];
 
   /// Circle diameter + label + gaps.
@@ -43,9 +43,8 @@ class ExploreCityCarousel extends StatelessWidget {
           final city = _cities[index];
           return _CityBadge(
             def: city,
-            onTap: () => context.go(
-              '${RouteNames.collegeSearch}?city=${Uri.encodeComponent(city.city)}&state=${Uri.encodeComponent(city.state)}',
-            ),
+            // Passes the tapped city along as `city=Pune`.
+            onTap: () => context.go(RouteNames.collegeBrowseForCity(city.city)),
           );
         },
       ),

@@ -522,7 +522,11 @@ final Provider<GoRouter> appRouterProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: RouteNames.collegeBrowse,
-            builder: (context, state) => const CollegeBrowseScreen(),
+            // `?city=Pune` narrows Browse to that city's streams and counts;
+            // without it Browse shows the all-India directory.
+            builder: (context, state) => CollegeBrowseScreen(
+              city: state.uri.queryParameters['city'],
+            ),
           ),
           GoRoute(
             path: RouteNames.assistant,
