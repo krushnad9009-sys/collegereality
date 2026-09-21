@@ -5,14 +5,27 @@ import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_spacing.dart';
-import '../../../core/constants/communication_constants.dart';
 import '../../../core/widgets/index.dart';
+import '../../auth/providers/user_provider.dart';
+import '../../community/models/chat_conversation_model.dart';
+import '../../community/providers/community_provider.dart';
 import '../models/public_guide_profile.dart';
 import '../providers/communication_provider.dart';
+import '../utils/guide_search_matcher.dart';
 import '../../verification/widgets/verification_badge_widget.dart';
 import '../../consultations/widgets/availability_badge.dart';
 import '../widgets/guide_badge_widget.dart';
 
+/// "Talk to a Verified Student/Alumni" (`/guides`).
+///
+/// A direct list, never a dead end:
+///  * a search bar (by college or stream) is always on top;
+///  * recent chat conversations, when there are any, then the available
+///    verified guides -- online ones first;
+///  * when nothing is available (or nothing matches the search) it shows
+///    active call-to-action cards instead of an empty-state card.
+///
+/// The Messages button in the app bar opens the main Chats list directly.
 class GuidesDirectoryScreen extends ConsumerStatefulWidget {
   const GuidesDirectoryScreen({super.key});
 
@@ -22,11 +35,37 @@ class GuidesDirectoryScreen extends ConsumerStatefulWidget {
 }
 
 class _GuidesDirectoryScreenState extends ConsumerState<GuidesDirectoryScreen> {
-  String? _languageFilter;
+  final _searchController = TextEditingController();
+  String _query = '';
+
+  /// How many recent conversations to surface above the guides.
+  static const int _recentChatCount = 3;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  // The directory is not filtered by language any more: every available
+  // guide is listed.
+  static final _guides = guidesDirectoryProvider(null);
+
+  Future<void> _refresh() async {
+    ref.invalidate(_guides);
+    try {
+      await ref.read(_guides.future);
+    } catch (_) {
+      // The error state is rendered by the provider itself.
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final guidesAsync = ref.watch(guidesDirectoryProvider(_languageFilter));
+    final guidesAsync = ref.watch(_guides);
+    final userId = ref.watch(currentUserDetailProvider).valueOrNull?.uid;
+    final chats =
+        ref.watch(privateConversationsProvider).valueOrNull ?? const [];
     final tokens = context.tokens;
 
     return Scaffold(
@@ -36,6 +75,14 @@ class _GuidesDirectoryScreenState extends ConsumerState<GuidesDirectoryScreen> {
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
           onPressed: () => context.go(RouteNames.home),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.chat_bubble_outline_rounded),
+            tooltip: 'Messages',
+            // Straight to the main Chats list.
+            onPressed: () => context.go(RouteNames.communityPrivateChats),
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -45,43 +92,24 @@ class _GuidesDirectoryScreenState extends ConsumerState<GuidesDirectoryScreen> {
               color: Theme.of(context).scaffoldBackgroundColor,
               border: Border(bottom: BorderSide(color: tokens.borderSubtle)),
             ),
-            child: Row(
-              children: [
-                Icon(Icons.language_outlined, size: 18, color: tokens.textTertiary),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: [
-                        PremiumChip(
-                          label: 'All languages',
-                          selected: _languageFilter == null,
-                          onTap: () {
-                            setState(() => _languageFilter = null);
-                            ref.invalidate(
-                                guidesDirectoryProvider(_languageFilter));
-                          },
-                        ),
-                        ...CommunicationConstants.supportedLanguages.map(
-                          (lang) => Padding(
-                            padding: const EdgeInsets.only(left: 8),
-                            child: PremiumChip(
-                              label: lang,
-                              selected: _languageFilter == lang,
-                              onTap: () {
-                                setState(() => _languageFilter = lang);
-                                ref.invalidate(
-                                    guidesDirectoryProvider(_languageFilter));
-                              },
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
+            child: TextField(
+              controller: _searchController,
+              onChanged: (value) => setState(() => _query = value),
+              textInputAction: TextInputAction.search,
+              decoration: InputDecoration(
+                hintText: 'Search guides by college or stream',
+                prefixIcon: const Icon(Icons.search_rounded),
+                suffixIcon: _query.isEmpty
+                    ? null
+                    : IconButton(
+                        icon: const Icon(Icons.close_rounded),
+                        tooltip: 'Clear search',
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() => _query = '');
+                        },
+                      ),
+              ),
             ),
           ),
           Expanded(
@@ -89,35 +117,342 @@ class _GuidesDirectoryScreenState extends ConsumerState<GuidesDirectoryScreen> {
               loading: () => const ListSkeletonLoader(itemCount: 5),
               error: (e, _) => AsyncErrorView(
                 message: e.toString().replaceFirst('Exception: ', ''),
-                onRetry: () =>
-                    ref.invalidate(guidesDirectoryProvider(_languageFilter)),
+                onRetry: () => ref.invalidate(_guides),
               ),
               data: (guides) {
-                if (guides.isEmpty) {
-                  return AsyncEmptyView(
-                    icon: Icons.school_outlined,
-                    title: 'No guides available yet',
-                    subtitle:
-                        'Guides are verified students who help others.\nEnable guide mode in your profile to appear here.',
-                  );
-                }
+                final query = _query.trim();
+                final searching = query.isNotEmpty;
+                final shown = GuideSearchMatcher.filter(
+                  GuideSearchMatcher.sortByAvailability(guides),
+                  query,
+                );
+                final recent = searching
+                    ? const <ChatConversationModel>[]
+                    : _recentChats(chats);
+
                 return RefreshIndicator(
-                  onRefresh: () async {
-                    ref.invalidate(guidesDirectoryProvider(_languageFilter));
-                  },
-                  child: ListView.separated(
+                  onRefresh: _refresh,
+                  child: ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.all(16),
-                    itemCount: guides.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 12),
-                    itemBuilder: (context, index) {
-                      return _GuideListTile(guide: guides[index]);
-                    },
+                    children: [
+                      if (recent.isNotEmpty) ...[
+                        _RecentChatsSection(chats: recent, userId: userId),
+                        const SizedBox(height: 20),
+                      ],
+                      if (shown.isNotEmpty) ...[
+                        _SectionTitle(
+                          searching
+                              ? '${shown.length} '
+                                    '${shown.length == 1 ? 'guide' : 'guides'} '
+                                    'for “$query”'
+                              : 'Available guides',
+                        ),
+                        for (var i = 0; i < shown.length; i++) ...[
+                          if (i > 0) const SizedBox(height: 12),
+                          _GuideListTile(guide: shown[i]),
+                        ],
+                      ] else
+                        _GuideHelpSection(
+                          query: query,
+                          hadGuides: guides.isNotEmpty,
+                          onClearSearch: () {
+                            _searchController.clear();
+                            setState(() => _query = '');
+                          },
+                        ),
+                    ],
                   ),
                 );
               },
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  List<ChatConversationModel> _recentChats(List<ChatConversationModel> chats) {
+    final withMessages = [...chats];
+    withMessages.sort((a, b) {
+      final at = a.lastMessageAt ?? a.updatedAt;
+      final bt = b.lastMessageAt ?? b.updatedAt;
+      return bt.compareTo(at);
+    });
+    return withMessages.take(_recentChatCount).toList();
+  }
+}
+
+class _SectionTitle extends StatelessWidget {
+  final String text;
+
+  const _SectionTitle(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Text(
+        text,
+        style: AppFonts.plusJakarta(
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+          letterSpacing: -0.2,
+          color: context.tokens.textPrimary,
+        ),
+      ),
+    );
+  }
+}
+
+/// The latest few conversations, each opening straight into that chat, with
+/// "See all" going to the full Messages list.
+class _RecentChatsSection extends StatelessWidget {
+  final List<ChatConversationModel> chats;
+  final String? userId;
+
+  const _RecentChatsSection({required this.chats, required this.userId});
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final primary = Theme.of(context).colorScheme.primary;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                'Recent chats',
+                style: AppFonts.plusJakarta(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.2,
+                  color: tokens.textPrimary,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () => context.go(RouteNames.communityPrivateChats),
+              child: const Text('See all'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        for (final chat in chats) ...[
+          PremiumCard(
+            padding: EdgeInsets.zero,
+            radius: tokens.cardRadius,
+            onTap: () => context.push(RouteNames.communityChatPath(chat.id)),
+            child: ListTile(
+              key: ValueKey('recent-chat-${chat.id}'),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.lg,
+                vertical: 2,
+              ),
+              leading: CircleAvatar(
+                radius: 20,
+                backgroundColor: primary.withValues(alpha: 0.12),
+                child: Icon(Icons.person_rounded, color: primary, size: 20),
+              ),
+              title: Text(
+                userId != null ? chat.displayTitle(userId!) : 'Chat',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppFonts.plusJakarta(
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w600,
+                  color: tokens.textPrimary,
+                ),
+              ),
+              subtitle: Text(
+                chat.lastMessageText ?? 'No messages yet',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppFonts.plusJakarta(
+                  fontSize: 12.5,
+                  color: tokens.textSecondary,
+                ),
+              ),
+              trailing: Icon(
+                Icons.chevron_right_rounded,
+                color: tokens.textTertiary,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+        ],
+      ],
+    );
+  }
+}
+
+/// Shown instead of an empty-state card when no guide is available, or none
+/// matches the search: says what happened and offers real next steps.
+class _GuideHelpSection extends StatelessWidget {
+  final String query;
+
+  /// There ARE guides, just none matching [query].
+  final bool hadGuides;
+  final VoidCallback onClearSearch;
+
+  const _GuideHelpSection({
+    required this.query,
+    required this.hadGuides,
+    required this.onClearSearch,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final searching = query.isNotEmpty;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          searching
+              ? 'No guides match “$query”'
+              : 'No guides are online right now',
+          style: AppFonts.plusJakarta(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.3,
+            color: tokens.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          searching
+              ? 'Try another college or stream, or start from one of these.'
+              : 'Verified students are joining all the time. Meanwhile, '
+                    'you can get answers here:',
+          style: AppFonts.plusJakarta(
+            fontSize: 13.5,
+            height: 1.4,
+            color: tokens.textSecondary,
+          ),
+        ),
+        if (searching && hadGuides)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(
+              onPressed: onClearSearch,
+              child: const Text('Show all guides'),
+            ),
+          ),
+        const SizedBox(height: 16),
+        if (searching) ...[
+          _ActionCard(
+            icon: Icons.search_rounded,
+            title: 'Search colleges for “$query”',
+            subtitle: 'See the college and what its students say',
+            onTap: () => context.go(
+              Uri(
+                path: RouteNames.collegeSearch,
+                queryParameters: {'q': query},
+              ).toString(),
+            ),
+          ),
+          const SizedBox(height: 10),
+        ],
+        _ActionCard(
+          icon: Icons.school_outlined,
+          title: 'Browse colleges',
+          subtitle: 'Find a college and its verified students',
+          onTap: () => context.go(RouteNames.collegeSearch),
+        ),
+        const SizedBox(height: 10),
+        _ActionCard(
+          icon: Icons.forum_outlined,
+          title: 'Ask seniors',
+          subtitle: 'Post a question and get answers from students',
+          onTap: () => context.go(RouteNames.communityAskSeniors),
+        ),
+        const SizedBox(height: 10),
+        _ActionCard(
+          icon: Icons.auto_awesome_rounded,
+          title: 'Ask the AI Assistant',
+          subtitle: 'Instant answers on colleges, fees and cutoffs',
+          onTap: () => context.go(RouteNames.assistant),
+        ),
+        const SizedBox(height: 10),
+        _ActionCard(
+          icon: Icons.verified_outlined,
+          title: 'Become a guide',
+          subtitle: 'Get verified and help other students',
+          onTap: () => context.go(RouteNames.verification),
+        ),
+      ],
+    );
+  }
+}
+
+class _ActionCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _ActionCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final primary = Theme.of(context).colorScheme.primary;
+
+    return PremiumCard(
+      padding: EdgeInsets.zero,
+      radius: tokens.cardRadius,
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: primary.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: primary, size: 22),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: AppFonts.plusJakarta(
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.w700,
+                      color: tokens.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: AppFonts.plusJakarta(
+                      fontSize: 12.5,
+                      height: 1.3,
+                      color: tokens.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right_rounded, color: tokens.textTertiary),
+          ],
+        ),
       ),
     );
   }
@@ -136,17 +471,14 @@ class _GuideListTile extends StatelessWidget {
     final priceLabel = settings.chatAvailable && settings.chatPricePaise > 0
         ? '₹${(settings.chatPricePaise / 100).round()} chat'
         : (settings.callAvailable &&
-                settings.callPricing.any((p) => p.pricePaise > 0)
-            ? 'Call from ₹${(settings.callPricing
-                    .where((p) => p.pricePaise > 0)
-                    .map((p) => p.pricePaise)
-                    .reduce((a, b) => a < b ? a : b) / 100)
-                .round()}'
-            : null);
+                  settings.callPricing.any((p) => p.pricePaise > 0)
+              ? 'Call from ₹${(settings.callPricing.where((p) => p.pricePaise > 0).map((p) => p.pricePaise).reduce((a, b) => a < b ? a : b) / 100).round()}'
+              : null);
 
     return PremiumCard(
       padding: EdgeInsets.zero,
       child: InkWell(
+        key: ValueKey('guide-${guide.uid}'),
         borderRadius: BorderRadius.circular(tokens.cardRadius),
         onTap: () => context.push(RouteNames.guideProfilePath(guide.uid)),
         child: Padding(
@@ -238,7 +570,10 @@ class _GuideListTile extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                         const SizedBox(height: 4),
-                        AvailabilityBadge(presence: guide.presence, compact: true),
+                        AvailabilityBadge(
+                          presence: guide.presence,
+                          compact: true,
+                        ),
                       ],
                     ),
                   ),

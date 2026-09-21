@@ -131,4 +131,29 @@ void main() {
     final profile = tester.widgetList<Icon>(find.byIcon(Icons.person_rounded));
     expect(profile.map((i) => i.color), contains(AppTheme.primaryColor));
   });
+
+  testWidgets('the Chats tab opens the main Chats list directly -- not the '
+      'guides directory', (tester) async {
+    final router = await _pumpShell(tester);
+
+    await tester.tap(find.text('Chats'));
+    await tester.pumpAndSettle();
+
+    expect(
+      router.routeInformationProvider.value.uri.path,
+      RouteNames.communityPrivateChats,
+    );
+    expect(
+      router.routeInformationProvider.value.uri.path,
+      isNot(RouteNames.guidesDirectory),
+    );
+    expect(
+      tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
+      3,
+    );
+    expect(
+      find.text('PAGE ${RouteNames.communityPrivateChats}'),
+      findsOneWidget,
+    );
+  });
 }
