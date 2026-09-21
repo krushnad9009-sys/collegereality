@@ -2,6 +2,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user_model.dart';
 import '../../communication/models/guide_stats_model.dart';
 import '../../community/models/user_presence_model.dart';
+import '../../onboarding/services/onboarding_location_resolver.dart'
+    show kLocationNotProvided;
 import '../services/firestore_user_service.dart';
 
 abstract class UserRepository {
@@ -31,21 +33,20 @@ abstract class UserRepository {
   Future<void> verifyEmail(String uid);
   Future<void> verifyPhone(String uid, {String? phone});
 
-  /// Records that the user has accepted the Terms & Conditions onboarding
-  /// gate. Sets `hasAcceptedTerms: true` and a `termsAcceptedAt` timestamp
-  /// on the owner's `users` document.
-  Future<void> acceptTerms(String uid);
-
-  /// Records the result of the one-time post-login permissions onboarding
-  /// screen. [state]/[city] are the reverse-geocoded values when location
-  /// was granted and resolved, or `'Not Provided'` when denied/skipped/
-  /// unresolvable. Sets `hasCompletedPermissionsOnboarding: true` so the
-  /// router's redirect gate never shows this screen again.
-  Future<void> completePermissionsOnboarding(
+  /// Finishes the single post-login "Permissions & Terms" step in one write.
+  ///
+  /// [recordTerms] sets `hasAcceptedTerms` + `termsAcceptedAt`;
+  /// [recordPermissions] sets `hasCompletedPermissionsOnboarding` plus the
+  /// location result ([state]/[city] are reverse-geocoded values, or
+  /// `'Not Provided'` when denied/skipped/unresolvable). Each half is only
+  /// written when still owed, so an existing acceptance timestamp survives.
+  Future<void> completeOnboarding(
     String uid, {
-    required String state,
-    required String city,
-    required bool locationGranted,
+    required bool recordTerms,
+    required bool recordPermissions,
+    String state,
+    String city,
+    bool locationGranted,
   });
 
   /// Counts one search/click on [category] and stores the recomputed
@@ -138,19 +139,18 @@ class UserRepositoryImpl implements UserRepository {
   }
 
   @override
-  Future<void> acceptTerms(String uid) async {
-    await _firestoreUserService.acceptTerms(uid);
-  }
-
-  @override
-  Future<void> completePermissionsOnboarding(
+  Future<void> completeOnboarding(
     String uid, {
-    required String state,
-    required String city,
-    required bool locationGranted,
-  }) async {
-    await _firestoreUserService.completePermissionsOnboarding(
+    required bool recordTerms,
+    required bool recordPermissions,
+    String state = kLocationNotProvided,
+    String city = kLocationNotProvided,
+    bool locationGranted = false,
+  }) {
+    return _firestoreUserService.completeOnboarding(
       uid,
+      recordTerms: recordTerms,
+      recordPermissions: recordPermissions,
       state: state,
       city: city,
       locationGranted: locationGranted,

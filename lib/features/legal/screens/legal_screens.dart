@@ -124,7 +124,7 @@ const String termsAndConditionsIntro =
     'services, you agree to be bound by these Terms:';
 
 /// Canonical Terms & Conditions copy, shared by the read-only
-/// [TermsOfServiceScreen] and the mandatory post-login [TermsGateScreen].
+/// [TermsOfServiceScreen] and the mandatory post-login PermissionsTermsScreen.
 const List<LegalSection> termsOfServiceSections = [
   LegalSection(
     heading: '1. User Role & Intermediary Status',

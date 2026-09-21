@@ -320,14 +320,48 @@ class FirestoreUserService {
     }
   }
 
-  // Record acceptance of the Terms & Conditions onboarding gate.
-  Future<void> acceptTerms(String uid) async {
+  // Finish the single post-login "Permissions & Terms" step in ONE atomic
+  // update, so the account can never end up with terms accepted but the
+  // step still looking incomplete (or vice versa) if the write is cut short.
+  //
+  // [recordTerms] / [recordPermissions] say which halves are still owed: an
+  // account that accepted Terms under the old two-screen flow must not have
+  // its original `termsAcceptedAt` overwritten by a later re-acceptance.
+  //
+  // Permissions are always recorded as "completed" whatever the user chose
+  // (grant, deny, switch off) -- this flag means the step was shown and
+  // answered, not that every permission was granted. [state]/[city] are the
+  // reverse-geocoded values, or the 'Not Provided' sentinel.
+  Future<void> completeOnboarding(
+    String uid, {
+    required bool recordTerms,
+    required bool recordPermissions,
+    String state = kLocationNotProvided,
+    String city = kLocationNotProvided,
+    bool locationGranted = false,
+  }) async {
+    if (!recordTerms && !recordPermissions) return;
     try {
       await FirestoreAuthUtils.ensureAuthenticated(expectedUid: uid);
       final now = DateTime.now().toIso8601String();
       await _firestore.collection(usersCollection).doc(uid).update({
-        'hasAcceptedTerms': true,
-        'termsAcceptedAt': now,
+        if (recordTerms) ...{
+          'hasAcceptedTerms': true,
+          'termsAcceptedAt': now,
+        },
+        if (recordPermissions) ...{
+          'hasCompletedPermissionsOnboarding': true,
+          'permissionsOnboardingCompletedAt': now,
+          'state': state,
+          'city': city,
+          'locationGranted': locationGranted,
+          // Seed the Home "Colleges Near You" preference from the detected
+          // state. Never overwrite with the 'Not Provided' sentinel.
+          if (locationGranted &&
+              state.trim().isNotEmpty &&
+              state != kLocationNotProvided)
+            'preferredState': state,
+        },
         'updatedAt': now,
       });
     } on FirebaseException catch (e) {
@@ -335,12 +369,12 @@ class FirestoreUserService {
         e,
         collectionPath: usersCollection,
         documentPath: uid,
-        action: 'accept terms',
+        action: 'complete onboarding',
       );
     } catch (e) {
       if (e is FirestoreException) rethrow;
       throw FirestoreException(
-        message: 'Could not save your acceptance. Please try again.',
+        message: 'Could not save your choices. Please try again.',
       );
     }
   }
@@ -391,49 +425,6 @@ class FirestoreUserService {
         collectionPath: usersCollection,
         documentPath: uid,
         action: 'save preferred state',
-      );
-    } catch (e) {
-      if (e is FirestoreException) rethrow;
-      throw FirestoreException(
-        message: 'Could not save your preferences. Please try again.',
-      );
-    }
-  }
-
-  // Record the result of the one-time post-login permissions onboarding
-  // screen (gallery/location/notifications). Always sets
-  // hasCompletedPermissionsOnboarding: true regardless of what the user
-  // chose -- this gate is about the screen having been shown and dismissed
-  // once, not about every permission having been granted.
-  Future<void> completePermissionsOnboarding(
-    String uid, {
-    required String state,
-    required String city,
-    required bool locationGranted,
-  }) async {
-    try {
-      await FirestoreAuthUtils.ensureAuthenticated(expectedUid: uid);
-      final now = DateTime.now().toIso8601String();
-      await _firestore.collection(usersCollection).doc(uid).update({
-        'hasCompletedPermissionsOnboarding': true,
-        'permissionsOnboardingCompletedAt': now,
-        'state': state,
-        'city': city,
-        'locationGranted': locationGranted,
-        // Seed the Home "Colleges Near You" preference from the detected
-        // state. Never overwrite with the 'Not Provided' sentinel.
-        if (locationGranted &&
-            state.trim().isNotEmpty &&
-            state != kLocationNotProvided)
-          'preferredState': state,
-        'updatedAt': now,
-      });
-    } on FirebaseException catch (e) {
-      throw _mapFirestoreError(
-        e,
-        collectionPath: usersCollection,
-        documentPath: uid,
-        action: 'save permissions onboarding',
       );
     } catch (e) {
       if (e is FirestoreException) rethrow;

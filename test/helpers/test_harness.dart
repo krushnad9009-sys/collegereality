@@ -102,34 +102,43 @@ class FakeUserRepository implements UserRepository {
   @override
   Future<void> verifyPhone(String uid, {String? phone}) async {}
 
-  @override
-  Future<void> acceptTerms(String uid) async {
-    final existing = users[uid];
-    if (existing != null) {
-      users[uid] = existing.copyWith(
-        hasAcceptedTerms: true,
-        termsAcceptedAt: DateTime.now(),
-      );
-    }
-  }
+  /// Every completeOnboarding call, so tests can assert exactly which
+  /// halves (terms / permissions) were written.
+  final List<({bool recordTerms, bool recordPermissions, String state})>
+      completeOnboardingCalls = [];
+
+  /// When set, completeOnboarding throws this instead of saving (and does
+  /// not record the call as a success).
+  Object? completeOnboardingError;
 
   @override
-  Future<void> completePermissionsOnboarding(
+  Future<void> completeOnboarding(
     String uid, {
-    required String state,
-    required String city,
-    required bool locationGranted,
+    required bool recordTerms,
+    required bool recordPermissions,
+    String state = 'Not Provided',
+    String city = 'Not Provided',
+    bool locationGranted = false,
   }) async {
+    final error = completeOnboardingError;
+    if (error != null) throw error;
+    completeOnboardingCalls.add((
+      recordTerms: recordTerms,
+      recordPermissions: recordPermissions,
+      state: state,
+    ));
     final existing = users[uid];
-    if (existing != null) {
-      users[uid] = existing.copyWith(
-        hasCompletedPermissionsOnboarding: true,
-        permissionsOnboardingCompletedAt: DateTime.now(),
-        state: state,
-        city: city,
-        locationGranted: locationGranted,
-      );
-    }
+    if (existing == null) return;
+    users[uid] = existing.copyWith(
+      hasAcceptedTerms: recordTerms ? true : null,
+      termsAcceptedAt: recordTerms ? DateTime.now() : null,
+      hasCompletedPermissionsOnboarding: recordPermissions ? true : null,
+      permissionsOnboardingCompletedAt:
+          recordPermissions ? DateTime.now() : null,
+      state: recordPermissions ? state : null,
+      city: recordPermissions ? city : null,
+      locationGranted: recordPermissions ? locationGranted : null,
+    );
   }
 
   @override

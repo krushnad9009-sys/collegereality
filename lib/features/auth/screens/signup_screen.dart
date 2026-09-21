@@ -80,7 +80,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           message:
               'Account created! Please verify your email from your inbox.',
         );
-        context.go(RouteNames.displayNameSetup);
+        // The router's onboarding gate takes it from here (Permissions &
+        // Terms), then Home.
+        context.go(RouteNames.home);
       }
     } on FirebaseAuthException catch (e) {
       if (mounted) {
@@ -120,13 +122,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           context,
           message: 'Signed up with Google!',
         );
-        final userDetail = await ref.read(currentUserDetailProvider.future);
-        if (!mounted) return;
-        if (userDetail != null && !userDetail.displayNameSetupComplete) {
-          context.go(RouteNames.displayNameSetup);
-        } else {
-          context.go(RouteNames.home);
-        }
+        // The router's onboarding gate takes it from here (Permissions &
+        // Terms), then Home.
+        context.go(RouteNames.home);
       }
     } catch (e) {
       if (mounted) {

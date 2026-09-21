@@ -109,7 +109,8 @@ void main() {
   });
 
   group('Signup flow', () {
-    testWidgets('creates account and routes to display-name setup',
+    testWidgets('creates account and hands off to Home (the router then '
+        'shows the Permissions & Terms gate) -- no display-name form step',
         (tester) async {
       _setTallSurface(tester);
       final auth = FakeAuthService();
@@ -144,8 +145,8 @@ void main() {
       );
 
       // SignupScreen has no terms checkbox of its own -- terms acceptance
-      // is enforced afterwards by the router's hasAcceptedTerms redirect
-      // gate (TermsGateScreen), not as a pre-submission form control here.
+      // is enforced afterwards by the router's onboarding gate
+      // (PermissionsTermsScreen), not as a pre-submission form control here.
       final fields = find.byType(TextFormField);
       await tester.enterText(fields.at(0), 'Test Student');
       await tester.enterText(fields.at(1), 'new@test.com');
@@ -157,7 +158,8 @@ void main() {
 
       expect(auth.signUpEmailCalls, 1);
       expect(users.createCalls, 1);
-      expect(find.text('SETUP'), findsOneWidget);
+      expect(find.text('HOME'), findsOneWidget);
+      expect(find.text('SETUP'), findsNothing);
     });
   });
 

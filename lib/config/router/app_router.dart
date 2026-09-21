@@ -21,8 +21,7 @@ import '../../features/profile/screens/profile_screen.dart';
 import '../../features/colleges/screens/college_browse_screen.dart';
 import '../../features/colleges/screens/college_search_screen.dart';
 import '../../features/legal/screens/legal_screens.dart';
-import '../../features/legal/screens/terms_gate_screen.dart';
-import '../../features/onboarding/screens/permissions_onboarding_screen.dart';
+import '../../features/onboarding/screens/permissions_terms_screen.dart';
 import '../../features/profile/screens/edit_profile_screen.dart';
 import '../../features/profile/screens/app_settings_screen.dart';
 import '../../features/profile/screens/help_support_screen.dart';
@@ -156,6 +155,26 @@ String? _fallbackRouteFor(String path, FirebaseAuth firebaseAuth) {
   return loggedIn ? RouteNames.home : RouteNames.login;
 }
 
+/// Onboarding gate decision for a signed-in user: where they must be to
+/// finish the single Permissions & Terms step, or `null` to leave [path]
+/// alone.
+///
+///  * Onboarding unfinished and not on the gate -> send them to the gate,
+///    from ANY route (public ones and `/home` included).
+///  * Onboarding finished but on the gate (stale bookmark / back button) ->
+///    Home, so it is never shown twice.
+///
+/// `user == null` (user doc slow or failed to load) deliberately does NOT
+/// trap anyone at the gate: it counts as finished.
+@visibleForTesting
+String? onboardingGateRedirect({required String path, required UserModel? user}) {
+  final needsOnboarding = user != null && !user.hasCompletedOnboarding;
+  final onGate = path == RouteNames.permissionsAndTerms;
+  if (needsOnboarding && !onGate) return RouteNames.permissionsAndTerms;
+  if (!needsOnboarding && onGate) return RouteNames.home;
+  return null;
+}
+
 Future<String?> _resolveRedirect(
   Ref ref,
   FirebaseAuth firebaseAuth,
@@ -220,15 +239,8 @@ Future<String?> _resolveRedirect(
           path == RouteNames.onboarding ||
           path == RouteNames.forgotPassword)) {
     final user = await userDetail();
-    if (user != null && !user.hasAcceptedTerms) {
-      return RouteNames.termsGate;
-    }
-    if (user != null && !user.displayNameSetupComplete) {
-      final from = state.uri.queryParameters['from'];
-      return RouteNames.displayNameSetupWithReturn(from);
-    }
-    if (user != null && !user.hasCompletedPermissionsOnboarding) {
-      return RouteNames.permissionsOnboarding;
+    if (user != null && !user.hasCompletedOnboarding) {
+      return RouteNames.permissionsAndTerms;
     }
     if (path == RouteNames.login || path == RouteNames.signup) {
       final returnTo = RouteNames.safeReturnPath(
@@ -239,49 +251,15 @@ Future<String?> _resolveRedirect(
     return RouteNames.home;
   }
 
-  // Terms & Conditions onboarding gate. The hardest gate — a logged-in user
-  // who has not accepted the current Terms cannot reach ANY route (public
-  // or protected, `/home` included) until they do. Checked before
-  // display-name setup. `userDetail()` returning null (Firestore slow or
-  // broken) deliberately does NOT trap the user here.
+  // Onboarding gate: the single Permissions & Terms step. A signed-in user
+  // who hasn't completed it cannot reach ANY other route (public or
+  // protected, `/home` included) until they do.
   if (isLoggedIn) {
-    final user = await userDetail();
-    final accepted = user?.hasAcceptedTerms ?? true;
-    if (!accepted && path != RouteNames.termsGate) {
-      return RouteNames.termsGate;
-    }
-    if (accepted && path == RouteNames.termsGate) {
-      return RouteNames.home;
-    }
-  }
-
-  if (isLoggedIn &&
-      path != RouteNames.termsGate &&
-      path != RouteNames.displayNameSetup) {
-    final user = await userDetail();
-    if (user != null && !user.displayNameSetupComplete) {
-      final intended = state.uri.toString();
-      return RouteNames.displayNameSetupWithReturn(intended);
-    }
-  }
-
-  // Onboarding permissions gate — the last of the three (terms, display
-  // name, permissions), so by the time this runs both earlier gates have
-  // already either redirected away and returned, or are satisfied. Shown
-  // exactly once per account; never blocks reaching /home beyond that.
-  if (isLoggedIn &&
-      path != RouteNames.termsGate &&
-      path != RouteNames.displayNameSetup) {
-    final user = await userDetail();
-    final completed = user?.hasCompletedPermissionsOnboarding ?? true;
-    if (!completed && path != RouteNames.permissionsOnboarding) {
-      return RouteNames.permissionsOnboarding;
-    }
-    // Already completed but landed here anyway (stale bookmark/back
-    // button) — don't re-show it, same symmetry as the terms gate above.
-    if (completed && path == RouteNames.permissionsOnboarding) {
-      return RouteNames.home;
-    }
+    final redirect = onboardingGateRedirect(
+      path: path,
+      user: await userDetail(),
+    );
+    if (redirect != null) return redirect;
   }
 
   if (path == RouteNames.adminLogin) {
@@ -458,19 +436,11 @@ final Provider<GoRouter> appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const TermsOfServiceScreen(),
       ),
       GoRoute(
-        path: RouteNames.termsGate,
+        path: RouteNames.permissionsAndTerms,
         pageBuilder: (context, state) => fadeUpPage(
           key: state.pageKey,
           name: state.name,
-          child: const TermsGateScreen(),
-        ),
-      ),
-      GoRoute(
-        path: RouteNames.permissionsOnboarding,
-        pageBuilder: (context, state) => fadeUpPage(
-          key: state.pageKey,
-          name: state.name,
-          child: const PermissionsOnboardingScreen(),
+          child: const PermissionsTermsScreen(),
         ),
       ),
       GoRoute(

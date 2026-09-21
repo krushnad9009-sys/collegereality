@@ -9,14 +9,12 @@ class RouteNames {
   static const String collegeBrowse = '/college-browse';
   static const String privacyPolicy = '/privacy-policy';
   static const String termsOfService = '/terms-of-service';
-  // Post-login legal gate. Distinct from [termsOfService] (the public,
-  // read-only legal document): this is the blocking onboarding screen shown
-  // until the user's `hasAcceptedTerms` flag is true.
-  static const String termsGate = '/welcome/terms';
-  // One-time post-login onboarding: gallery/location/notification
-  // permissions. Shown after the terms gate and display-name setup (if
-  // needed), immediately before the user first reaches Home.
-  static const String permissionsOnboarding = '/welcome/permissions';
+  // The single post-login onboarding step: full Terms & Conditions plus the
+  // gallery/location/notification permissions on one screen. The router keeps
+  // every signed-in user here until `UserModel.hasCompletedOnboarding`, then
+  // sends them to [home]. Distinct from [termsOfService] (the public,
+  // read-only legal document).
+  static const String permissionsAndTerms = '/welcome/permissions-terms';
   static const String assistant = '/assistant';
   static const String compare = '/compare';
   static const String collegeDetails = '/college-details/:id';

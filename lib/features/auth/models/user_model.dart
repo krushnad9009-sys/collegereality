@@ -386,6 +386,11 @@ class UserModel {
     return counts;
   }
 
+  /// True once the single post-login "Permissions & Terms" step is done, i.e.
+  /// the router no longer needs to send this user to the onboarding gate.
+  bool get hasCompletedOnboarding =>
+      hasAcceptedTerms && hasCompletedPermissionsOnboarding;
+
   String get effectivePublicDisplayName => resolvePublicDisplayNameFromUser(this);
 
   bool get usesAnonymousPublicDisplayName =>
