@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_design_tokens.dart';
+import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../core/constants/profile_constants.dart';
 import '../../../core/constants/verification_constants.dart';
@@ -138,6 +139,15 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
+  }
+
+  void _openCustomPricingSheet(BuildContext context, UserModel user) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _CustomPricingSheet(user: user),
+    );
   }
 
   @override
@@ -391,8 +401,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                             Padding(
                               padding: const EdgeInsets.only(top: 8),
                               child: OutlinedButton.icon(
-                                onPressed: () =>
-                                    context.push(RouteNames.guidePricingSetup),
+                                onPressed: userDetail == null
+                                    ? null
+                                    : () => _openCustomPricingSheet(
+                                        context, userDetail),
                                 icon: const Icon(Icons.sell_outlined),
                                 label: const Text('Set chat/call prices'),
                               ),
@@ -412,6 +424,289 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+/// Simple custom-rate config saved alongside the guide's booking-flow
+/// pricing (GuideCommunicationSettings), NOT replacing it -- these five
+/// fields are stored as-is in `metadata.customPricing` (plain rupee
+/// amounts, matching the field names as specced, not the paise convention
+/// used elsewhere) rather than the paid-consultation price model.
+class _CustomPricingSheet extends ConsumerStatefulWidget {
+  final UserModel user;
+  const _CustomPricingSheet({required this.user});
+
+  @override
+  ConsumerState<_CustomPricingSheet> createState() => _CustomPricingSheetState();
+}
+
+class _CustomPricingSheetState extends ConsumerState<_CustomPricingSheet> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _voiceRateController;
+  late final TextEditingController _videoRateController;
+  late final TextEditingController _voice15Controller;
+  late final TextEditingController _video15Controller;
+  late final TextEditingController _chat30Controller;
+  bool _saving = false;
+
+  static const _defaults = {
+    'voiceRatePerMin': 10,
+    'videoRatePerMin': 15,
+    'voice15MinPkg': 99,
+    'video15MinPkg': 149,
+    'chat30MinPkg': 89,
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    final existing =
+        (widget.user.metadata?['customPricing'] as Map?)?.cast<String, dynamic>() ??
+            const {};
+    String value(String key) {
+      final v = existing[key];
+      return (v is num ? v : _defaults[key]!).toString();
+    }
+
+    _voiceRateController = TextEditingController(text: value('voiceRatePerMin'));
+    _videoRateController = TextEditingController(text: value('videoRatePerMin'));
+    _voice15Controller = TextEditingController(text: value('voice15MinPkg'));
+    _video15Controller = TextEditingController(text: value('video15MinPkg'));
+    _chat30Controller = TextEditingController(text: value('chat30MinPkg'));
+  }
+
+  @override
+  void dispose() {
+    _voiceRateController.dispose();
+    _videoRateController.dispose();
+    _voice15Controller.dispose();
+    _video15Controller.dispose();
+    _chat30Controller.dispose();
+    super.dispose();
+  }
+
+  String? _validateAmount(String? v) {
+    final value = v?.trim() ?? '';
+    if (value.isEmpty) return 'Required';
+    final parsed = int.tryParse(value);
+    if (parsed == null || parsed < 0) return 'Enter a whole number';
+    return null;
+  }
+
+  Future<void> _save() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _saving = true);
+    try {
+      final metadata = Map<String, dynamic>.from(widget.user.metadata ?? {});
+      metadata['customPricing'] = {
+        'voiceRatePerMin': int.parse(_voiceRateController.text.trim()),
+        'videoRatePerMin': int.parse(_videoRateController.text.trim()),
+        'voice15MinPkg': int.parse(_voice15Controller.text.trim()),
+        'video15MinPkg': int.parse(_video15Controller.text.trim()),
+        'chat30MinPkg': int.parse(_chat30Controller.text.trim()),
+      };
+      await ref.read(userRepositoryProvider).updateUserProfile(
+            uid: widget.user.uid,
+            metadata: metadata,
+          );
+      ref.invalidate(currentUserDetailProvider);
+      if (!mounted) return;
+      SnackBarHelper.showSuccessSnackBar(context, message: 'Custom pricing saved.');
+      Navigator.of(context).pop();
+    } catch (e) {
+      if (!mounted) return;
+      SnackBarHelper.showErrorSnackBar(
+        context,
+        message: 'Could not save pricing: ${FirestoreErrorUtils.userMessage(e)}',
+      );
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  /// Rate field with the ₹ prefix and unit ("/ min", "for 15 mins", ...) as
+  /// native `InputDecoration` prefix/suffix text sitting right against the
+  /// value inside the field itself, rather than a separate hint/caption.
+  Widget _rateField({
+    required String label,
+    required TextEditingController controller,
+    required String unitSuffix,
+  }) {
+    final tokens = context.tokens;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: AppFonts.plusJakarta(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: tokens.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          validator: _validateAmount,
+          style: AppFonts.plusJakarta(fontSize: 14, fontWeight: FontWeight.w500),
+          decoration: InputDecoration(
+            prefixText: '₹ ',
+            suffixText: unitSuffix,
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.85,
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            color: tokens.surfaceElevated,
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(AppSpacing.radiusLg),
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: AppSpacing.md),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: tokens.borderSubtle,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.pageH,
+                  AppSpacing.md,
+                  AppSpacing.pageH,
+                  0,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Set chat/call prices',
+                      style: AppFonts.plusJakarta(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: tokens.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Your custom rates for students who reach out directly.',
+                      style: AppFonts.plusJakarta(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: tokens.textTertiary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Only this middle section scrolls -- the header above and
+              // the action buttons below stay pinned, so Save/Cancel are
+              // always reachable without hunting for them after scrolling.
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.pageH,
+                    AppSpacing.lg,
+                    AppSpacing.pageH,
+                    AppSpacing.lg,
+                  ),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _rateField(
+                          label: 'Voice Call Rate',
+                          controller: _voiceRateController,
+                          unitSuffix: '/ min',
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        _rateField(
+                          label: 'Video Call Rate',
+                          controller: _videoRateController,
+                          unitSuffix: '/ min',
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        _rateField(
+                          label: '15-min Voice Package',
+                          controller: _voice15Controller,
+                          unitSuffix: 'for 15 mins',
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        _rateField(
+                          label: '15-min Video Package',
+                          controller: _video15Controller,
+                          unitSuffix: 'for 15 mins',
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        _rateField(
+                          label: 'SMS / Text Chat (30 min package)',
+                          controller: _chat30Controller,
+                          unitSuffix: 'for 30 mins',
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              Container(
+                padding: EdgeInsets.fromLTRB(
+                  AppSpacing.pageH,
+                  AppSpacing.md,
+                  AppSpacing.pageH,
+                  AppSpacing.md + MediaQuery.of(context).padding.bottom,
+                ),
+                decoration: BoxDecoration(
+                  border: Border(top: BorderSide(color: tokens.borderSubtle)),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: _saving ? null : () => Navigator.of(context).pop(),
+                        child: const Text('Cancel'),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      flex: 2,
+                      child: PrimaryButton(
+                        label: 'Save Rates',
+                        isLoading: _saving,
+                        onPressed: _save,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

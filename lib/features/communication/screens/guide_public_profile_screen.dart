@@ -194,7 +194,20 @@ class _GuidePublicProfileScreenState
 
   @override
   Widget build(BuildContext context) {
-    final guideAsync = ref.watch(publicGuideProvider(widget.guideUid));
+    final currentUid = ref.watch(currentUserProvider)?.uid;
+    final isOwnProfile = currentUid != null && currentUid == widget.guideUid;
+    // publicGuideProvider reads the cross-user public_profiles mirror and
+    // deliberately returns null when isGuideAvailable is off -- correct
+    // for another viewer, but wrong for the owner looking at their own
+    // page: they should always see their own profile (e.g. right after
+    // verifying or before ever toggling availability on), sourced from
+    // their own always-accessible users/{uid} doc instead of the
+    // cross-user mirror that gate is meant to protect.
+    final guideAsync = isOwnProfile
+        ? ref.watch(currentUserDetailProvider).whenData(
+              (user) => user == null ? null : PublicGuideProfile.fromUser(user),
+            )
+        : ref.watch(publicGuideProvider(widget.guideUid));
     final tokens = context.tokens;
 
     return Scaffold(
@@ -217,7 +230,9 @@ class _GuidePublicProfileScreenState
         loading: () => const AsyncLoadingView(),
         error: (e, _) => AsyncErrorView(
           message: e.toString().replaceFirst('Exception: ', ''),
-          onRetry: () => ref.invalidate(publicGuideProvider(widget.guideUid)),
+          onRetry: () => isOwnProfile
+              ? ref.invalidate(currentUserDetailProvider)
+              : ref.invalidate(publicGuideProvider(widget.guideUid)),
         ),
         data: (guide) {
           if (guide == null) {
