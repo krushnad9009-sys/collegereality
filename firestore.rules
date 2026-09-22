@@ -799,6 +799,32 @@ service cloud.firestore {
       }
     }
 
+    // Guide withdrawal requests reviewed by Super Admin. Deliberately a
+    // separate collection from the trusted-backend-only `guide_earnings`
+    // ledger above (never written by this rule set) -- a request just
+    // references an amount the guide claims is available; admin approval
+    // moves it to 'paid' (with a transaction id) or 'rejected' (with a
+    // reason), and either way the guide/amount on the request itself can
+    // never be altered after creation.
+    match /payout_requests/{requestId} {
+      allow read: if isAdmin() ||
+        (isAuthenticated() && resource.data.guideId == request.auth.uid);
+      allow create: if isAuthenticated() &&
+        request.resource.data.guideId == request.auth.uid &&
+        request.resource.data.status == 'pending' &&
+        request.resource.data.amountPaise is int &&
+        request.resource.data.amountPaise > 0 &&
+        request.resource.data.get('decidedAt', null) == null &&
+        request.resource.data.get('transactionId', null) == null;
+      allow update: if isAdmin() &&
+        resource.data.status == 'pending' &&
+        request.resource.data.guideId == resource.data.guideId &&
+        request.resource.data.amountPaise == resource.data.amountPaise &&
+        (request.resource.data.status == 'paid' ||
+          request.resource.data.status == 'rejected');
+      allow delete: if false;
+    }
+
     // Two-way post-consultation ratings. Doc ID is deterministically
     // `${consultationId}_${raterRole}` (student|guide) — that alone
     // enforces "one rating per participant per consultation" without a

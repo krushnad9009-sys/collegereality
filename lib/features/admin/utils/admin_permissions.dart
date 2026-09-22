@@ -44,6 +44,11 @@ class AdminPermissions {
 
   static bool canManageAppSettings(String? userType) => isSuperAdmin(userType);
 
+  /// Reviewing/approving guide withdrawal requests and adjusting the
+  /// platform commission is money-moving, so it's Super Admin only, same
+  /// tier as canManageAppSettings/canManageAds.
+  static bool canManagePayouts(String? userType) => isSuperAdmin(userType);
+
   /// Roles an actor may assign to another user.
   static List<String> assignableRoles(String? actorUserType) {
     if (isSuperAdmin(actorUserType)) {

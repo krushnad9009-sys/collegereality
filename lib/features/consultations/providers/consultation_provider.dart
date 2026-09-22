@@ -4,15 +4,31 @@ import '../../social/models/social_models.dart';
 import '../models/consultation_model.dart';
 import '../models/consultation_rating_model.dart';
 import '../models/guide_review_model.dart';
+import '../models/payout_models.dart';
 import '../services/call_access_service.dart';
 import '../services/consultation_service.dart';
 import '../services/payment_service.dart';
+import '../services/payout_service.dart';
 import '../utils/consultation_rating_calculator.dart';
 
 final consultationServiceProvider =
     Provider<ConsultationService>((ref) => ConsultationService());
 
 final paymentServiceProvider = Provider<PaymentService>((ref) => PaymentService());
+
+final payoutServiceProvider = Provider<PayoutService>((ref) => PayoutService());
+
+/// This guide's own `guide_earnings` ledger entries, newest first.
+final guideEarningsEntriesProvider =
+    FutureProvider.autoDispose.family<List<GuideEarningsEntry>, String>((ref, guideId) {
+  return ref.watch(payoutServiceProvider).fetchGuideEarningsEntries(guideId);
+});
+
+/// This guide's own withdrawal request history, newest first.
+final guidePayoutRequestsProvider =
+    FutureProvider.autoDispose.family<List<PayoutRequestModel>, String>((ref, guideId) {
+  return ref.watch(payoutServiceProvider).fetchGuidePayoutRequests(guideId);
+});
 
 final callAccessServiceProvider =
     Provider<CallAccessService>((ref) => CallAccessService());

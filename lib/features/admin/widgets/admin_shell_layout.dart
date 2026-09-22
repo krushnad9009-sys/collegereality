@@ -36,6 +36,7 @@ const adminNavItems = [
   AdminNavItem(title: 'Broadcast', icon: Icons.campaign_outlined, route: RouteNames.adminAnnouncements, adminOnly: true),
   AdminNavItem(title: 'Reports', icon: Icons.flag_outlined, route: RouteNames.adminReports),
   AdminNavItem(title: 'Export', icon: Icons.download_outlined, route: RouteNames.adminExport, adminOnly: true),
+  AdminNavItem(title: 'Payouts & Earnings', icon: Icons.account_balance_wallet_outlined, route: RouteNames.adminPayouts, adminOnly: true),
   AdminNavItem(title: 'Q&A', icon: Icons.quiz_outlined, route: RouteNames.adminQuestions),
   AdminNavItem(title: 'Campus Life', icon: Icons.event_outlined, route: RouteNames.adminStudentLife),
 ];

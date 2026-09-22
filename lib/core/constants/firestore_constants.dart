@@ -95,6 +95,11 @@ class FirestoreConstants {
   static const String guideEarningsEntriesSubcollection = 'entries';
   static const String consultationRatingsCollection = 'consultation_ratings';
 
+  /// Guide-initiated withdrawal requests against their `guide_earnings`
+  /// balance, reviewed by Super Admin (Approve & Mark Paid / Reject) — see
+  /// lib/features/admin/screens/admin_payouts_screen.dart.
+  static const String payoutRequestsCollection = 'payout_requests';
+
   /// PII-free public copies of student→guide reviews (no raterId), read by
   /// anyone to render a guide's public review list. Doc id = consultationId.
   static const String guideReviewsCollection = 'guide_reviews';

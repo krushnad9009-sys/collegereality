@@ -62,6 +62,7 @@ class RouteNames {
   static const String adminVerification = '/admin/verification';
   static const String adminConsultations = '/admin/consultations';
   static const String adminConsultationRevenue = '/admin/consultation-revenue';
+  static const String adminPayouts = '/admin/payouts';
   static const String verification = '/verification';
   // Guide-only earnings dashboard (drawer's "Earnings & Payouts" item).
   static const String earnings = '/earnings';

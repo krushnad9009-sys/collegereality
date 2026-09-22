@@ -170,6 +170,13 @@ class AdminDashboardScreen extends ConsumerWidget {
                 subtitle: 'Analytics, verification, and user reports (CSV)',
                 onTap: () => context.go(RouteNames.adminExport),
               ),
+            if (AdminPermissions.canManagePayouts(userType))
+              _AdminMenuTile(
+                icon: Icons.account_balance_wallet_outlined,
+                title: 'Payouts & Earnings',
+                subtitle: 'Review guide withdrawals, platform commission, guide ledgers',
+                onTap: () => context.go(RouteNames.adminPayouts),
+              ),
             _AdminMenuTile(
               icon: Icons.hub_outlined,
               title: 'Ecosystem Approvals',

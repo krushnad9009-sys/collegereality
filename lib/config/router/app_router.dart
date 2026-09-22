@@ -42,6 +42,7 @@ import '../../features/admin/screens/admin_analytics_screen.dart';
 import '../../features/admin/screens/admin_reports_hub_screen.dart';
 import '../../features/admin/screens/admin_consultations_screen.dart';
 import '../../features/admin/screens/admin_consultation_revenue_screen.dart';
+import '../../features/admin/screens/admin_payouts_screen.dart';
 import '../../features/admin/screens/admin_system_monitor_screen.dart';
 import '../../features/admin/screens/admin_college_bulk_screen.dart';
 import '../../features/admin/screens/admin_export_screen.dart';
@@ -970,6 +971,10 @@ final Provider<GoRouter> appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: RouteNames.adminConsultationRevenue,
             builder: (context, state) => const AdminConsultationRevenueScreen(),
+          ),
+          GoRoute(
+            path: RouteNames.adminPayouts,
+            builder: (context, state) => const AdminPayoutsScreen(),
           ),
           GoRoute(
             path: RouteNames.adminSystem,

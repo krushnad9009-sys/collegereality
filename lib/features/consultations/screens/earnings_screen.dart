@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,12 +9,11 @@ import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_theme.dart';
-import '../../../core/constants/consultation_constants.dart';
 import '../../../core/widgets/index.dart';
 import '../../auth/models/user_model.dart';
 import '../../auth/providers/user_provider.dart';
 import '../../auth/services/firestore_user_service.dart';
-import '../models/consultation_model.dart';
+import '../models/payout_models.dart';
 import '../providers/consultation_provider.dart';
 
 String _rupees(int paise) {
@@ -23,58 +21,23 @@ String _rupees(int paise) {
   return '₹${NumberFormat.decimalPattern('en_IN').format(rupees)}';
 }
 
-/// Bounded page-through of this guide's consultation history, used to
-/// compute real earnings instead of the 20-item first page the history
-/// screen shows. Capped at 5 pages (200 consultations) so opening this
-/// screen can never trigger an unbounded read.
-///
-/// Deliberately swallows fetch errors instead of rethrowing: this list only
-/// feeds the "Total Earnings" / transaction-history cards below the balance
-/// summary, so a transient Firestore hiccup (or a composite index still
-/// building) should degrade to an empty, zero-earnings state rather than
-/// block the whole dashboard behind an "Unable to load" screen.
-final _guideEarningsHistoryProvider = FutureProvider.autoDispose
-    .family<List<ConsultationModel>, String>((ref, uid) async {
-  final service = ref.watch(consultationServiceProvider);
-  final items = <ConsultationModel>[];
-  try {
-    DocumentSnapshot<Map<String, dynamic>>? cursor;
-    for (var i = 0; i < 5; i++) {
-      final page = await service.fetchHistoryPage(
-        userId: uid,
-        asGuide: true,
-        startAfter: cursor,
-        limit: 40,
-      );
-      items.addAll(page.items);
-      if (!page.hasMore || page.lastDocument == null) break;
-      cursor = page.lastDocument;
-    }
-  } catch (e) {
-    if (kDebugMode) debugPrint('[Earnings] history fetch failed: $e');
-    return items;
-  }
-  return items;
-});
-
-/// Withdrawn / pending-withdrawal ledger and linked payout method. Persisted
-/// in `UserModel.metadata['wallet']` -- the existing owner-only free-form
-/// bag (already stripped from the public_profiles mirror in
-/// FirestoreUserService.syncPublicProfile) -- so this needs no new Firestore
-/// collection or rules change. Actually moving money to a bank/UPI account
-/// is a backend payout job that doesn't exist yet; withdrawing here only
-/// records the request.
+/// Linked payout method plus any Super Admin manual balance adjustment.
+/// Persisted in `UserModel.metadata['wallet']` -- the existing owner-only
+/// free-form bag (already stripped from the public_profiles mirror in
+/// FirestoreUserService.syncPublicProfile), so linking a UPI/bank account
+/// needs no new Firestore collection or rules change. The actual earnings
+/// figures come from the backend-authoritative `guide_earnings` ledger and
+/// the `payout_requests` collection, not from this wallet -- see
+/// [_EarningsBodyState.build].
 class _Wallet {
-  final int withdrawnPaise;
-  final int pendingWithdrawalPaise;
+  final int manualAdjustmentPaise;
   final String? upiId;
   final String? bankAccountNumber;
   final String? bankIfsc;
   final String? accountHolderName;
 
   const _Wallet({
-    this.withdrawnPaise = 0,
-    this.pendingWithdrawalPaise = 0,
+    this.manualAdjustmentPaise = 0,
     this.upiId,
     this.bankAccountNumber,
     this.bankIfsc,
@@ -94,19 +57,26 @@ class _Wallet {
     return 'Not linked';
   }
 
+  PayoutMethodSnapshot toSnapshot() => PayoutMethodSnapshot(
+        type: (upiId?.isNotEmpty ?? false) ? 'upi' : 'bank',
+        upiId: upiId,
+        bankAccountNumber: bankAccountNumber,
+        bankIfsc: bankIfsc,
+        accountHolderName: accountHolderName,
+      );
+
   static int _asInt(dynamic v) => v is num ? v.toInt() : 0;
   static String? _asString(dynamic v) => v is String && v.isNotEmpty ? v : null;
 
   /// Never throws -- a brand-new guide has no `wallet` entry yet (and an
   /// old/partially-written one could have the wrong shape), and either case
-  /// should read as "₹0 earned, no payout method linked" rather than an
-  /// error. `json` itself may not even be a `Map` if legacy data wrote
-  /// something else under this key.
+  /// should read as "no payout method linked" rather than an error. `json`
+  /// itself may not even be a `Map` if legacy data wrote something else
+  /// under this key.
   factory _Wallet.fromJson(Object? json) {
     if (json is! Map) return const _Wallet();
     return _Wallet(
-      withdrawnPaise: _asInt(json['withdrawnPaise']),
-      pendingWithdrawalPaise: _asInt(json['pendingWithdrawalPaise']),
+      manualAdjustmentPaise: _asInt(json['manualAdjustmentPaise']),
       upiId: _asString(json['upiId']),
       bankAccountNumber: _asString(json['bankAccountNumber']),
       bankIfsc: _asString(json['bankIfsc']),
@@ -115,8 +85,7 @@ class _Wallet {
   }
 
   Map<String, dynamic> toJson() => {
-        'withdrawnPaise': withdrawnPaise,
-        'pendingWithdrawalPaise': pendingWithdrawalPaise,
+        'manualAdjustmentPaise': manualAdjustmentPaise,
         if (upiId != null) 'upiId': upiId,
         if (bankAccountNumber != null) 'bankAccountNumber': bankAccountNumber,
         if (bankIfsc != null) 'bankIfsc': bankIfsc,
@@ -124,17 +93,14 @@ class _Wallet {
       };
 
   _Wallet copyWith({
-    int? withdrawnPaise,
-    int? pendingWithdrawalPaise,
+    int? manualAdjustmentPaise,
     String? upiId,
     String? bankAccountNumber,
     String? bankIfsc,
     String? accountHolderName,
   }) {
     return _Wallet(
-      withdrawnPaise: withdrawnPaise ?? this.withdrawnPaise,
-      pendingWithdrawalPaise:
-          pendingWithdrawalPaise ?? this.pendingWithdrawalPaise,
+      manualAdjustmentPaise: manualAdjustmentPaise ?? this.manualAdjustmentPaise,
       upiId: upiId ?? this.upiId,
       bankAccountNumber: bankAccountNumber ?? this.bankAccountNumber,
       bankIfsc: bankIfsc ?? this.bankIfsc,
@@ -144,9 +110,12 @@ class _Wallet {
 }
 
 /// Guide-only earnings dashboard reached from the drawer's "Earnings &
-/// Payouts" item. Total earnings and the transaction list are computed from
-/// this guide's real completed consultations (`guideAmountPaise` on each
-/// [ConsultationModel]).
+/// Payouts" item. Total earnings come from the backend-authoritative
+/// `guide_earnings/{uid}/entries` ledger (written only by trusted Cloud
+/// Function logic on payment/completion/refund); withdrawals create a
+/// `payout_requests` doc reviewed by Super Admin in
+/// admin_payouts_screen.dart -- the two screens share this same data, so a
+/// request approved/rejected there is reflected here.
 class EarningsScreen extends ConsumerWidget {
   const EarningsScreen({super.key});
 
@@ -255,22 +224,25 @@ class _EarningsBodyState extends ConsumerState<_EarningsBody> {
       context,
       title: 'Withdraw funds',
       message:
-          'Withdraw ${_rupees(availablePaise)} to ${wallet.payoutSummary}? '
-          'This is typically credited within 3-5 business days.',
-      confirmText: 'Withdraw',
+          'Request a withdrawal of ${_rupees(availablePaise)} to ${wallet.payoutSummary}? '
+          'A Super Admin reviews every request before it is paid out.',
+      confirmText: 'Request withdrawal',
       cancelText: 'Cancel',
     );
     if (!confirmed || !mounted) return;
     setState(() => _busy = true);
     try {
-      final updated = wallet.copyWith(
-        pendingWithdrawalPaise: wallet.pendingWithdrawalPaise + availablePaise,
-      );
-      await _saveWallet(updated);
+      await ref.read(payoutServiceProvider).createPayoutRequest(
+            guideId: widget.user.uid,
+            guideName: widget.user.effectivePublicDisplayName,
+            amountPaise: availablePaise,
+            payoutMethod: wallet.toSnapshot(),
+          );
+      ref.invalidate(guidePayoutRequestsProvider(widget.user.uid));
       if (!mounted) return;
       SnackBarHelper.showSuccessSnackBar(
         context,
-        message: 'Withdrawal request submitted.',
+        message: 'Withdrawal request submitted for review.',
       );
     } catch (e) {
       if (kDebugMode) debugPrint('[Earnings] withdraw failed: $e');
@@ -287,35 +259,45 @@ class _EarningsBodyState extends ConsumerState<_EarningsBody> {
   @override
   Widget build(BuildContext context) {
     final uid = widget.user.uid;
-    final historyAsync = ref.watch(_guideEarningsHistoryProvider(uid));
+    final entriesAsync = ref.watch(guideEarningsEntriesProvider(uid));
+    final requestsAsync = ref.watch(guidePayoutRequestsProvider(uid));
     final wallet = _Wallet.fromJson(widget.user.metadata?['wallet']);
 
     return AsyncStateView(
-      value: historyAsync,
-      onRetry: () => ref.invalidate(_guideEarningsHistoryProvider(uid)),
-      builder: (history) {
-        final completed = history
-            .where((c) => c.status == ConsultationConstants.statusCompleted)
-            .toList();
-        final totalEarnedPaise = completed.fold<int>(
-          0,
-          (total, c) => total + c.priceInfo.guideAmountPaise,
-        );
-        final availablePaise = (totalEarnedPaise -
-                wallet.withdrawnPaise -
-                wallet.pendingWithdrawalPaise)
-            .clamp(0, totalEarnedPaise)
-            .toInt();
+      value: entriesAsync,
+      onRetry: () => ref.invalidate(guideEarningsEntriesProvider(uid)),
+      builder: (entries) {
+        final payable = entries.where((e) => e.status == 'payable').toList();
+        final processingPaise = entries
+            .where((e) => e.status == 'pending')
+            .fold<int>(0, (t, e) => t + e.amountPaise);
+        final totalEarnedPaise =
+            payable.fold<int>(0, (t, e) => t + e.amountPaise);
+
+        // Every non-rejected request (pending or already paid) reserves
+        // that amount out of the balance -- a rejected one returns it
+        // automatically since it's simply excluded here, no separate
+        // "refund to balance" bookkeeping needed.
+        final requests = requestsAsync.valueOrNull ?? const <PayoutRequestModel>[];
+        final reservedPaise = requests
+            .where((r) => r.status != PayoutRequestConstants.statusRejected)
+            .fold<int>(0, (t, r) => t + r.amountPaise);
+        final rawAvailable =
+            totalEarnedPaise + wallet.manualAdjustmentPaise - reservedPaise;
+        final availablePaise = rawAvailable < 0 ? 0 : rawAvailable;
 
         return RefreshIndicator(
-          onRefresh: () async =>
-              ref.invalidate(_guideEarningsHistoryProvider(uid)),
+          onRefresh: () async {
+            ref.invalidate(guideEarningsEntriesProvider(uid));
+            ref.invalidate(guidePayoutRequestsProvider(uid));
+          },
           child: ListView(
             padding: const EdgeInsets.all(AppSpacing.pageH),
             children: [
               _TotalEarningsCard(
                 totalPaise: totalEarnedPaise,
-                completedCount: completed.length,
+                completedCount: payable.length,
+                processingPaise: processingPaise,
               ),
               const SizedBox(height: 16),
               _AvailableBalanceCard(
@@ -335,20 +317,58 @@ class _EarningsBodyState extends ConsumerState<_EarningsBody> {
               ),
               const SizedBox(height: 16),
               const SectionHeader(
+                title: 'Withdrawal requests',
+                subtitle: 'Reviewed by a Super Admin.',
+              ),
+              requestsAsync.when(
+                data: (list) => list.isEmpty
+                    ? Text(
+                        'No withdrawal requests yet.',
+                        style: AppFonts.plusJakarta(
+                          fontSize: 13,
+                          color: context.tokens.textTertiary,
+                        ),
+                      )
+                    : Column(
+                        children: list
+                            .map(
+                              (r) => Padding(
+                                padding: const EdgeInsets.only(bottom: 10),
+                                child: _WithdrawalRequestTile(request: r),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                loading: () => const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: Center(
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ),
+                ),
+                // Best-effort section beneath the balance cards above --
+                // never block the whole page on this list failing to load.
+                error: (_, _) => const SizedBox.shrink(),
+              ),
+              const SizedBox(height: 16),
+              const SectionHeader(
                 title: 'Transaction history',
                 subtitle: 'Your guidance sessions and their payout status.',
               ),
-              if (history.isEmpty)
+              if (entries.isEmpty)
                 const AsyncEmptyView(
                   icon: Icons.receipt_long_outlined,
                   title: 'No sessions yet',
                   subtitle: 'Completed guidance sessions will show up here.',
                 )
               else
-                ...history.map(
-                  (c) => Padding(
+                ...entries.map(
+                  (e) => Padding(
                     padding: const EdgeInsets.only(bottom: 10),
-                    child: _TransactionTile(consultation: c),
+                    child: _EarningsEntryTile(entry: e),
                   ),
                 ),
             ],
@@ -362,10 +382,12 @@ class _EarningsBodyState extends ConsumerState<_EarningsBody> {
 class _TotalEarningsCard extends StatelessWidget {
   final int totalPaise;
   final int completedCount;
+  final int processingPaise;
 
   const _TotalEarningsCard({
     required this.totalPaise,
     required this.completedCount,
+    this.processingPaise = 0,
   });
 
   @override
@@ -429,7 +451,8 @@ class _TotalEarningsCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'From $completedCount completed ${completedCount == 1 ? 'session' : 'sessions'}',
+            'From $completedCount completed ${completedCount == 1 ? 'session' : 'sessions'}'
+            '${processingPaise > 0 ? ' · ${_rupees(processingPaise)} processing' : ''}',
             style: AppFonts.plusJakarta(
               fontSize: 12.5,
               fontWeight: FontWeight.w500,
@@ -573,20 +596,27 @@ class _AvailableBalanceCard extends StatelessWidget {
   }
 }
 
-class _TransactionTile extends StatelessWidget {
-  final ConsultationModel consultation;
-  const _TransactionTile({required this.consultation});
-
-  bool get _isCompleted =>
-      consultation.status == ConsultationConstants.statusCompleted;
+class _EarningsEntryTile extends StatelessWidget {
+  final GuideEarningsEntry entry;
+  const _EarningsEntryTile({required this.entry});
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final primary = Theme.of(context).colorScheme.primary;
-    final statusColor =
-        _isCompleted ? const Color(0xFF16A34A) : const Color(0xFFD97706);
-    final date = consultation.completedAt ?? consultation.createdAt;
+    final String label;
+    final Color statusColor;
+    switch (entry.status) {
+      case 'payable':
+        label = 'Completed';
+        statusColor = const Color(0xFF16A34A);
+      case 'pending':
+        label = 'Processing';
+        statusColor = const Color(0xFFD97706);
+      default:
+        label = 'Refunded';
+        statusColor = const Color(0xFF64748B);
+    }
 
     return PremiumCard(
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -599,13 +629,7 @@ class _TransactionTile extends StatelessWidget {
               color: primary.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
             ),
-            child: Icon(
-              consultation.type == ConsultationConstants.typeChat
-                  ? Icons.chat_bubble_outline_rounded
-                  : Icons.call_outlined,
-              size: 18,
-              color: primary,
-            ),
+            child: Icon(Icons.payments_outlined, size: 18, color: primary),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -613,7 +637,7 @@ class _TransactionTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${consultation.type[0].toUpperCase()}${consultation.type.substring(1)} · ${consultation.durationMinutes} min',
+                  'Consultation session',
                   style: AppFonts.plusJakarta(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -624,7 +648,7 @@ class _TransactionTile extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  DateFormat('MMM d, yyyy').format(date),
+                  DateFormat('MMM d, yyyy').format(entry.createdAt),
                   style: AppFonts.plusJakarta(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
@@ -639,7 +663,7 @@ class _TransactionTile extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '+${_rupees(consultation.priceInfo.guideAmountPaise)}',
+                '+${_rupees(entry.amountPaise)}',
                 style: AppFonts.plusJakarta(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
@@ -647,12 +671,86 @@ class _TransactionTile extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 4),
-              StatusBadge(
-                label: _isCompleted ? 'Completed' : 'Pending',
-                color: statusColor,
-              ),
+              StatusBadge(label: label, color: statusColor),
             ],
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _WithdrawalRequestTile extends StatelessWidget {
+  final PayoutRequestModel request;
+  const _WithdrawalRequestTile({required this.request});
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final String label;
+    final Color statusColor;
+    switch (request.status) {
+      case PayoutRequestConstants.statusPaid:
+        label = 'Paid';
+        statusColor = const Color(0xFF16A34A);
+      case PayoutRequestConstants.statusRejected:
+        label = 'Rejected';
+        statusColor = const Color(0xFFDC2626);
+      default:
+        label = 'Pending review';
+        statusColor = const Color(0xFFD97706);
+    }
+
+    return PremiumCard(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  _rupees(request.amountPaise),
+                  style: AppFonts.plusJakarta(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: tokens.textPrimary,
+                  ),
+                ),
+              ),
+              StatusBadge(label: label, color: statusColor),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Requested ${DateFormat('MMM d, yyyy').format(request.requestedAt)} '
+            '· to ${request.payoutMethod.summary}',
+            style: AppFonts.plusJakarta(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: tokens.textTertiary,
+            ),
+          ),
+          if (request.status == PayoutRequestConstants.statusPaid &&
+              (request.transactionId?.isNotEmpty ?? false)) ...[
+            const SizedBox(height: 4),
+            Text(
+              'Transaction ID: ${request.transactionId}',
+              style: AppFonts.plusJakarta(fontSize: 11.5, color: tokens.textTertiary),
+            ),
+          ],
+          if (request.status == PayoutRequestConstants.statusRejected &&
+              (request.rejectionReason?.isNotEmpty ?? false)) ...[
+            const SizedBox(height: 4),
+            Text(
+              'Reason: ${request.rejectionReason}',
+              style: AppFonts.plusJakarta(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: const Color(0xFFDC2626),
+              ),
+            ),
+          ],
         ],
       ),
     );
