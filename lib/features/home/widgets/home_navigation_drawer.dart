@@ -74,6 +74,13 @@ class HomeNavigationDrawer extends ConsumerWidget {
                       title: 'Notifications',
                       onTap: () => _go(context, RouteNames.notifications),
                     ),
+                    if (userDetail?.communicationSettings.isGuideAvailable ??
+                        false)
+                      _DrawerItem(
+                        icon: Icons.account_balance_wallet_outlined,
+                        title: 'Earnings & Payouts',
+                        onTap: () => _go(context, RouteNames.earnings),
+                      ),
                   ],
                   if (user != null && isAdmin) ...[
                     const _DrawerDivider(inset: true),

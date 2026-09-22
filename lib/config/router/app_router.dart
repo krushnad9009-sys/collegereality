@@ -117,6 +117,7 @@ import '../../features/consultations/screens/guide_pricing_setup_screen.dart';
 import '../../features/consultations/screens/consultation_checkout_screen.dart';
 import '../../features/consultations/screens/consultation_room_screen.dart';
 import '../../features/consultations/screens/consultation_history_screen.dart';
+import '../../features/consultations/screens/earnings_screen.dart';
 import 'route_names.dart';
 import '../../core/widgets/app_shell.dart';
 import '../../core/widgets/page_transitions.dart';
@@ -572,6 +573,14 @@ final Provider<GoRouter> appRouterProvider = Provider<GoRouter>((ref) {
           key: state.pageKey,
           name: state.name,
           child: const VerificationScreen(),
+        ),
+      ),
+      GoRoute(
+        path: RouteNames.earnings,
+        pageBuilder: (context, state) => fadeThroughPage(
+          key: state.pageKey,
+          name: state.name,
+          child: const EarningsScreen(),
         ),
       ),
       GoRoute(
