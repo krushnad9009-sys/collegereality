@@ -17,6 +17,7 @@ import '../../features/admin/screens/admin_community_screen.dart';
 import '../../features/admin/screens/admin_cr_score_screen.dart';
 import '../../features/admin/screens/admin_export_screen.dart';
 import '../../features/admin/screens/admin_merge_colleges_screen.dart';
+import '../../features/admin/screens/admin_payouts_screen.dart';
 import '../../features/admin/screens/admin_questions_screen.dart';
 import '../../features/admin/screens/admin_reports_hub_screen.dart';
 import '../../features/admin/screens/admin_reviews_screen.dart';
@@ -246,6 +247,10 @@ final Provider<GoRouter> superAdminRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: SuperAdminRouteNames.consultationRevenue,
         builder: (context, state) => const AdminConsultationRevenueScreen(),
+      ),
+      GoRoute(
+        path: SuperAdminRouteNames.payouts,
+        builder: (context, state) => const AdminPayoutsScreen(),
       ),
       GoRoute(
         path: SuperAdminRouteNames.leadAnalytics,

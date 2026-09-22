@@ -36,7 +36,13 @@ const adminNavItems = [
   AdminNavItem(title: 'Broadcast', icon: Icons.campaign_outlined, route: RouteNames.adminAnnouncements, adminOnly: true),
   AdminNavItem(title: 'Reports', icon: Icons.flag_outlined, route: RouteNames.adminReports),
   AdminNavItem(title: 'Export', icon: Icons.download_outlined, route: RouteNames.adminExport, adminOnly: true),
-  AdminNavItem(title: 'Payouts & Earnings', icon: Icons.account_balance_wallet_outlined, route: RouteNames.adminPayouts, adminOnly: true),
+  // Deliberately not `adminOnly: true` -- that flag hides the item until
+  // the async isAdminUser check resolves, so on a first paint (or if that
+  // provider is ever slow/stuck) the item silently disappears from the
+  // sidebar even for an actual admin. The screen itself still enforces
+  // AdminPermissions.canManagePayouts, so this only affects whether the
+  // link is shown, never who can act on it.
+  AdminNavItem(title: 'Payouts & Earnings', icon: Icons.payments_outlined, route: RouteNames.adminPayouts),
   AdminNavItem(title: 'Q&A', icon: Icons.quiz_outlined, route: RouteNames.adminQuestions),
   AdminNavItem(title: 'Campus Life', icon: Icons.event_outlined, route: RouteNames.adminStudentLife),
 ];

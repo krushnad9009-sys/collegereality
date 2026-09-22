@@ -93,6 +93,16 @@ class AdminDashboardScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: AppSpacing.md),
+            // Prominent, first in the list -- money-moving actions
+            // (pending withdrawal requests) benefit from an admin seeing
+            // this before anything else on the dashboard.
+            if (AdminPermissions.canManagePayouts(userType))
+              _AdminMenuTile(
+                icon: Icons.payments_outlined,
+                title: 'Manage Payouts',
+                subtitle: 'Review guide withdrawals, platform commission, guide ledgers',
+                onTap: () => context.go(RouteNames.adminPayouts),
+              ),
             if (AdminPermissions.canViewAnalytics(userType))
               _AdminMenuTile(
                 icon: Icons.analytics_outlined,
@@ -169,13 +179,6 @@ class AdminDashboardScreen extends ConsumerWidget {
                 title: 'Export Reports',
                 subtitle: 'Analytics, verification, and user reports (CSV)',
                 onTap: () => context.go(RouteNames.adminExport),
-              ),
-            if (AdminPermissions.canManagePayouts(userType))
-              _AdminMenuTile(
-                icon: Icons.account_balance_wallet_outlined,
-                title: 'Payouts & Earnings',
-                subtitle: 'Review guide withdrawals, platform commission, guide ledgers',
-                onTap: () => context.go(RouteNames.adminPayouts),
               ),
             _AdminMenuTile(
               icon: Icons.hub_outlined,

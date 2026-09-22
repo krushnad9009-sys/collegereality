@@ -45,9 +45,11 @@ class AdminPermissions {
   static bool canManageAppSettings(String? userType) => isSuperAdmin(userType);
 
   /// Reviewing/approving guide withdrawal requests and adjusting the
-  /// platform commission is money-moving, so it's Super Admin only, same
-  /// tier as canManageAppSettings/canManageAds.
-  static bool canManagePayouts(String? userType) => isSuperAdmin(userType);
+  /// platform commission. firestore.rules already gate the underlying
+  /// payout_requests writes at isAdmin() (not super-admin-only), so the
+  /// client gate matches that rather than being stricter than what's
+  /// actually enforced -- same tier as canManageUsers/canBroadcast.
+  static bool canManagePayouts(String? userType) => isAdmin(userType);
 
   /// Roles an actor may assign to another user.
   static List<String> assignableRoles(String? actorUserType) {

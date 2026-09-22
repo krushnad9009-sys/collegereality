@@ -73,6 +73,11 @@ const superAdminPanelConfig = SuperAdminPanelConfig(
       route: SuperAdminRouteNames.consultationRevenue,
     ),
     SuperAdminNavItem(
+      title: 'Payouts & Earnings',
+      icon: Icons.payments_outlined,
+      route: SuperAdminRouteNames.payouts,
+    ),
+    SuperAdminNavItem(
       title: 'Export',
       icon: Icons.download_outlined,
       route: SuperAdminRouteNames.export,
