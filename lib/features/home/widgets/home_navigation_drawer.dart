@@ -62,24 +62,24 @@ class HomeNavigationDrawer extends ConsumerWidget {
                     _DrawerItem(
                       icon: Icons.rate_review_outlined,
                       title: 'My Reviews',
-                      onTap: () => _go(context, RouteNames.myReviews),
+                      onTap: () => _push(context, RouteNames.myReviews),
                     ),
                     _DrawerItem(
                       icon: Icons.bookmark_outline_rounded,
                       title: 'Bookmarks',
-                      onTap: () => _go(context, RouteNames.favorites),
+                      onTap: () => _push(context, RouteNames.favorites),
                     ),
                     _DrawerItem(
                       icon: Icons.notifications_outlined,
                       title: 'Notifications',
-                      onTap: () => _go(context, RouteNames.notifications),
+                      onTap: () => _push(context, RouteNames.notifications),
                     ),
                     if (userDetail?.communicationSettings.isGuideAvailable ??
                         false)
                       _DrawerItem(
                         icon: Icons.account_balance_wallet_outlined,
                         title: 'Earnings & Payouts',
-                        onTap: () => _go(context, RouteNames.earnings),
+                        onTap: () => _push(context, RouteNames.earnings),
                       ),
                   ],
                   if (user != null && isAdmin) ...[
@@ -122,10 +122,25 @@ class HomeNavigationDrawer extends ConsumerWidget {
 
   /// Closes the drawer, then navigates. The router is captured first because
   /// the drawer's own context is on its way out once it has been popped.
+  /// Used for peer/tab-like destinations (Search) and sign-in/admin, which
+  /// follow the same `go()` convention used to reach them elsewhere in the
+  /// app.
   static void _go(BuildContext context, String route) {
     final router = GoRouter.of(context);
     Navigator.of(context).pop();
     router.go(route);
+  }
+
+  /// Same as [_go], but pushes the destination onto the navigation stack
+  /// instead of replacing it. Used for standalone detail screens (My
+  /// Reviews, Bookmarks, Notifications, Earnings & Payouts) so Home stays
+  /// underneath them on the stack -- without this, `go()` would replace
+  /// Home outright and the destination's back arrow would have nothing to
+  /// pop back to.
+  static void _push(BuildContext context, String route) {
+    final router = GoRouter.of(context);
+    Navigator.of(context).pop();
+    router.push(route);
   }
 
   /// The confirmation runs while the drawer is still open, so `context` and

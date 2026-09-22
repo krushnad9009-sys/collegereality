@@ -138,7 +138,10 @@ class _NotificationBell extends ConsumerWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () => context.go(RouteNames.notifications),
+        // push, not go: Home must stay on the stack so Notifications' own
+        // back arrow can pop straight back to it (see home_navigation_drawer
+        // for the same fix on the drawer's Notifications item).
+        onTap: () => context.push(RouteNames.notifications),
         borderRadius: BorderRadius.circular(14),
         child: Container(
           width: size,

@@ -100,7 +100,9 @@ class _NotificationsCenterScreenState
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-          onPressed: () => context.pop(),
+          onPressed: () => context.canPop()
+              ? context.pop()
+              : context.go(RouteNames.home),
         ),
         title: Text(
           'Notifications',
