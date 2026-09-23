@@ -137,7 +137,13 @@ class UserModel {
     final uid = json['uid'] as String? ?? docId ?? '';
     return UserModel(
       uid: uid,
-      email: json['email'] as String,
+      // Nullable, not a required cast: `public_profiles` mirror docs (read
+      // for any cross-user view -- guide directory, guide profile, etc.)
+      // never carry `email` at all, by design (see
+      // FirestoreUserService.syncPublicProfile) -- parsing one of those
+      // must not throw just because the PII field it deliberately never
+      // had is absent.
+      email: json['email'] as String? ?? '',
       phone: json['phone'] as String?,
       displayName: json['displayName'] as String?,
       verifiedRealName: json['verifiedRealName'] as String?,

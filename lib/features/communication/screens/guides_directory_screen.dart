@@ -458,20 +458,19 @@ class _ActionCard extends StatelessWidget {
   }
 }
 
-class _GuideListTile extends ConsumerWidget {
+class _GuideListTile extends StatelessWidget {
   final PublicGuideProfile guide;
 
   const _GuideListTile({required this.guide});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final tokens = context.tokens;
     final primary = Theme.of(context).colorScheme.primary;
-    // Live presence (autoDispose -- only rows currently on/near screen keep
-    // a listener open) so a guide flipping online/offline updates this row
-    // in real time instead of only showing the search snapshot.
-    final presence =
-        ref.watch(presenceProvider(guide.uid)).valueOrNull ?? guide.presence;
+    // guidesDirectoryProvider is now a live query stream (watchGuides) that
+    // re-emits the whole list -- including this guide's presence -- on any
+    // change, so there's no need for a second per-row listener on top of it.
+    final presence = guide.presence;
     final settings = guide.settings;
     final priceLabel = settings.chatAvailable && settings.chatPricePaise > 0
         ? '₹${(settings.chatPricePaise / 100).round()} chat'

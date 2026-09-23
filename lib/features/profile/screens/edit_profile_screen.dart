@@ -45,6 +45,15 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   List<String> _languagesKnown = [];
   List<String> _interests = [];
   String _availabilityStatus = ProfileConstants.availabilityAvailable;
+  // The value `_availabilityStatus` was hydrated with, so `_saveProfile`
+  // can tell "the user changed this on this screen" apart from "this
+  // screen just happens to hold a copy of it". Without that distinction,
+  // saving ANY unrelated field (course, bio, name, ...) would blindly
+  // write this possibly-stale copy back over `presence.availabilityStatus`
+  // -- silently reverting a guide's online status if they'd toggled it on
+  // (via GuideOnlineToggleCard on the Profile hub) any time after this
+  // screen last hydrated. See _saveProfile.
+  String? _hydratedAvailabilityStatus;
   String? _photoURL;
   String? _coverPhotoURL;
   GuideCommunicationSettings? _communicationSettings;
@@ -73,6 +82,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _languagesKnown = List<String>.from(user.languagesKnown);
     _interests = List<String>.from(user.interests);
     _availabilityStatus = user.presence.availabilityStatus;
+    _hydratedAvailabilityStatus = user.presence.availabilityStatus;
     _photoURL = user.photoURL;
     _coverPhotoURL = user.coverPhotoURL;
     _communicationSettings = user.communicationSettings;
@@ -113,11 +123,20 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             interests: _interests,
             languagesKnown: _languagesKnown,
             communicationSettings: _communicationSettings,
-            presence: UserPresenceModel(
-              isOnline: currentDetail?.presence.isOnline ?? false,
-              lastSeenAt: DateTime.now(),
-              availabilityStatus: _availabilityStatus,
-            ),
+            // Only touch presence when the availability selector on THIS
+            // screen was actually changed -- otherwise omit it so this
+            // save (course/bio/name/anything else) can never clobber a
+            // guide's online status with the copy this screen happened to
+            // hydrate with, which may be stale if they toggled it (via
+            // GuideOnlineToggleCard) any time after that. See
+            // _hydratedAvailabilityStatus.
+            presence: _availabilityStatus == _hydratedAvailabilityStatus
+                ? null
+                : UserPresenceModel(
+                    isOnline: currentDetail?.presence.isOnline ?? false,
+                    lastSeenAt: DateTime.now(),
+                    availabilityStatus: _availabilityStatus,
+                  ),
           );
 
       ref.invalidate(currentUserDetailProvider);

@@ -109,7 +109,10 @@ void main() {
         ),
         guidesDirectoryProvider.overrideWith((ref, language) {
           languagesAsked.add(language);
-          return load != null ? load() : Future.value(guides);
+          // guidesDirectoryProvider is a StreamProvider (watchGuides) now;
+          // Stream.fromFuture preserves the same loading/error/data
+          // semantics the `load` callback already expects.
+          return Stream.fromFuture(load != null ? load() : Future.value(guides));
         }),
         privateConversationsProvider.overrideWith((ref) => Stream.value(chats)),
       ],

@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 import '../../../core/constants/communication_constants.dart';
 import '../../../core/constants/firestore_constants.dart';
@@ -16,10 +17,28 @@ class CommunicationFirestoreService {
   final _uuid = const Uuid();
   final _userService = FirestoreUserService();
 
-  Future<List<PublicGuideProfile>> searchGuides({
+  /// Live guide directory -- re-emits the full matching set whenever ANY
+  /// field on ANY matching doc changes (a presence toggle included, since
+  /// presence lives on this same doc), so the `/guides` list and its
+  /// online-first ordering (GuideSearchMatcher.sortByAvailability, which
+  /// reads `guide.presence` straight off these results) update instantly
+  /// without a manual refresh -- no per-row listener needed on top of this.
+  ///
+  /// Deliberately does NOT filter by `isOnline`/presence at the query
+  /// level: `isLiveOnline` is staleness-derived (see UserPresenceModel),
+  /// not a raw stored flag, precisely because a crashed/backgrounded app
+  /// can leave a stale `isOnline: true` behind with no chance to correct
+  /// it -- a hard Firestore filter on that flag would trust exactly the
+  /// signal the app's own design says not to. Offline guides intentionally
+  /// stay in the list (sorted below online ones) so `/guides` is never a
+  /// dead end. `isGuideAvailable` alone is the eligibility filter; every
+  /// doc it matches is already a verified student/alumni, enforced
+  /// server-side by `guideAvailabilityRequiresVerification()` in
+  /// firestore.rules, not re-checked here.
+  Stream<List<PublicGuideProfile>> watchGuides({
     String? language,
     int limit = 50,
-  }) async {
+  }) {
     Query<Map<String, dynamic>> query = _firestore
         .collection(FirestoreConstants.publicProfilesCollection)
         .where('communicationSettings.isGuideAvailable', isEqualTo: true)
@@ -29,12 +48,35 @@ class CommunicationFirestoreService {
       query = query.where('languagesKnown', arrayContains: language);
     }
 
-    final snapshot = await query.get();
-    return snapshot.docs
-        .map((doc) => PublicGuideProfile.fromUser(
+    return query.snapshots().map((snapshot) {
+      final guides = <PublicGuideProfile>[];
+      for (final doc in snapshot.docs) {
+        try {
+          guides.add(
+            PublicGuideProfile.fromUser(
               UserModel.fromJson(doc.data(), docId: doc.id),
-            ))
-        .toList();
+            ),
+          );
+        } catch (e) {
+          // One malformed/mismatched-field doc must never blank out the
+          // whole directory -- skip it and trace why in debug builds.
+          if (kDebugMode) {
+            debugPrint(
+              '[CommunicationFirestoreService] watchGuides: skipped '
+              '${doc.id} -- $e',
+            );
+          }
+        }
+      }
+      if (kDebugMode) {
+        final onlineCount = guides.where((g) => g.presence.isLiveOnline).length;
+        debugPrint(
+          '[CommunicationFirestoreService] watchGuides: '
+          '${guides.length} available guide(s), $onlineCount online now',
+        );
+      }
+      return guides;
+    });
   }
 
   Future<PublicGuideProfile?> getPublicGuideProfile(String uid) async {

@@ -12,8 +12,8 @@ final communicationServiceProvider = Provider<CommunicationFirestoreService>((re
 });
 
 final guidesDirectoryProvider =
-    FutureProvider.family<List<PublicGuideProfile>, String?>((ref, language) {
-  return ref.watch(communicationServiceProvider).searchGuides(language: language);
+    StreamProvider.family<List<PublicGuideProfile>, String?>((ref, language) {
+  return ref.watch(communicationServiceProvider).watchGuides(language: language);
 });
 
 final publicGuideProvider =

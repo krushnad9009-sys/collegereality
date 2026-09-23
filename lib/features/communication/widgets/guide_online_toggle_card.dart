@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_fonts.dart';
+import '../../../core/constants/profile_constants.dart';
 import '../../../core/constants/verification_constants.dart';
 import '../../../core/widgets/index.dart';
 import '../../auth/models/user_model.dart';
+import '../../auth/providers/user_provider.dart';
 import '../../community/providers/community_provider.dart';
 
 /// Quick "Online status" switch on the guide's own profile hub. Flips
@@ -39,11 +41,10 @@ class _GuideOnlineToggleCardState extends ConsumerState<GuideOnlineToggleCard> {
   /// Set the instant a toggle is tapped, cleared once the live stream
   /// confirms it. Firestore's local cache resolves `FieldValue
   /// .serverTimestamp()` to `null` until the server ack lands, which would
-  /// otherwise make `presence.isLiveOnline` read false for a moment right
-  /// after switching ON (the exact "flips back to Offline" bug) -- the
-  /// switch shows this optimistic value instead of the live-derived one
-  /// while a write is in flight, so it never depends on that transient
-  /// local state.
+  /// otherwise make presence read stale for a moment right after switching
+  /// ON -- the switch shows this optimistic value instead of the
+  /// live-derived one while a write is in flight, so it never depends on
+  /// that transient local state.
   bool? _pendingOnline;
 
   bool get _isEligibleGuide => GuideOnlineToggleCard.isEligible(widget.user);
@@ -58,6 +59,18 @@ class _GuideOnlineToggleCardState extends ConsumerState<GuideOnlineToggleCard> {
       await ref
           .read(communityServiceProvider)
           .setAvailability(widget.user.uid, available: value);
+      // currentUserDetailProvider is a one-shot FutureProvider, not a
+      // stream -- without this, it keeps serving whatever presence it had
+      // cached from before this toggle. That stale copy is exactly what
+      // made edit_profile_screen.dart's general "Save Profile" (course,
+      // bio, anything) silently overwrite a guide's online status back to
+      // whatever it was when that screen last hydrated: it re-populates
+      // its local availability field from this same provider, and its
+      // save always writes presence back out from that local field. This
+      // invalidation is what keeps that screen (and anywhere else reading
+      // this provider) from ever re-hydrating a stale value in the first
+      // place.
+      ref.invalidate(currentUserDetailProvider);
     } catch (_) {
       if (mounted) {
         // Revert to whatever the switch showed before this attempt so the
@@ -78,15 +91,27 @@ class _GuideOnlineToggleCardState extends ConsumerState<GuideOnlineToggleCard> {
     if (!_isEligibleGuide) return const SizedBox.shrink();
 
     final tokens = context.tokens;
-    // Live presence from the public mirror; fall back to the doc we were
-    // built with until the stream produces a value.
-    final live = ref.watch(presenceProvider(widget.user.uid));
-    final presence = live.valueOrNull ?? widget.user.presence;
-    final liveOnline = presence.isLiveOnline;
+    // Straight from the guide's own `users/{uid}` doc (owner-readable,
+    // source of truth) rather than the public_profiles mirror other
+    // viewers read -- one write, one listener, no dependency on a second
+    // sync write landing before this card sees the change.
+    final live = ref.watch(userStreamProvider(widget.user.uid));
+    final presence = live.valueOrNull?.presence ?? widget.user.presence;
+
+    // This is the guide's OWN toggle, so it reflects their persisted
+    // choice directly -- NOT gated by the same freshness check other
+    // viewers' "is this guide reachable right now" signal uses
+    // (UserPresenceModel.isLiveOnline). That staleness gate exists so a
+    // crashed/backgrounded app can't leave other students thinking a
+    // guide is reachable forever; it has nothing to do with what this
+    // switch itself should show, and gating on it here was the "reverts
+    // after ~100s" bug -- a missed/delayed heartbeat tick made the
+    // guide's own switch flip off even though they never touched it.
+    final liveOnline =
+        presence.availabilityStatus == ProfileConstants.availabilityAvailable;
 
     // Once the live stream confirms our own pending toggle, stop
-    // overriding it -- from then on this card tracks real presence again
-    // (e.g. the heartbeat later going stale still turns the switch off).
+    // overriding it.
     if (_pendingOnline != null && _pendingOnline == liveOnline) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && _pendingOnline == liveOnline) {
