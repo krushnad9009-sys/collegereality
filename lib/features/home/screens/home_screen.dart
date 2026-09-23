@@ -25,6 +25,7 @@ import '../../personalization/providers/personalized_colleges_provider.dart';
 import '../providers/home_content_provider.dart';
 import '../widgets/app_header.dart';
 import '../widgets/deferred_incoming_call_banner.dart';
+import '../widgets/home_header_widget.dart';
 import '../widgets/explore_by_city_section.dart';
 import '../widgets/explore_category_section.dart';
 import '../widgets/home_core_features_grid.dart';
@@ -160,6 +161,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
+                                      // Top of the page, directly under the
+                                      // hero's hamburger menu bar -- renders
+                                      // nothing for a non-guide.
+                                      const GuideOnlineStatusBar(),
                                       const DeferredIncomingCallBanner(),
                                       if (quotaBlocked) ...[
                                         _QuotaNoticeBanner(),
