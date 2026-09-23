@@ -55,7 +55,19 @@ class ConsultationConstants {
 
   // Presence heartbeat — see CommunityFirestoreService.updatePresence.
   static const Duration heartbeatInterval = Duration(seconds: 75);
-  static const Duration presenceStaleAfter = Duration(seconds: 100);
+  // Was 100s -- only a 25s buffer over the 75s heartbeat interval, so any
+  // single delayed/missed tick (a backgrounded browser tab throttling its
+  // JS timers, a brief network hiccup, the app simply not being in the
+  // foreground for a moment) flipped a genuinely-online guide to "Offline"
+  // everywhere else viewers read UserPresenceModel.isLiveOnline (the
+  // directory list, a guide's public profile) even though they never
+  // toggled off. A guide's own toggle no longer depends on this at all
+  // (see GuideOnlinePresenceLogic), but every OTHER viewer's "is this
+  // guide reachable right now" signal still does, and needs real headroom
+  // against normal heartbeat jitter -- not zero, since it's still what
+  // eventually marks a crashed/force-quit app's session offline without
+  // an explicit "going offline" write.
+  static const Duration presenceStaleAfter = Duration(minutes: 5);
 
   static const int maxConsultationRequestsPerHour = 6;
 }

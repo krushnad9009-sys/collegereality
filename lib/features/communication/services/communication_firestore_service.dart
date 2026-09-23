@@ -48,7 +48,31 @@ class CommunicationFirestoreService {
       query = query.where('languagesKnown', arrayContains: language);
     }
 
-    return query.snapshots().map((snapshot) {
+    return query
+        .snapshots()
+        .handleError((Object error, StackTrace stackTrace) {
+      // Observe-and-rethrow: `throw error` below re-emits the SAME error on
+      // the stream (guidesDirectoryProvider still surfaces it normally via
+      // AsyncErrorView) -- this only adds a clear, greppable trace so a
+      // missing composite index doesn't read as "the directory is just
+      // empty". A FAILED_PRECONDITION Firestore error's message always
+      // includes a one-click "Create Index" console URL; this makes sure
+      // that URL actually reaches the console/logs instead of only ever
+      // being rendered (truncated) inside an error widget.
+      if (kDebugMode) {
+        final looksLikeMissingIndex =
+            error.toString().contains('FAILED_PRECONDITION') ||
+                error.toString().toLowerCase().contains('index');
+        debugPrint(
+          '[CommunicationFirestoreService] watchGuides: Firestore stream '
+          'error${looksLikeMissingIndex ? ' -- LOOKS LIKE A MISSING '
+              'COMPOSITE INDEX, see the create-index URL in the message '
+              'below' : ''}: $error',
+        );
+        debugPrint('$stackTrace');
+      }
+      throw error;
+    }).map((snapshot) {
       final guides = <PublicGuideProfile>[];
       for (final doc in snapshot.docs) {
         try {
