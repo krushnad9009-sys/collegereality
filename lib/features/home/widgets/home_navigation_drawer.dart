@@ -10,9 +10,12 @@ import '../../../config/theme/app_theme.dart';
 import '../../../core/config/release_config.dart';
 import '../../../core/widgets/index.dart';
 import '../../admin/providers/admin_provider.dart';
+import '../../auth/models/user_model.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/providers/user_provider.dart';
 import '../../auth/utils/sign_out.dart';
+import '../../communication/widgets/guide_online_presence_mixin.dart';
+import '../../communication/widgets/guide_online_toggle_card.dart';
 
 /// Left-side navigation drawer opened by the hamburger icon on Home.
 ///
@@ -45,6 +48,7 @@ class HomeNavigationDrawer extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _DrawerHeader(signedInName: signedInName),
+            const _GuideAvailabilityDrawerTile(),
             const _DrawerDivider(),
             Expanded(
               child: ListView(
@@ -220,6 +224,109 @@ class _DrawerHeader extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// "Guide Availability Status" -- right below the profile header card, only
+/// rendered for an approved verified guide with guide mode on. Shares its
+/// write path/optimistic UI with the Profile hub's GuideOnlineToggleCard
+/// via GuideOnlinePresenceLogic, so both toggles stay in sync and can't
+/// regress independently.
+class _GuideAvailabilityDrawerTile extends ConsumerStatefulWidget {
+  const _GuideAvailabilityDrawerTile();
+
+  @override
+  ConsumerState<_GuideAvailabilityDrawerTile> createState() =>
+      _GuideAvailabilityDrawerTileState();
+}
+
+class _GuideAvailabilityDrawerTileState
+    extends ConsumerState<_GuideAvailabilityDrawerTile>
+    with GuideOnlinePresenceLogic<_GuideAvailabilityDrawerTile> {
+  UserModel? _user;
+
+  @override
+  UserModel get presenceUser => _user!;
+
+  @override
+  Widget build(BuildContext context) {
+    // Drawer.build() re-runs every time the drawer is opened, and
+    // resolveOnline() below watches a live Firestore stream (not a
+    // one-shot fetch), so this always reflects the exact current state --
+    // never a snapshot from whenever the drawer was last opened.
+    final userDetail = ref.watch(currentUserDetailProvider).valueOrNull;
+    if (userDetail == null || !GuideOnlineToggleCard.isEligible(userDetail)) {
+      return const SizedBox.shrink();
+    }
+    _user = userDetail;
+    final online = resolveOnline();
+    final tokens = context.tokens;
+
+    const onColor = Color(0xFF16A34A);
+    final offColor = Colors.grey.shade500;
+    final activeColor = online ? onColor : offColor;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        0,
+        AppSpacing.lg,
+        AppSpacing.md,
+      ),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: activeColor.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: activeColor.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 10,
+              height: 10,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: activeColor,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Guide Availability Status',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppFonts.plusJakarta(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: tokens.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    online ? 'Online' : 'Offline',
+                    style: AppFonts.plusJakarta(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: activeColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Switch(
+              value: online,
+              onChanged: busy ? null : setGuideOnline,
+              activeThumbColor: onColor,
+            ),
+          ],
+        ),
       ),
     );
   }

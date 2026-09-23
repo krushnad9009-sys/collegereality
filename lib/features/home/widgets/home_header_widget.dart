@@ -5,12 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../../config/theme/app_fonts.dart';
 
 import '../../../config/router/route_names.dart';
-import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_theme.dart';
-import '../../auth/models/user_model.dart';
 import '../../auth/providers/user_provider.dart';
-import '../../communication/widgets/guide_online_presence_mixin.dart';
-import '../../communication/widgets/guide_online_toggle_card.dart';
 import '../../engagement/providers/engagement_provider.dart';
 import 'user_quick_profile_sheet.dart';
 
@@ -179,83 +175,6 @@ class _NotificationBell extends ConsumerWidget {
                 ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Compact "You are Online/Offline" status bar for the very top of Home,
-/// directly under the hamburger menu bar. Only rendered for an approved
-/// verified guide who has guide mode on (same eligibility as
-/// GuideOnlineToggleCard, the fuller version of this same toggle on the
-/// Profile hub -- both share their write/optimistic-UI logic via
-/// GuideOnlinePresenceLogic so there's exactly one place that can get the
-/// Firestore sync wrong).
-class GuideOnlineStatusBar extends ConsumerStatefulWidget {
-  const GuideOnlineStatusBar({super.key});
-
-  @override
-  ConsumerState<GuideOnlineStatusBar> createState() =>
-      _GuideOnlineStatusBarState();
-}
-
-class _GuideOnlineStatusBarState extends ConsumerState<GuideOnlineStatusBar>
-    with GuideOnlinePresenceLogic<GuideOnlineStatusBar> {
-  UserModel? _user;
-
-  @override
-  UserModel get presenceUser => _user!;
-
-  @override
-  Widget build(BuildContext context) {
-    final userDetail = ref.watch(currentUserDetailProvider).valueOrNull;
-    if (userDetail == null || !GuideOnlineToggleCard.isEligible(userDetail)) {
-      return const SizedBox.shrink();
-    }
-    _user = userDetail;
-    final online = resolveOnline();
-
-    const onColor = Color(0xFF16A34A);
-    final offColor = Colors.grey.shade500;
-    final activeColor = online ? onColor : offColor;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.lg),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: activeColor.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: activeColor.withValues(alpha: 0.3)),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 10,
-              height: 10,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: activeColor,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                online ? 'You are Online' : 'You are Offline',
-                style: AppFonts.plusJakarta(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: activeColor,
-                ),
-              ),
-            ),
-            Switch(
-              value: online,
-              onChanged: busy ? null : setGuideOnline,
-              activeThumbColor: onColor,
-            ),
-          ],
         ),
       ),
     );
