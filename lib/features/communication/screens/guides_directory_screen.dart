@@ -458,15 +458,20 @@ class _ActionCard extends StatelessWidget {
   }
 }
 
-class _GuideListTile extends StatelessWidget {
+class _GuideListTile extends ConsumerWidget {
   final PublicGuideProfile guide;
 
   const _GuideListTile({required this.guide});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final tokens = context.tokens;
     final primary = Theme.of(context).colorScheme.primary;
+    // Live presence (autoDispose -- only rows currently on/near screen keep
+    // a listener open) so a guide flipping online/offline updates this row
+    // in real time instead of only showing the search snapshot.
+    final presence =
+        ref.watch(presenceProvider(guide.uid)).valueOrNull ?? guide.presence;
     final settings = guide.settings;
     final priceLabel = settings.chatAvailable && settings.chatPricePaise > 0
         ? '₹${(settings.chatPricePaise / 100).round()} chat'
@@ -525,7 +530,7 @@ class _GuideListTile extends StatelessWidget {
                             height: 11,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: guide.presence.isLiveOnline
+                              color: presence.isLiveOnline
                                   ? PresenceState.online.color
                                   : tokens.textTertiary,
                             ),
@@ -571,7 +576,7 @@ class _GuideListTile extends StatelessWidget {
                           ),
                         const SizedBox(height: 4),
                         AvailabilityBadge(
-                          presence: guide.presence,
+                          presence: presence,
                           compact: true,
                         ),
                       ],

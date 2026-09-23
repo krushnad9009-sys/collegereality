@@ -69,7 +69,7 @@ class CommunityFirestoreService {
 
     await _writePresence(userId, {
       'isOnline': isOnline,
-      'lastSeenAt': DateTime.now().toIso8601String(),
+      'lastSeenAt': FieldValue.serverTimestamp(),
       'availabilityStatus': availabilityStatus,
       'busyUntil': existingPresence?['busyUntil'],
     });
@@ -92,7 +92,7 @@ class CommunityFirestoreService {
     final existingPresence = doc.data()?['presence'] as Map<String, dynamic>?;
     await _writePresence(userId, {
       'isOnline': true,
-      'lastSeenAt': DateTime.now().toIso8601String(),
+      'lastSeenAt': FieldValue.serverTimestamp(),
       'availabilityStatus': availabilityStatus ??
           existingPresence?['availabilityStatus'] as String? ??
           ProfileConstants.availabilityOffline,
@@ -124,7 +124,7 @@ class CommunityFirestoreService {
     final existingPresence = doc.data()?['presence'] as Map<String, dynamic>?;
     await _writePresence(userId, {
       'isOnline': available,
-      'lastSeenAt': DateTime.now().toIso8601String(),
+      'lastSeenAt': FieldValue.serverTimestamp(),
       'availabilityStatus': available
           ? ProfileConstants.availabilityAvailable
           : ProfileConstants.availabilityOffline,

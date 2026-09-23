@@ -333,17 +333,22 @@ class _GuidePublicProfileScreenState
   }
 }
 
-class _GuideProfileHeader extends StatelessWidget {
+class _GuideProfileHeader extends ConsumerWidget {
   const _GuideProfileHeader({required this.guide});
 
   final PublicGuideProfile guide;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final tokens = context.tokens;
     final primary = Theme.of(context).colorScheme.primary;
     final secondary = Theme.of(context).colorScheme.secondary;
     final stats = guide.stats;
+    // Live presence so a guide going online/offline while this page is
+    // open updates the dot/badge in real time instead of only showing the
+    // snapshot from when the profile was first fetched.
+    final presence =
+        ref.watch(presenceProvider(guide.uid)).valueOrNull ?? guide.presence;
 
     return Container(
       width: double.infinity,
@@ -397,7 +402,7 @@ class _GuideProfileHeader extends StatelessWidget {
                     height: 14,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: guide.presence.isLiveOnline
+                      color: presence.isLiveOnline
                           ? PresenceState.online.color
                           : tokens.textTertiary,
                     ),
@@ -447,7 +452,7 @@ class _GuideProfileHeader extends StatelessWidget {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              AvailabilityBadge(presence: guide.presence),
+              AvailabilityBadge(presence: presence),
               if (stats.totalRatings > 0) ...[
                 const SizedBox(width: 8),
                 Container(

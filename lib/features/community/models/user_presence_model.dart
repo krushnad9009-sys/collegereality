@@ -38,14 +38,29 @@ class UserPresenceModel {
       availabilityStatus == ProfileConstants.availabilityAvailable &&
       isFresh(ConsultationConstants.presenceStaleAfter);
 
+  /// `lastSeenAt`/`busyUntil` were written as ISO strings historically and
+  /// are now written with `FieldValue.serverTimestamp()` (a Firestore
+  /// `Timestamp` once resolved) -- accept either so in-flight/legacy data
+  /// never silently parses to null and reads as stale.
+  static DateTime? _parseTimestamp(dynamic value) {
+    if (value == null) return null;
+    if (value is DateTime) return value;
+    if (value is String) return DateTime.tryParse(value);
+    try {
+      return (value as dynamic).toDate() as DateTime;
+    } catch (_) {
+      return null;
+    }
+  }
+
   factory UserPresenceModel.fromJson(Map<String, dynamic>? json) {
     if (json == null) return const UserPresenceModel();
     return UserPresenceModel(
       isOnline: json['isOnline'] as bool? ?? false,
-      lastSeenAt: DateTime.tryParse(json['lastSeenAt']?.toString() ?? ''),
+      lastSeenAt: _parseTimestamp(json['lastSeenAt']),
       availabilityStatus: json['availabilityStatus'] as String? ??
           ProfileConstants.availabilityOffline,
-      busyUntil: DateTime.tryParse(json['busyUntil']?.toString() ?? ''),
+      busyUntil: _parseTimestamp(json['busyUntil']),
     );
   }
 

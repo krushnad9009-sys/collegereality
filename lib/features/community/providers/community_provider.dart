@@ -53,8 +53,13 @@ final qaThreadsProvider = StreamProvider<List<ChatConversationModel>>((ref) {
       );
 });
 
+// autoDispose: watched per-row in scrollable guide lists (directory search,
+// profile cards) as well as single detail screens -- without it, every
+// distinct guideId ever scrolled past would keep its Firestore listener
+// open for the rest of the session. Same reasoning as
+// publicVerificationBadgeStreamProvider.
 final presenceProvider =
-    StreamProvider.family<UserPresenceModel?, String>((ref, userId) {
+    StreamProvider.family.autoDispose<UserPresenceModel?, String>((ref, userId) {
   return ref.watch(communityServiceProvider).watchPresence(userId);
 });
 
