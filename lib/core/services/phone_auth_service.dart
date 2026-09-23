@@ -609,15 +609,16 @@ class PhoneAuthService {
             hint: hint,
           );
         case 'captcha-check-failed':
-          return PhoneAuthException(
-            e.message ?? 'reCAPTCHA verification failed. Please try again.',
-            code: e.code,
-            rawMessage: rawMessage,
-            hint: hint,
-          );
         case 'invalid-app-credential':
+          // Same user-facing copy for both -- from the app user's
+          // perspective these are the same failure (the reCAPTCHA/app
+          // check Firebase runs before sending an SMS was rejected), even
+          // though the underlying FirebaseAuthException code differs by
+          // platform/cause. `hint`/`rawMessage` still carry the precise
+          // code for logs and the debug-only error dialog.
           return PhoneAuthException(
-            e.message ?? 'Invalid app credentials for phone authentication.',
+            'reCAPTCHA verification failed. Please try again or use a '
+            'registered test number.',
             code: e.code,
             rawMessage: rawMessage,
             hint: hint,

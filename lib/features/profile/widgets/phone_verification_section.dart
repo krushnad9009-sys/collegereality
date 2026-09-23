@@ -160,6 +160,9 @@ class _PhoneVerificationSectionState
       }
     } catch (e) {
       if (mounted) {
+        final isRecaptchaOrCredentialFailure = e is PhoneAuthException &&
+            (e.code == 'invalid-app-credential' ||
+                e.code == 'captcha-check-failed');
         if (e is PhoneAuthException &&
             (e.code == 'too-many-requests' || e.code == 'quota-exceeded')) {
           _startRateLimitTimer(e.retryAfter ?? const Duration(minutes: 30));
@@ -167,6 +170,16 @@ class _PhoneVerificationSectionState
             context,
             message:
                 'Too many OTP attempts. Try again in ${_formatRetryDuration(_rateLimitSeconds)}.',
+          );
+        } else if (isRecaptchaOrCredentialFailure) {
+          // A known, well-understood misconfiguration (see
+          // PhoneAuthService._diagnosticHint for the exact console checklist,
+          // still logged via debugPrint below) -- a real user gets one clear
+          // sentence, not a raw FirebaseAuthException code.
+          SnackBarHelper.showErrorSnackBar(
+            context,
+            message: 'reCAPTCHA verification failed. Please try again or '
+                'use a registered test number.',
           );
         } else {
           SnackBarHelper.showErrorSnackBar(
@@ -176,11 +189,16 @@ class _PhoneVerificationSectionState
                 : 'Could not send OTP. Please try again.',
           );
         }
-        // Debug builds only: `verificationFailed` (and every other OTP-send
-        // failure) is otherwise only visible in `debugPrint` logs. Put the
+        // Debug builds only, and not for the recaptcha/credential case above
+        // (that one already has a specific, well-documented cause and its
+        // own friendly message -- this dialog is for genuinely unexpected
+        // codes). `verificationFailed` (and every other OTP-send failure)
+        // is otherwise only visible in `debugPrint` logs; this puts the
         // exact FirebaseAuthException code/message/fix on screen so a local
         // "SMS never arrives" repro is diagnosable without a log console.
-        if (kDebugMode && e is PhoneAuthException) {
+        if (kDebugMode &&
+            e is PhoneAuthException &&
+            !isRecaptchaOrCredentialFailure) {
           _showDebugPhoneAuthErrorDialog(e);
         }
       }
