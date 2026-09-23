@@ -53,6 +53,14 @@ dependencies:
   # lookups are guarded with kIsWeb in the code that calls it.
   geolocator: ^13.0.2
   geocoding: ^3.0.0
+  # Startup security gate: root/jailbreak + Android Developer Options/USB
+  # debugging detection -- see lib/core/security/. Release builds only
+  # (lib/core/security/device_security_service.dart gates on kReleaseMode);
+  # never blocks a debug `flutter run`, which itself requires USB debugging.
+  safe_device: ^1.4.1
+  # Opens the Android Developer Options settings screen from
+  # security_block_screen.dart's "Open Developer Settings" button.
+  android_intent_plus: ^6.1.0
 
 dev_dependencies:
   flutter_test:

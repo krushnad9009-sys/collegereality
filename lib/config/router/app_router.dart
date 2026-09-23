@@ -6,6 +6,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import '../../core/bootstrap/native_splash.dart';
+import '../../core/security/device_security_provider.dart';
+import '../../core/security/security_block_screen.dart';
 import '../../core/services/analytics_service.dart';
 import '../../core/widgets/firebase_initializing_screen.dart';
 import 'go_router_refresh_stream.dart';
@@ -187,6 +189,25 @@ Future<String?> _resolveRedirect(
 
   // Never block splash — it handles its own navigation.
   if (path == RouteNames.splash) return null;
+
+  // Device-security gate takes priority over everything below (auth,
+  // onboarding, admin) -- a flagged device is bounced regardless of who's
+  // signed in. Never redirect away from the block screen itself (nothing
+  // else here would be reachable while blocked, and _resolveRedirect
+  // must remain idempotent for it). DeviceSecurityService itself already
+  // fails open (never throws, never hangs past its own 5s timeout) --
+  // this .timeout is an outer guard in case the Riverpod read stalls for
+  // an unrelated reason.
+  if (path != RouteNames.securityBlock) {
+    try {
+      final security = await ref
+          .read(deviceSecurityStatusProvider.future)
+          .timeout(const Duration(seconds: 6));
+      if (security.isBlocked) return RouteNames.securityBlock;
+    } catch (_) {
+      // Fail open — see DeviceSecurityService's own doc comment.
+    }
+  }
 
   // On first load (including a Flutter Web hard refresh), wait for
   // Firebase Auth to finish restoring any persisted session before
@@ -396,6 +417,10 @@ final Provider<GoRouter> appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RouteNames.splash,
         builder: (context, state) => const SplashScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.securityBlock,
+        builder: (context, state) => const SecurityBlockScreen(),
       ),
       GoRoute(
         path: RouteNames.onboarding,

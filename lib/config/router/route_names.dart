@@ -1,5 +1,9 @@
 class RouteNames {
   static const String splash = '/';
+  // Terminal screen for a device flagged by DeviceSecurityService
+  // (root/jailbreak, or Android Developer Options/USB debugging in release
+  // builds) -- see the redirect guard in app_router.dart.
+  static const String securityBlock = '/security-block';
   static const String onboarding = '/onboarding';
   static const String login = '/login';
   static const String signup = '/signup';

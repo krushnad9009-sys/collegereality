@@ -10,6 +10,7 @@ import 'config/theme/app_theme.dart';
 import 'config/theme/theme_provider.dart';
 import 'core/bootstrap/app_error_handler.dart';
 import 'core/bootstrap/firebase_bootstrap.dart';
+import 'core/security/device_security_service.dart';
 import 'core/services/crashlytics_service.dart';
 import 'features/engagement/services/firebase_messaging_service.dart';
 
@@ -26,6 +27,13 @@ Future<void> main() async {
   } catch (e, st) {
     debugPrint('[main] FCM background handler registration failed: $e\n$st');
   }
+
+  // Root/jailbreak + Android Developer Options detection (release builds
+  // only -- see DeviceSecurityService). Kicked off unawaited, exactly like
+  // FirebaseBootstrap below, so the router's first redirect (which awaits
+  // this same cached future via deviceSecurityStatusProvider) doesn't pay
+  // the native round-trip cold on the very first navigation.
+  unawaited(DeviceSecurityService.prewarm());
 
   // Firebase / Crashlytics init is deliberately NOT awaited before
   // runApp(). Firebase.initializeApp() hits the network on web and can be
