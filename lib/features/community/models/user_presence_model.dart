@@ -74,9 +74,12 @@ class UserPresenceModel {
 
   Map<String, dynamic> toJson() => {
         'isOnline': isOnline,
-        'lastSeenAt': lastSeenAt?.toIso8601String(),
+        // UTC ('...Z'): a bare local ISO string has no offset, so a viewer
+        // in another timezone would parse it hours off and see a fresh
+        // heartbeat as stale (or vice versa).
+        'lastSeenAt': lastSeenAt?.toUtc().toIso8601String(),
         'availabilityStatus': availabilityStatus,
-        'busyUntil': busyUntil?.toIso8601String(),
+        'busyUntil': busyUntil?.toUtc().toIso8601String(),
       };
 
   UserPresenceModel copyWith({

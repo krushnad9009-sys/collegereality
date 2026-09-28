@@ -76,11 +76,17 @@ class CommunicationFirestoreService {
       final guides = <PublicGuideProfile>[];
       for (final doc in snapshot.docs) {
         try {
-          guides.add(
-            PublicGuideProfile.fromUser(
-              UserModel.fromJson(doc.data(), docId: doc.id),
-            ),
-          );
+          final user = UserModel.fromJson(doc.data(), docId: doc.id);
+          // Rules only require verification to TURN ON guide mode; a
+          // later revocation leaves isGuideAvailable true. Checked here
+          // rather than in the query to avoid another composite index.
+          if (!VerificationConstants.isApprovedStudentOrAlumni(
+            user.verificationBadge,
+            user.verificationStatus,
+          )) {
+            continue;
+          }
+          guides.add(PublicGuideProfile.fromUser(user));
         } catch (e) {
           // One malformed/mismatched-field doc must never blank out the
           // whole directory -- skip it and trace why in debug builds.

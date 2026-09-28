@@ -599,6 +599,21 @@ service cloud.firestore {
     // guideStats mirror after a call/chat rating (same shape-validated
     // carve-out as the `users` doc below) — and never allowed to carry
     // email/phone even if application code has a bug.
+    // A write may never ADD or CHANGE a PII key on the mirror. Checked on
+    // the diff, not on the whole resulting doc: a legacy mirror written
+    // before the 2026-09-10 PII hardening still carries e.g.
+    // `verifiedRealName`, and a whole-doc check rejected EVERY later owner
+    // write to it (guide mode, online toggle, heartbeats) -- which froze
+    // guides as offline for everyone else. Removing a PII key stays
+    // allowed; onUserWriteSyncPublicProfile deletes them server-side.
+    function noNewPublicPii() {
+      let pii = ['email', 'phone', 'verifiedRealName', 'metadata'];
+      return resource == null
+        ? !request.resource.data.keys().hasAny(pii)
+        : !request.resource.data.diff(resource.data).addedKeys().hasAny(pii) &&
+          !request.resource.data.diff(resource.data).changedKeys().hasAny(pii);
+    }
+
     match /public_profiles/{userId} {
       allow read: if isAuthenticated();
       allow create, update: if (
@@ -607,9 +622,7 @@ service cloud.firestore {
         (isAuthenticated() &&
           request.auth.uid != userId &&
           isGuideStatsRatingUpdate())
-      ) && !request.resource.data.keys().hasAny(
-        ['email', 'phone', 'verifiedRealName', 'metadata']
-      ) &&
+      ) && noNewPublicPii() &&
         guideAvailabilityRequiresVerification(
           resource == null ? {} : resource.data, request.resource.data
         );

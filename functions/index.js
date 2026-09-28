@@ -16,6 +16,7 @@ const {
   onFreeTrialCallUpdated,
   sweepFreeTrialCalls,
 } = require('./src/freeTrialCalls');
+const { onUserWriteSyncPublicProfile } = require('./src/publicProfileSync');
 const { aiChatComplete } = require('./src/aiChat');
 const { requestEmailOtp, verifyEmailOtp } = require('./src/emailOtp');
 const { requestAccountDeletion } = require('./src/accountDeletion');
@@ -43,6 +44,9 @@ module.exports = {
   startFreeTrialCall,
   onFreeTrialCallUpdated,
   sweepFreeTrialCalls,
+  // Keeps public_profiles (guide directory, presence) in step with users
+  // even when a client mirror write was denied; strips legacy PII keys.
+  onUserWriteSyncPublicProfile,
   aiChatComplete,
   requestEmailOtp,
   verifyEmailOtp,
