@@ -25,6 +25,14 @@ class UserPresenceModel {
     return DateTime.now().difference(lastSeenAt!) < staleAfter;
   }
 
+  /// "Is this user in the app right now" for any user (not just guides):
+  /// their app last reported foreground (`isOnline`) AND that report is
+  /// fresh. The flag alone lies after a force-quit/crash (no offline write
+  /// ever lands); freshness alone lies for [ConsultationConstants
+  /// .presenceStaleAfter] after a normal backgrounding.
+  bool get isActiveNow =>
+      isOnline && isFresh(ConsultationConstants.presenceStaleAfter);
+
   bool get isBusyNow =>
       busyUntil != null && busyUntil!.isAfter(DateTime.now());
 

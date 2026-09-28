@@ -56,22 +56,29 @@ class CommunityFirestoreService {
     await _userService.syncPublicProfile(userId, update);
   }
 
-  /// Screen-level online marker (chat opened/closed) — kept for existing
-  /// call sites, but cross-user viewers should prefer staleness-derived
-  /// status (see UserPresenceModel.isFresh) over trusting `isOnline` alone.
+  /// App-level online/offline marker, written ONLY by
+  /// PresenceHeartbeatController (app foregrounded / backgrounded / signed
+  /// out) -- never per screen, or leaving one screen marks a user who is
+  /// still in the app offline for everyone else.
+  ///
+  /// Partial write: touches only `isOnline` + `lastSeenAt`, so it needs no
+  /// read first (fast enough to land while the app is being backgrounded)
+  /// and can never clobber `availabilityStatus` / `busyUntil` with a stale
+  /// copy. `users` takes dotted field paths; the `public_profiles` mirror
+  /// is a merge-set, which deep-merges the nested `presence` map.
   Future<void> updatePresence(String userId, {required bool isOnline}) async {
-    final doc =
-        await _firestore.collection(FirestoreConstants.usersCollection).doc(userId).get();
-    final existingPresence = doc.data()?['presence'] as Map<String, dynamic>?;
-    final availabilityStatus =
-        existingPresence?['availabilityStatus'] as String? ??
-            ProfileConstants.availabilityOffline;
-
-    await _writePresence(userId, {
-      'isOnline': isOnline,
-      'lastSeenAt': FieldValue.serverTimestamp(),
-      'availabilityStatus': availabilityStatus,
-      'busyUntil': existingPresence?['busyUntil'],
+    await _firestore
+        .collection(FirestoreConstants.usersCollection)
+        .doc(userId)
+        .update({
+      'presence.isOnline': isOnline,
+      'presence.lastSeenAt': FieldValue.serverTimestamp(),
+    });
+    await _userService.syncPublicProfile(userId, {
+      'presence': {
+        'isOnline': isOnline,
+        'lastSeenAt': FieldValue.serverTimestamp(),
+      },
     });
   }
 
@@ -80,32 +87,10 @@ class CommunityFirestoreService {
   /// foregrounded (see PresenceHeartbeatController), never per-second.
   /// Viewers treat presence as stale (offline) once `lastSeenAt` exceeds
   /// [ConsultationConstants.presenceStaleAfter], so a killed/crashed app
-  /// naturally goes offline without needing an explicit "going offline"
-  /// write.
-  Future<void> sendHeartbeat(
-    String userId, {
-    String? availabilityStatus,
-    DateTime? busyUntil,
-  }) async {
-    final doc =
-        await _firestore.collection(FirestoreConstants.usersCollection).doc(userId).get();
-    final existingPresence = doc.data()?['presence'] as Map<String, dynamic>?;
-    await _writePresence(userId, {
-      'isOnline': true,
-      'lastSeenAt': FieldValue.serverTimestamp(),
-      'availabilityStatus': availabilityStatus ??
-          existingPresence?['availabilityStatus'] as String? ??
-          ProfileConstants.availabilityOffline,
-      'busyUntil':
-          (busyUntil ?? _parseBusyUntil(existingPresence))?.toIso8601String(),
-    });
-  }
-
-  DateTime? _parseBusyUntil(Map<String, dynamic>? presence) {
-    final raw = presence?['busyUntil'];
-    if (raw == null) return null;
-    return DateTime.tryParse(raw.toString());
-  }
+  /// naturally goes offline even though it never got to write
+  /// `isOnline: false`.
+  Future<void> sendHeartbeat(String userId) =>
+      updatePresence(userId, isOnline: true);
 
   /// Explicit "I'm online / I'm offline" toggle for guides (the quick
   /// switch on the profile hub). Going online also refreshes `lastSeenAt`

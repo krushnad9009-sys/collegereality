@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../config/router/route_names.dart';
+import '../../community/providers/presence_heartbeat_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/user_provider.dart';
 
@@ -24,6 +25,18 @@ Future<void> signOutAndRedirect(BuildContext context, WidgetRef ref) async {
   // Capture the router before any await so navigation still works even if
   // `context` is torn down while signing out.
   final router = GoRouter.of(context);
+
+  // Mark offline while still authenticated (rules reject it afterwards).
+  // Bounded so a slow/offline network never holds up sign-out; if it
+  // doesn't land, presence just goes stale on its own.
+  try {
+    await ref
+        .read(presenceHeartbeatControllerProvider)
+        .markOfflineAndStop()
+        .timeout(const Duration(seconds: 3));
+  } catch (e) {
+    debugPrint('[signOut] presence offline write skipped: $e');
+  }
 
   try {
     await ref.read(authProvider.notifier).signOut();

@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../../core/constants/display_name_constants.dart';
 import '../../../core/constants/firestore_constants.dart';
@@ -122,9 +123,13 @@ class FirestoreUserService {
           .collection(FirestoreConstants.publicProfilesCollection)
           .doc(uid)
           .set(safeFields, SetOptions(merge: true));
-    } catch (_) {
+    } catch (e) {
       // Best-effort mirror; the source-of-truth `users` write already
       // succeeded, so a mirror hiccup should not fail the caller's action.
+      // Still log it: every cross-user read (presence, guide directory)
+      // goes through this mirror, so a silently failing sync looks exactly
+      // like "other users always see me as offline".
+      debugPrint('[syncPublicProfile] mirror write failed for $uid: $e');
     }
   }
 

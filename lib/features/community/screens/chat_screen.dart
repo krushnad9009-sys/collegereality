@@ -15,6 +15,7 @@ import '../../auth/providers/user_provider.dart';
 import '../models/chat_conversation_model.dart';
 import '../models/chat_message_model.dart';
 import '../providers/community_provider.dart';
+import '../providers/presence_heartbeat_provider.dart';
 import '../services/community_firestore_service.dart';
 import '../widgets/chat_input_bar.dart';
 import '../widgets/message_bubble.dart';
@@ -40,21 +41,21 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _setOnline(true));
+    // Presence is app-level, not per-screen: this route sits outside the
+    // AppShell ShellRoute (e.g. opened from a notification), so make sure
+    // the app-wide heartbeat is running. Idempotent. Deliberately NO
+    // offline write in dispose -- leaving a chat doesn't mean leaving the
+    // app, and doing so is what showed active users as offline.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) ref.read(presenceHeartbeatControllerProvider).start();
+    });
   }
 
   @override
   void dispose() {
     _typingTimer?.cancel();
-    _setOnline(false);
     _scrollController.dispose();
     super.dispose();
-  }
-
-  Future<void> _setOnline(bool online) async {
-    final user = ref.read(currentUserDetailProvider).valueOrNull;
-    if (user == null) return;
-    await ref.read(communityServiceProvider).updatePresence(user.uid, isOnline: online);
   }
 
   void _onTypingChanged(bool typing) {
