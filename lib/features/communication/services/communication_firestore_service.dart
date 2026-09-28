@@ -203,79 +203,8 @@ class CommunicationFirestoreService {
     });
   }
 
-  Future<void> _checkSpam(String callerId) async {
-    final hourAgo = DateTime.now().subtract(const Duration(hours: 1));
-    final snapshot = await _firestore
-        .collection(FirestoreConstants.callSessionsCollection)
-        .where('callerId', isEqualTo: callerId)
-        .where('createdAt', isGreaterThan: hourAgo.toIso8601String())
-        .get();
-    if (snapshot.docs.length >= CommunicationConstants.maxCallRequestsPerHour) {
-      throw CommunicationException(
-        'Too many call requests. Please wait before trying again.',
-      );
-    }
-  }
-
-  Future<CallSessionModel> requestCall({
-    required String callerId,
-    required String calleeId,
-    required String callType,
-  }) async {
-    if (await isBlocked(callerId, calleeId) || await isBlocked(calleeId, callerId)) {
-      throw CommunicationException('Unable to connect with this guide.');
-    }
-
-    await _checkSpam(callerId);
-
-    final caller = await _userService.getUserByUID(callerId);
-    final callee = await _userService.getPublicProfileByUID(calleeId);
-    if (caller == null || callee == null) {
-      throw CommunicationException('User not found.');
-    }
-    if (!callee.communicationSettings.isGuideAvailable) {
-      throw CommunicationException('This guide is not available.');
-    }
-    if (callType == CommunicationConstants.callTypeVideo &&
-        !callee.communicationSettings.videoCallsEnabled) {
-      throw CommunicationException('Video calls are disabled for this guide.');
-    }
-
-    final tier = caller.subscriptionTier;
-    final maxDuration = CommunicationConstants.maxDurationSeconds(
-      tier: tier,
-      callType: callType,
-    );
-    if (maxDuration <= 0) {
-      throw CommunicationException(
-        'Upgrade your subscription for ${callType == CommunicationConstants.callTypeVideo ? 'video' : 'voice'} calls.',
-      );
-    }
-
-    final id = _uuid.v4();
-    final session = CallSessionModel(
-      id: id,
-      callerId: callerId,
-      calleeId: calleeId,
-      callType: callType,
-      status: CommunicationConstants.callStatusRequested,
-      callerAccepted: true,
-      calleeAccepted: false,
-      callerAlias: caller.anonymousGuideAlias,
-      calleeAlias: callee.anonymousGuideAlias,
-      callerTier: caller.subscriptionTier,
-      calleeTier: callee.subscriptionTier,
-      maxDurationSeconds: maxDuration,
-      createdAt: DateTime.now(),
-    );
-
-    await _firestore
-        .collection(FirestoreConstants.callSessionsCollection)
-        .doc(id)
-        .set(session.toJson());
-
-    return session;
-  }
+  // Call sessions are created server-side only -- see
+  // FreeTrialCallService.startFreeTrialCall / functions/src/freeTrialCalls.js.
 
   Stream<CallSessionModel?> watchCallSession(String sessionId) {
     return _firestore
@@ -316,7 +245,7 @@ class CommunicationFirestoreService {
 
     if (callerAccepted && calleeAccepted) {
       updates['status'] = CommunicationConstants.callStatusActive;
-      updates['startedAt'] = DateTime.now().toIso8601String();
+      updates['startedAt'] = DateTime.now().toUtc().toIso8601String();
     } else {
       updates['status'] = CommunicationConstants.callStatusAccepted;
     }
@@ -333,7 +262,7 @@ class CommunicationFirestoreService {
         .doc(sessionId)
         .update({
       'status': CommunicationConstants.callStatusRejected,
-      'endedAt': DateTime.now().toIso8601String(),
+      'endedAt': DateTime.now().toUtc().toIso8601String(),
       'endedBy': userId,
     });
   }
@@ -350,7 +279,7 @@ class CommunicationFirestoreService {
       'status': emergency
           ? CommunicationConstants.callStatusEmergencyEnded
           : CommunicationConstants.callStatusEnded,
-      'endedAt': DateTime.now().toIso8601String(),
+      'endedAt': DateTime.now().toUtc().toIso8601String(),
       'endedBy': userId,
       'isEmergencyEnd': emergency,
     });

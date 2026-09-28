@@ -9,9 +9,11 @@ import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/communication_constants.dart';
 import '../../../core/widgets/index.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../models/call_session_model.dart';
 import '../models/interaction_rating_model.dart';
 import '../providers/communication_provider.dart';
 import '../services/communication_firestore_service.dart';
+import '../utils/call_countdown.dart';
 import '../utils/communication_formatters.dart';
 import '../widgets/post_interaction_rating_sheet.dart';
 
@@ -28,6 +30,7 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
   Timer? _durationTimer;
   int _elapsedSeconds = 0;
   bool _timerStarted = false;
+  bool _limitHandled = false;
   bool _isMuted = false;
   bool _cameraOff = false;
   bool _blurBackground = true;
@@ -39,20 +42,39 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
     super.dispose();
   }
 
-  void _startTimer(int maxSeconds) {
+  /// Ticks once a second, re-deriving elapsed time from the session's
+  /// `startedAt` each tick (no drift, and reopening this screen can't
+  /// restart the clock). At the limit -- 2 minutes for a free trial call --
+  /// the call is ended automatically. Both participants run this; the
+  /// server's sweepFreeTrialCalls is the backstop if neither app is alive.
+  void _startTimer(CallSessionModel session) {
     _durationTimer?.cancel();
-    _durationTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+    void tick() {
       if (!mounted) return;
-      setState(() => _elapsedSeconds++);
-      if (_elapsedSeconds >= maxSeconds) {
-        _endCall(emergency: false, limitReached: true);
+      final elapsed = callElapsedSeconds(
+        startedAt: session.startedAt,
+        now: DateTime.now(),
+        maxSeconds: session.maxDurationSeconds,
+      );
+      setState(() => _elapsedSeconds = elapsed);
+      if (elapsed >= session.maxDurationSeconds && !_limitHandled) {
+        _limitHandled = true;
+        _endCall(
+          emergency: false,
+          limitReached: true,
+          isFreeTrial: session.isFreeTrial,
+        );
       }
-    });
+    }
+
+    tick();
+    _durationTimer = Timer.periodic(const Duration(seconds: 1), (_) => tick());
   }
 
   Future<void> _endCall({
     required bool emergency,
     bool limitReached = false,
+    bool isFreeTrial = false,
   }) async {
     final user = ref.read(currentUserProvider);
     if (user == null) return;
@@ -73,7 +95,9 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
     if (limitReached && mounted) {
       SnackBarHelper.showInfoSnackBar(
         context,
-        message: 'Call duration limit reached for your subscription.',
+        message: isFreeTrial
+            ? 'Your 2-minute free call has ended.'
+            : 'Call duration limit reached.',
       );
     }
   }
@@ -211,8 +235,15 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
             session.startedAt != null) {
           _timerStarted = true;
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            _startTimer(session.maxDurationSeconds);
+            _startTimer(session);
           });
+        }
+        // The other side hung up (or the server ended it): stop counting
+        // so this device doesn't also try to end an already-ended call.
+        if (session.status != CommunicationConstants.callStatusActive &&
+            _durationTimer != null) {
+          _durationTimer?.cancel();
+          _durationTimer = null;
         }
 
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -341,7 +372,14 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                       CommunicationConstants.callStatusActive) ...[
                     const SizedBox(height: 20),
                     Text(
-                      formatCallDuration(_elapsedSeconds),
+                      session.isFreeTrial
+                          ? formatCallDuration(
+                              callRemainingSeconds(
+                                elapsedSeconds: _elapsedSeconds,
+                                maxSeconds: session.maxDurationSeconds,
+                              ),
+                            )
+                          : formatCallDuration(_elapsedSeconds),
                       style: AppFonts.plusJakarta(
                         fontSize: 36,
                         fontWeight: FontWeight.w300,
@@ -351,7 +389,9 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Max ${formatCallDuration(session.maxDurationSeconds)}',
+                      session.isFreeTrial
+                          ? 'Free call · ends automatically'
+                          : 'Max ${formatCallDuration(session.maxDurationSeconds)}',
                       style: AppFonts.plusJakarta(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
@@ -473,6 +513,8 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
         return 'Call ended (emergency)';
       case CommunicationConstants.callStatusRejected:
         return 'Call declined';
+      case CommunicationConstants.callStatusMissed:
+        return 'No answer';
       default:
         return status;
     }

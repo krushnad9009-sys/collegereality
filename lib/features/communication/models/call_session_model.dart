@@ -13,6 +13,8 @@ class CallSessionModel {
   final String callerTier;
   final String calleeTier;
   final int maxDurationSeconds;
+  // Server-created 2-minute free trial call (see startFreeTrialCall).
+  final bool isFreeTrial;
   final DateTime createdAt;
   final DateTime? startedAt;
   final DateTime? endedAt;
@@ -34,6 +36,7 @@ class CallSessionModel {
     this.callerTier = CommunicationConstants.subscriptionFree,
     this.calleeTier = CommunicationConstants.subscriptionFree,
     required this.maxDurationSeconds,
+    this.isFreeTrial = false,
     required this.createdAt,
     this.startedAt,
     this.endedAt,
@@ -67,6 +70,7 @@ class CallSessionModel {
       callerTier: json['callerTier'] as String? ?? CommunicationConstants.subscriptionFree,
       calleeTier: json['calleeTier'] as String? ?? CommunicationConstants.subscriptionFree,
       maxDurationSeconds: (json['maxDurationSeconds'] as num?)?.toInt() ?? 300,
+      isFreeTrial: json['isFreeTrial'] as bool? ?? false,
       createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
           DateTime.now(),
       startedAt: DateTime.tryParse(json['startedAt']?.toString() ?? ''),
@@ -91,6 +95,7 @@ class CallSessionModel {
         'callerTier': callerTier,
         'calleeTier': calleeTier,
         'maxDurationSeconds': maxDurationSeconds,
+        'isFreeTrial': isFreeTrial,
         'createdAt': createdAt.toIso8601String(),
         'startedAt': startedAt?.toIso8601String(),
         'endedAt': endedAt?.toIso8601String(),
@@ -124,6 +129,7 @@ class CallSessionModel {
       callerTier: callerTier,
       calleeTier: calleeTier,
       maxDurationSeconds: maxDurationSeconds,
+      isFreeTrial: isFreeTrial,
       createdAt: createdAt,
       startedAt: startedAt ?? this.startedAt,
       endedAt: endedAt ?? this.endedAt,

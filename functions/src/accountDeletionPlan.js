@@ -47,6 +47,8 @@ const DELETE_BY_FIELD = Object.freeze([
   { collection: 'user_blocks', field: 'blockerId' },
   { collection: 'user_blocks', field: 'blockedId' },
   { collection: 'interaction_ratings', field: 'raterId' },
+  { collection: 'free_call_usage', field: 'callerId' },
+  { collection: 'free_call_usage', field: 'guideId' },
   { collection: 'student_chat_intents', field: 'seekerId' },
   { collection: 'student_chat_intents', field: 'peerId' },
   { collection: 'college_analytics_events', field: 'userId' },

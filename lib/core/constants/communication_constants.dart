@@ -31,29 +31,19 @@ class CommunicationConstants {
   static const callStatusEnded = 'ended';
   static const callStatusRejected = 'rejected';
   static const callStatusEmergencyEnded = 'emergency_ended';
+  // Nobody answered before the ring timeout (set by the server sweeper).
+  static const callStatusMissed = 'missed';
 
   static const reportStatusOpen = 'open';
   static const reportStatusReviewed = 'reviewed';
   static const reportStatusActionTaken = 'action_taken';
 
-  /// Max call duration in seconds per subscription tier and call type.
-  static int maxDurationSeconds({
-    required String tier,
-    required String callType,
-  }) {
-    final limits = _durationLimits[tier] ?? _durationLimits[subscriptionFree]!;
-    return callType == callTypeVideo
-        ? limits['video'] ?? 0
-        : limits['voice'] ?? 300;
-  }
+  /// Direct guide calls are a free trial: this many seconds, once per day
+  /// per guide (IST calendar day), after which the user must book a paid
+  /// consultation. Enforced server-side by `startFreeTrialCall`
+  /// (functions/src/freeTrialCallLogic.js FREE_TRIAL_SECONDS) -- keep the
+  /// two in sync; this copy only drives the countdown UI.
+  static const int freeTrialCallSeconds = 120;
 
-  static const Map<String, Map<String, int>> _durationLimits = {
-    subscriptionFree: {'voice': 300, 'video': 0},
-    subscriptionBronze: {'voice': 900, 'video': 300},
-    subscriptionSilver: {'voice': 1800, 'video': 900},
-    subscriptionGold: {'voice': 3600, 'video': 1800},
-  };
-
-  static const int maxCallRequestsPerHour = 10;
   static const int spamReportThreshold = 3;
 }

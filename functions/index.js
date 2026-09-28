@@ -11,6 +11,11 @@ const { razorpayWebhook } = require('./src/webhook');
 const { mintConsultationCallToken } = require('./src/callToken');
 const { onConsultationWrite } = require('./src/triggers');
 const { expireStaleConsultations } = require('./src/scheduled');
+const {
+  startFreeTrialCall,
+  onFreeTrialCallUpdated,
+  sweepFreeTrialCalls,
+} = require('./src/freeTrialCalls');
 const { aiChatComplete } = require('./src/aiChat');
 const { requestEmailOtp, verifyEmailOtp } = require('./src/emailOtp');
 const { requestAccountDeletion } = require('./src/accountDeletion');
@@ -33,6 +38,11 @@ module.exports = {
   mintConsultationCallToken,
   onConsultationWrite,
   expireStaleConsultations,
+  // Direct guide calls: 2-minute free trial, once per day per guide.
+  // startFreeTrialCall is the only way to create a call_sessions doc.
+  startFreeTrialCall,
+  onFreeTrialCallUpdated,
+  sweepFreeTrialCalls,
   aiChatComplete,
   requestEmailOtp,
   verifyEmailOtp,

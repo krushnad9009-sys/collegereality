@@ -5,10 +5,15 @@ import '../models/interaction_rating_model.dart';
 import '../models/public_guide_profile.dart';
 import '../models/public_student_profile.dart';
 import '../services/communication_firestore_service.dart';
+import '../services/free_trial_call_service.dart';
 import '../utils/communication_formatters.dart';
 
 final communicationServiceProvider = Provider<CommunicationFirestoreService>((ref) {
   return CommunicationFirestoreService();
+});
+
+final freeTrialCallServiceProvider = Provider<FreeTrialCallService>((ref) {
+  return FreeTrialCallService();
 });
 
 final guidesDirectoryProvider =

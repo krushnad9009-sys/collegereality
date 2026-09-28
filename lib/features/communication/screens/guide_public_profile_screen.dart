@@ -14,6 +14,8 @@ import '../../community/services/community_firestore_service.dart';
 import '../models/public_guide_profile.dart';
 import '../providers/communication_provider.dart';
 import '../services/communication_firestore_service.dart';
+import '../services/free_trial_call_service.dart';
+import '../widgets/free_call_limit_dialog.dart';
 import '../widgets/guide_stats_display.dart';
 import '../../verification/widgets/verification_badge_widget.dart';
 import '../../consultations/widgets/availability_badge.dart';
@@ -74,14 +76,31 @@ class _GuidePublicProfileScreenState
 
     setState(() => _isRequestingCall = true);
     try {
-      final service = ref.read(communicationServiceProvider);
-      final session = await service.requestCall(
+      final freeTrial = ref.read(freeTrialCallServiceProvider);
+      // Fast local check first so an already-used free call shows the
+      // popup instantly, before any call session exists. The server check
+      // inside startFreeTrialCall is the one that actually counts.
+      final eligibility = await freeTrial.checkEligibility(
         callerId: user.uid,
-        calleeId: widget.guideUid,
+        guideId: widget.guideUid,
+      );
+      if (eligibility == FreeTrialEligibility.usedToday) {
+        if (mounted) {
+          await showFreeCallLimitDialog(context, guideId: widget.guideUid);
+        }
+        return;
+      }
+
+      final sessionId = await freeTrial.startFreeTrialCall(
+        guideId: widget.guideUid,
         callType: callType,
       );
       if (mounted) {
-        context.push(RouteNames.activeCallPath(session.id));
+        context.push(RouteNames.activeCallPath(sessionId));
+      }
+    } on FreeTrialUsedException {
+      if (mounted) {
+        await showFreeCallLimitDialog(context, guideId: widget.guideUid);
       }
     } on CommunicationException catch (e) {
       if (mounted) {
@@ -304,6 +323,15 @@ class _GuidePublicProfileScreenState
                   ),
                 ),
                 const SizedBox(height: 12),
+                Text(
+                  'First 2 minutes free with each guide, once a day.',
+                  textAlign: TextAlign.center,
+                  style: AppFonts.plusJakarta(
+                    fontSize: 12,
+                    color: tokens.textTertiary,
+                  ),
+                ),
+                const SizedBox(height: 8),
                 PrimaryButton(
                   label: 'Voice Call',
                   isLoading: _isRequestingCall,

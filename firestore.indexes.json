@@ -187,6 +187,24 @@
       ]
     },
     {
+      "collectionGroup": "call_sessions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "isFreeTrial", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "startedAt", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "call_sessions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "isFreeTrial", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "user_reports",
       "queryScope": "COLLECTION",
       "fields": [

@@ -675,11 +675,41 @@ service cloud.firestore {
       allow read: if isAuthenticated() &&
         (resource.data.callerId == request.auth.uid ||
          resource.data.calleeId == request.auth.uid);
-      allow create: if isAuthenticated() &&
-        request.resource.data.callerId == request.auth.uid;
+      // Created ONLY by the startFreeTrialCall Cloud Function, which
+      // enforces the 2-minute / once-per-day-per-guide free trial and sets
+      // maxDurationSeconds itself. A client create could pick its own limit.
+      allow create: if false;
+      // Participants drive accept / end / rating flags, nothing else:
+      // never the limit, the parties, or the trial bookkeeping. startedAt
+      // is write-once (re-setting it would restart the free-trial clock),
+      // and an ended call can't be brought back to life.
       allow update: if isAuthenticated() &&
         (resource.data.callerId == request.auth.uid ||
-         resource.data.calleeId == request.auth.uid);
+         resource.data.calleeId == request.auth.uid) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'callerAccepted', 'calleeAccepted', 'status', 'startedAt',
+          'endedAt', 'endedBy', 'isEmergencyEnd',
+          'ratingsSubmittedCaller', 'ratingsSubmittedCallee'
+        ]) &&
+        (resource.data.get('startedAt', null) == null ||
+          request.resource.data.startedAt == resource.data.startedAt) &&
+        (!(resource.data.status in
+            ['ended', 'rejected', 'emergency_ended', 'missed']) ||
+          request.resource.data.status in
+            ['ended', 'rejected', 'emergency_ended', 'missed']);
+    }
+
+    // Free trial call log: one doc per (caller, guide, IST day), written
+    // only by Cloud Functions (startFreeTrialCall / onFreeTrialCallUpdated).
+    // The caller reads it to show "already used today" before dialing; a
+    // missing doc (resource == null) is the normal "not used yet" answer.
+    match /free_call_usage/{usageId} {
+      allow read: if isAuthenticated() &&
+        (resource == null ||
+         resource.data.callerId == request.auth.uid ||
+         resource.data.guideId == request.auth.uid ||
+         isAdmin());
+      allow write: if false;
     }
 
     match /interaction_ratings/{ratingId} {
