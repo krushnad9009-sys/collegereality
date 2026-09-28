@@ -61,6 +61,7 @@ dependencies:
   # Opens the Android Developer Options settings screen from
   # security_block_screen.dart's "Open Developer Settings" button.
   android_intent_plus: ^6.1.0
+  firebase_app_check: ^0.3.2+10
 
 dev_dependencies:
   flutter_test:

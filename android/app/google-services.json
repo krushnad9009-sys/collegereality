@@ -12,7 +12,20 @@
           "package_name": "com.collegeReality"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "244446156099-tc043p1gc40tih8h38j7dv3cqd3r5lce.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.collegeReality",
+            "certificate_hash": "0bf5f81d6262265d123d4ec85811f7182d7b5494"
+          }
+        },
+        {
+          "client_id": "244446156099-g6ra01v0mavtbmceqpvkmsd0pn13vsof.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCF11KTKt0yHRon2McwwYvIRtIgO4qYJ8U"
@@ -20,18 +33,35 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "244446156099-g6ra01v0mavtbmceqpvkmsd0pn13vsof.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "244446156099-as39p17h9db2mgk9n68gaq5sgmjsoep8.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.collegeRealityIndia"
+              }
+            }
+          ]
         }
       }
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "1:244446156099:android:0471c18323c4bdf5bf0bf6",
+        "mobilesdk_app_id": "1:244446156099:android:a5b02b5e974c183ebf0bf6",
         "android_client_info": {
           "package_name": "com.collegereality.india"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "244446156099-g6ra01v0mavtbmceqpvkmsd0pn13vsof.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCF11KTKt0yHRon2McwwYvIRtIgO4qYJ8U"
@@ -39,7 +69,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "244446156099-g6ra01v0mavtbmceqpvkmsd0pn13vsof.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "244446156099-as39p17h9db2mgk9n68gaq5sgmjsoep8.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.collegeRealityIndia"
+              }
+            }
+          ]
         }
       }
     }
