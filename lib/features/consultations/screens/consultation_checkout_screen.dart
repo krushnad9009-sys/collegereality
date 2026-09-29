@@ -8,6 +8,7 @@ import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_theme.dart';
+import '../../../core/constants/wallet_constants.dart';
 import '../../../core/widgets/index.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../communication/models/guide_stats_model.dart';
@@ -53,16 +54,16 @@ class _ConsultationCheckoutScreenState
         '💬 Chat · ${s.chatDurationMinutes} min',
       ));
     }
-    if (s.callAvailable) {
-      for (final o in s.callPricing) {
-        if (o.pricePaise <= 0) continue;
-        options.add(_PriceOption(
-          o.type,
-          o.minutes,
-          o.pricePaise,
-          '${o.type == 'video' ? '📹 Video' : '📞 Call'} · ${o.minutes} min',
-        ));
-      }
+    // A guide who never priced calls gets default ₹10/min packages (same
+    // rule the server re-checks in createConsultationOrder) instead of a
+    // "not taking consultations" dead end.
+    for (final o in effectiveCallPackages(s)) {
+      options.add(_PriceOption(
+        o.type,
+        o.minutes,
+        o.pricePaise,
+        '${o.type == 'video' ? '📹 Video' : '📞 Call'} · ${o.minutes} min',
+      ));
     }
     return options;
   }

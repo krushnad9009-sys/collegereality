@@ -180,6 +180,10 @@ class GuideCommunicationSettings {
   final int chatDurationMinutes;
   final List<GuideCallPriceOption> callPricing;
   final List<String> areasOfExpertise;
+  // Per-minute rate for wallet-paid calls, in paise. 0 = not set: the rate
+  // is derived from callPricing, else the ₹10/min default (see
+  // resolvePerMinuteRatePaise in wallet_constants.dart).
+  final int perMinuteRatePaise;
 
   const GuideCommunicationSettings({
     this.isGuideAvailable = false,
@@ -193,6 +197,7 @@ class GuideCommunicationSettings {
     this.chatDurationMinutes = 15,
     this.callPricing = const [],
     this.areasOfExpertise = const [],
+    this.perMinuteRatePaise = 0,
   });
 
   bool get hasAnyConsultationPricing =>
@@ -221,6 +226,7 @@ class GuideCommunicationSettings {
               ?.map((e) => e.toString())
               .toList() ??
           const [],
+      perMinuteRatePaise: (json['perMinuteRatePaise'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -236,6 +242,7 @@ class GuideCommunicationSettings {
         'chatDurationMinutes': chatDurationMinutes,
         'callPricing': callPricing.map((p) => p.toJson()).toList(),
         'areasOfExpertise': areasOfExpertise,
+        'perMinuteRatePaise': perMinuteRatePaise,
       };
 
   GuideCommunicationSettings copyWith({
@@ -250,6 +257,7 @@ class GuideCommunicationSettings {
     int? chatDurationMinutes,
     List<GuideCallPriceOption>? callPricing,
     List<String>? areasOfExpertise,
+    int? perMinuteRatePaise,
   }) {
     return GuideCommunicationSettings(
       isGuideAvailable: isGuideAvailable ?? this.isGuideAvailable,
@@ -263,6 +271,7 @@ class GuideCommunicationSettings {
       chatDurationMinutes: chatDurationMinutes ?? this.chatDurationMinutes,
       callPricing: callPricing ?? this.callPricing,
       areasOfExpertise: areasOfExpertise ?? this.areasOfExpertise,
+      perMinuteRatePaise: perMinuteRatePaise ?? this.perMinuteRatePaise,
     );
   }
 }

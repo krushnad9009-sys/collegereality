@@ -84,10 +84,19 @@ const razorpayWebhook = onRequest(
           res.status(200).send('rejected');
           return;
         }
-        await finalizePaymentSuccess({
-          paymentDocId: entity.order_id,
-          gatewayPaymentId: entity.id,
-        });
+        if (pay.kind === 'wallet_recharge') {
+          // Wallet top-up, not a consultation -- credit the balance.
+          const { creditWalletRecharge } = require('./wallet');
+          await creditWalletRecharge({
+            paymentDocId: entity.order_id,
+            gatewayPaymentId: entity.id,
+          });
+        } else {
+          await finalizePaymentSuccess({
+            paymentDocId: entity.order_id,
+            gatewayPaymentId: entity.id,
+          });
+        }
       } else if (eventType === 'payment.failed') {
         const payment = event.payload.payment.entity;
         const { db } = require('./admin');

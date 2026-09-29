@@ -129,7 +129,10 @@ class FirestoreUserService {
       // Still log it: every cross-user read (presence, guide directory)
       // goes through this mirror, so a silently failing sync looks exactly
       // like "other users always see me as offline".
-      debugPrint('[syncPublicProfile] mirror write failed for $uid: $e');
+      debugPrint(
+        '[syncPublicProfile] mirror write failed for $uid '
+        '(fields: ${safeFields.keys.join(', ')}): $e',
+      );
     }
   }
 

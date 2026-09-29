@@ -65,11 +65,18 @@ const createConsultationOrder = onCall(
     // Instant-consultation online gate — mirrors
     // UserPresenceModel.isLiveOnline on the client: the guide's
     // availability toggle is ON *and* their heartbeat is fresh
-    // (ConsultationConstants.presenceStaleAfter = 100s). Blocks paying an
+    // (ConsultationConstants.presenceStaleAfter = 5 min). Blocks paying an
     // offline guide even if the client skipped its own check.
-    const PRESENCE_STALE_AFTER_MS = 100 * 1000;
+    //
+    // lastSeenAt is a Firestore Timestamp (FieldValue.serverTimestamp())
+    // since the presence rewrite; Date.parse() on it was always NaN, which
+    // reported EVERY guide as offline. Legacy ISO strings still parse.
+    const PRESENCE_STALE_AFTER_MS = 5 * 60 * 1000;
     const presence = guide.presence || {};
-    const lastSeenMs = Date.parse(presence.lastSeenAt || '');
+    const rawLastSeen = presence.lastSeenAt;
+    const lastSeenMs = rawLastSeen && typeof rawLastSeen.toMillis === 'function'
+      ? rawLastSeen.toMillis()
+      : Date.parse(rawLastSeen || '');
     const heartbeatFresh =
       Number.isFinite(lastSeenMs) &&
       Date.now() - lastSeenMs < PRESENCE_STALE_AFTER_MS;

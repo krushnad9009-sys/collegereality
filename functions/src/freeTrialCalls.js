@@ -3,14 +3,15 @@
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const { onDocumentUpdated } = require('firebase-functions/v2/firestore');
 const { onSchedule } = require('firebase-functions/v2/scheduler');
+const { FieldValue, Timestamp } = require('firebase-admin/firestore');
 const { logger } = require('firebase-functions');
 const { db } = require('./admin');
+const { assertCanCallGuide } = require('./callGuards');
 const {
   FREE_TRIAL_SECONDS,
   USAGE_STATUS,
   CALL_STATUS,
   DENIAL_REASON,
-  VALID_CALL_TYPES,
   isEndedStatus,
   dayKeyFor,
   usageDocId,
@@ -18,8 +19,6 @@ const {
   usageTransition,
   sweepCutoffs,
 } = require('./freeTrialCallLogic');
-
-const MAX_CALL_REQUESTS_PER_HOUR = 10; // was CommunicationConstants.maxCallRequestsPerHour
 
 const DENIAL_MESSAGES = {
   [DENIAL_REASON.FREE_CALL_USED]:
@@ -44,54 +43,10 @@ const startFreeTrialCall = onCall(async (request) => {
   const uid = request.auth && request.auth.uid;
   if (!uid) throw new HttpsError('unauthenticated', 'Sign in required.');
 
-  const guideId = request.data && request.data.guideId;
-  const callType = request.data && request.data.callType;
-  if (typeof guideId !== 'string' || !guideId) {
-    throw new HttpsError('invalid-argument', 'guideId is required.');
-  }
-  if (!VALID_CALL_TYPES.includes(callType)) {
-    throw new HttpsError('invalid-argument', 'callType must be voice or video.');
-  }
-  if (guideId === uid) {
-    throw new HttpsError('invalid-argument', 'You cannot call yourself.');
-  }
-
-  const blocks = db.collection('user_blocks');
-  const [blockedByMe, blockedMe, callerSnap, guideSnap, recentCalls] =
-    await Promise.all([
-      blocks.where('blockerId', '==', uid).where('blockedId', '==', guideId).limit(1).get(),
-      blocks.where('blockerId', '==', guideId).where('blockedId', '==', uid).limit(1).get(),
-      db.collection('users').doc(uid).get(),
-      db.collection('public_profiles').doc(guideId).get(),
-      db
-        .collection('call_sessions')
-        .where('callerId', '==', uid)
-        .where('createdAt', '>', new Date(Date.now() - 60 * 60 * 1000).toISOString())
-        .get(),
-    ]);
-
-  if (!blockedByMe.empty || !blockedMe.empty) {
-    throw new HttpsError('failed-precondition', 'Unable to connect with this guide.');
-  }
-  if (!callerSnap.exists || !guideSnap.exists) {
-    throw new HttpsError('not-found', 'User not found.');
-  }
-  const caller = callerSnap.data();
-  const guide = guideSnap.data();
-  const settings = guide.communicationSettings || {};
-  if (settings.isGuideAvailable !== true) {
-    throw new HttpsError('failed-precondition', 'This guide is not available.');
-  }
-  if (callType === 'video' && settings.videoCallsEnabled === false) {
-    throw new HttpsError('failed-precondition', 'Video calls are disabled for this guide.');
-  }
-  if (recentCalls.size >= MAX_CALL_REQUESTS_PER_HOUR) {
-    throw new HttpsError(
-      'resource-exhausted',
-      'Too many call requests. Please wait before trying again.',
-      { reason: 'rate_limited' },
-    );
-  }
+  const { guideId, callType, caller, guide } = await assertCanCallGuide(
+    uid,
+    request.data,
+  );
 
   const nowMs = Date.now();
   const nowIso = new Date(nowMs).toISOString();
@@ -191,6 +146,11 @@ const onFreeTrialCallUpdated = onDocumentUpdated(
     if (!transition) return;
 
     const sessionId = event.params.sessionId;
+    if (transition.stampServerStart && !after.serverStartedAt) {
+      // Server-clock start: what the sweeper and call token measure from.
+      // Re-fires this trigger, which then finds no transition (no-op).
+      await event.data.after.ref.update({ serverStartedAt: FieldValue.serverTimestamp() });
+    }
     const usageRef = db.collection('free_call_usage').doc(after.freeUsageId);
     await db.runTransaction(async (tx) => {
       const snap = await tx.get(usageRef);
@@ -219,7 +179,7 @@ const sweepFreeTrialCalls = onSchedule('every 1 minutes', async () => {
     sessions
       .where('isFreeTrial', '==', true)
       .where('status', '==', CALL_STATUS.ACTIVE)
-      .where('startedAt', '<', overrunStartedBefore)
+      .where('serverStartedAt', '<', Timestamp.fromDate(overrunStartedBefore))
       .limit(200)
       .get(),
     sessions

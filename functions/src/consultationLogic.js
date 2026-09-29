@@ -52,8 +52,11 @@ function resolveGuidePriceForConsultation({ settings, type, durationMinutes }) {
     if (settings.chatDurationMinutes !== durationMinutes) return null;
     return settings.chatPricePaise > 0 ? settings.chatPricePaise : null;
   }
-  if (!settings || !settings.callAvailable) return null;
-  const options = Array.isArray(settings.callPricing) ? settings.callPricing : [];
+  // Guides who never priced calls get default packages at the default
+  // per-minute rate (walletLogic.effectiveCallPackages) instead of being
+  // unbookable. Lazy require: walletLogic depends on this module.
+  const { effectiveCallPackages } = require('./walletLogic');
+  const options = effectiveCallPackages(settings);
   const match = options.find(
     (o) => o && o.type === type && o.minutes === durationMinutes,
   );

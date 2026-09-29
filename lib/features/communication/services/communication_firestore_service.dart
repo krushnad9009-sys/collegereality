@@ -10,7 +10,6 @@ import '../models/call_session_model.dart';
 import '../models/interaction_rating_model.dart';
 import '../models/public_guide_profile.dart';
 import '../models/public_student_profile.dart';
-import '../utils/guide_stats_calculator.dart';
 
 class CommunicationFirestoreService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -293,7 +292,6 @@ class CommunicationFirestoreService {
 
   Future<void> submitInteractionRating({
     required InteractionRatingModel rating,
-    required bool incrementCall,
   }) async {
     final id = rating.id.isEmpty ? _uuid.v4() : rating.id;
     final data = rating.copyWith(id: id).toJson();
@@ -304,31 +302,10 @@ class CommunicationFirestoreService {
         .doc(id)
         .set(data);
 
-    final ratingsSnapshot = await _firestore
-        .collection(FirestoreConstants.interactionRatingsCollection)
-        .where('rateeId', isEqualTo: rating.rateeId)
-        .get();
-
-    final ratee = await _userService.getPublicProfileByUID(rating.rateeId);
-    if (ratee == null) return;
-
-    final allRatings = ratingsSnapshot.docs.map((d) => d.data()).toList();
-    final newStats = recomputeGuideStats(
-      current: ratee.guideStats,
-      ratings: allRatings,
-      incrementCall: incrementCall,
-      incrementChat: !incrementCall,
-    );
-
-    final guideStatsUpdate = {
-      'guideStats': newStats.toJson(),
-      'updatedAt': DateTime.now().toIso8601String(),
-    };
-    await _firestore
-        .collection(FirestoreConstants.usersCollection)
-        .doc(rating.rateeId)
-        .update(guideStatsUpdate);
-    await _userService.syncPublicProfile(rating.rateeId, guideStatsUpdate);
+    // The ratee's guideStats (users + public_profiles) are recomputed
+    // server-side by onInteractionRatingCreated. Doing it here meant reading
+    // every rating for someone else and writing their docs -- both denied
+    // by firestore.rules for anyone but an admin.
 
     final sessionRef = _firestore
         .collection(FirestoreConstants.callSessionsCollection)

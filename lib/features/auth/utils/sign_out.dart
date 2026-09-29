@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../config/router/route_names.dart';
+import '../../communication/providers/incoming_call_controller.dart';
 import '../../community/providers/presence_heartbeat_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/user_provider.dart';
@@ -37,6 +38,8 @@ Future<void> signOutAndRedirect(BuildContext context, WidgetRef ref) async {
   } catch (e) {
     debugPrint('[signOut] presence offline write skipped: $e');
   }
+  // Stop ringing for / listening to this account's incoming calls.
+  ref.read(incomingCallControllerProvider).stop();
 
   try {
     await ref.read(authProvider.notifier).signOut();

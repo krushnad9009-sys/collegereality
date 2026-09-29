@@ -12,7 +12,9 @@ const {
   durationUsedSeconds,
   usageTransition,
   sweepCutoffs,
+  remainingFreeSeconds,
 } = require('../src/freeTrialCallLogic');
+const { Timestamp } = require('firebase-admin/firestore');
 
 const NOW = Date.parse('2026-09-28T10:00:00.000Z');
 const iso = (ms) => new Date(ms).toISOString();
@@ -99,8 +101,25 @@ describe('usageTransition', () => {
   it('consumes the free call when the call connects', () => {
     expect(usageTransition(requested, active)).toEqual({
       type: 'consume',
+      stampServerStart: true,
       fields: { status: USAGE_STATUS.CONSUMED, connectedAt: iso(NOW) },
     });
+  });
+
+  it('asks the trigger to stamp a server-clock start on connect', () => {
+    expect(usageTransition(requested, active).stampServerStart).toBe(true);
+  });
+
+  it('measures duration on the server clock when serverStartedAt exists', () => {
+    // The accepting phone's clock ran 10 minutes behind: its startedAt
+    // string is useless, the server stamp is not.
+    const ended = {
+      status: 'ended',
+      startedAt: iso(NOW - 600e3),
+      endedAt: iso(NOW + 40e3),
+      serverStartedAt: Timestamp.fromMillis(NOW),
+    };
+    expect(usageTransition(active, ended, NOW + 40e3).fields.durationUsedSeconds).toBe(40);
   });
 
   it('records the duration when a connected call ends', () => {
@@ -126,8 +145,19 @@ describe('usageTransition', () => {
 describe('sweepCutoffs', () => {
   it('only ends calls past the free limit plus grace', () => {
     const { overrunStartedBefore, unansweredCreatedBefore } = sweepCutoffs(NOW);
-    expect(Date.parse(overrunStartedBefore))
+    expect(overrunStartedBefore.getTime())
       .toBe(NOW - (FREE_TRIAL_SECONDS + OVERRUN_GRACE_SECONDS) * 1000);
     expect(Date.parse(unansweredCreatedBefore)).toBe(NOW - RING_TIMEOUT_SECONDS * 1000);
+  });
+});
+
+describe('remainingFreeSeconds', () => {
+  it('counts down from the server-stamped start', () => {
+    expect(remainingFreeSeconds(Timestamp.fromMillis(NOW), NOW + 45e3)).toBe(75);
+    expect(remainingFreeSeconds(Timestamp.fromMillis(NOW), NOW + 500e3)).toBe(0);
+  });
+
+  it('assumes the full allowance before the start is stamped', () => {
+    expect(remainingFreeSeconds(null, NOW)).toBe(FREE_TRIAL_SECONDS);
   });
 });

@@ -6,6 +6,7 @@ import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../core/constants/communication_constants.dart';
+import '../../../core/constants/wallet_constants.dart';
 import '../../../core/widgets/index.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/providers/user_provider.dart';
@@ -14,9 +15,8 @@ import '../../community/services/community_firestore_service.dart';
 import '../models/public_guide_profile.dart';
 import '../providers/communication_provider.dart';
 import '../services/communication_firestore_service.dart';
-import '../services/free_trial_call_service.dart';
-import '../widgets/free_call_limit_dialog.dart';
 import '../widgets/guide_stats_display.dart';
+import '../../wallet/utils/guide_call_flow.dart';
 import '../../verification/widgets/verification_badge_widget.dart';
 import '../../consultations/widgets/availability_badge.dart';
 import '../../consultations/widgets/guide_pricing_card.dart';
@@ -58,12 +58,26 @@ class _GuidePublicProfileScreenState
       if (mounted) {
         SnackBarHelper.showErrorSnackBar(context, message: e.message);
       }
+    } catch (e) {
+      // Firestore errors (e.g. a rules denial) used to escape silently
+      // here: the button just stopped spinning and nothing happened.
+      debugPrint('[GuideProfile] start chat failed: $e');
+      if (mounted) {
+        SnackBarHelper.showErrorSnackBar(
+          context,
+          message: 'Could not open the chat. Please try again.',
+        );
+      }
     } finally {
       if (mounted) setState(() => _isStartingChat = false);
     }
   }
 
-  Future<void> _startCall(String callType) async {
+  Future<void> _startCall(
+    String callType, {
+    required String guideName,
+    required int ratePaisePerMinute,
+  }) async {
     final user = ref.read(currentUserProvider);
     if (user == null) return;
     if (user.uid == widget.guideUid) {
@@ -76,39 +90,28 @@ class _GuidePublicProfileScreenState
 
     setState(() => _isRequestingCall = true);
     try {
-      final freeTrial = ref.read(freeTrialCallServiceProvider);
-      // Fast local check first so an already-used free call shows the
-      // popup instantly, before any call session exists. The server check
-      // inside startFreeTrialCall is the one that actually counts.
-      final eligibility = await freeTrial.checkEligibility(
+      // Free 2 minutes if unused today -> paid from the shared wallet ->
+      // recharge popup. See startGuideCall.
+      await startGuideCall(
+        context: context,
+        ref: ref,
         callerId: user.uid,
         guideId: widget.guideUid,
-      );
-      if (eligibility == FreeTrialEligibility.usedToday) {
-        if (mounted) {
-          await showFreeCallLimitDialog(context, guideId: widget.guideUid);
-        }
-        return;
-      }
-
-      final sessionId = await freeTrial.startFreeTrialCall(
-        guideId: widget.guideUid,
+        guideName: guideName,
+        ratePaisePerMinute: ratePaisePerMinute,
         callType: callType,
       );
-      if (mounted) {
-        context.push(RouteNames.activeCallPath(sessionId));
-      }
-    } on FreeTrialUsedException {
-      if (mounted) {
-        await showFreeCallLimitDialog(context, guideId: widget.guideUid);
-      }
     } on CommunicationException catch (e) {
       if (mounted) {
         SnackBarHelper.showErrorSnackBar(context, message: e.message);
       }
     } catch (e) {
+      debugPrint('[GuideProfile] start call failed: $e');
       if (mounted) {
-        SnackBarHelper.showErrorSnackBar(context, message: e.toString());
+        SnackBarHelper.showErrorSnackBar(
+          context,
+          message: 'Could not start the call. Please try again.',
+        );
       }
     } finally {
       if (mounted) setState(() => _isRequestingCall = false);
@@ -324,7 +327,9 @@ class _GuidePublicProfileScreenState
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'First 2 minutes free with each guide, once a day.',
+                  'First 2 minutes free with each guide, once a day · then '
+                  '${formatRupees(resolvePerMinuteRatePaise(guide.settings))}/min '
+                  'from your wallet.',
                   textAlign: TextAlign.center,
                   style: AppFonts.plusJakarta(
                     fontSize: 12,
@@ -335,16 +340,24 @@ class _GuidePublicProfileScreenState
                 PrimaryButton(
                   label: 'Voice Call',
                   isLoading: _isRequestingCall,
-                  onPressed: () =>
-                      _startCall(CommunicationConstants.callTypeVoice),
+                  onPressed: () => _startCall(
+                    CommunicationConstants.callTypeVoice,
+                    guideName: guide.displayName,
+                    ratePaisePerMinute:
+                        resolvePerMinuteRatePaise(guide.settings),
+                  ),
                 ),
                 if (guide.settings.videoCallsEnabled) ...[
                   const SizedBox(height: 12),
                   OutlinedButton.icon(
                     onPressed: _isRequestingCall
                         ? null
-                        : () =>
-                            _startCall(CommunicationConstants.callTypeVideo),
+                        : () => _startCall(
+                              CommunicationConstants.callTypeVideo,
+                              guideName: guide.displayName,
+                              ratePaisePerMinute:
+                                  resolvePerMinuteRatePaise(guide.settings),
+                            ),
                     icon: const Icon(Icons.videocam_outlined),
                     label: const Text('Video Call'),
                     style: OutlinedButton.styleFrom(

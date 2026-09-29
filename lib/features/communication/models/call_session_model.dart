@@ -15,6 +15,10 @@ class CallSessionModel {
   final int maxDurationSeconds;
   // Server-created 2-minute free trial call (see startFreeTrialCall).
   final bool isFreeTrial;
+  // 'wallet' for a paid call billed from the caller's shared wallet
+  // (startPaidCall); null for free trial / legacy calls.
+  final String? billingMode;
+  final int ratePaisePerMinute;
   final DateTime createdAt;
   final DateTime? startedAt;
   final DateTime? endedAt;
@@ -37,6 +41,8 @@ class CallSessionModel {
     this.calleeTier = CommunicationConstants.subscriptionFree,
     required this.maxDurationSeconds,
     this.isFreeTrial = false,
+    this.billingMode,
+    this.ratePaisePerMinute = 0,
     required this.createdAt,
     this.startedAt,
     this.endedAt,
@@ -47,6 +53,8 @@ class CallSessionModel {
   });
 
   bool get isVideo => callType == CommunicationConstants.callTypeVideo;
+
+  bool get isWalletCall => billingMode == 'wallet';
 
   bool get bothAccepted => callerAccepted && calleeAccepted;
 
@@ -71,6 +79,8 @@ class CallSessionModel {
       calleeTier: json['calleeTier'] as String? ?? CommunicationConstants.subscriptionFree,
       maxDurationSeconds: (json['maxDurationSeconds'] as num?)?.toInt() ?? 300,
       isFreeTrial: json['isFreeTrial'] as bool? ?? false,
+      billingMode: json['billingMode'] as String?,
+      ratePaisePerMinute: (json['ratePaisePerMinute'] as num?)?.toInt() ?? 0,
       createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
           DateTime.now(),
       startedAt: DateTime.tryParse(json['startedAt']?.toString() ?? ''),
@@ -96,6 +106,8 @@ class CallSessionModel {
         'calleeTier': calleeTier,
         'maxDurationSeconds': maxDurationSeconds,
         'isFreeTrial': isFreeTrial,
+        'billingMode': billingMode,
+        'ratePaisePerMinute': ratePaisePerMinute,
         'createdAt': createdAt.toIso8601String(),
         'startedAt': startedAt?.toIso8601String(),
         'endedAt': endedAt?.toIso8601String(),
@@ -130,6 +142,8 @@ class CallSessionModel {
       calleeTier: calleeTier,
       maxDurationSeconds: maxDurationSeconds,
       isFreeTrial: isFreeTrial,
+      billingMode: billingMode,
+      ratePaisePerMinute: ratePaisePerMinute,
       createdAt: createdAt,
       startedAt: startedAt ?? this.startedAt,
       endedAt: endedAt ?? this.endedAt,

@@ -70,6 +70,10 @@ class RouteNames {
   static const String verification = '/verification';
   // Guide-only earnings dashboard (drawer's "Earnings & Payouts" item).
   static const String earnings = '/earnings';
+  // Shared call wallet (recharge + balance + history). Optional query
+  // params guideId/guideName/rate come back to "Call this guide" after a
+  // recharge -- see walletPath().
+  static const String wallet = '/wallet';
   static const String guidesDirectory = '/guides';
   static const String guideProfile = '/guides/:uid';
   static const String activeCall = '/call/:sessionId';
@@ -160,6 +164,16 @@ class RouteNames {
       '/college-details/$collegeId/submit-placement?name=${Uri.encodeComponent(collegeName)}';
   static String guideProfilePath(String uid) => '/guides/$uid';
   static String activeCallPath(String sessionId) => '/call/$sessionId';
+  static String walletPath({
+    String? guideId,
+    String? guideName,
+    int? ratePaisePerMinute,
+  }) =>
+      Uri(path: wallet, queryParameters: {
+        'guideId': ?guideId,
+        'guideName': ?guideName,
+        if (ratePaisePerMinute != null) 'rate': '$ratePaisePerMinute',
+      }).toString();
   static String consultationCheckoutPath(String guideId) =>
       '/consultations/$guideId/checkout';
   static String consultationRoomPath(String id) => '/consultations/$id';

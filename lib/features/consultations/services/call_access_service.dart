@@ -54,3 +54,27 @@ class CallAccessService {
     }
   }
 }
+
+/// Agora join token for a direct guide call (`call_sessions`), minted by
+/// the `mintCallSessionToken` Cloud Function only for a participant of an
+/// ACTIVE call. For a free-trial call the token expires with the free time,
+/// so Agora itself ends the audio even if an app never hangs up.
+class CallSessionTokenService {
+  CallSessionTokenService({FirebaseFunctions? functions})
+      : _functionsOverride = functions;
+
+  final FirebaseFunctions? _functionsOverride;
+  FirebaseFunctions get _functions =>
+      _functionsOverride ?? FirebaseFunctions.instance;
+
+  Future<ConsultationCallToken> mint(String sessionId) async {
+    try {
+      final result = await _functions
+          .httpsCallable('mintCallSessionToken')
+          .call<Map<String, dynamic>>({'sessionId': sessionId});
+      return ConsultationCallToken.fromMap(result.data);
+    } on FirebaseFunctionsException catch (e) {
+      throw CallAccessException(e.message ?? 'Could not connect call audio.');
+    }
+  }
+}

@@ -7,9 +7,13 @@ import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/communication_constants.dart';
+import '../../../core/constants/wallet_constants.dart';
 import '../../../core/widgets/index.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../engagement/services/local_notification_service.dart';
 import '../models/call_session_model.dart';
+import '../providers/incoming_call_controller.dart';
+import '../services/call_audio_session.dart';
 import '../models/interaction_rating_model.dart';
 import '../providers/communication_provider.dart';
 import '../services/communication_firestore_service.dart';
@@ -31,28 +35,63 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
   int _elapsedSeconds = 0;
   bool _timerStarted = false;
   bool _limitHandled = false;
-  bool _isMuted = false;
   bool _cameraOff = false;
   bool _blurBackground = true;
   bool _ratingShown = false;
+  DateTime? _activeSince;
+
+  /// Real-time audio (Agora) for this call, created once it's ACTIVE.
+  CallAudioSession? _audio;
+
+  @override
+  void initState() {
+    super.initState();
+    OpenCallScreens.ids.add(widget.sessionId);
+  }
 
   @override
   void dispose() {
+    OpenCallScreens.ids.remove(widget.sessionId);
     _durationTimer?.cancel();
+    unawaited(_audio?.dispose());
     super.dispose();
   }
 
-  /// Ticks once a second, re-deriving elapsed time from the session's
-  /// `startedAt` each tick (no drift, and reopening this screen can't
-  /// restart the clock). At the limit -- 2 minutes for a free trial call --
-  /// the call is ended automatically. Both participants run this; the
-  /// server's sweepFreeTrialCalls is the backstop if neither app is alive.
+  void _startAudio(CallSessionModel session) {
+    if (_audio != null) return;
+    final audio = CallAudioSession(
+      sessionId: session.id,
+      isVideo: session.isVideo,
+    );
+    setState(() => _audio = audio);
+    unawaited(audio.join());
+  }
+
+  void _stopAudio() {
+    final audio = _audio;
+    if (audio == null) return;
+    _audio = null;
+    unawaited(audio.dispose());
+  }
+
+  void _stopRinging() => unawaited(
+        LocalNotificationService.instance.cancelIncomingCall(widget.sessionId),
+      );
+
+  /// Ticks once a second and ends the call at its limit -- 2 minutes for a
+  /// free trial call. Measured from when THIS device saw the call connect,
+  /// not from the session's `startedAt`: that was written by the OTHER
+  /// phone, and a clock a few minutes behind (common on emulators) made the
+  /// call end the instant it connected. The server enforces the real limit
+  /// on its own clock (serverStartedAt + sweepFreeTrialCalls, and the Agora
+  /// token expiring), so reopening this screen can't buy extra time.
   void _startTimer(CallSessionModel session) {
     _durationTimer?.cancel();
+    final activeSince = _activeSince ??= DateTime.now();
     void tick() {
       if (!mounted) return;
       final elapsed = callElapsedSeconds(
-        startedAt: session.startedAt,
+        startedAt: activeSince,
         now: DateTime.now(),
         maxSeconds: session.maxDurationSeconds,
       );
@@ -97,7 +136,7 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
         context,
         message: isFreeTrial
             ? 'Your 2-minute free call has ended.'
-            : 'Call duration limit reached.',
+            : 'Your wallet balance for this call is used up.',
       );
     }
   }
@@ -141,7 +180,6 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                   interactionType: session.isVideo ? 'video_call' : 'voice_call',
                   createdAt: DateTime.now(),
                 ),
-                incrementCall: true,
               );
         },
       ),
@@ -235,15 +273,28 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
             session.startedAt != null) {
           _timerStarted = true;
           WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            _stopRinging();
             _startTimer(session);
+            _startAudio(session);
           });
         }
         // The other side hung up (or the server ended it): stop counting
-        // so this device doesn't also try to end an already-ended call.
+        // and leave the audio channel so this device doesn't also try to
+        // end an already-ended call.
         if (session.status != CommunicationConstants.callStatusActive &&
-            _durationTimer != null) {
-          _durationTimer?.cancel();
-          _durationTimer = null;
+            session.status != CommunicationConstants.callStatusRequested &&
+            session.status != CommunicationConstants.callStatusAccepted) {
+          if (_durationTimer != null) {
+            _durationTimer?.cancel();
+            _durationTimer = null;
+          }
+          if (_audio != null) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _stopRinging();
+              _stopAudio();
+            });
+          }
         }
 
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -372,7 +423,7 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                       CommunicationConstants.callStatusActive) ...[
                     const SizedBox(height: 20),
                     Text(
-                      session.isFreeTrial
+                      session.isFreeTrial || session.isWalletCall
                           ? formatCallDuration(
                               callRemainingSeconds(
                                 elapsedSeconds: _elapsedSeconds,
@@ -391,13 +442,18 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                     Text(
                       session.isFreeTrial
                           ? 'Free call · ends automatically'
-                          : 'Max ${formatCallDuration(session.maxDurationSeconds)}',
+                          : session.isWalletCall
+                              ? '${formatRupees(session.ratePaisePerMinute)}/min '
+                                  'from wallet · time left'
+                              : 'Max ${formatCallDuration(session.maxDurationSeconds)}',
                       style: AppFonts.plusJakarta(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                         color: Colors.white54,
                       ),
                     ),
+                    const SizedBox(height: 10),
+                    _AudioStatusLine(audio: _audio),
                   ],
                   const Spacer(),
                   if (needsAccept && !isCaller)
@@ -409,6 +465,7 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                           label: 'Decline',
                           color: AppTheme.errorColor,
                           onTap: () async {
+                            _stopRinging();
                             await ref
                                 .read(communicationServiceProvider)
                                 .rejectCall(
@@ -416,7 +473,13 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                                   userId: user.uid,
                                 );
                             if (!context.mounted) return;
-                            context.pop();
+                            // Opened from a notification tap (go) there is
+                            // nothing underneath to pop back to.
+                            if (context.canPop()) {
+                              context.pop();
+                            } else {
+                              context.go(RouteNames.home);
+                            }
                           },
                         ),
                         _CallActionButton(
@@ -424,6 +487,7 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                           label: 'Accept',
                           color: AppTheme.accentColor,
                           onTap: () async {
+                            _stopRinging();
                             await ref
                                 .read(communicationServiceProvider)
                                 .acceptCall(
@@ -452,11 +516,7 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                       spacing: 16,
                       runSpacing: 12,
                       children: [
-                        _CallControl(
-                          icon: _isMuted ? Icons.mic_off : Icons.mic,
-                          label: _isMuted ? 'Unmute' : 'Mute',
-                          onTap: () => setState(() => _isMuted = !_isMuted),
-                        ),
+                        _AudioControls(audio: _audio),
                         if (session.isVideo) ...[
                           _CallControl(
                             icon: _cameraOff
@@ -629,6 +689,89 @@ class _CallControl extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Mute + Loudspeaker, both driving the live Agora audio session.
+class _AudioControls extends StatelessWidget {
+  final CallAudioSession? audio;
+
+  const _AudioControls({required this.audio});
+
+  @override
+  Widget build(BuildContext context) {
+    final audio = this.audio;
+    if (audio == null) return const SizedBox.shrink();
+    return ValueListenableBuilder<CallAudioState>(
+      valueListenable: audio.state,
+      builder: (context, state, _) => Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _CallControl(
+            icon: state.muted ? Icons.mic_off : Icons.mic,
+            label: state.muted ? 'Unmute' : 'Mute',
+            onTap: () => audio.setMuted(!state.muted),
+          ),
+          const SizedBox(width: 16),
+          _CallControl(
+            icon: state.speakerOn
+                ? Icons.volume_up_rounded
+                : Icons.phone_in_talk_rounded,
+            label: state.speakerOn ? 'Speaker on' : 'Speaker',
+            color: state.speakerOn ? AppTheme.primaryColor : null,
+            onTap: () => audio.setSpeakerOn(!state.speakerOn),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// "Connecting audio…" / "Waiting for the other person…" / errors, so a
+/// silent line is never a mystery.
+class _AudioStatusLine extends StatelessWidget {
+  final CallAudioSession? audio;
+
+  const _AudioStatusLine({required this.audio});
+
+  static String? _label(CallAudioState s) {
+    switch (s.status) {
+      case CallAudioStatus.idle:
+      case CallAudioStatus.connected:
+        return null;
+      case CallAudioStatus.connecting:
+        return 'Connecting audio…';
+      case CallAudioStatus.waitingForPeer:
+        return 'Waiting for the other person to join audio…';
+      case CallAudioStatus.reconnecting:
+        return 'Reconnecting audio…';
+      case CallAudioStatus.failed:
+        return s.error ?? 'Call audio unavailable.';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final audio = this.audio;
+    if (audio == null) return const SizedBox.shrink();
+    return ValueListenableBuilder<CallAudioState>(
+      valueListenable: audio.state,
+      builder: (context, state, _) {
+        final label = _label(state);
+        if (label == null) return const SizedBox.shrink();
+        return Text(
+          label,
+          textAlign: TextAlign.center,
+          style: AppFonts.plusJakarta(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w600,
+            color: state.status == CallAudioStatus.failed
+                ? AppTheme.warningColor
+                : Colors.white70,
+          ),
+        );
+      },
     );
   }
 }

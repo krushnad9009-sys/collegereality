@@ -11,6 +11,7 @@ import '../../core/security/security_block_screen.dart';
 import '../../core/services/analytics_service.dart';
 import '../../core/widgets/firebase_initializing_screen.dart';
 import 'go_router_refresh_stream.dart';
+import '../../features/wallet/screens/wallet_screen.dart';
 import '../../features/auth/screens/splash_screen.dart';
 import '../../features/auth/screens/onboarding_screen.dart';
 import '../../features/auth/screens/login_screen.dart';
@@ -608,6 +609,17 @@ final Provider<GoRouter> appRouterProvider = Provider<GoRouter>((ref) {
           name: state.name,
           child: const EarningsScreen(),
         ),
+      ),
+      GoRoute(
+        path: RouteNames.wallet,
+        builder: (context, state) {
+          final q = state.uri.queryParameters;
+          return WalletScreen(
+            guideId: q['guideId'],
+            guideName: q['guideName'],
+            ratePaisePerMinute: int.tryParse(q['rate'] ?? ''),
+          );
+        },
       ),
       GoRoute(
         path: RouteNames.requestCollege,

@@ -7,6 +7,7 @@ import '../../config/router/route_names.dart';
 import '../../config/theme/app_design_tokens.dart';
 import '../../config/theme/app_theme.dart';
 import '../../config/theme/premium_home_theme.dart';
+import '../../features/communication/providers/incoming_call_controller.dart';
 import '../../features/community/providers/presence_heartbeat_provider.dart';
 
 /// Premium bottom navigation shell for primary app destinations. Also hosts
@@ -34,7 +35,13 @@ class _AppShellState extends ConsumerState<AppShell> {
     // Starts a >=heartbeatInterval foreground timer; auto-pauses/resumes
     // with app lifecycle and disposes with this shell (app session ends).
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) ref.read(presenceHeartbeatControllerProvider).start();
+      if (!mounted) return;
+      ref.read(presenceHeartbeatControllerProvider).start();
+      // Rings + opens the call screen for incoming calls on ANY screen
+      // (the Home banner alone missed every call while elsewhere).
+      ref
+          .read(incomingCallControllerProvider)
+          .start(router: GoRouter.of(context));
     });
   }
 

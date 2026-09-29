@@ -1,11 +1,10 @@
 /// Seconds already used on a call that connected at [startedAt], clamped
 /// to `[0, maxSeconds]`.
 ///
-/// Measured from the session's server-stored `startedAt`, not from when
-/// this screen first saw the call -- otherwise leaving and reopening the
-/// call screen (or an app restart) would restart the free-trial clock.
-/// Clamped because `startedAt` was written by the other participant's
-/// device, whose clock may be slightly off from this one.
+/// Callers pass the moment THIS device saw the call connect -- not the
+/// session's `startedAt`, which the other phone wrote with its own clock
+/// (a clock a few minutes behind ended calls the instant they connected).
+/// The server enforces the real limit on its own clock.
 int callElapsedSeconds({
   required DateTime? startedAt,
   required DateTime now,

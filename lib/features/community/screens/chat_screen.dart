@@ -97,6 +97,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           );
     } on CommunityException catch (e) {
       if (mounted) SnackBarHelper.showErrorSnackBar(context, message: e.message);
+    } catch (e) {
+      debugPrint('[ChatScreen] send failed: $e');
+      if (mounted) {
+        SnackBarHelper.showErrorSnackBar(
+          context,
+          message: 'Message not sent. Please try again.',
+        );
+      }
     }
   }
 

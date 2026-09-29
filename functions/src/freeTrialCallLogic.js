@@ -116,10 +116,22 @@ function evaluateFreeTrialUsage(usage, session, nowMs) {
   return { allowed: true, supersedesSessionId: usage.sessionId || undefined };
 }
 
+/**
+ * Epoch ms of a timestamp that may be a Firestore Timestamp (server-set
+ * `serverStartedAt`), a Date, or an ISO string (client-set `startedAt`).
+ */
+function toMs(value) {
+  if (value == null) return null;
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  if (typeof value.toMillis === 'function') return value.toMillis();
+  if (value instanceof Date) return value.getTime();
+  return parseMs(value);
+}
+
 /** Seconds of the free call actually used, clamped to [0, limit]. */
-function durationUsedSeconds(startedAtIso, endedAtIso) {
-  const start = parseMs(startedAtIso);
-  const end = parseMs(endedAtIso);
+function durationUsedSeconds(startedAt, endedAt) {
+  const start = toMs(startedAt);
+  const end = toMs(endedAt);
   if (start === null || end === null) return 0;
   const secs = Math.round((end - start) / 1000);
   return Math.min(Math.max(secs, 0), FREE_TRIAL_SECONDS);
@@ -128,38 +140,69 @@ function durationUsedSeconds(startedAtIso, endedAtIso) {
 /**
  * How a call_sessions update should change its free_call_usage doc.
  * Returns null when the update is irrelevant (ratings, accept flags...).
+ *
+ * Duration is measured on the SERVER clock (`serverStartedAt`, stamped by
+ * the trigger on connect, to `nowMs` at end). `startedAt`/`endedAt` are
+ * written by two different phones whose clocks can disagree by minutes
+ * (emulators especially), so they are only a fallback.
  */
-function usageTransition(before, after) {
+function usageTransition(before, after, nowMs = Date.now()) {
   const endedNow = !isEndedStatus(before.status) && isEndedStatus(after.status);
   const connectedNow = !before.startedAt && !!after.startedAt;
 
   if (endedNow) {
     if (!after.startedAt) return { type: 'release' };
+    const serverStart = toMs(after.serverStartedAt);
     return {
       type: 'finish',
       fields: {
         status: USAGE_STATUS.CONSUMED,
         connectedAt: after.startedAt,
         endedAt: after.endedAt || null,
-        durationUsedSeconds: durationUsedSeconds(after.startedAt, after.endedAt),
+        durationUsedSeconds: serverStart !== null
+          ? durationUsedSeconds(serverStart, nowMs)
+          : durationUsedSeconds(after.startedAt, after.endedAt),
       },
     };
   }
   if (connectedNow) {
     return {
       type: 'consume',
+      // The trigger also stamps call_sessions.serverStartedAt -- the only
+      // start time the sweeper and the call token trust.
+      stampServerStart: true,
       fields: { status: USAGE_STATUS.CONSUMED, connectedAt: after.startedAt },
     };
   }
   return null;
 }
 
-/** ISO cutoffs for the sweeper's two queries. */
+/**
+ * Seconds of a call's allowance left, by server clock (call token TTL,
+ * sweepers). Before the server start is stamped, the full allowance.
+ */
+function remainingSecondsFor(limitSeconds, serverStartedAt, nowMs) {
+  const start = toMs(serverStartedAt);
+  if (start === null) return limitSeconds;
+  return Math.max(0, limitSeconds - Math.floor((nowMs - start) / 1000));
+}
+
+/** Seconds of a free call left, by server clock (for the call token TTL). */
+function remainingFreeSeconds(serverStartedAt, nowMs) {
+  return remainingSecondsFor(FREE_TRIAL_SECONDS, serverStartedAt, nowMs);
+}
+
+/**
+ * Cutoffs for the sweeper's two queries. The overrun cutoff is a Date
+ * compared against the server-stamped `serverStartedAt` Timestamp -- never
+ * the client's `startedAt` string, which would end a call early whenever
+ * the accepting phone's clock runs behind.
+ */
 function sweepCutoffs(nowMs) {
   return {
     overrunStartedBefore: new Date(
       nowMs - (FREE_TRIAL_SECONDS + OVERRUN_GRACE_SECONDS) * 1000,
-    ).toISOString(),
+    ),
     unansweredCreatedBefore: new Date(
       nowMs - RING_TIMEOUT_SECONDS * 1000,
     ).toISOString(),
@@ -180,5 +223,8 @@ module.exports = {
   evaluateFreeTrialUsage,
   durationUsedSeconds,
   usageTransition,
+  remainingFreeSeconds,
+  remainingSecondsFor,
+  toMs,
   sweepCutoffs,
 };

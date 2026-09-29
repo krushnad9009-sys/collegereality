@@ -32,38 +32,63 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   final actionRoute =
       isAllowedFcmActionRoute(rawRoute) ? rawRoute : RouteNames.notifications;
 
-  final firestore = FirebaseFirestore.instance;
   final dedupeId = '${userId}_${type}_$entityId';
-  final existing = await firestore
-      .collection(FirestoreConstants.userNotificationsCollection)
-      .doc(dedupeId)
-      .get();
-  if (existing.exists) return;
 
-  await firestore
-      .collection(FirestoreConstants.userNotificationsCollection)
-      .doc(dedupeId)
-      .set({
-    'id': dedupeId,
-    'userId': userId,
-    'type': type,
-    'category': category,
-    'title': title,
-    'body': body,
-    'entityType': entityType,
-    'entityId': entityId,
-    'actionRoute': actionRoute,
-    'isRead': false,
-    'createdAt': DateTime.now().toIso8601String(),
-  });
+  // Show FIRST, then do the Firestore bookkeeping. This isolate was just
+  // woken from the background: Firestore (and the restored auth session
+  // it needs for rules) may not be ready, and a failure there used to
+  // abort the handler before anything appeared -- a call that never rang.
+  if (type == _incomingCallType) {
+    // iOS already shows the OS-level alert carried by the call push
+    // (see functions/src/push.js); a local one too would double it.
+    if (defaultTargetPlatform != TargetPlatform.iOS) {
+      await LocalNotificationService.instance.showIncomingCall(
+        sessionId: entityId,
+        title: title,
+        body: body,
+        payload: actionRoute,
+      );
+    }
+  } else {
+    await LocalNotificationService.instance.show(
+      id: dedupeId.hashCode,
+      title: title,
+      body: body,
+      payload: actionRoute,
+    );
+  }
 
-  await LocalNotificationService.instance.show(
-    id: dedupeId.hashCode,
-    title: title,
-    body: body,
-    payload: actionRoute,
-  );
+  try {
+    final firestore = FirebaseFirestore.instance;
+    final existing = await firestore
+        .collection(FirestoreConstants.userNotificationsCollection)
+        .doc(dedupeId)
+        .get();
+    if (existing.exists) return;
+
+    await firestore
+        .collection(FirestoreConstants.userNotificationsCollection)
+        .doc(dedupeId)
+        .set({
+      'id': dedupeId,
+      'userId': userId,
+      'type': type,
+      'category': category,
+      'title': title,
+      'body': body,
+      'entityType': entityType,
+      'entityId': entityId,
+      'actionRoute': actionRoute,
+      'isRead': false,
+      'createdAt': DateTime.now().toIso8601String(),
+    });
+  } catch (e) {
+    debugPrint('[FCM background] in-app notification record skipped: $e');
+  }
 }
+
+/// `type` of the push sent by onCallSessionCreated (pushNotificationTriggers.js).
+const _incomingCallType = 'incoming_call';
 
 class FirebaseMessagingService {
   FirebaseMessagingService(this._engagementService);
@@ -89,6 +114,14 @@ class FirebaseMessagingService {
 
     _currentUserId = userId;
     _router = router;
+    // Tapping any of our local notifications (e.g. a ringing call) opens
+    // its route -- including a tap that cold-started the app.
+    LocalNotificationService.instance.onRouteTap = (route) {
+      if (!isAllowedFcmActionRoute(route)) return;
+      final r = _router;
+      if (r == null) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) => r.go(route));
+    };
 
     if (!kIsWeb) {
       await _messaging.requestPermission(
@@ -151,6 +184,11 @@ class FirebaseMessagingService {
       ),
     );
 
+    // Foreground calls are rung and opened by IncomingCallController
+    // (driven by the live call_sessions stream, so it also works when the
+    // push is late or lost) -- a generic banner here would just duplicate it.
+    if (type == _incomingCallType) return;
+
     unawaited(
       LocalNotificationService.instance.show(
         id: title.hashCode ^ body.hashCode,
@@ -187,5 +225,6 @@ class FirebaseMessagingService {
     _initialized = false;
     _currentUserId = null;
     _router = null;
+    LocalNotificationService.instance.onRouteTap = null;
   }
 }

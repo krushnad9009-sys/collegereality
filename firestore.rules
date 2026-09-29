@@ -712,6 +712,18 @@ service cloud.firestore {
             ['ended', 'rejected', 'emergency_ended', 'missed']);
     }
 
+    // Shared call wallet (functions/src/wallet.js). Balance and ledger move
+    // money, so ONLY Cloud Functions write them; the owner can read.
+    match /wallets/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+      allow write: if false;
+    }
+    match /wallet_transactions/{txId} {
+      allow read: if isAuthenticated() &&
+        (resource.data.uid == request.auth.uid || isAdmin());
+      allow write: if false;
+    }
+
     // Free trial call log: one doc per (caller, guide, IST day), written
     // only by Cloud Functions (startFreeTrialCall / onFreeTrialCallUpdated).
     // The caller reads it to show "already used today" before dialing; a
@@ -907,8 +919,15 @@ service cloud.firestore {
     }
 
     match /user_blocks/{blockId} {
+      // Both parties may read a block. The app checks blocks in BOTH
+      // directions before opening a private chat, sending a message, or
+      // requesting a consultation ("did they block me?" is queried as
+      // blockerId == peer && blockedId == me). Blocker-only read made that
+      // query always PERMISSION_DENIED, which broke every chat start,
+      // message send and consultation request.
       allow read: if isAuthenticated() &&
-        resource.data.blockerId == request.auth.uid;
+        (resource.data.blockerId == request.auth.uid ||
+         resource.data.blockedId == request.auth.uid);
       allow create: if isAuthenticated() &&
         request.resource.data.blockerId == request.auth.uid;
     }

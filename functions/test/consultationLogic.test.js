@@ -156,3 +156,18 @@ describe('verifyWebhookSignature', () => {
     ).toBe(false);
   });
 });
+
+describe('resolveGuidePriceForConsultation default pricing fallback', () => {
+  const { resolveGuidePriceForConsultation: resolve } = require('../src/consultationLogic');
+
+  it('a guide who never set call pricing is bookable at ₹10/min packages', () => {
+    const settings = { chatAvailable: false, callAvailable: false, callPricing: [] };
+    expect(resolve({ settings, type: 'call', durationMinutes: 15 })).toBe(15000);
+    expect(resolve({ settings, type: 'call', durationMinutes: 30 })).toBe(30000);
+    expect(resolve({ settings, type: 'call', durationMinutes: 45 })).toBeNull();
+  });
+
+  it('does not invent chat pricing', () => {
+    expect(resolve({ settings: {}, type: 'chat', durationMinutes: 15 })).toBeNull();
+  });
+});

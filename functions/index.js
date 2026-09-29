@@ -8,7 +8,7 @@
 
 const { createConsultationOrder, verifyConsultationPayment } = require('./src/consultations');
 const { razorpayWebhook } = require('./src/webhook');
-const { mintConsultationCallToken } = require('./src/callToken');
+const { mintConsultationCallToken, mintCallSessionToken } = require('./src/callToken');
 const { onConsultationWrite } = require('./src/triggers');
 const { expireStaleConsultations } = require('./src/scheduled');
 const {
@@ -17,6 +17,14 @@ const {
   sweepFreeTrialCalls,
 } = require('./src/freeTrialCalls');
 const { onUserWriteSyncPublicProfile } = require('./src/publicProfileSync');
+const { onInteractionRatingCreated } = require('./src/interactionRatingTriggers');
+const {
+  createWalletRechargeOrder,
+  verifyWalletRecharge,
+  startPaidCall,
+  onWalletCallUpdated,
+  sweepWalletCalls,
+} = require('./src/wallet');
 const { aiChatComplete } = require('./src/aiChat');
 const { requestEmailOtp, verifyEmailOtp } = require('./src/emailOtp');
 const { requestAccountDeletion } = require('./src/accountDeletion');
@@ -37,6 +45,8 @@ module.exports = {
   verifyConsultationPayment,
   razorpayWebhook,
   mintConsultationCallToken,
+  // Agora join token for direct guide calls (expires with the free time).
+  mintCallSessionToken,
   onConsultationWrite,
   expireStaleConsultations,
   // Direct guide calls: 2-minute free trial, once per day per guide.
@@ -47,6 +57,16 @@ module.exports = {
   // Keeps public_profiles (guide directory, presence) in step with users
   // even when a client mirror write was denied; strips legacy PII keys.
   onUserWriteSyncPublicProfile,
+  // Free call/chat ratings -> ratee's guideStats (was a cross-user client
+  // write that rules denied).
+  onInteractionRatingCreated,
+  // Shared call wallet: recharge once, spend on paid calls with any guide
+  // at that guide's per-minute rate; unused balance stays for next time.
+  createWalletRechargeOrder,
+  verifyWalletRecharge,
+  startPaidCall,
+  onWalletCallUpdated,
+  sweepWalletCalls,
   aiChatComplete,
   requestEmailOtp,
   verifyEmailOtp,

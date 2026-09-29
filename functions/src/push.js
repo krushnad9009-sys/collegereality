@@ -82,7 +82,22 @@ async function sendPushToUser({
           // silent (data-only, no alert/sound at the OS level) push --
           // required for firebaseMessagingBackgroundHandler to run there
           // the same way it does on Android.
-          aps: { 'content-available': 1 },
+          //
+          // A ringing call can't rely on that alone: iOS throttles silent
+          // pushes and never delivers them to a force-quit app, so the
+          // call would just never show. High-priority (call) pushes also
+          // carry an OS-level alert + sound on iOS only; the Flutter
+          // background handler skips its own local notification for those
+          // on iOS so it isn't shown twice. Android stays data-only (the
+          // app shows its own full-screen, ringing call notification).
+          aps: highPriority
+            ? {
+                'content-available': 1,
+                alert: { title, body },
+                sound: 'default',
+                'interruption-level': 'time-sensitive',
+              }
+            : { 'content-available': 1 },
         },
       },
     });

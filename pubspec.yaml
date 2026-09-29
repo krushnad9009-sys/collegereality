@@ -62,6 +62,7 @@ dependencies:
   # security_block_screen.dart's "Open Developer Settings" button.
   android_intent_plus: ^6.1.0
   firebase_app_check: ^0.3.2+10
+  agora_rtc_engine: ^6.5.3
 
 dev_dependencies:
   flutter_test:

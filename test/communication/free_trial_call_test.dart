@@ -198,7 +198,7 @@ void main() {
     });
   });
 
-  testWidgets('limit popup: Pay Now opens that guide\'s checkout',
+  testWidgets('limit popup: Recharge opens the wallet for that guide',
       (tester) async {
     final router = GoRouter(
       routes: [
@@ -206,16 +206,23 @@ void main() {
           path: '/',
           builder: (context, _) => Scaffold(
             body: TextButton(
-              onPressed: () =>
-                  showFreeCallLimitDialog(context, guideId: 'guide1'),
+              onPressed: () => showFreeCallLimitDialog(
+                context,
+                guideId: 'guide1',
+                guideName: 'Asha',
+                ratePaisePerMinute: 1000,
+                balancePaise: 0,
+              ),
               child: const Text('call'),
             ),
           ),
         ),
         GoRoute(
-          path: RouteNames.consultationCheckout,
-          builder: (_, state) =>
-              Text('CHECKOUT ${state.pathParameters['guideId']}'),
+          path: RouteNames.wallet,
+          builder: (_, state) => Text(
+            'WALLET ${state.uri.queryParameters['guideId']} '
+            '${state.uri.queryParameters['rate']}',
+          ),
         ),
       ],
     );
@@ -228,9 +235,10 @@ void main() {
       find.textContaining('You have used your 2-minute free call'),
       findsOneWidget,
     );
+    expect(find.textContaining('₹10/min'), findsOneWidget);
 
-    await tester.tap(find.text('Pay Now'));
+    await tester.tap(find.text('Recharge'));
     await tester.pumpAndSettle();
-    expect(find.text('CHECKOUT guide1'), findsOneWidget);
+    expect(find.text('WALLET guide1 1000'), findsOneWidget);
   });
 }

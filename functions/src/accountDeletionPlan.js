@@ -11,7 +11,8 @@
 //  ANONYMISE  — content/records that must stay for OTHER people
 //               (a college's review score, a guide's rating average, a
 //               moderation record) but must no longer identify the user.
-//  RETAIN     — `consultations` + `payments`: financial source-of-truth,
+//  RETAIN     — `consultations` + `payments` + `wallets` +
+//               `wallet_transactions`: financial source-of-truth,
 //               needed for reconciliation / refunds / disputes / tax.
 //               They carry only opaque uids + amounts + gateway ids — no
 //               name, email or phone — so the uid is left as an opaque

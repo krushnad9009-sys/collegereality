@@ -7,6 +7,12 @@ const { db } = require('./admin');
 const { CONSULTATION_STATUS } = require('./consultationLogic');
 const { AGORA_APP_ID, AGORA_APP_CERTIFICATE } = require('./params');
 const { assertConfigured } = require('./util/guards');
+const {
+  CALL_STATUS,
+  OVERRUN_GRACE_SECONDS,
+  remainingFreeSeconds,
+  remainingSecondsFor,
+} = require('./freeTrialCallLogic');
 
 const TOKEN_TTL_SECONDS = 60 * 60 * 2; // 2h — comfortably covers any priced duration
 
@@ -52,12 +58,7 @@ const mintConsultationCallToken = onCall(
       );
     }
 
-    // Deterministic small numeric uid Agora requires, derived from the
-    // Firebase uid (stable per user, doesn't leak the real uid string).
-    const numericUid =
-      parseInt(crypto.createHash('sha256').update(uid).digest('hex').slice(0, 8), 16) %
-      2147483647;
-
+    const numericUid = agoraUidFor(uid);
     const appId = assertConfigured(AGORA_APP_ID.value(), 'Calling');
     const appCertificate = assertConfigured(
       AGORA_APP_CERTIFICATE.value(),
@@ -84,4 +85,81 @@ const mintConsultationCallToken = onCall(
   },
 );
 
-module.exports = { mintConsultationCallToken };
+/**
+ * Deterministic small numeric uid Agora requires, derived from the
+ * Firebase uid (stable per user, doesn't leak the real uid string).
+ */
+function agoraUidFor(uid) {
+  return (
+    parseInt(crypto.createHash('sha256').update(uid).digest('hex').slice(0, 8), 16) %
+    2147483647
+  );
+}
+
+/**
+ * Agora join token for a direct guide call (`call_sessions`, created by
+ * startFreeTrialCall). Only a participant of an ACTIVE session gets one.
+ *
+ * For a free trial call the token expires when the free time runs out
+ * (server clock, `serverStartedAt`) plus a small grace: Agora itself then
+ * drops both sides from the channel, so the 2-minute limit holds even if
+ * neither app hangs up.
+ */
+const mintCallSessionToken = onCall(
+  { secrets: [AGORA_APP_ID, AGORA_APP_CERTIFICATE] },
+  async (request) => {
+    const uid = request.auth && request.auth.uid;
+    if (!uid) throw new HttpsError('unauthenticated', 'Sign in required.');
+
+    const sessionId = request.data && request.data.sessionId;
+    if (typeof sessionId !== 'string' || !sessionId) {
+      throw new HttpsError('invalid-argument', 'sessionId is required.');
+    }
+
+    const snap = await db.collection('call_sessions').doc(sessionId).get();
+    if (!snap.exists) throw new HttpsError('not-found', 'Call not found.');
+    const session = snap.data();
+    if (session.callerId !== uid && session.calleeId !== uid) {
+      throw new HttpsError('permission-denied', 'Not a participant.');
+    }
+    if (session.status !== CALL_STATUS.ACTIVE) {
+      throw new HttpsError(
+        'failed-precondition',
+        `Call is '${session.status}', not connected.`,
+      );
+    }
+
+    const nowSec = Math.floor(Date.now() / 1000);
+    // Free trial: what's left of the 2 minutes. Wallet call: what's left of
+    // the talk time the balance paid for at start (maxDurationSeconds).
+    const allowedSeconds = session.isFreeTrial
+      ? remainingFreeSeconds(session.serverStartedAt, Date.now())
+      : remainingSecondsFor(
+          Number(session.maxDurationSeconds) || 0,
+          session.serverStartedAt,
+          Date.now(),
+        );
+    if (allowedSeconds <= 0) {
+      throw new HttpsError('failed-precondition', 'This call has reached its time limit.');
+    }
+    const expireAt = nowSec + allowedSeconds + OVERRUN_GRACE_SECONDS;
+
+    const appId = assertConfigured(AGORA_APP_ID.value(), 'Calling');
+    const appCertificate = assertConfigured(AGORA_APP_CERTIFICATE.value(), 'Calling');
+    const channelName = `call_${sessionId}`;
+    const numericUid = agoraUidFor(uid);
+    const token = RtcTokenBuilder.buildTokenWithUid(
+      appId,
+      appCertificate,
+      channelName,
+      numericUid,
+      RtcRole.PUBLISHER,
+      expireAt,
+      expireAt,
+    );
+
+    return { appId, channelName, token, uid: numericUid, expiresAt: expireAt };
+  },
+);
+
+module.exports = { mintConsultationCallToken, mintCallSessionToken };

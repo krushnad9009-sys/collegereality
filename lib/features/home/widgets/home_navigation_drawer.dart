@@ -78,10 +78,15 @@ class HomeNavigationDrawer extends ConsumerWidget {
                       title: 'Notifications',
                       onTap: () => _push(context, RouteNames.notifications),
                     ),
+                    _DrawerItem(
+                      icon: Icons.account_balance_wallet_outlined,
+                      title: 'Call Wallet',
+                      onTap: () => _push(context, RouteNames.wallet),
+                    ),
                     if (userDetail?.communicationSettings.isGuideAvailable ??
                         false)
                       _DrawerItem(
-                        icon: Icons.account_balance_wallet_outlined,
+                        icon: Icons.payments_outlined,
                         title: 'Earnings & Payouts',
                         onTap: () => _push(context, RouteNames.earnings),
                       ),
