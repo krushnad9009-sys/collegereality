@@ -11,6 +11,7 @@ import '../../core/security/security_block_screen.dart';
 import '../../core/services/analytics_service.dart';
 import '../../core/widgets/firebase_initializing_screen.dart';
 import 'go_router_refresh_stream.dart';
+import '../../features/guide_onboarding/guide_onboarding_screen.dart';
 import '../../features/wallet/screens/wallet_screen.dart';
 import '../../features/auth/screens/splash_screen.dart';
 import '../../features/auth/screens/onboarding_screen.dart';
@@ -1082,6 +1083,17 @@ final Provider<GoRouter> appRouterProvider = Provider<GoRouter>((ref) {
         path: RouteNames.guidesDirectory,
         builder: (context, state) => const GuidesDirectoryScreen(),
       ),
+      // Literal /guides/... routes MUST come before /guides/:uid -- the
+      // first match wins, so `pricing` / `become` would otherwise open a
+      // guide profile for a user with that id.
+      GoRoute(
+        path: RouteNames.guidePricingSetup,
+        builder: (context, state) => const GuidePricingSetupScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.guideOnboarding,
+        builder: (context, state) => const GuideOnboardingScreen(),
+      ),
       GoRoute(
         path: RouteNames.guideProfile,
         builder: (context, state) {
@@ -1095,10 +1107,6 @@ final Provider<GoRouter> appRouterProvider = Provider<GoRouter>((ref) {
           final sessionId = state.pathParameters['sessionId']!;
           return ActiveCallScreen(sessionId: sessionId);
         },
-      ),
-      GoRoute(
-        path: RouteNames.guidePricingSetup,
-        builder: (context, state) => const GuidePricingSetupScreen(),
       ),
       GoRoute(
         path: RouteNames.consultationCheckout,

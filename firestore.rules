@@ -166,7 +166,24 @@ service cloud.firestore {
         // Guide reputation must use dedicated lastActive / rating helpers.
         request.resource.data.get('guideStats', {}) ==
           resource.data.get('guideStats', {}) &&
-        guideAvailabilityRequiresVerification(resource.data, request.resource.data);
+        guideAvailabilityRequiresVerification(resource.data, request.resource.data) &&
+        guideModeRequiresCollegeReview(resource.data, request.resource.data);
+    }
+
+    // Guide onboarding is complete only with a college review on file:
+    // switching guide mode ON requires `guideOnboarding.reviewId` to name a
+    // review this user wrote (pending or published). Only the users doc is
+    // checked -- the public_profiles mirror follows via the server sync.
+    function guideModeRequiresCollegeReview(oldData, newData) {
+      let turningOn =
+        newData.get('communicationSettings', {}).get('isGuideAvailable', false) == true &&
+        oldData.get('communicationSettings', {}).get('isGuideAvailable', false) != true;
+      let reviewId = newData.get('guideOnboarding', {}).get('reviewId', '');
+      return !turningOn || (
+        reviewId is string && reviewId.size() > 0 &&
+        exists(/databases/$(database)/documents/reviews/$(reviewId)) &&
+        get(/databases/$(database)/documents/reviews/$(reviewId)).data.userId == request.auth.uid
+      );
     }
 
     function isSafeUserCreate(userId) {
@@ -205,6 +222,30 @@ service cloud.firestore {
           resource.data.get('helpfulCount', 0) + 1 &&
         !exists(/databases/$(database)/documents/reviews/$(reviewId)/helpful/$(request.auth.uid)) &&
         existsAfter(/databases/$(database)/documents/reviews/$(reviewId)/helpful/$(request.auth.uid));
+    }
+
+    // Guide onboarding: an UNVERIFIED user may write their college review
+    // before their documents are checked -- but only as a hidden,
+    // non-counting `pending_verification` review (never touches aggregates).
+    function isPendingVerificationReviewCreate() {
+      return isAuthenticated() &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.status == 'pending_verification' &&
+        request.resource.data.isVerifiedStudent == false &&
+        request.resource.data.get('helpfulCount', 0) == 0;
+    }
+
+    // ...and publish it only once the SERVER has verified them
+    // (isVerifiedStudent() reads their users doc, which only the
+    // verification pipeline can set). The college aggregate bump in the
+    // same transaction is covered by isBoundedCollegeAggregateUpdate.
+    function isOwnPendingReviewPublish() {
+      return resource.data.userId == request.auth.uid &&
+        resource.data.status == 'pending_verification' &&
+        request.resource.data.status == 'published' &&
+        request.resource.data.isVerifiedStudent == true &&
+        isVerifiedStudent() &&
+        affectedKeys().hasOnly(['status', 'isVerifiedStudent', 'reviewerBadge', 'updatedAt']);
     }
 
     function isOwnerReviewContentUpdate() {
@@ -664,8 +705,10 @@ service cloud.firestore {
         (isAuthenticated() &&
           isVerifiedStudent() &&
           request.resource.data.userId == request.auth.uid &&
-          request.resource.data.isVerifiedStudent == true);
+          request.resource.data.isVerifiedStudent == true) ||
+        isPendingVerificationReviewCreate();
       allow update: if isAdmin() ||
+        (isAuthenticated() && isOwnPendingReviewPublish()) ||
         (isAuthenticated() && isOwnerReviewContentUpdate()) ||
         (isAuthenticated() && isHelpfulCountOnlyUpdate(reviewId));
       allow delete: if isAdmin() ||

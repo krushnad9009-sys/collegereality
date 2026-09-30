@@ -389,13 +389,16 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                               // of doing nothing.
                               return ListTile(
                                 contentPadding: EdgeInsets.zero,
+                                // Guide onboarding wizard: college review
+                                // + document verification, step by step.
                                 onTap: userDetail != null
-                                    ? () => GuideVerificationCard.openSheet(
-                                        context, userDetail)
+                                    ? () => context
+                                        .push(RouteNames.guideOnboarding)
                                     : null,
                                 title: const Text('Available as a guide'),
                                 subtitle: const Text(
-                                  'Only verified students/alumni can become a guide. Tap to verify.',
+                                  'Review your college and verify you study '
+                                  'there to become a guide. Tap to start.',
                                 ),
                                 trailing: const Switch(
                                   value: false,
@@ -408,6 +411,16 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                               title: const Text('Available as a guide'),
                               value: settings.isGuideAvailable,
                               onChanged: (value) {
+                                // Switching ON needs a college review on
+                                // file (rules: guideModeRequiresCollegeReview)
+                                // -- send verified users without one through
+                                // the wizard instead of a save that fails.
+                                if (value &&
+                                    userDetail.guideOnboardingReviewId ==
+                                        null) {
+                                  context.push(RouteNames.guideOnboarding);
+                                  return;
+                                }
                                 setState(() {
                                   _communicationSettings = settings.copyWith(
                                       isGuideAvailable: value);

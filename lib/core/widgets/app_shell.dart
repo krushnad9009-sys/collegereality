@@ -8,6 +8,7 @@ import '../../config/theme/app_design_tokens.dart';
 import '../../config/theme/app_theme.dart';
 import '../../config/theme/premium_home_theme.dart';
 import '../../features/communication/providers/incoming_call_controller.dart';
+import '../../features/guide_onboarding/guide_onboarding_provider.dart';
 import '../../features/community/providers/presence_heartbeat_provider.dart';
 
 /// Premium bottom navigation shell for primary app destinations. Also hosts
@@ -42,6 +43,9 @@ class _AppShellState extends ConsumerState<AppShell> {
       ref
           .read(incomingCallControllerProvider)
           .start(router: GoRouter.of(context));
+      // Publishes a pending guide review + turns guide mode on the moment
+      // the user's documents are approved.
+      ref.read(guideOnboardingFinalizerProvider).start();
     });
   }
 

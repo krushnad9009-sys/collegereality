@@ -85,6 +85,82 @@ class FirestoreReviewService {
     return saved;
   }
 
+  /// Guide onboarding, step 1+2: a review written BEFORE the author is
+  /// verified. Stored `pending_verification` + `isVerifiedStudent: false`
+  /// (hidden from every public list) and does NOT touch the college
+  /// aggregates. Re-submitting reuses an existing review for the same
+  /// college instead of creating a duplicate.
+  Future<ReviewModel> createPendingVerificationReview(ReviewModel review) async {
+    final existing = await getUserReviewForCollege(
+      review.userId,
+      review.collegeId,
+    );
+    if (existing != null) return existing;
+
+    final id = review.id.isEmpty ? _uuid.v4() : review.id;
+    final now = DateTime.now();
+    final saved = review.copyWith(
+      id: id,
+      collegeId: review.collegeId.trim(),
+      status: ReviewModel.statusPendingVerification,
+      isVerifiedStudent: false,
+      createdAt: now,
+      updatedAt: now,
+    );
+    final data = saved.toJson();
+    data['helpfulCount'] = 0;
+    data['createdAt'] = now.toIso8601String();
+    data['updatedAt'] = now.toIso8601String();
+    await _reviews.doc(id).set(data);
+    return saved;
+  }
+
+  /// Once the author's verification is approved: publishes each of their
+  /// `pending_verification` reviews and adds it to the college aggregates
+  /// (the same delta path as a normal review). firestore.rules only allow
+  /// this for a server-verified student, so an unverified client can't
+  /// publish early. Returns how many were published.
+  Future<int> publishPendingVerificationReviews({
+    required String userId,
+    String? reviewerBadge,
+  }) async {
+    final snapshot = await _reviews
+        .where('userId', isEqualTo: userId)
+        .where('status', isEqualTo: ReviewModel.statusPendingVerification)
+        .get();
+    var published = 0;
+    for (final doc in snapshot.docs) {
+      final pending = ReviewModel.fromJson(doc.data(), docId: doc.id);
+      final review = pending.copyWith(
+        status: ReviewModel.statusPublished,
+        isVerifiedStudent: true,
+        reviewerBadge: reviewerBadge,
+      );
+      await _firestore.runTransaction((transaction) async {
+        final fresh = await transaction.get(doc.reference);
+        if (fresh.data()?['status'] !=
+            ReviewModel.statusPendingVerification) {
+          return; // already published (e.g. another device)
+        }
+        // Aggregate read must come before the review write in a transaction.
+        await _applyReviewDeltaInTransaction(
+          transaction,
+          collegeId: review.collegeId.trim(),
+          review: review,
+          deltaSign: 1,
+        );
+        transaction.update(doc.reference, {
+          'status': ReviewModel.statusPublished,
+          'isVerifiedStudent': true,
+          'reviewerBadge': reviewerBadge,
+          'updatedAt': DateTime.now().toIso8601String(),
+        });
+      });
+      published++;
+    }
+    return published;
+  }
+
   /// Super Admin's "Manage & Add Reviews" section on the Edit College
   /// screen. Deliberately bypasses BOTH of [createReview]'s guards, not
   /// just the verified-student one: the duplicate-review-per-userId check

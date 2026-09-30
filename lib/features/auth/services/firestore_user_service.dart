@@ -116,7 +116,9 @@ class FirestoreUserService {
       // Home feed — no reason for any other user to be able to read them.
       ..remove('preferredState')
       ..remove('preferredCategory')
-      ..remove('categoryInteractionCounts');
+      ..remove('categoryInteractionCounts')
+      // Guide onboarding bookkeeping (review id etc.) -- owner-only.
+      ..remove('guideOnboarding');
     if (safeFields.isEmpty) return;
     try {
       await _firestore

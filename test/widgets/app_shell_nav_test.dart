@@ -2,6 +2,7 @@ import 'package:college_reality_india/config/router/route_names.dart';
 import 'package:college_reality_india/config/theme/app_theme.dart';
 import 'package:college_reality_india/core/widgets/app_shell.dart';
 import 'package:college_reality_india/features/communication/providers/incoming_call_controller.dart';
+import 'package:college_reality_india/features/guide_onboarding/guide_onboarding_provider.dart';
 import 'package:college_reality_india/features/community/providers/presence_heartbeat_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,6 +13,8 @@ import 'package:mocktail/mocktail.dart';
 class _FakeHeartbeat extends Mock implements PresenceHeartbeatController {}
 
 class _FakeIncomingCalls extends Mock implements IncomingCallController {}
+
+class _FakeFinalizer extends Mock implements GuideOnboardingFinalizer {}
 
 Future<GoRouter> _pumpShell(
   WidgetTester tester, {
@@ -50,6 +53,7 @@ Future<GoRouter> _pumpShell(
       overrides: [
         presenceHeartbeatControllerProvider.overrideWithValue(_FakeHeartbeat()),
         incomingCallControllerProvider.overrideWithValue(_FakeIncomingCalls()),
+        guideOnboardingFinalizerProvider.overrideWithValue(_FakeFinalizer()),
       ],
       child: MaterialApp.router(
         theme: AppTheme.lightTheme,

@@ -79,6 +79,8 @@ class RouteNames {
   static const String activeCall = '/call/:sessionId';
   // "Talk to a Verified Student/Alumni" paid consultations.
   static const String guidePricingSetup = '/guides/pricing';
+  // Guide onboarding wizard: college review + document verification.
+  static const String guideOnboarding = '/guides/become';
   static const String consultationCheckout = '/consultations/:guideId/checkout';
   static const String consultationRoom = '/consultations/:id';
   static const String consultationHistory = '/consultations';

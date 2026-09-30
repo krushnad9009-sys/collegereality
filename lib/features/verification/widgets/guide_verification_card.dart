@@ -1,6 +1,3 @@
-import 'dart:typed_data';
-
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -14,6 +11,7 @@ import '../../auth/providers/user_provider.dart';
 import '../../colleges/widgets/college_autocomplete_field.dart';
 import '../providers/verification_provider.dart';
 import '../services/verification_firestore_service.dart';
+import 'guide_documents_picker.dart';
 
 /// "Student Verification" card for the Edit Profile screen, sitting right
 /// above "Guide Settings". Drives the 2-document upload flow whose approval
@@ -158,18 +156,11 @@ class _GuideVerificationSheet extends ConsumerStatefulWidget {
       _GuideVerificationSheetState();
 }
 
-class _PickedFile {
-  final Uint8List bytes;
-  final String name;
-  const _PickedFile(this.bytes, this.name);
-}
-
 class _GuideVerificationSheetState
     extends ConsumerState<_GuideVerificationSheet> {
   static const _required = VerificationConstants.requiredGuideVerificationDocs;
 
-  final _selected = <String>{};
-  final _files = <String, _PickedFile>{};
+  List<GuideVerificationDoc> _docs = const [];
   String? _collegeId;
   String? _collegeName;
   bool _isSubmitting = false;
@@ -186,48 +177,13 @@ class _GuideVerificationSheetState
       (_collegeName == null || _collegeName!.trim().isEmpty);
 
   bool get _canSubmit =>
-      !_isSubmitting &&
-      _selected.length == _required &&
-      _selected.every((t) => _files[t] != null) &&
-      !_needsCollege;
-
-  void _toggleType(String typeId, bool checked) {
-    setState(() {
-      if (checked) {
-        if (_selected.length >= _required) return;
-        _selected.add(typeId);
-      } else {
-        _selected.remove(typeId);
-        _files.remove(typeId);
-      }
-    });
-  }
-
-  Future<void> _pickFor(String typeId) async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: VerificationConstants.allowedExtensions,
-      withData: true,
-    );
-    if (result == null || result.files.isEmpty) return;
-    final file = result.files.first;
-    final bytes = file.bytes;
-    if (bytes == null) return;
-    setState(() => _files[typeId] = _PickedFile(bytes, file.name));
-  }
+      !_isSubmitting && _docs.length == _required && !_needsCollege;
 
   Future<void> _submit() async {
-    if (_selected.length != _required) {
+    if (_docs.length != _required) {
       SnackBarHelper.showErrorSnackBar(
         context,
-        message: 'Pick exactly $_required document types.',
-      );
-      return;
-    }
-    if (_selected.any((t) => _files[t] == null)) {
-      SnackBarHelper.showErrorSnackBar(
-        context,
-        message: 'Upload a file for each selected document.',
+        message: 'Upload a file for $_required different documents.',
       );
       return;
     }
@@ -238,13 +194,7 @@ class _GuideVerificationSheetState
 
     setState(() => _isSubmitting = true);
     try {
-      final docs = _selected
-          .map((t) => GuideVerificationDoc(
-                documentType: t,
-                bytes: _files[t]!.bytes,
-                fileName: _files[t]!.name,
-              ))
-          .toList();
+      final docs = _docs;
 
       await ref.read(verificationServiceProvider).submitGuideVerificationDocuments(
             user: widget.user,
@@ -281,7 +231,6 @@ class _GuideVerificationSheetState
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final viewInsets = MediaQuery.of(context).viewInsets.bottom;
-    final selectionFull = _selected.length >= _required;
 
     return Padding(
       padding: EdgeInsets.fromLTRB(20, 4, 20, 20 + viewInsets),
@@ -299,63 +248,10 @@ class _GuideVerificationSheetState
               ),
             ),
             const SizedBox(height: 4),
-            Text(
-              'Select exactly $_required document types and upload a photo or '
-              'PDF for each. ${_selected.length}/$_required selected.',
-              style: AppFonts.plusJakarta(
-                fontSize: 12.5,
-                color: tokens.textSecondary,
-              ),
+            GuideDocumentsPicker(
+              enabled: !_isSubmitting,
+              onChanged: (docs) => setState(() => _docs = docs),
             ),
-            const SizedBox(height: 12),
-            ...VerificationConstants.guideVerificationDocumentTypes.map((doc) {
-              final id = doc['id']!;
-              final isChecked = _selected.contains(id);
-              final picked = _files[id];
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  CheckboxListTile(
-                    contentPadding: EdgeInsets.zero,
-                    dense: true,
-                    controlAffinity: ListTileControlAffinity.leading,
-                    value: isChecked,
-                    // Lock the remaining options once 2 are chosen.
-                    onChanged: (!isChecked && selectionFull)
-                        ? null
-                        : (v) => _toggleType(id, v ?? false),
-                    title: Text(
-                      doc['label']!,
-                      style: AppFonts.plusJakarta(
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w600,
-                        color: (!isChecked && selectionFull)
-                            ? tokens.textTertiary
-                            : tokens.textPrimary,
-                      ),
-                    ),
-                  ),
-                  if (isChecked)
-                    Padding(
-                      padding: const EdgeInsets.only(left: 8, bottom: 8),
-                      child: OutlinedButton.icon(
-                        onPressed: () => _pickFor(id),
-                        icon: Icon(
-                          picked != null
-                              ? Icons.check_circle_outline
-                              : Icons.upload_file_outlined,
-                          size: 18,
-                          color: picked != null ? AppTheme.accentColor : null,
-                        ),
-                        label: Text(
-                          picked?.name ?? 'Upload file (photo/PDF)',
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ),
-                ],
-              );
-            }),
             if (_needsCollege) ...[
               const SizedBox(height: 8),
               Text(

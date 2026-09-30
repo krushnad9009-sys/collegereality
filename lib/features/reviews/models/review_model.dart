@@ -6,6 +6,11 @@ class ReviewModel {
   static const String statusPending = 'pending';
   static const String statusRejected = 'rejected';
   static const String statusHidden = 'hidden';
+  // Written during guide onboarding BEFORE the author is verified: hidden
+  // everywhere (isVerifiedStudent is false too) and excluded from college
+  // aggregates until the author's documents are approved, when their app
+  // publishes it via FirestoreReviewService.publishPendingVerificationReviews.
+  static const String statusPendingVerification = 'pending_verification';
 
   final String id;
   final String collegeId;

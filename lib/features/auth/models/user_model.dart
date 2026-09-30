@@ -57,6 +57,10 @@ class UserModel {
   final List<String> languagesKnown;
   final String subscriptionTier;
   final String anonymousGuideAlias;
+  // `guideOnboarding.reviewId` -- set once the guide onboarding wizard
+  // (college review + documents) was submitted. Read-only here: never
+  // written back by toJson(), so profile saves can't clobber it.
+  final String? guideOnboardingReviewId;
   final GuideStatsModel guideStats;
   final GuideCommunicationSettings communicationSettings;
   final UserPresenceModel presence;
@@ -104,6 +108,7 @@ class UserModel {
     this.languagesKnown = const [],
     this.subscriptionTier = 'free',
     String? anonymousGuideAlias,
+    this.guideOnboardingReviewId,
     GuideStatsModel? guideStats,
     GuideCommunicationSettings? communicationSettings,
     UserPresenceModel? presence,
@@ -210,6 +215,9 @@ class UserModel {
           [],
       subscriptionTier: json['subscriptionTier'] as String? ?? 'free',
       anonymousGuideAlias: json['anonymousGuideAlias'] as String?,
+      guideOnboardingReviewId: (json['guideOnboarding'] is Map)
+          ? (json['guideOnboarding'] as Map)['reviewId'] as String?
+          : null,
       guideStats: GuideStatsModel.fromJson(
         json['guideStats'] as Map<String, dynamic>?,
       ),
@@ -371,6 +379,7 @@ class UserModel {
       languagesKnown: languagesKnown ?? this.languagesKnown,
       subscriptionTier: subscriptionTier ?? this.subscriptionTier,
       anonymousGuideAlias: anonymousGuideAlias ?? this.anonymousGuideAlias,
+      guideOnboardingReviewId: guideOnboardingReviewId,
       guideStats: guideStats ?? this.guideStats,
       communicationSettings:
           communicationSettings ?? this.communicationSettings,
