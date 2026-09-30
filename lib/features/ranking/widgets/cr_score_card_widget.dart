@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
@@ -11,6 +10,7 @@ import '../models/cr_score_model.dart';
 import '../utils/cr_score_engine.dart';
 import 'cr_score_category_bars.dart';
 import 'cr_score_gauge_widget.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class CrScoreCardWidget extends StatelessWidget {
   final CollegeModel college;
@@ -63,7 +63,7 @@ class CrScoreCardWidget extends StatelessWidget {
                 ),
                 const Spacer(),
                 TextButton.icon(
-                  onPressed: () => context.push(RouteNames.howCrScoreWorks),
+                  onPressed: () => context.pushOnce(RouteNames.howCrScoreWorks),
                   icon: const Icon(Icons.info_outline, size: 16),
                   label: const Text('How it works'),
                 ),

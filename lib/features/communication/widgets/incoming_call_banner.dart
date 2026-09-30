@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../providers/communication_provider.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class IncomingCallBanner extends ConsumerWidget {
   const IncomingCallBanner({super.key});
@@ -78,7 +78,7 @@ class IncomingCallBanner extends ConsumerWidget {
               ),
               TextButton(
                 onPressed: () =>
-                    context.push(RouteNames.activeCallPath(call.id)),
+                    context.pushOnce(RouteNames.activeCallPath(call.id)),
                 child: Text(
                   'Answer',
                   style: AppFonts.plusJakarta(

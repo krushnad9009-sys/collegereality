@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
 import '../providers/ranking_provider.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class CompareRecommendationsScreen extends ConsumerWidget {
   const CompareRecommendationsScreen({super.key});
@@ -19,14 +19,14 @@ class CompareRecommendationsScreen extends ConsumerWidget {
         title: const Text('Top 5 Compare Picks'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrGo(),
         ),
         actions: [
           TextButton(
             onPressed: () {
               final items = itemsAsync.valueOrNull ?? [];
               if (items.length >= 2) {
-                context.push(RouteNames.comparePath(
+                context.pushOnce(RouteNames.comparePath(
                   ids: items.take(3).map((i) => i.college.id).toList(),
                 ));
               }
@@ -104,7 +104,7 @@ class CompareRecommendationsScreen extends ConsumerWidget {
                     const SizedBox(height: 8),
                     TextButton(
                       onPressed: () =>
-                          context.push(RouteNames.collegeDetailsPath(item.college.id)),
+                          context.pushOnce(RouteNames.collegeDetailsPath(item.college.id)),
                       child: const Text('View college'),
                     ),
                   ],

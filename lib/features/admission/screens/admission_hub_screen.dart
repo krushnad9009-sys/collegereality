@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class AdmissionHubScreen extends StatelessWidget {
   const AdmissionHubScreen({super.key});
@@ -50,49 +51,49 @@ class AdmissionHubScreen extends StatelessWidget {
                 title: 'Scholarships',
                 subtitle: 'Govt & private schemes',
                 color: AppTheme.primaryColor,
-                onTap: () => context.push(RouteNames.admissionScholarships),
+                onTap: () => context.pushOnce(RouteNames.admissionScholarships),
               ),
               _HubTile(
                 icon: Icons.quiz_outlined,
                 title: 'Entrance Exams',
                 subtitle: 'JEE, NEET, CET & more',
                 color: AppTheme.secondaryColor,
-                onTap: () => context.push(RouteNames.admissionExams),
+                onTap: () => context.pushOnce(RouteNames.admissionExams),
               ),
               _HubTile(
                 icon: Icons.analytics_outlined,
                 title: 'Cutoffs',
                 subtitle: 'Previous year data',
                 color: AppTheme.accentColor,
-                onTap: () => context.push(RouteNames.admissionCutoffs),
+                onTap: () => context.pushOnce(RouteNames.admissionCutoffs),
               ),
               _HubTile(
                 icon: Icons.auto_awesome_outlined,
                 title: 'Predictor',
                 subtitle: 'AI college chances',
                 color: const Color(0xFF7C3AED),
-                onTap: () => context.push(RouteNames.admissionPredictor),
+                onTap: () => context.pushOnce(RouteNames.admissionPredictor),
               ),
               _HubTile(
                 icon: Icons.bookmark_outline,
                 title: 'Saved',
                 subtitle: 'Scholarships & predictions',
                 color: AppTheme.warningColor,
-                onTap: () => context.push(RouteNames.savedPredictions),
+                onTap: () => context.pushOnce(RouteNames.savedPredictions),
               ),
               _HubTile(
                 icon: Icons.calendar_month_outlined,
                 title: 'Calendar',
                 subtitle: 'CAP rounds & deadlines',
                 color: const Color(0xFF2563EB),
-                onTap: () => context.push(RouteNames.admissionCalendar),
+                onTap: () => context.pushOnce(RouteNames.admissionCalendar),
               ),
               _HubTile(
                 icon: Icons.notifications_active_outlined,
                 title: 'Alerts',
                 subtitle: 'Admission reminders',
                 color: const Color(0xFFDC2626),
-                onTap: () => context.push(RouteNames.notifications),
+                onTap: () => context.pushOnce(RouteNames.notifications),
               ),
             ],
           ),

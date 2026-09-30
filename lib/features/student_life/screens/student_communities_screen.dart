@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -15,6 +14,7 @@ import '../models/student_life_models.dart';
 import '../providers/student_life_provider.dart';
 import '../services/firestore_student_life_service.dart';
 import '../utils/student_life_filter_utils.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class StudentCommunitiesScreen extends ConsumerWidget {
   const StudentCommunitiesScreen({super.key});
@@ -28,7 +28,7 @@ class StudentCommunitiesScreen extends ConsumerWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrGo(),
         ),
         title: const Text('Student Communities'),
       ),
@@ -106,7 +106,7 @@ class StudentCommunitiesScreen extends ConsumerWidget {
                       style: GoogleFonts.poppins(fontSize: 12),
                     ),
                     trailing: const Icon(Icons.chevron_right),
-                    onTap: () => context.push(RouteNames.studentLifeCommunityBoardPath(c.id)),
+                    onTap: () => context.pushOnce(RouteNames.studentLifeCommunityBoardPath(c.id)),
                   ),
                 ),
               ),
@@ -147,7 +147,7 @@ class _CommunityBoardScreenState extends ConsumerState<CommunityBoardScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrGo(),
         ),
         title: communityAsync.when(
           data: (c) => Text(c?.name ?? 'Community'),

@@ -1,7 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../../../config/theme/app_fonts.dart';
 
 import '../../../config/router/route_names.dart';
@@ -9,6 +8,7 @@ import '../../../config/theme/app_theme.dart';
 import '../../auth/providers/user_provider.dart';
 import '../../engagement/providers/engagement_provider.dart';
 import 'user_quick_profile_sheet.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 /// Notification bell + profile avatar shown at the right of the Home app bar.
 /// The avatar opens the simplified quick-profile sheet.
@@ -141,7 +141,7 @@ class _NotificationBell extends ConsumerWidget {
         // push, not go: Home must stay on the stack so Notifications' own
         // back arrow can pop straight back to it (see home_navigation_drawer
         // for the same fix on the drawer's Notifications item).
-        onTap: () => context.push(RouteNames.notifications),
+        onTap: () => context.pushOnce(RouteNames.notifications),
         borderRadius: BorderRadius.circular(14),
         child: Container(
           width: size,

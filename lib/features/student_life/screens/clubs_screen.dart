@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../config/router/route_names.dart';
@@ -9,6 +8,7 @@ import '../../../core/constants/student_life_constants.dart';
 import '../../../core/widgets/index.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../providers/student_life_provider.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class ClubsScreen extends ConsumerWidget {
   const ClubsScreen({super.key});
@@ -22,7 +22,7 @@ class ClubsScreen extends ConsumerWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrGo(),
         ),
         title: const Text('College Clubs'),
       ),
@@ -85,7 +85,7 @@ class ClubsScreen extends ConsumerWidget {
                     ),
                     isThreeLine: true,
                     trailing: const Icon(Icons.chevron_right),
-                    onTap: () => context.push(RouteNames.studentLifeClubDetailPath(c.id)),
+                    onTap: () => context.pushOnce(RouteNames.studentLifeClubDetailPath(c.id)),
                   ),
                 ),
               ),
@@ -110,7 +110,7 @@ class ClubDetailScreen extends ConsumerWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrGo(),
         ),
         title: const Text('Club Details'),
       ),

@@ -6,6 +6,7 @@ import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../widgets/profile_settings_section.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 /// App-level preferences: appearance, notifications, and legal documents.
 /// Reached from the Profile hub via "App Settings".
@@ -21,7 +22,7 @@ class AppSettingsScreen extends ConsumerWidget {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
           onPressed: () => context.canPop()
-              ? context.pop()
+              ? context.popOrGo()
               : context.go(RouteNames.home),
         ),
         title: Text(

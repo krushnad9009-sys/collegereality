@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_design_tokens.dart';
@@ -8,6 +7,7 @@ import '../../../config/theme/app_spacing.dart';
 import '../../../core/widgets/premium_components.dart';
 import '../../communication/models/public_guide_profile.dart';
 import 'availability_badge.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 /// The premium "Talk to this student" card on a guide's public profile —
 /// verified badge, live availability, priced chat/call/video options, and
@@ -59,7 +59,7 @@ class GuidePricingCard extends StatelessWidget {
                   icon: '💬',
                   label:
                       'Chat ₹${(settings.chatPricePaise / 100).toStringAsFixed(0)} / ${settings.chatDurationMinutes} min',
-                  onTap: () => context.push(
+                  onTap: () => context.pushOnce(
                     RouteNames.consultationCheckoutPath(guide.uid),
                   ),
                 ),
@@ -70,7 +70,7 @@ class GuidePricingCard extends StatelessWidget {
                       icon: option.type == 'video' ? '📹' : '📞',
                       label:
                           '${option.type == 'video' ? 'Video' : 'Call'} ₹${(option.pricePaise / 100).toStringAsFixed(0)} / ${option.minutes} min',
-                      onTap: () => context.push(
+                      onTap: () => context.pushOnce(
                         RouteNames.consultationCheckoutPath(guide.uid),
                       ),
                     ),

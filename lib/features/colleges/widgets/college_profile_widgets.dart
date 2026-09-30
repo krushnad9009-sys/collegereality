@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../../../config/theme/app_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -14,6 +13,7 @@ import '../../../core/widgets/premium_list_row.dart';
 import '../../reviews/widgets/review_summary_panel.dart';
 import '../../community_feed/providers/college_community_feed_provider.dart';
 import '../models/college_model.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 /// At-a-glance college stats as a row of modern floating cards:
 /// Rating · Reviews · Verified students · Avg package · Tuition fees.
@@ -652,7 +652,7 @@ class CollegeCommunitySection extends ConsumerWidget {
                 ),
               ),
               TextButton(
-                onPressed: () => context.push(
+                onPressed: () => context.pushOnce(
                   RouteNames.collegeCommunityFeedPath(
                     college.id,
                     name: college.name,
@@ -719,7 +719,7 @@ class CollegeCommunitySection extends ConsumerWidget {
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
-              onPressed: () => context.push(
+              onPressed: () => context.pushOnce(
                 RouteNames.collegeCommunityFeedPath(
                   college.id,
                   name: college.name,

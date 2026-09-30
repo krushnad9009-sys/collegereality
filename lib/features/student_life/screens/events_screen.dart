@@ -2,7 +2,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
@@ -13,6 +12,7 @@ import '../../../core/widgets/index.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../models/student_life_models.dart';
 import '../providers/student_life_provider.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class EventsScreen extends ConsumerWidget {
   const EventsScreen({super.key});
@@ -28,7 +28,7 @@ class EventsScreen extends ConsumerWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrGo(),
         ),
         title: const Text('College Events'),
       ),
@@ -91,7 +91,7 @@ class EventsScreen extends ConsumerWidget {
                   event: e,
                   isSaved: savedIds.contains(e.id),
                   isRegistered: registeredIds.contains(e.id),
-                  onTap: () => context.push(RouteNames.studentLifeEventDetailPath(e.id)),
+                  onTap: () => context.pushOnce(RouteNames.studentLifeEventDetailPath(e.id)),
                   onSave: () => _toggleSave(ref, context, e.id, savedIds.contains(e.id)),
                 ),
               ),
@@ -138,7 +138,7 @@ class EventDetailScreen extends ConsumerWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrGo(),
         ),
         title: const Text('Event Details'),
         actions: [

@@ -8,6 +8,7 @@ import '../../../config/theme/app_spacing.dart';
 import '../../../core/widgets/index.dart';
 import '../../auth/providers/user_provider.dart';
 import '../providers/community_provider.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class PrivateChatsScreen extends ConsumerWidget {
   const PrivateChatsScreen({super.key});
@@ -37,14 +38,14 @@ class PrivateChatsScreen extends ConsumerWidget {
         leading: context.canPop()
             ? IconButton(
                 icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-                onPressed: () => context.pop(),
+                onPressed: () => context.popOrGo(),
               )
             : null,
         actions: [
           IconButton(
             icon: const Icon(Icons.groups_outlined),
             tooltip: 'Community',
-            onPressed: () => context.push(RouteNames.community),
+            onPressed: () => context.pushOnce(RouteNames.community),
           ),
         ],
       ),
@@ -81,7 +82,7 @@ class PrivateChatsScreen extends ConsumerWidget {
                 padding: EdgeInsets.zero,
                 radius: tokens.cardRadius,
                 onTap: () =>
-                    context.push(RouteNames.communityChatPath(chat.id)),
+                    context.pushOnce(RouteNames.communityChatPath(chat.id)),
                 child: ListTile(
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: AppSpacing.lg,

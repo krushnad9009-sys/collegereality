@@ -164,4 +164,27 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets('system back on a non-Home tab returns to Home instead of '
+      'exiting', (tester) async {
+    final router = await _pumpShell(tester, initial: RouteNames.profile);
+
+    final handled = await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+
+    expect(handled, isTrue, reason: 'back must be consumed, not exit the app');
+    expect(router.routeInformationProvider.value.uri.path, RouteNames.home);
+    expect(find.text('PAGE ${RouteNames.home}'), findsOneWidget);
+  });
+
+  testWidgets('system back on Home is left to the OS (exits normally)',
+      (tester) async {
+    final router = await _pumpShell(tester);
+
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+
+    // Still Home -- we never trap the user or bounce them elsewhere.
+    expect(router.routeInformationProvider.value.uri.path, RouteNames.home);
+  });
 }

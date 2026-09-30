@@ -27,6 +27,7 @@ import '../providers/college_provider.dart';
 import '../utils/college_suggestion_utils.dart';
 import '../widgets/college_suggestions_panel.dart';
 import '../widgets/premium_search_discovery_panel.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class CollegeSearchScreen extends ConsumerStatefulWidget {
   final String? initialQuery;
@@ -497,7 +498,7 @@ class _CollegeSearchScreenState extends ConsumerState<CollegeSearchScreen> {
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
           onPressed: () {
             if (context.canPop()) {
-              context.pop();
+              context.popOrGo();
             } else {
               context.go(RouteNames.home);
             }

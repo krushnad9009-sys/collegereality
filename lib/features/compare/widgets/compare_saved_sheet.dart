@@ -7,6 +7,7 @@ import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
 import '../models/saved_comparison_model.dart';
 import '../providers/compare_basket_provider.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 Future<void> showSavedComparisonsSheet(
   BuildContext context,
@@ -105,7 +106,7 @@ class _SavedComparisonTile extends ConsumerWidget {
       ),
       onTap: () {
         ref.read(compareBasketProvider.notifier).setColleges(item.collegeIds);
-        context.pop();
+        context.popOrGo();
         context.go(RouteNames.comparePath(ids: item.collegeIds));
       },
     );

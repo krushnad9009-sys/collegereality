@@ -17,6 +17,7 @@ import '../../verification/widgets/verification_badge_widget.dart';
 import '../models/student_trust_model.dart';
 import '../services/account_deletion_service.dart';
 import '../widgets/trust_score_card.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 /// The Profile "hub": a professional identity header plus clean, grouped
 /// cards that link out to the profile editor, settings, and account
@@ -133,7 +134,7 @@ class ProfileScreen extends ConsumerWidget {
                   displayName: displayName,
                   email: authUser.email ?? '',
                   verificationBadge: userDetail?.verificationBadge,
-                  onEdit: () => context.push(RouteNames.editProfile),
+                  onEdit: () => context.pushOnce(RouteNames.editProfile),
                 ),
               ),
               if (userDetail != null) ...[
@@ -162,19 +163,19 @@ class ProfileScreen extends ConsumerWidget {
                       leadingIcon: Icons.edit_outlined,
                       title: 'Edit Profile',
                       subtitle: 'Name, photo, college, and guide settings',
-                      onTap: () => context.push(RouteNames.editProfile),
+                      onTap: () => context.pushOnce(RouteNames.editProfile),
                     ),
                     PremiumListRow(
                       leadingIcon: Icons.tune_rounded,
                       title: 'App Settings',
                       subtitle: 'Appearance, notifications, and legal',
-                      onTap: () => context.push(RouteNames.appSettings),
+                      onTap: () => context.pushOnce(RouteNames.appSettings),
                     ),
                     PremiumListRow(
                       leadingIcon: Icons.help_outline_rounded,
                       title: 'Help & Support',
                       subtitle: 'Contact us or report a problem',
-                      onTap: () => context.push(RouteNames.helpSupport),
+                      onTap: () => context.pushOnce(RouteNames.helpSupport),
                     ),
                   ],
                 ),

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_design_tokens.dart';
@@ -12,6 +11,7 @@ import '../../auth/providers/auth_provider.dart';
 import '../models/consultation_model.dart';
 import '../providers/consultation_provider.dart';
 import '../widgets/two_way_rating_sheet.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 /// Paginated consultation history for the current user, both as student
 /// and as guide (two tabs) — same cursor-pagination pattern already used
@@ -157,7 +157,7 @@ class _ConsultationTile extends StatelessWidget {
     final rated = _isCompleted && !consultation.canRate(currentUid);
     return PremiumCard(
       padding: const EdgeInsets.all(AppSpacing.md),
-      onTap: () => context.push(RouteNames.consultationRoomPath(consultation.id)),
+      onTap: () => context.pushOnce(RouteNames.consultationRoomPath(consultation.id)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

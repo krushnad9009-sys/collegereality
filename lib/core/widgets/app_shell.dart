@@ -88,69 +88,81 @@ class _AppShellState extends ConsumerState<AppShell> {
         ? PremiumHomeTheme.resolve(Theme.of(context))
         : Theme.of(context);
 
-    return Scaffold(
-      body: child,
-      drawer: widget.drawer,
-      // Screens already reserve room for the bar through the bottom
-      // MediaQuery padding; keeping the body extended preserves that.
-      extendBody: true,
-      bottomNavigationBar: showNav
-          ? Theme(
-              data: navTheme,
-              child: Builder(
-                builder: (navContext) {
-                  final navTokens = navContext.tokens;
-                  final accent = isHome
-                      ? navTokens.heroColor
-                      : AppTheme.primaryColor;
-                  final surface = isDark ? AppTheme.gray800 : AppTheme.white;
+    // Back on a non-Home tab (Search / Assistant / Chats / Profile) goes
+    // to the Home tab instead of closing the app -- those tabs are reached
+    // with go(), so there is nothing underneath them to pop back to. On
+    // Home, back behaves normally (exits).
+    final backToHome = _tabRoutes.contains(location) && !isHome;
+    return PopScope(
+      canPop: !backToHome,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && backToHome) context.go(RouteNames.home);
+      },
+      child: Scaffold(
+        body: child,
+        drawer: widget.drawer,
+        // Screens already reserve room for the bar through the bottom
+        // MediaQuery padding; keeping the body extended preserves that.
+        extendBody: true,
+        bottomNavigationBar: showNav
+            ? Theme(
+                data: navTheme,
+                child: Builder(
+                  builder: (navContext) {
+                    final navTokens = navContext.tokens;
+                    final accent = isHome
+                        ? navTokens.heroColor
+                        : AppTheme.primaryColor;
+                    final surface = isDark ? AppTheme.gray800 : AppTheme.white;
 
-                  // A minimal, docked bar: solid white, full width, one
-                  // hairline on top. No blur, no floating pill, no shadow.
-                  return DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: surface,
-                      border: Border(
-                        top: BorderSide(
-                          color: isDark
-                              ? AppTheme.gray700
-                              : navTokens.borderSubtle,
+                    // A minimal, docked bar: solid white, full width, one
+                    // hairline on top. No blur, no floating pill, no shadow.
+                    return DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: surface,
+                        border: Border(
+                          top: BorderSide(
+                            color: isDark
+                                ? AppTheme.gray700
+                                : navTokens.borderSubtle,
+                          ),
                         ),
                       ),
-                    ),
-                    child: NavigationBar(
-                      selectedIndex: _selectedIndex(location),
-                      onDestinationSelected: (index) => _onTap(context, index),
-                      height: 64,
-                      backgroundColor: surface,
-                      surfaceTintColor: Colors.transparent,
-                      elevation: 0,
-                      indicatorColor: accent.withValues(alpha: 0.10),
-                      labelBehavior:
-                          NavigationDestinationLabelBehavior.alwaysShow,
-                      animationDuration: const Duration(milliseconds: 280),
-                      destinations: [
-                        _destination(Icons.home_rounded, 'Home', accent),
-                        _destination(Icons.search_rounded, 'Search', accent),
-                        _destination(
-                          Icons.auto_awesome_rounded,
-                          'Assistant',
-                          accent,
-                        ),
-                        _destination(
-                          Icons.chat_bubble_rounded,
-                          'Chats',
-                          accent,
-                          unselectedIcon: Icons.chat_bubble_outline_rounded,
-                        ),
-                        _destination(Icons.person_rounded, 'Profile', accent),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            )
-          : null,
+                      child: NavigationBar(
+                        selectedIndex: _selectedIndex(location),
+                        onDestinationSelected: (index) =>
+                            _onTap(context, index),
+                        height: 64,
+                        backgroundColor: surface,
+                        surfaceTintColor: Colors.transparent,
+                        elevation: 0,
+                        indicatorColor: accent.withValues(alpha: 0.10),
+                        labelBehavior:
+                            NavigationDestinationLabelBehavior.alwaysShow,
+                        animationDuration: const Duration(milliseconds: 280),
+                        destinations: [
+                          _destination(Icons.home_rounded, 'Home', accent),
+                          _destination(Icons.search_rounded, 'Search', accent),
+                          _destination(
+                            Icons.auto_awesome_rounded,
+                            'Assistant',
+                            accent,
+                          ),
+                          _destination(
+                            Icons.chat_bubble_rounded,
+                            'Chats',
+                            accent,
+                            unselectedIcon: Icons.chat_bubble_outline_rounded,
+                          ),
+                          _destination(Icons.person_rounded, 'Profile', accent),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              )
+            : null,
+      ),
     );
   }
 

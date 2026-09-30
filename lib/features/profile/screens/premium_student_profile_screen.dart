@@ -14,6 +14,7 @@ import '../../community/services/community_firestore_service.dart';
 import '../providers/student_profile_provider.dart';
 import '../widgets/premium_profile_header.dart';
 import '../widgets/trust_score_card.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class PremiumStudentProfileScreen extends ConsumerStatefulWidget {
   final String studentUid;
@@ -44,7 +45,7 @@ class _PremiumStudentProfileScreenState
                 peerName: peerName,
               );
       if (mounted) {
-        context.push(RouteNames.communityChatPath(conversation.id));
+        context.pushOnce(RouteNames.communityChatPath(conversation.id));
       }
     } on CommunityException catch (e) {
       if (mounted) {
@@ -87,7 +88,7 @@ class _PremiumStudentProfileScreenState
                 pinned: true,
                 leading: IconButton(
                   icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-                  onPressed: () => context.pop(),
+                  onPressed: () => context.popOrGo(),
                 ),
                 title: const Text('Student Profile'),
                 actions: [

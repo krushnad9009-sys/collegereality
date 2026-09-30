@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_design_tokens.dart';
@@ -15,6 +14,7 @@ import 'ask_student_button.dart';
 import 'question_card_widget.dart';
 import 'question_shimmer.dart';
 import 'unanswered_questions_banner.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class CollegeQuestionsTabContent extends ConsumerStatefulWidget {
   final CollegeModel college;
@@ -167,7 +167,7 @@ class _CollegeQuestionsTabContentState
               ...questions.map(
                 (question) => QuestionCardWidget(
                   question: question,
-                  onTap: () => context.push(
+                  onTap: () => context.pushOnce(
                     RouteNames.collegeQuestionPath(collegeId, question.id),
                   ),
                 ),

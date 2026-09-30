@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_fonts.dart';
@@ -9,6 +8,7 @@ import '../../../core/widgets/async_state_widgets.dart';
 import '../../../core/widgets/premium_components.dart';
 import '../models/engagement_models.dart';
 import '../providers/engagement_provider.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class NotificationPreferencesScreen extends ConsumerWidget {
   const NotificationPreferencesScreen({super.key});
@@ -22,7 +22,7 @@ class NotificationPreferencesScreen extends ConsumerWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrGo(),
         ),
         title: Text(
           'Alert Preferences',

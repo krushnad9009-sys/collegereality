@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -12,6 +11,7 @@ import '../../auth/providers/auth_provider.dart';
 import '../../auth/providers/user_provider.dart';
 import '../models/careers_models.dart';
 import '../providers/careers_provider.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class CompaniesScreen extends ConsumerWidget {
   const CompaniesScreen({super.key});
@@ -24,7 +24,7 @@ class CompaniesScreen extends ConsumerWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrGo(),
         ),
         title: const Text('Companies'),
       ),
@@ -59,7 +59,7 @@ class CompaniesScreen extends ConsumerWidget {
                     ),
                     isThreeLine: true,
                     trailing: const Icon(Icons.chevron_right),
-                    onTap: () => context.push(RouteNames.careersCompanyDetailPath(c.id)),
+                    onTap: () => context.pushOnce(RouteNames.careersCompanyDetailPath(c.id)),
                   ),
                 ),
               ),
@@ -99,7 +99,7 @@ class _CompanyDetailScreenState extends ConsumerState<CompanyDetailScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrGo(),
         ),
         title: const Text('Company'),
       ),

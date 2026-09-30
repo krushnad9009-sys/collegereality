@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_fonts.dart';
@@ -16,6 +15,7 @@ import '../../student_life/models/student_life_models.dart';
 import '../providers/college_community_feed_provider.dart';
 import '../services/college_community_feed_service.dart';
 import '../widgets/college_community_post_card.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class CollegeCommunityFeedScreen extends ConsumerStatefulWidget {
   final String collegeId;
@@ -142,7 +142,7 @@ class _CollegeCommunityFeedScreenState
         backgroundColor: tokens.surfaceElevated,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrGo(),
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

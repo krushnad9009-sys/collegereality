@@ -15,6 +15,7 @@ import '../utils/guide_search_matcher.dart';
 import '../../verification/widgets/verification_badge_widget.dart';
 import '../../consultations/widgets/availability_badge.dart';
 import '../widgets/guide_badge_widget.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 /// "Talk to a Verified Student/Alumni" (`/guides`).
 ///
@@ -245,7 +246,7 @@ class _RecentChatsSection extends StatelessWidget {
           PremiumCard(
             padding: EdgeInsets.zero,
             radius: tokens.cardRadius,
-            onTap: () => context.push(RouteNames.communityChatPath(chat.id)),
+            onTap: () => context.pushOnce(RouteNames.communityChatPath(chat.id)),
             child: ListTile(
               key: ValueKey('recent-chat-${chat.id}'),
               contentPadding: const EdgeInsets.symmetric(
@@ -484,7 +485,7 @@ class _GuideListTile extends StatelessWidget {
       child: InkWell(
         key: ValueKey('guide-${guide.uid}'),
         borderRadius: BorderRadius.circular(tokens.cardRadius),
-        onTap: () => context.push(RouteNames.guideProfilePath(guide.uid)),
+        onTap: () => context.pushOnce(RouteNames.guideProfilePath(guide.uid)),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(

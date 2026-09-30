@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/constants/careers_constants.dart';
@@ -8,6 +7,7 @@ import '../../../core/widgets/index.dart';
 import '../models/careers_models.dart';
 import '../providers/careers_provider.dart';
 import '../utils/careers_filter_utils.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class PostJobScreen extends ConsumerStatefulWidget {
   const PostJobScreen({super.key});
@@ -46,7 +46,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrGo(),
         ),
         title: const Text('Post Job'),
       ),
@@ -143,7 +143,7 @@ class _PostJobScreenState extends ConsumerState<PostJobScreen> {
       await ref.read(careersRepositoryProvider).createJobListing(job);
       if (mounted) {
         SnackBarHelper.showSuccessSnackBar(context, message: 'Job published');
-        context.pop();
+        context.popOrGo();
       }
     } catch (e) {
       if (mounted) SnackBarHelper.showErrorSnackBar(context, message: e.toString());

@@ -10,6 +10,7 @@ import '../../../core/widgets/premium_components.dart';
 import '../../../core/widgets/skeleton_loader.dart';
 import '../providers/review_provider.dart';
 import '../widgets/review_card_widget.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class MyReviewsScreen extends ConsumerWidget {
   const MyReviewsScreen({super.key});
@@ -30,7 +31,7 @@ class MyReviewsScreen extends ConsumerWidget {
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
           onPressed: () {
             if (context.canPop()) {
-              context.pop();
+              context.popOrGo();
             } else {
               context.go(RouteNames.profile);
             }

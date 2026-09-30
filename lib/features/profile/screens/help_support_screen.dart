@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../core/widgets/index.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 /// Help & Support hub: contact channels and legal documents.
 /// Reached from the Profile hub via "Help & Support".
@@ -95,7 +95,7 @@ class HelpSupportScreen extends ConsumerWidget {
                 PremiumListRow(
                   leadingIcon: Icons.privacy_tip_outlined,
                   title: 'Privacy policy',
-                  onTap: () => context.push(RouteNames.privacyPolicy),
+                  onTap: () => context.pushOnce(RouteNames.privacyPolicy),
                 ),
               ],
             ),

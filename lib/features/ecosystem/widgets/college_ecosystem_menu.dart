@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 /// College detail overflow menu for ecosystem actions.
 class CollegeEcosystemMenu extends StatelessWidget {
@@ -23,13 +23,13 @@ class CollegeEcosystemMenu extends StatelessWidget {
       onSelected: (value) {
         switch (value) {
           case 'request':
-            context.push(RouteNames.requestCollege);
+            context.pushOnce(RouteNames.requestCollege);
           case 'edit':
-            context.push(RouteNames.suggestEditPath(collegeId, collegeName));
+            context.pushOnce(RouteNames.suggestEditPath(collegeId, collegeName));
           case 'report':
-            context.push(RouteNames.reportCollegeDataPath(collegeId, collegeName));
+            context.pushOnce(RouteNames.reportCollegeDataPath(collegeId, collegeName));
           case 'claim':
-            context.push(RouteNames.claimCollegePath(collegeId, collegeName));
+            context.pushOnce(RouteNames.claimCollegePath(collegeId, collegeName));
         }
       },
       itemBuilder: (context) => [

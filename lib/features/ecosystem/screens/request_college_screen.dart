@@ -1,7 +1,6 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../config/theme/app_theme.dart';
@@ -12,6 +11,7 @@ import '../../auth/repositories/user_repository.dart';
 import '../../colleges/services/college_storage_service.dart';
 import '../../colleges/utils/college_suggestion_utils.dart';
 import '../providers/ecosystem_provider.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 final collegeStorageServiceProvider = Provider<CollegeStorageService>((ref) {
   return CollegeStorageService();
@@ -110,7 +110,7 @@ class _RequestCollegeScreenState extends ConsumerState<RequestCollegeScreen> {
             ),
           ),
         );
-        context.pop();
+        context.popOrGo();
       }
     } catch (e, st) {
       debugPrint('[RequestCollegeScreen] submit failed: $e\n$st');

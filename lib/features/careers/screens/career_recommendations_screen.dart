@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
 import '../providers/careers_provider.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class CareerRecommendationsScreen extends ConsumerWidget {
   const CareerRecommendationsScreen({super.key});
@@ -20,7 +20,7 @@ class CareerRecommendationsScreen extends ConsumerWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrGo(),
         ),
         title: const Text('Career Matches'),
       ),
@@ -70,7 +70,7 @@ class CareerRecommendationsScreen extends ConsumerWidget {
                           subtitle: Text('${m.item.companyName} · ${m.reason}',
                               style: GoogleFonts.poppins(fontSize: 12)),
                           trailing: Text('${m.score}%'),
-                          onTap: () => context.push(RouteNames.careersJobs),
+                          onTap: () => context.pushOnce(RouteNames.careersJobs),
                         ),
                       ),
                     )
@@ -101,7 +101,7 @@ class CareerRecommendationsScreen extends ConsumerWidget {
                           subtitle: Text('${m.item.companyName} · ${m.reason}',
                               style: GoogleFonts.poppins(fontSize: 12)),
                           trailing: Text('${m.score}%'),
-                          onTap: () => context.push(RouteNames.careersInternships),
+                          onTap: () => context.pushOnce(RouteNames.careersInternships),
                         ),
                       ),
                     )

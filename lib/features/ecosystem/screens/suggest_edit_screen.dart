@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../auth/providers/user_provider.dart';
 import '../../colleges/providers/college_provider.dart';
 import '../providers/ecosystem_provider.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class SuggestEditScreen extends ConsumerStatefulWidget {
   final String collegeId;
@@ -63,7 +63,7 @@ class _SuggestEditScreenState extends ConsumerState<SuggestEditScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Edit suggestion submitted.')),
         );
-        context.pop();
+        context.popOrGo();
       }
     } catch (e) {
       if (mounted) {

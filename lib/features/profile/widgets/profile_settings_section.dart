@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../../../config/theme/app_fonts.dart';
 
 import '../../../config/router/route_names.dart';
@@ -8,6 +7,7 @@ import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/theme_provider.dart';
 import '../../../core/widgets/premium_components.dart';
 import '../../../core/widgets/premium_list_row.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 /// App preferences: theme, legal links, notifications.
 class ProfileSettingsSection extends ConsumerWidget {
@@ -89,13 +89,13 @@ class ProfileSettingsSection extends ConsumerWidget {
             leadingIcon: Icons.notifications_outlined,
             title: 'Notification preferences',
             dense: true,
-            onTap: () => context.push(RouteNames.notificationPreferences),
+            onTap: () => context.pushOnce(RouteNames.notificationPreferences),
           ),
           PremiumListRow(
             leadingIcon: Icons.privacy_tip_outlined,
             title: 'Privacy policy',
             dense: true,
-            onTap: () => context.push(RouteNames.privacyPolicy),
+            onTap: () => context.pushOnce(RouteNames.privacyPolicy),
           ),
         ],
       ),

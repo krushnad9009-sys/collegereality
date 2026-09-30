@@ -17,6 +17,7 @@ import '../../ranking/utils/cr_score_engine.dart';
 import '../../ranking/widgets/cr_score_badge_widget.dart';
 import '../../questions/providers/question_provider.dart';
 import '../providers/engagement_provider.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class BookmarksHubScreen extends ConsumerWidget {
   const BookmarksHubScreen({super.key});
@@ -30,7 +31,7 @@ class BookmarksHubScreen extends ConsumerWidget {
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_ios_new, size: 18),
             onPressed: () => context.canPop()
-                ? context.pop()
+                ? context.popOrGo()
                 : context.go(RouteNames.home),
           ),
           title: const Text('Bookmarks'),
@@ -88,7 +89,7 @@ class _CollegesTab extends ConsumerWidget {
               return _BookmarkTile(
                 title: 'Saved college',
                 subtitle: id,
-                onTap: () => context.push(RouteNames.collegeDetailsPath(id)),
+                onTap: () => context.pushOnce(RouteNames.collegeDetailsPath(id)),
               );
             }).toList(),
           );
@@ -105,7 +106,7 @@ class _CollegesTab extends ConsumerWidget {
             trailing: crScore > 0
                 ? CrScoreBadgeWidget(score: crScore, fontSize: 11)
                 : null,
-            onTap: () => context.push(RouteNames.collegeDetailsPath(college.id)),
+            onTap: () => context.pushOnce(RouteNames.collegeDetailsPath(college.id)),
           );
           },
         );
@@ -140,7 +141,7 @@ class _ScholarshipsTab extends ConsumerWidget {
           itemBuilder: (_, i) => _BookmarkTile(
             title: saved[i].name,
             subtitle: saved[i].providerType,
-            onTap: () => context.push(RouteNames.admissionScholarships),
+            onTap: () => context.pushOnce(RouteNames.admissionScholarships),
           ),
         );
       },
@@ -174,7 +175,7 @@ class _ExamsTab extends ConsumerWidget {
           itemBuilder: (_, i) => _BookmarkTile(
             title: saved[i].name,
             subtitle: saved[i].category,
-            onTap: () => context.push(RouteNames.admissionExams),
+            onTap: () => context.pushOnce(RouteNames.admissionExams),
           ),
         );
       },
@@ -208,7 +209,7 @@ class _InternshipsTab extends ConsumerWidget {
           itemBuilder: (_, i) => _BookmarkTile(
             title: saved[i].title,
             subtitle: '${saved[i].companyName} · ${saved[i].city}',
-            onTap: () => context.push(RouteNames.careersInternships),
+            onTap: () => context.pushOnce(RouteNames.careersInternships),
           ),
         );
       },
@@ -242,7 +243,7 @@ class _JobsTab extends ConsumerWidget {
           itemBuilder: (_, i) => _BookmarkTile(
             title: saved[i].title,
             subtitle: '${saved[i].companyName} · ${saved[i].salaryRange}',
-            onTap: () => context.push(RouteNames.careersJobs),
+            onTap: () => context.pushOnce(RouteNames.careersJobs),
           ),
         );
       },
@@ -295,7 +296,7 @@ class _SavedQuestionTile extends ConsumerWidget {
         return _BookmarkTile(
           title: q.title,
           subtitle: q.collegeName,
-          onTap: () => context.push(
+          onTap: () => context.pushOnce(
             RouteNames.collegeQuestionPath(q.collegeId, q.id),
           ),
         );

@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class CareersHubScreen extends StatelessWidget {
   const CareersHubScreen({super.key});
@@ -39,21 +40,21 @@ class CareersHubScreen extends StatelessWidget {
             childAspectRatio: isWide ? 1.4 : 1.1,
             children: [
               _tile(Icons.work_outline, 'Internships', 'Find & apply', AppTheme.primaryColor,
-                  () => context.push(RouteNames.careersInternships)),
+                  () => context.pushOnce(RouteNames.careersInternships)),
               _tile(Icons.business_center_outlined, 'Jobs', 'Fresher & experienced',
-                  AppTheme.secondaryColor, () => context.push(RouteNames.careersJobs)),
+                  AppTheme.secondaryColor, () => context.pushOnce(RouteNames.careersJobs)),
               _tile(Icons.apartment_outlined, 'Companies', 'Profiles & reviews',
-                  AppTheme.accentColor, () => context.push(RouteNames.careersCompanies)),
+                  AppTheme.accentColor, () => context.pushOnce(RouteNames.careersCompanies)),
               _tile(Icons.people_outline, 'Alumni', 'Network & guidance', const Color(0xFF7C3AED),
-                  () => context.push(RouteNames.careersAlumni)),
+                  () => context.pushOnce(RouteNames.careersAlumni)),
               _tile(Icons.bookmark_outline, 'Saved', 'Internships & jobs',
-                  AppTheme.warningColor, () => context.push(RouteNames.careersSaved)),
+                  AppTheme.warningColor, () => context.pushOnce(RouteNames.careersSaved)),
               _tile(Icons.description_outlined, 'Resume', 'Upload & score',
-                  const Color(0xFF0891B2), () => context.push(RouteNames.careersResume)),
+                  const Color(0xFF0891B2), () => context.pushOnce(RouteNames.careersResume)),
               _tile(Icons.auto_awesome_outlined, 'Matches', 'AI career picks',
-                  const Color(0xFF9333EA), () => context.push(RouteNames.careersRecommendations)),
+                  const Color(0xFF9333EA), () => context.pushOnce(RouteNames.careersRecommendations)),
               _tile(Icons.dashboard_outlined, 'Company', 'Post & manage',
-                  const Color(0xFF64748B), () => context.push(RouteNames.careersCompanyDashboard)),
+                  const Color(0xFF64748B), () => context.pushOnce(RouteNames.careersCompanyDashboard)),
             ],
           ),
         ],

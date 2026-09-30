@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class RankingHubScreen extends StatelessWidget {
   const RankingHubScreen({super.key});
@@ -31,39 +32,39 @@ class RankingHubScreen extends StatelessWidget {
             title: 'College Rankings',
             subtitle: 'Overall, state, city, course & type rankings',
             color: AppTheme.primaryColor,
-            onTap: () => context.push(RouteNames.rankingColleges),
+            onTap: () => context.pushOnce(RouteNames.rankingColleges),
           ),
           _Tile(
             icon: Icons.auto_awesome,
             title: 'Smart Recommendations',
             subtitle: 'Match colleges to your exam score & preferences',
             color: const Color(0xFF7C3AED),
-            onTap: () => context.push(RouteNames.rankingRecommendations),
+            onTap: () => context.pushOnce(RouteNames.rankingRecommendations),
           ),
           _Tile(
             icon: Icons.compare_arrows,
             title: 'Compare Top 5',
             subtitle: 'Best picks with strengths, ROI & placement',
             color: AppTheme.secondaryColor,
-            onTap: () => context.push(RouteNames.rankingCompare),
+            onTap: () => context.pushOnce(RouteNames.rankingCompare),
           ),
           _Tile(
             icon: Icons.insights_outlined,
             title: 'AI Insights',
             subtitle: 'Best placement, teaching, value & trending',
             color: const Color(0xFF0EA5E9),
-            onTap: () => context.push(RouteNames.rankingInsights),
+            onTap: () => context.pushOnce(RouteNames.rankingInsights),
           ),
           _Tile(
             icon: Icons.analytics_outlined,
             title: 'College Analytics',
             subtitle: 'Popular, most reviewed & highest rated',
             color: const Color(0xFF059669),
-            onTap: () => context.push(RouteNames.rankingAnalytics),
+            onTap: () => context.pushOnce(RouteNames.rankingAnalytics),
           ),
           const SizedBox(height: 12),
           OutlinedButton.icon(
-            onPressed: () => context.push(RouteNames.assistant),
+            onPressed: () => context.pushOnce(RouteNames.assistant),
             icon: const Icon(Icons.chat_outlined),
             label: const Text('AI Assistant'),
           ),

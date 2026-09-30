@@ -20,6 +20,7 @@ import '../services/communication_firestore_service.dart';
 import '../utils/call_countdown.dart';
 import '../utils/communication_formatters.dart';
 import '../widgets/post_interaction_rating_sheet.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class ActiveCallScreen extends ConsumerStatefulWidget {
   final String sessionId;
@@ -476,7 +477,7 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
                             // Opened from a notification tap (go) there is
                             // nothing underneath to pop back to.
                             if (context.canPop()) {
-                              context.pop();
+                              context.popOrGo();
                             } else {
                               context.go(RouteNames.home);
                             }

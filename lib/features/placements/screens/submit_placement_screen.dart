@@ -12,6 +12,7 @@ import '../../../core/constants/placement_constants.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../models/placement_submission_model.dart';
 import '../providers/placement_provider.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class SubmitPlacementScreen extends ConsumerStatefulWidget {
   final String collegeId;
@@ -165,7 +166,7 @@ class _SubmitPlacementScreenState extends ConsumerState<SubmitPlacementScreen> {
         title: const Text('Submit Placement'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrGo(),
         ),
       ),
       body: verifiedAsync.when(

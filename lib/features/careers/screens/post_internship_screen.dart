@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/constants/careers_constants.dart';
@@ -8,6 +7,7 @@ import '../../../core/widgets/index.dart';
 import '../models/careers_models.dart';
 import '../providers/careers_provider.dart';
 import '../utils/careers_filter_utils.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class PostInternshipScreen extends ConsumerStatefulWidget {
   const PostInternshipScreen({super.key});
@@ -44,7 +44,7 @@ class _PostInternshipScreenState extends ConsumerState<PostInternshipScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrGo(),
         ),
         title: const Text('Post Internship'),
       ),
@@ -142,7 +142,7 @@ class _PostInternshipScreenState extends ConsumerState<PostInternshipScreen> {
       await ref.read(careersRepositoryProvider).createInternshipListing(internship);
       if (mounted) {
         SnackBarHelper.showSuccessSnackBar(context, message: 'Internship published');
-        context.pop();
+        context.popOrGo();
       }
     } catch (e) {
       if (mounted) SnackBarHelper.showErrorSnackBar(context, message: e.toString());

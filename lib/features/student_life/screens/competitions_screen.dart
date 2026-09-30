@@ -1,7 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -10,6 +9,7 @@ import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/student_life_constants.dart';
 import '../providers/student_life_provider.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class CompetitionsScreen extends ConsumerWidget {
   const CompetitionsScreen({super.key});
@@ -23,7 +23,7 @@ class CompetitionsScreen extends ConsumerWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrGo(),
         ),
         title: const Text('Competitions'),
       ),
@@ -99,7 +99,7 @@ class CompetitionsScreen extends ConsumerWidget {
                     ),
                     isThreeLine: true,
                     trailing: const Icon(Icons.chevron_right),
-                    onTap: () => context.push(RouteNames.studentLifeCompetitionDetailPath(c.id)),
+                    onTap: () => context.pushOnce(RouteNames.studentLifeCompetitionDetailPath(c.id)),
                   ),
                 ),
               ),
@@ -123,7 +123,7 @@ class CompetitionDetailScreen extends ConsumerWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrGo(),
         ),
         title: const Text('Competition'),
       ),

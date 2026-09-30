@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../config/router/route_names.dart';
@@ -13,6 +12,7 @@ import '../../community/services/community_firestore_service.dart';
 import '../../communication/providers/communication_provider.dart';
 import '../../verification/widgets/verification_badge_widget.dart';
 import '../services/student_chat_service.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 final studentChatServiceProvider = Provider<StudentChatService>((ref) {
   return StudentChatService();
@@ -88,7 +88,7 @@ class _TalkToStudentsScreenState extends ConsumerState<TalkToStudentsScreen> {
                 peerName: peerName,
               );
       if (mounted) {
-        context.push(RouteNames.communityChatPath(conversation.id));
+        context.pushOnce(RouteNames.communityChatPath(conversation.id));
       }
     } on CommunityException catch (e) {
       if (mounted) {
@@ -120,7 +120,7 @@ class _TalkToStudentsScreenState extends ConsumerState<TalkToStudentsScreen> {
         title: const Text('Talk to Students'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrGo(),
         ),
       ),
       body: ListView(

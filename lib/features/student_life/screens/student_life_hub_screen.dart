@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class StudentLifeHubScreen extends StatelessWidget {
   const StudentLifeHubScreen({super.key});
@@ -39,17 +40,17 @@ class StudentLifeHubScreen extends StatelessWidget {
             childAspectRatio: isWide ? 1.4 : 1.1,
             children: [
               _tile(Icons.event_outlined, 'Events', 'Upcoming campus events',
-                  AppTheme.primaryColor, () => context.push(RouteNames.studentLifeEvents)),
+                  AppTheme.primaryColor, () => context.pushOnce(RouteNames.studentLifeEvents)),
               _tile(Icons.groups_outlined, 'Clubs', 'Join college clubs',
-                  AppTheme.secondaryColor, () => context.push(RouteNames.studentLifeClubs)),
+                  AppTheme.secondaryColor, () => context.pushOnce(RouteNames.studentLifeClubs)),
               _tile(Icons.emoji_events_outlined, 'Competitions', 'Win prizes',
                   AppTheme.accentColor,
-                  () => context.push(RouteNames.studentLifeCompetitions)),
+                  () => context.pushOnce(RouteNames.studentLifeCompetitions)),
               _tile(Icons.forum_outlined, 'Communities', 'Branch & year boards',
                   const Color(0xFF7C3AED),
-                  () => context.push(RouteNames.studentLifeCommunities)),
+                  () => context.pushOnce(RouteNames.studentLifeCommunities)),
               _tile(Icons.bookmark_outline, 'Saved Events', 'Your bookmarks',
-                  AppTheme.warningColor, () => context.push(RouteNames.studentLifeSaved)),
+                  AppTheme.warningColor, () => context.pushOnce(RouteNames.studentLifeSaved)),
             ],
           ),
         ],

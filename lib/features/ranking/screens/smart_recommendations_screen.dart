@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../config/router/route_names.dart';
@@ -9,6 +8,7 @@ import '../../../core/constants/ranking_constants.dart';
 import '../models/ranking_models.dart';
 import '../providers/ranking_provider.dart';
 import '../utils/college_ranking_utils.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class SmartRecommendationsScreen extends ConsumerStatefulWidget {
   const SmartRecommendationsScreen({super.key});
@@ -72,7 +72,7 @@ class _SmartRecommendationsScreenState extends ConsumerState<SmartRecommendation
         title: const Text('Smart Recommendations'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrGo(),
         ),
       ),
       body: ListView(
@@ -194,7 +194,7 @@ class _SmartRecommendationsScreenState extends ConsumerState<SmartRecommendation
                           ),
                           trailing: Text(formatFees(r.college)),
                           onTap: () =>
-                              context.push(RouteNames.collegeDetailsPath(r.college.id)),
+                              context.pushOnce(RouteNames.collegeDetailsPath(r.college.id)),
                         ),
                       )),
                 ],

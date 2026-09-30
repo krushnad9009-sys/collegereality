@@ -19,6 +19,7 @@ import '../models/review_model.dart';
 import '../providers/review_provider.dart';
 import '../services/review_storage_service.dart';
 import '../widgets/star_rating_widget.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 final reviewStorageServiceProvider = Provider<ReviewStorageService>((ref) {
   return ReviewStorageService();
@@ -394,7 +395,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
             icon: const Icon(Icons.arrow_back_ios_new, size: 18),
             onPressed: () {
               if (context.canPop()) {
-                context.pop();
+                context.popOrGo();
               } else {
                 context.go(RouteNames.collegeDetailsPath(widget.collegeId));
               }
@@ -433,7 +434,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
                 icon: const Icon(Icons.arrow_back_ios_new, size: 18),
                 onPressed: () {
                   if (context.canPop()) {
-                    context.pop();
+                    context.popOrGo();
                   } else {
                     context.go(RouteNames.collegeDetailsPath(widget.collegeId));
                   }
@@ -484,7 +485,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
               icon: const Icon(Icons.arrow_back_ios_new, size: 18),
                 onPressed: () {
                   if (context.canPop()) {
-                    context.pop();
+                    context.popOrGo();
                   } else {
                     context.go(RouteNames.collegeDetailsPath(widget.collegeId));
                   }

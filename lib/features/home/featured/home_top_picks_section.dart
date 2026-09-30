@@ -9,6 +9,7 @@ import '../../../core/widgets/college_image_widget.dart';
 import '../../colleges/models/college_model.dart';
 import '../../communication/models/public_guide_profile.dart';
 import 'home_featured_provider.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 const double _kCollegeCardWidth = 196;
 const double _kCollegeMediaHeight = _kCollegeCardWidth / 16 * 9;
@@ -227,7 +228,7 @@ class _GuidePickCard extends StatelessWidget {
         ? '?'
         : g.displayName.trim().characters.first.toUpperCase();
     return GestureDetector(
-      onTap: () => context.push(RouteNames.guideProfilePath(g.uid)),
+      onTap: () => context.pushOnce(RouteNames.guideProfilePath(g.uid)),
       child: Container(
         width: _kGuideCardWidth,
         padding: const EdgeInsets.all(12),

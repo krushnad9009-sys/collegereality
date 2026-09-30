@@ -4,11 +4,11 @@ import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../auth/providers/user_provider.dart';
 import '../../colleges/providers/college_provider.dart';
 import '../providers/ecosystem_provider.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class ClaimCollegeScreen extends ConsumerStatefulWidget {
   final String collegeId;
@@ -78,7 +78,7 @@ class _ClaimCollegeScreenState extends ConsumerState<ClaimCollegeScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Claim submitted for admin approval.')),
         );
-        context.pop();
+        context.popOrGo();
       }
     } catch (e) {
       if (mounted) {

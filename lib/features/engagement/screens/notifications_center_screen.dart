@@ -14,6 +14,7 @@ import '../../../core/widgets/premium_components.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../models/engagement_models.dart';
 import '../providers/engagement_provider.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class NotificationsCenterScreen extends ConsumerStatefulWidget {
   const NotificationsCenterScreen({super.key});
@@ -101,7 +102,7 @@ class _NotificationsCenterScreenState
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
           onPressed: () => context.canPop()
-              ? context.pop()
+              ? context.popOrGo()
               : context.go(RouteNames.home),
         ),
         title: Text(
@@ -117,7 +118,7 @@ class _NotificationsCenterScreenState
           IconButton(
             icon: const Icon(Icons.settings_outlined),
             tooltip: 'Preferences',
-            onPressed: () => context.push(RouteNames.notificationPreferences),
+            onPressed: () => context.pushOnce(RouteNames.notificationPreferences),
           ),
           IconButton(
             icon: const Icon(Icons.done_all),
@@ -380,7 +381,7 @@ class _NotificationTile extends ConsumerWidget {
                 .markAsRead(notification.id);
           }
           if (notification.actionRoute.isNotEmpty && context.mounted) {
-            context.push(notification.actionRoute);
+            context.pushOnce(notification.actionRoute);
           }
         },
         child: Row(

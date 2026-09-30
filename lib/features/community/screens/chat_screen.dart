@@ -3,7 +3,6 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_design_tokens.dart';
@@ -21,6 +20,7 @@ import '../widgets/chat_input_bar.dart';
 import '../widgets/message_bubble.dart';
 import '../widgets/presence_indicator.dart';
 import '../widgets/typing_indicator.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   final String conversationId;
@@ -140,7 +140,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           blockerId: user.uid,
           blockedId: peerId,
         );
-    if (mounted) context.pop();
+    if (mounted) context.popOrGo();
   }
 
   Future<void> _runSearch(String query) async {
@@ -237,7 +237,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 PopupMenuButton<String>(
                   onSelected: (v) {
                     if (v == 'profile') {
-                      context.push(RouteNames.studentProfilePath(peerId));
+                      context.pushOnce(RouteNames.studentProfilePath(peerId));
                     }
                     if (v == 'report') _reportPeer(peerId);
                     if (v == 'block') _blockPeer(peerId);

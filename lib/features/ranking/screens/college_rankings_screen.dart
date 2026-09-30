@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../config/router/route_names.dart';
@@ -10,6 +9,7 @@ import '../../../core/widgets/async_state_widgets.dart';
 import '../providers/ranking_provider.dart';
 import '../utils/college_ranking_utils.dart';
 import '../widgets/cr_score_badge_widget.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class CollegeRankingsScreen extends ConsumerWidget {
   const CollegeRankingsScreen({super.key});
@@ -24,7 +24,7 @@ class CollegeRankingsScreen extends ConsumerWidget {
         title: const Text('College Rankings'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrGo(),
         ),
       ),
       body: Column(
@@ -110,7 +110,7 @@ class CollegeRankingsScreen extends ConsumerWidget {
                             ),
                           ],
                         ),
-                        onTap: () => context.push(
+                        onTap: () => context.pushOnce(
                           RouteNames.collegeDetailsPath(entry.college.id),
                         ),
                       ),

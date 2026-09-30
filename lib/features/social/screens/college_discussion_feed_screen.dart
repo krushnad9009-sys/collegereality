@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../config/router/route_names.dart';
@@ -13,6 +12,7 @@ import '../../../core/widgets/premium_components.dart';
 import '../../auth/providers/user_provider.dart';
 import '../models/social_models.dart';
 import '../providers/social_provider.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class CollegeDiscussionFeedScreen extends ConsumerStatefulWidget {
   const CollegeDiscussionFeedScreen({super.key});
@@ -88,13 +88,13 @@ class _CollegeDiscussionFeedScreenState
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrGo(),
         ),
         actions: [
           IconButton(
             icon: const Icon(Icons.chat_outlined),
             tooltip: 'Open college chat',
-            onPressed: () => context.push(RouteNames.community),
+            onPressed: () => context.pushOnce(RouteNames.community),
           ),
         ],
       ),
@@ -161,7 +161,7 @@ class _CollegeDiscussionFeedScreenState
                           item: _items[index],
                           onTap: () {
                             if (_items[index].actionRoute.isNotEmpty) {
-                              context.push(_items[index].actionRoute);
+                              context.pushOnce(_items[index].actionRoute);
                             }
                           },
                         );

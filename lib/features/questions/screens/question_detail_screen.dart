@@ -16,6 +16,7 @@ import '../providers/question_provider.dart';
 import '../utils/question_rich_text_utils.dart';
 import '../widgets/answer_card_widget.dart';
 import '../widgets/ask_question_sheet.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class QuestionDetailScreen extends ConsumerWidget {
   final String collegeId;
@@ -46,7 +47,7 @@ class QuestionDetailScreen extends ConsumerWidget {
         backgroundColor: tokens.surfaceElevated,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrGo(),
         ),
         title: Text(
           'Question',
@@ -177,7 +178,7 @@ class QuestionDetailScreen extends ConsumerWidget {
                   const SizedBox(width: 6),
                   if (!question.isAnonymous)
                     InkWell(
-                      onTap: () => context.push(
+                      onTap: () => context.pushOnce(
                         RouteNames.studentProfilePath(question.authorId),
                       ),
                       child: Text(

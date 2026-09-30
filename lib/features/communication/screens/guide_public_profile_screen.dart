@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_fonts.dart';
@@ -21,6 +20,7 @@ import '../../verification/widgets/verification_badge_widget.dart';
 import '../../consultations/widgets/availability_badge.dart';
 import '../../consultations/widgets/guide_pricing_card.dart';
 import '../../consultations/widgets/guide_reviews_list.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class GuidePublicProfileScreen extends ConsumerStatefulWidget {
   final String guideUid;
@@ -52,7 +52,7 @@ class _GuidePublicProfileScreenState
                 peerName: guideName,
               );
       if (mounted) {
-        context.push(RouteNames.communityChatPath(conversation.id));
+        context.pushOnce(RouteNames.communityChatPath(conversation.id));
       }
     } on CommunityException catch (e) {
       if (mounted) {
@@ -148,7 +148,7 @@ class _GuidePublicProfileScreenState
         );
     if (mounted) {
       SnackBarHelper.showSuccessSnackBar(context, message: 'Guide blocked.');
-      context.pop();
+      context.popOrGo();
     }
   }
 

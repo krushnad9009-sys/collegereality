@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_fonts.dart';
 import '../../communication/providers/communication_provider.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 /// Compact Talk to Students entry on the college Reviews tab.
 class ConnectStudentsSection extends ConsumerWidget {
@@ -88,7 +88,7 @@ class ConnectStudentsSection extends ConsumerWidget {
           SizedBox(
             width: double.infinity,
             child: FilledButton.icon(
-              onPressed: () => context.push(
+              onPressed: () => context.pushOnce(
                 RouteNames.talkToStudentsPath(
                   collegeId,
                   name: collegeName,

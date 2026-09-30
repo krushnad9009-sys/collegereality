@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_design_tokens.dart';
@@ -8,6 +7,7 @@ import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/app_theme.dart';
 import '../providers/question_provider.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class UnansweredQuestionsBanner extends ConsumerWidget {
   final String collegeId;
@@ -79,7 +79,7 @@ class UnansweredQuestionsBanner extends ConsumerWidget {
                         ),
                       ),
                       trailing: Icon(Icons.chevron_right_rounded, size: 18, color: tokens.textTertiary),
-                      onTap: () => context.push(
+                      onTap: () => context.pushOnce(
                         RouteNames.collegeQuestionPath(collegeId, q.id),
                       ),
                     ),

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../config/router/route_names.dart';
 import '../../../core/constants/wallet_constants.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 /// Shown instead of connecting when the caller can't talk to [guideId] for
 /// free (today's 2-minute free call is used) AND their wallet can't pay
@@ -50,7 +50,7 @@ Future<void> showFreeCallLimitDialog(
         FilledButton(
           onPressed: () {
             Navigator.of(dialogContext).pop();
-            context.push(RouteNames.walletPath(
+            context.pushOnce(RouteNames.walletPath(
               guideId: guideId,
               guideName: guideName,
               ratePaisePerMinute: rate,

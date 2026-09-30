@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
 import '../models/ranking_models.dart';
 import '../providers/ranking_provider.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class CollegeAnalyticsScreen extends ConsumerWidget {
   const CollegeAnalyticsScreen({super.key});
@@ -20,7 +20,7 @@ class CollegeAnalyticsScreen extends ConsumerWidget {
         title: const Text('College Analytics'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrGo(),
         ),
       ),
       body: analyticsAsync.when(
@@ -72,7 +72,7 @@ class _Section extends StatelessWidget {
                           style: GoogleFonts.poppins(fontSize: 10, color: AppTheme.gray500)),
                     ],
                   ),
-                  onTap: () => context.push(RouteNames.collegeDetailsPath(e.college.id)),
+                  onTap: () => context.pushOnce(RouteNames.collegeDetailsPath(e.college.id)),
                 ),
               )),
         const SizedBox(height: 20),

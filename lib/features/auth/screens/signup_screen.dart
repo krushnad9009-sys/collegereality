@@ -15,6 +15,7 @@ import '../providers/auth_provider.dart';
 import '../providers/user_provider.dart';
 import '../utils/google_auth_helper.dart';
 import '../utils/validation_util.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class SignupScreen extends ConsumerStatefulWidget {
   const SignupScreen({super.key});
@@ -162,7 +163,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                       child: InkWell(
                         onTap: () {
                           if (context.canPop()) {
-                            context.pop();
+                            context.popOrGo();
                           } else {
                             final from = GoRouterState.of(context)
                                 .uri

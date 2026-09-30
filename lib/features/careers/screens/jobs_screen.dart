@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -12,6 +11,7 @@ import '../../auth/providers/auth_provider.dart';
 import '../models/careers_models.dart';
 import '../providers/careers_provider.dart';
 import '../utils/careers_filter_utils.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class JobsScreen extends ConsumerStatefulWidget {
   const JobsScreen({super.key});
@@ -49,7 +49,7 @@ class _JobsScreenState extends ConsumerState<JobsScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrGo(),
         ),
         title: const Text('Jobs'),
       ),
@@ -266,7 +266,7 @@ class _JobCard extends StatelessWidget {
                 FilledButton(onPressed: onApply, child: const Text('Apply')),
                 const SizedBox(width: 8),
                 TextButton(
-                  onPressed: () => context.push(RouteNames.careersCompanyDetailPath(job.companyId)),
+                  onPressed: () => context.pushOnce(RouteNames.careersCompanyDetailPath(job.companyId)),
                   child: const Text('Company'),
                 ),
               ],

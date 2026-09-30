@@ -9,6 +9,7 @@ import '../../../core/constants/ecosystem_constants.dart';
 import '../../../core/constants/verification_constants.dart';
 import '../../auth/providers/user_provider.dart';
 import '../providers/ecosystem_provider.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class OfficialCollegeDashboardScreen extends ConsumerStatefulWidget {
   const OfficialCollegeDashboardScreen({super.key});
@@ -66,7 +67,7 @@ class _OfficialCollegeDashboardScreenState
         title: const Text('Official College Dashboard'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrGo(),
         ),
       ),
       body: accountAsync.when(
@@ -238,7 +239,7 @@ class _AlumniMentorshipScreenState extends ConsumerState<AlumniMentorshipScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Mentorship offer published.')),
         );
-        context.pop();
+        context.popOrGo();
       }
     } catch (e) {
       if (mounted) {

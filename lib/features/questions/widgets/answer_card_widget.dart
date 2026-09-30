@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../config/router/route_names.dart';
@@ -18,6 +17,7 @@ import '../models/question_model.dart';
 import '../providers/question_provider.dart';
 import '../utils/question_rich_text_utils.dart';
 import 'answer_reply_section.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class AnswerCardWidget extends ConsumerWidget {
   final AnswerModel answer;
@@ -330,7 +330,7 @@ class _AuthorRow extends StatelessWidget {
         const SizedBox(width: 6),
         if (!isAnonymous)
           InkWell(
-            onTap: () => context.push(RouteNames.studentProfilePath(authorId)),
+            onTap: () => context.pushOnce(RouteNames.studentProfilePath(authorId)),
             child: nameWidget,
           )
         else

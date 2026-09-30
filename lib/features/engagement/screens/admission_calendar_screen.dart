@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
@@ -8,6 +7,7 @@ import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/engagement_constants.dart';
 import '../models/engagement_models.dart';
 import '../providers/engagement_provider.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class AdmissionCalendarScreen extends ConsumerWidget {
   const AdmissionCalendarScreen({super.key});
@@ -21,7 +21,7 @@ class AdmissionCalendarScreen extends ConsumerWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrGo(),
         ),
         title: const Text('Admission Calendar'),
       ),

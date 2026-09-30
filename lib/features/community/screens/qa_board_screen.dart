@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_design_tokens.dart';
@@ -13,6 +12,7 @@ import '../../auth/providers/user_provider.dart';
 import '../providers/community_provider.dart';
 import '../services/community_firestore_service.dart';
 import '../widgets/community_thread_card.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class QaBoardScreen extends ConsumerStatefulWidget {
   const QaBoardScreen({super.key});
@@ -44,7 +44,7 @@ class _QaBoardScreenState extends ConsumerState<QaBoardScreen> {
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrGo(),
         ),
         actions: [
           IconButton(
@@ -59,7 +59,7 @@ class _QaBoardScreenState extends ConsumerState<QaBoardScreen> {
               title: 'Set your college first',
               subtitle: 'Add your college in Profile to use Q&A there.',
               action: OutlinedButton.icon(
-                onPressed: () => context.push(RouteNames.profile),
+                onPressed: () => context.pushOnce(RouteNames.profile),
                 icon: const Icon(Icons.person_outline, size: 18),
                 label: const Text('Go to Profile'),
               ),
@@ -95,7 +95,7 @@ class _QaBoardScreenState extends ConsumerState<QaBoardScreen> {
                       color: AppTheme.primaryColor,
                       replyLabel: 'answers',
                       onTap: () =>
-                          context.push(RouteNames.communityChatPath(thread.id)),
+                          context.pushOnce(RouteNames.communityChatPath(thread.id)),
                     );
                   },
                 );
@@ -137,7 +137,7 @@ class _QaBoardScreenState extends ConsumerState<QaBoardScreen> {
       titleController.dispose();
       bodyController.dispose();
       if (!context.mounted) return;
-      context.push(RouteNames.communityChatPath(thread.id));
+      context.pushOnce(RouteNames.communityChatPath(thread.id));
     } on CommunityException catch (e) {
       titleController.dispose();
       bodyController.dispose();

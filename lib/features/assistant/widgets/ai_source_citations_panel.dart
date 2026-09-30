@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/widgets/status_badge.dart';
 import '../models/ai_source_citation.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class AiSourceCitationsPanel extends StatelessWidget {
   final List<AiSourceCitation> sources;
@@ -37,7 +37,7 @@ class AiSourceCitationsPanel extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 6),
               child: InkWell(
                 onTap: s.actionRoute.isNotEmpty
-                    ? () => context.push(s.actionRoute)
+                    ? () => context.pushOnce(s.actionRoute)
                     : null,
                 borderRadius: BorderRadius.circular(tokens.buttonRadius),
                 child: Container(

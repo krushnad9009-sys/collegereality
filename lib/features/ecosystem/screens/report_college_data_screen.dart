@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/ecosystem_constants.dart';
 import '../../auth/providers/user_provider.dart';
 import '../../colleges/providers/college_provider.dart';
 import '../providers/ecosystem_provider.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class ReportCollegeDataScreen extends ConsumerStatefulWidget {
   final String collegeId;
@@ -52,7 +52,7 @@ class _ReportCollegeDataScreenState extends ConsumerState<ReportCollegeDataScree
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Report submitted. Thank you.')),
         );
-        context.pop();
+        context.popOrGo();
       }
     } catch (e) {
       if (mounted) {

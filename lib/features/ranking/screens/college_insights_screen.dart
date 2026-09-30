@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
 import '../providers/ranking_provider.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class CollegeInsightsScreen extends ConsumerWidget {
   const CollegeInsightsScreen({super.key});
@@ -19,7 +19,7 @@ class CollegeInsightsScreen extends ConsumerWidget {
         title: const Text('AI Insights'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrGo(),
         ),
       ),
       body: insightsAsync.when(
@@ -56,7 +56,7 @@ class CollegeInsightsScreen extends ConsumerWidget {
                   isThreeLine: true,
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () =>
-                      context.push(RouteNames.collegeDetailsPath(insight.college.id)),
+                      context.pushOnce(RouteNames.collegeDetailsPath(insight.college.id)),
                 ),
               );
             },

@@ -15,6 +15,7 @@ import '../../auth/providers/user_provider.dart';
 import '../../auth/services/firestore_user_service.dart';
 import '../models/payout_models.dart';
 import '../providers/consultation_provider.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 String _rupees(int paise) {
   final rupees = (paise / 100).round();
@@ -127,7 +128,7 @@ class EarningsScreen extends ConsumerWidget {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
           onPressed: () => context.canPop()
-              ? context.pop()
+              ? context.popOrGo()
               : context.go(RouteNames.home),
         ),
         title: const Text('Earnings & Payouts'),

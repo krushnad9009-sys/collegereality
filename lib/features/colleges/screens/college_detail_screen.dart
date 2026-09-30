@@ -45,6 +45,7 @@ import '../../ecosystem/widgets/official_college_content_section.dart';
 import '../widgets/college_profile_widgets.dart';
 import '../models/college_model.dart';
 import '../providers/college_provider.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class CollegeDetailScreen extends ConsumerStatefulWidget {
   final String collegeId;
@@ -224,7 +225,7 @@ class _CollegeDetailScreenState extends ConsumerState<CollegeDetailScreen>
                   icon: const Icon(Icons.arrow_back_ios_new, size: 18),
                   onPressed: () {
                     if (context.canPop()) {
-                      context.pop();
+                      context.popOrGo();
                     } else {
                       context.go(RouteNames.home);
                     }

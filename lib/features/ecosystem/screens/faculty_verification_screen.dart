@@ -4,12 +4,12 @@ import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../config/theme/app_theme.dart';
 import '../../auth/providers/user_provider.dart';
 import '../providers/ecosystem_provider.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class FacultyVerificationScreen extends ConsumerStatefulWidget {
   const FacultyVerificationScreen({super.key});
@@ -77,7 +77,7 @@ class _FacultyVerificationScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Faculty verification submitted.')),
         );
-        context.pop();
+        context.popOrGo();
       }
     } catch (e) {
       if (mounted) {

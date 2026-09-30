@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/cr_score_constants.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class HowCrScoreWorksScreen extends StatelessWidget {
   const HowCrScoreWorksScreen({super.key});
@@ -15,7 +15,7 @@ class HowCrScoreWorksScreen extends StatelessWidget {
         title: const Text('How CR Score Works'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrGo(),
         ),
       ),
       body: ListView(

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -12,6 +11,7 @@ import '../../auth/providers/auth_provider.dart';
 import '../models/careers_models.dart';
 import '../providers/careers_provider.dart';
 import '../utils/careers_filter_utils.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class InternshipsScreen extends ConsumerStatefulWidget {
   const InternshipsScreen({super.key});
@@ -51,7 +51,7 @@ class _InternshipsScreenState extends ConsumerState<InternshipsScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrGo(),
         ),
         title: const Text('Internships'),
       ),
@@ -276,7 +276,7 @@ class _InternshipCard extends StatelessWidget {
                 FilledButton(onPressed: onApply, child: const Text('Apply')),
                 const SizedBox(width: 8),
                 TextButton(
-                  onPressed: () => context.push(
+                  onPressed: () => context.pushOnce(
                     RouteNames.careersCompanyDetailPath(internship.companyId),
                   ),
                   child: const Text('Company'),

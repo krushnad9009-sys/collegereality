@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../config/router/route_names.dart';
 import '../../../core/constants/wallet_constants.dart';
@@ -9,6 +8,7 @@ import '../../communication/services/free_trial_call_service.dart';
 import '../../communication/widgets/free_call_limit_dialog.dart';
 import '../providers/wallet_provider.dart';
 import '../services/wallet_service.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 /// The one way to call a guide (guide profile, wallet "Call now"):
 ///
@@ -41,7 +41,7 @@ Future<void> startGuideCall({
         guideId: guideId,
         callType: callType,
       );
-      if (context.mounted) context.push(RouteNames.activeCallPath(sessionId));
+      if (context.mounted) context.pushOnce(RouteNames.activeCallPath(sessionId));
       return;
     } on FreeTrialUsedException {
       // Server says it's used after all -- fall through to a paid call.
@@ -79,7 +79,7 @@ Future<void> startGuideCall({
       guideId: guideId,
       callType: callType,
     );
-    if (context.mounted) context.push(RouteNames.activeCallPath(sessionId));
+    if (context.mounted) context.pushOnce(RouteNames.activeCallPath(sessionId));
   } on InsufficientBalanceException catch (e) {
     if (!context.mounted) return;
     await showFreeCallLimitDialog(

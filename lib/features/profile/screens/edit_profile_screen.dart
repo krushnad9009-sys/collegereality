@@ -24,6 +24,7 @@ import '../widgets/premium_profile_edit_section.dart';
 import '../widgets/display_name_settings_section.dart';
 import '../widgets/phone_verification_section.dart';
 import '../widgets/email_verification_section.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 /// Full profile editor. Reached from the Profile hub via "Edit Profile".
 class EditProfileScreen extends ConsumerStatefulWidget {
@@ -146,7 +147,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           context,
           message: 'Profile updated successfully!',
         );
-        if (context.canPop()) context.pop();
+        if (context.canPop()) context.popOrGo();
       }
     } catch (e) {
       if (mounted) {
@@ -418,7 +419,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                 if (value &&
                                     userDetail.guideOnboardingReviewId ==
                                         null) {
-                                  context.push(RouteNames.guideOnboarding);
+                                  context.pushOnce(RouteNames.guideOnboarding);
                                   return;
                                 }
                                 setState(() {

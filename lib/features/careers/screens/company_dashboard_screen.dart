@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
 import '../providers/careers_provider.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class CompanyDashboardScreen extends ConsumerWidget {
   const CompanyDashboardScreen({super.key});
@@ -18,7 +18,7 @@ class CompanyDashboardScreen extends ConsumerWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrGo(),
         ),
         title: const Text('Company Dashboard'),
       ),
@@ -64,19 +64,19 @@ class CompanyDashboardScreen extends ConsumerWidget {
                 icon: Icons.work_outline,
                 title: 'Post Internship',
                 subtitle: 'Create a new internship listing',
-                onTap: () => context.push(RouteNames.careersPostInternship),
+                onTap: () => context.pushOnce(RouteNames.careersPostInternship),
               ),
               _DashboardTile(
                 icon: Icons.business_center_outlined,
                 title: 'Post Job',
                 subtitle: 'Create fresher or experienced role',
-                onTap: () => context.push(RouteNames.careersPostJob),
+                onTap: () => context.pushOnce(RouteNames.careersPostJob),
               ),
               _DashboardTile(
                 icon: Icons.people_outline,
                 title: 'Manage Applicants',
                 subtitle: 'Review internship & job applications',
-                onTap: () => context.push(RouteNames.careersManageApplicants),
+                onTap: () => context.pushOnce(RouteNames.careersManageApplicants),
               ),
             ],
           );

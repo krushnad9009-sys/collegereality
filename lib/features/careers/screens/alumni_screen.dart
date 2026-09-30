@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -13,6 +12,7 @@ import '../../community/providers/community_provider.dart';
 import '../../community/services/community_firestore_service.dart';
 import '../models/careers_models.dart';
 import '../providers/careers_provider.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class AlumniDirectoryScreen extends ConsumerWidget {
   const AlumniDirectoryScreen({super.key});
@@ -25,7 +25,7 @@ class AlumniDirectoryScreen extends ConsumerWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrGo(),
         ),
         title: const Text('Alumni Network'),
       ),
@@ -50,7 +50,7 @@ class AlumniDirectoryScreen extends ConsumerWidget {
               ...alumni.map(
                 (a) => _AlumniCard(
                   alumni: a,
-                  onTap: () => context.push(RouteNames.careersAlumniDetailPath(a.id)),
+                  onTap: () => context.pushOnce(RouteNames.careersAlumniDetailPath(a.id)),
                 ),
               ),
           ],
@@ -81,7 +81,7 @@ class _AlumniProfileScreenState extends ConsumerState<AlumniProfileScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrGo(),
         ),
         title: const Text('Alumni Profile'),
       ),
@@ -223,7 +223,7 @@ class _AlumniProfileScreenState extends ConsumerState<AlumniProfileScreen> {
             peerId: alumni.userId!,
             peerName: alumni.displayName,
           );
-      if (mounted) context.push(RouteNames.communityChatPath(conversation.id));
+      if (mounted) context.pushOnce(RouteNames.communityChatPath(conversation.id));
     } on CommunityException catch (e) {
       if (mounted) SnackBarHelper.showErrorSnackBar(context, message: e.message);
     } finally {

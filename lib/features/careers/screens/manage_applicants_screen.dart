@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -8,6 +7,7 @@ import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/careers_constants.dart';
 import '../models/careers_models.dart';
 import '../providers/careers_provider.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class ManageApplicantsScreen extends ConsumerWidget {
   const ManageApplicantsScreen({super.key});
@@ -29,7 +29,7 @@ class ManageApplicantsScreen extends ConsumerWidget {
         appBar: AppBar(
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-            onPressed: () => context.pop(),
+            onPressed: () => context.popOrGo(),
           ),
           title: const Text('Applicants'),
           bottom: const TabBar(tabs: [Tab(text: 'Internships'), Tab(text: 'Jobs')]),

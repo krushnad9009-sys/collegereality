@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_design_tokens.dart';
@@ -12,6 +11,7 @@ import '../../../core/widgets/premium_components.dart';
 import '../../auth/providers/user_provider.dart';
 import '../providers/community_provider.dart';
 import '../services/community_firestore_service.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class CommunityHubScreen extends ConsumerWidget {
   const CommunityHubScreen({super.key});
@@ -29,7 +29,7 @@ class CommunityHubScreen extends ConsumerWidget {
             user: user,
           );
       if (context.mounted) {
-        context.push(RouteNames.communityChatPath(conversation.id));
+        context.pushOnce(RouteNames.communityChatPath(conversation.id));
       }
     } on CommunityException catch (e) {
       if (context.mounted) {
@@ -171,7 +171,7 @@ class CommunityHubScreen extends ConsumerWidget {
                       title: 'Private Chats',
                       subtitle: 'Free 1:1 messaging with read receipts',
                       color: AppTheme.primaryColor,
-                      onTap: () => context.push(RouteNames.communityPrivateChats),
+                      onTap: () => context.pushOnce(RouteNames.communityPrivateChats),
                     ),
                   ),
                   FadeInSection(
@@ -181,7 +181,7 @@ class CommunityHubScreen extends ConsumerWidget {
                       title: 'College Discussion Feed',
                       subtitle: 'Posts, Q&A and campus updates in one place',
                       color: AppTheme.secondaryColor,
-                      onTap: () => context.push(RouteNames.communityDiscussionFeed),
+                      onTap: () => context.pushOnce(RouteNames.communityDiscussionFeed),
                     ),
                   ),
                   FadeInSection(
@@ -219,7 +219,7 @@ class CommunityHubScreen extends ConsumerWidget {
                       title: 'Ask Seniors',
                       subtitle: 'Get advice from senior students',
                       color: AppTheme.warningColor,
-                      onTap: () => context.push(RouteNames.communityAskSeniors),
+                      onTap: () => context.pushOnce(RouteNames.communityAskSeniors),
                     ),
                   ),
                   FadeInSection(
@@ -229,7 +229,7 @@ class CommunityHubScreen extends ConsumerWidget {
                       title: 'Student Q&A',
                       subtitle: 'Questions and answers board',
                       color: const Color(0xFFEC4899),
-                      onTap: () => context.push(RouteNames.communityQa),
+                      onTap: () => context.pushOnce(RouteNames.communityQa),
                     ),
                   ),
                 ]),

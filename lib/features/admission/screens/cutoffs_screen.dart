@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/admission_constants.dart';
 import '../providers/admission_provider.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class CutoffsScreen extends ConsumerStatefulWidget {
   const CutoffsScreen({super.key});
@@ -35,7 +35,7 @@ class _CutoffsScreenState extends ConsumerState<CutoffsScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrGo(),
         ),
         title: const Text('Cutoffs'),
       ),

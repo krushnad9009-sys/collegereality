@@ -14,6 +14,7 @@ import '../widgets/document_upload_section.dart';
 import '../widgets/verification_badge_widget.dart';
 import '../../profile/widgets/email_verification_section.dart';
 import '../../profile/widgets/phone_verification_section.dart';
+import '../../../core/navigation/safe_navigation.dart';
 
 class VerificationScreen extends ConsumerWidget {
   const VerificationScreen({super.key});
@@ -34,7 +35,7 @@ class VerificationScreen extends ConsumerWidget {
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
           onPressed: () {
             if (context.canPop()) {
-              context.pop();
+              context.popOrGo();
             } else {
               context.go(RouteNames.profile);
             }
