@@ -51,6 +51,11 @@
 				</array>
 			</dict>
 		</dict>
+		<key>GADApplicationIdentifier</key>
+		<!-- Google's official TEST AdMob app ID. Replace with your real iOS
+		     AdMob app ID (ca-app-pub-XXXX~YYYY) before an App Store release;
+		     the SDK crashes at launch if this key is missing. -->
+		<string>ca-app-pub-3940256099942544~1458002511</string>
 		<key>NSMicrophoneUsageDescription</key>
 		<string>College Reality uses the microphone for voice calls with guides.</string>
 		<key>UIBackgroundModes</key>

@@ -8,6 +8,7 @@ import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'config/router/app_router.dart';
 import 'config/theme/app_theme.dart';
 import 'config/theme/theme_provider.dart';
+import 'core/ads/ad_manager.dart';
 import 'core/bootstrap/app_error_handler.dart';
 import 'core/bootstrap/firebase_bootstrap.dart';
 import 'core/security/device_security_service.dart';
@@ -57,6 +58,11 @@ Future<void> main() async {
           debugPrint('[main] boot services init failed, continuing: $e\n$st');
         }),
   );
+
+  // AdMob (consent -> SDK init -> preload). Fire-and-forget and internally
+  // bounded, like Firebase above: ads must never delay the first frame.
+  // No-op on web / when ads are disabled (see AdConfig).
+  unawaited(AdManager.instance.initialize());
 
   runApp(
     const ProviderScope(

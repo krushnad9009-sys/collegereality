@@ -18,6 +18,7 @@ const {
 } = require('./src/freeTrialCalls');
 const { onUserWriteSyncPublicProfile } = require('./src/publicProfileSync');
 const { onInteractionRatingCreated } = require('./src/interactionRatingTriggers');
+const { admobRewardCallback } = require('./src/adRewards');
 const {
   createWalletRechargeOrder,
   verifyWalletRecharge,
@@ -67,6 +68,8 @@ module.exports = {
   startPaidCall,
   onWalletCallUpdated,
   sweepWalletCalls,
+  // AdMob rewarded-video SSV callback -> wallet credit (Google-signed only).
+  admobRewardCallback,
   aiChatComplete,
   requestEmailOtp,
   verifyEmailOtp,

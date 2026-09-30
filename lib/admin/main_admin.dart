@@ -53,7 +53,13 @@ const superAdminPanelConfig = SuperAdminPanelConfig(
       route: SuperAdminRouteNames.notifications,
     ),
     SuperAdminNavItem(
-      title: 'Ads',
+      title: 'Manage Advertisements',
+      icon: Icons.ad_units_outlined,
+      route: SuperAdminRouteNames.adSettings,
+    ),
+    SuperAdminNavItem(
+      // In-house promo banners (not Google AdMob -- that's above).
+      title: 'Promo Ads',
       icon: Icons.campaign,
       route: SuperAdminRouteNames.ads,
     ),

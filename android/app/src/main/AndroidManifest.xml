@@ -27,6 +27,10 @@
         android:label="College Reality"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        <!-- AdMob App ID: filled from build.gradle.kts (admobAppId). -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="${admobAppId}"/>
         <activity
             android:name=".MainActivity"
             android:exported="true"

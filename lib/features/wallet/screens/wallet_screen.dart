@@ -5,6 +5,8 @@ import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_spacing.dart';
 import '../../../core/constants/communication_constants.dart';
+import '../../../core/ads/ad_config.dart';
+import '../../../core/ads/ad_manager.dart';
 import '../../../core/constants/wallet_constants.dart';
 import '../../../core/widgets/index.dart';
 import '../../auth/providers/auth_provider.dart';
@@ -42,6 +44,52 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
   int _selectedPaise = WalletConstants.rechargePresetsPaise[1];
   bool _processing = false;
   bool _calling = false;
+  bool _watchingAd = false;
+
+  // Rewarded-ad button follows the Super Admin toggle live.
+  void _onAdSettings() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    AdManager.instance.settings.addListener(_onAdSettings);
+  }
+
+  @override
+  void dispose() {
+    AdManager.instance.settings.removeListener(_onAdSettings);
+    super.dispose();
+  }
+
+  /// Rewarded video -> wallet credit. The credit is made SERVER-side by
+  /// AdMob's signed callback (functions/src/adRewards.js), so the balance
+  /// above updates on its own a moment after the video finishes.
+  Future<void> _watchAdForCredit(String uid) async {
+    setState(() => _watchingAd = true);
+    final outcome = await AdManager.instance.showRewarded(uid: uid);
+    if (!mounted) return;
+    setState(() => _watchingAd = false);
+    switch (outcome) {
+      case RewardedAdOutcome.rewarded:
+        SnackBarHelper.showSuccessSnackBar(
+          context,
+          message: 'Thanks! ${formatRupees(AdConfig.rewardPaise)} will be '
+              'added to your wallet in a moment.',
+        );
+      case RewardedAdOutcome.notRewarded:
+        SnackBarHelper.showInfoSnackBar(
+          context,
+          message: 'Watch the video to the end to earn the credit.',
+        );
+      case RewardedAdOutcome.unavailable:
+        SnackBarHelper.showInfoSnackBar(
+          context,
+          message: 'No video available right now. Please try again later.',
+        );
+    }
+  }
 
   int get _rate =>
       widget.ratePaisePerMinute ?? WalletConstants.defaultRatePaisePerMinute;
@@ -181,6 +229,26 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
               ),
             ),
           ],
+          if (AdManager.instance.rewardedAvailable) ...[
+            const SizedBox(height: 16),
+            OutlinedButton.icon(
+              onPressed: _watchingAd ? null : () => _watchAdForCredit(user.uid),
+              icon: _watchingAd
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.ondemand_video_rounded),
+              label: Text(
+                'Watch a short video, get ${formatRupees(AdConfig.rewardPaise)} '
+                '(up to ${AdConfig.rewardDailyCap}×/day)',
+              ),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 48),
+              ),
+            ),
+          ],
           const SizedBox(height: 24),
           Text('Add money',
               style: AppFonts.plusJakarta(
@@ -239,16 +307,23 @@ class _TransactionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    final isRecharge = t.type == 'recharge';
+    final isAdReward = t.type == 'ad_reward';
+    final isRecharge = t.type == 'recharge' || isAdReward;
     final mins = t.billedSeconds ~/ 60;
     final secs = t.billedSeconds % 60;
     return ListTile(
       contentPadding: EdgeInsets.zero,
       leading: Icon(
-        isRecharge ? Icons.add_circle_outline : Icons.call_outlined,
+        isAdReward
+            ? Icons.ondemand_video_rounded
+            : (isRecharge ? Icons.add_circle_outline : Icons.call_outlined),
         color: tokens.textSecondary,
       ),
-      title: Text(isRecharge ? 'Recharge' : 'Call with ${t.guideAlias ?? 'guide'}'),
+      title: Text(
+        isAdReward
+            ? 'Video reward'
+            : (isRecharge ? 'Recharge' : 'Call with ${t.guideAlias ?? 'guide'}'),
+      ),
       subtitle: Text(
         isRecharge
             ? 'Balance ${formatRupees(t.balanceAfterPaise)}'

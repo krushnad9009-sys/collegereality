@@ -63,6 +63,7 @@ dependencies:
   android_intent_plus: ^6.1.0
   firebase_app_check: ^0.3.2+10
   agora_rtc_engine: ^6.5.3
+  google_mobile_ads: ^9.1.0
 
 dev_dependencies:
   flutter_test:

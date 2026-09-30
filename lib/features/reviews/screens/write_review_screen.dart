@@ -2,6 +2,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/ads/ad_manager.dart';
 import '../../../config/theme/app_fonts.dart';
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_design_tokens.dart';
@@ -366,6 +367,10 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
               ? 'Review updated successfully!'
               : 'Review submitted successfully!',
         );
+        // Natural break after finishing a task: maybe a full-screen ad
+        // (frequency-capped; returns at once if none is shown).
+        await AdManager.instance.showInterstitialAtBreak('review_submitted');
+        if (!mounted) return;
         context.go(
           RouteNames.collegeDetailsPath(widget.collegeId, tab: 'reviews'),
         );

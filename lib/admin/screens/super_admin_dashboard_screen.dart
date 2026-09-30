@@ -211,6 +211,11 @@ class SuperAdminDashboardScreen extends ConsumerWidget {
                       route: SuperAdminRouteNames.featured,
                     ),
                     _ActionChipButton(
+                      label: 'Manage Advertisements',
+                      icon: Icons.ad_units_outlined,
+                      route: SuperAdminRouteNames.adSettings,
+                    ),
+                    _ActionChipButton(
                       label: 'Moderation',
                       icon: Icons.shield_outlined,
                       route: SuperAdminRouteNames.moderation,

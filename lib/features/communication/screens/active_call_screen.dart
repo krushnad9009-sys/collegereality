@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/ads/ad_manager.dart';
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_theme.dart';
@@ -186,6 +187,9 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
       ),
     );
 
+    // The call is over and rated: a natural break for a (frequency-
+    // capped) full-screen ad -- never while a call is still running.
+    await AdManager.instance.showInterstitialAtBreak('call_ended');
     if (mounted) context.go(RouteNames.home);
   }
 

@@ -755,6 +755,40 @@ service cloud.firestore {
             ['ended', 'rejected', 'emergency_ended', 'missed']);
     }
 
+    // Super Admin AdMob remote control (lib/core/ads/ad_remote_settings.dart).
+    // Every app instance (signed in or not) reads the switches + unit IDs;
+    // only a Super Admin may change them, with typed flags and ad unit IDs
+    // that are empty or well-formed (ca-app-pub-<16 digits>/<10 digits>).
+    function isAdUnitIdOrEmpty(data, key) {
+      return !(key in data) || data[key] == '' ||
+        (data[key] is string &&
+          data[key].matches('ca-app-pub-[0-9]{16}/[0-9]{10}'));
+    }
+
+    function isValidAdSettings(data) {
+      return data.keys().hasOnly([
+          'enableBannerAds', 'enableInterstitialAds', 'enableRewardedAds',
+          'bannerAdId', 'bannerAdIdIos', 'interstitialAdId',
+          'interstitialAdIdIos', 'rewardedAdId', 'rewardedAdIdIos',
+          'updatedAt', 'updatedBy']) &&
+        data.get('enableBannerAds', false) is bool &&
+        data.get('enableInterstitialAds', false) is bool &&
+        data.get('enableRewardedAds', false) is bool &&
+        isAdUnitIdOrEmpty(data, 'bannerAdId') &&
+        isAdUnitIdOrEmpty(data, 'bannerAdIdIos') &&
+        isAdUnitIdOrEmpty(data, 'interstitialAdId') &&
+        isAdUnitIdOrEmpty(data, 'interstitialAdIdIos') &&
+        isAdUnitIdOrEmpty(data, 'rewardedAdId') &&
+        isAdUnitIdOrEmpty(data, 'rewardedAdIdIos');
+    }
+
+    match /app_config/{docId} {
+      allow read: if docId == 'ads_settings' || isAdmin();
+      allow write: if isSuperAdmin() &&
+        docId == 'ads_settings' &&
+        isValidAdSettings(request.resource.data);
+    }
+
     // Home "Top Picks" (lib/features/home/featured/): one doc holding the
     // ordered college + guide ids a Super Admin pinned. Public read (ids
     // only; Home works signed-out); only a Super Admin may change it.
@@ -774,6 +808,13 @@ service cloud.firestore {
     // money, so ONLY Cloud Functions write them; the owner can read.
     match /wallets/{uid} {
       allow read: if isOwner(uid) || isAdmin();
+      allow write: if false;
+    }
+    // One doc per AdMob rewarded-ad view (transaction_id), written only by
+    // admobRewardCallback after verifying Google's signature.
+    match /ad_rewards/{transactionId} {
+      allow read: if isAuthenticated() &&
+        (resource.data.uid == request.auth.uid || isAdmin());
       allow write: if false;
     }
     match /wallet_transactions/{txId} {

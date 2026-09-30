@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../config/router/route_names.dart';
+import '../ads/sticky_banner_ad.dart';
 import '../../config/theme/app_design_tokens.dart';
 import '../../config/theme/app_theme.dart';
 import '../../config/theme/premium_home_theme.dart';
@@ -105,64 +106,92 @@ class _AppShellState extends ConsumerState<AppShell> {
         // MediaQuery padding; keeping the body extended preserves that.
         extendBody: true,
         bottomNavigationBar: showNav
-            ? Theme(
-                data: navTheme,
-                child: Builder(
-                  builder: (navContext) {
-                    final navTokens = navContext.tokens;
-                    final accent = isHome
-                        ? navTokens.heroColor
-                        : AppTheme.primaryColor;
-                    final surface = isDark ? AppTheme.gray800 : AppTheme.white;
+            ? _withBanner(
+                show: _bannerRoutes.contains(location),
+                navBar: Theme(
+                  data: navTheme,
+                  child: Builder(
+                    builder: (navContext) {
+                      final navTokens = navContext.tokens;
+                      final accent = isHome
+                          ? navTokens.heroColor
+                          : AppTheme.primaryColor;
+                      final surface = isDark
+                          ? AppTheme.gray800
+                          : AppTheme.white;
 
-                    // A minimal, docked bar: solid white, full width, one
-                    // hairline on top. No blur, no floating pill, no shadow.
-                    return DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: surface,
-                        border: Border(
-                          top: BorderSide(
-                            color: isDark
-                                ? AppTheme.gray700
-                                : navTokens.borderSubtle,
+                      // A minimal, docked bar: solid white, full width, one
+                      // hairline on top. No blur, no floating pill, no shadow.
+                      return DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: surface,
+                          border: Border(
+                            top: BorderSide(
+                              color: isDark
+                                  ? AppTheme.gray700
+                                  : navTokens.borderSubtle,
+                            ),
                           ),
                         ),
-                      ),
-                      child: NavigationBar(
-                        selectedIndex: _selectedIndex(location),
-                        onDestinationSelected: (index) =>
-                            _onTap(context, index),
-                        height: 64,
-                        backgroundColor: surface,
-                        surfaceTintColor: Colors.transparent,
-                        elevation: 0,
-                        indicatorColor: accent.withValues(alpha: 0.10),
-                        labelBehavior:
-                            NavigationDestinationLabelBehavior.alwaysShow,
-                        animationDuration: const Duration(milliseconds: 280),
-                        destinations: [
-                          _destination(Icons.home_rounded, 'Home', accent),
-                          _destination(Icons.search_rounded, 'Search', accent),
-                          _destination(
-                            Icons.auto_awesome_rounded,
-                            'Assistant',
-                            accent,
-                          ),
-                          _destination(
-                            Icons.chat_bubble_rounded,
-                            'Chats',
-                            accent,
-                            unselectedIcon: Icons.chat_bubble_outline_rounded,
-                          ),
-                          _destination(Icons.person_rounded, 'Profile', accent),
-                        ],
-                      ),
-                    );
-                  },
+                        child: NavigationBar(
+                          selectedIndex: _selectedIndex(location),
+                          onDestinationSelected: (index) =>
+                              _onTap(context, index),
+                          height: 64,
+                          backgroundColor: surface,
+                          surfaceTintColor: Colors.transparent,
+                          elevation: 0,
+                          indicatorColor: accent.withValues(alpha: 0.10),
+                          labelBehavior:
+                              NavigationDestinationLabelBehavior.alwaysShow,
+                          animationDuration: const Duration(milliseconds: 280),
+                          destinations: [
+                            _destination(Icons.home_rounded, 'Home', accent),
+                            _destination(
+                              Icons.search_rounded,
+                              'Search',
+                              accent,
+                            ),
+                            _destination(
+                              Icons.auto_awesome_rounded,
+                              'Assistant',
+                              accent,
+                            ),
+                            _destination(
+                              Icons.chat_bubble_rounded,
+                              'Chats',
+                              accent,
+                              unselectedIcon: Icons.chat_bubble_outline_rounded,
+                            ),
+                            _destination(
+                              Icons.person_rounded,
+                              'Profile',
+                              accent,
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
                 ),
               )
             : null,
       ),
+    );
+  }
+
+  /// Screens that carry the sticky AdMob banner (above the nav bar): the
+  /// two main browsing surfaces. Not Assistant / Chats / Profile.
+  static const _bannerRoutes = <String>{
+    RouteNames.home,
+    RouteNames.collegeSearch,
+  };
+
+  Widget _withBanner({required bool show, required Widget navBar}) {
+    if (!show) return navBar;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [const StickyBannerAd(), navBar],
     );
   }
 

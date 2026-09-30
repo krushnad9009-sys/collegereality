@@ -31,6 +31,13 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         multiDexEnabled = true
+        // AdMob App ID (required by the Mobile Ads SDK at launch). Defaults
+        // to Google's official TEST app ID; for production pass your real
+        // one: `-PADMOB_APP_ID=ca-app-pub-XXXX~YYYY` or set it in
+        // android/gradle.properties. See lib/core/ads/ad_config.dart.
+        manifestPlaceholders["admobAppId"] =
+            (project.findProperty("ADMOB_APP_ID") as String?)
+                ?: "ca-app-pub-3940256099942544~3347511713"
     }
 
     signingConfigs {
