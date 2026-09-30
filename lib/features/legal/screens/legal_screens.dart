@@ -11,10 +11,14 @@ class LegalDocumentScreen extends StatelessWidget {
   /// Optional lead-in paragraph rendered above the first section.
   final String? intro;
 
+  /// Tappable mailto link at the end of the document.
+  final String? contactEmail;
+
   const LegalDocumentScreen({
     required this.title,
     required this.sections,
     this.intro,
+    this.contactEmail,
     super.key,
   });
 
@@ -42,17 +46,13 @@ class LegalDocumentScreen extends StatelessWidget {
             const SizedBox(height: 24),
           ],
           for (final section in sections) ...[
-            Text(
-              section.heading,
-              style: GoogleFonts.poppins(
+            LegalSectionView(
+              section: section,
+              headingStyle: GoogleFonts.poppins(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              section.body,
-              style: GoogleFonts.poppins(
+              bodyStyle: GoogleFonts.poppins(
                 fontSize: 14,
                 height: 1.6,
                 color: AppTheme.gray700,
@@ -60,12 +60,13 @@ class LegalDocumentScreen extends StatelessWidget {
             ),
             const SizedBox(height: 20),
           ],
-          if (title.contains('Privacy'))
-            TextButton(
-              onPressed: () => launchUrl(
-                Uri.parse('mailto:privacy@collegereality.in'),
+          if (contactEmail != null)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                onPressed: () => launchUrl(Uri.parse('mailto:$contactEmail')),
+                child: Text('Contact: $contactEmail'),
               ),
-              child: const Text('Contact: privacy@collegereality.in'),
             ),
         ],
       ),
@@ -75,9 +76,105 @@ class LegalDocumentScreen extends StatelessWidget {
 
 class LegalSection {
   final String heading;
+
+  /// Paragraph shown under the heading (optional when [bullets] are used).
   final String body;
 
-  const LegalSection({required this.heading, required this.body});
+  /// List items. An item starting with a short "Label: " (e.g.
+  /// "Document Privacy: ...") renders the label in bold.
+  final List<String> bullets;
+
+  /// Render [bullets] as 1., 2., 3. instead of dots.
+  final bool numbered;
+
+  /// Paragraph shown after the list.
+  final String? footer;
+
+  const LegalSection({
+    required this.heading,
+    this.body = '',
+    this.bullets = const [],
+    this.numbered = false,
+    this.footer,
+  });
+
+  /// Plain-text form (search, tests, copy).
+  String get plainText => [
+        if (body.isNotEmpty) body,
+        ...bullets,
+        ?footer,
+      ].join(' ');
+}
+
+/// Renders one [LegalSection]: heading, paragraph, bullet / numbered list
+/// with hanging indents (wrapped lines align under the text, not the
+/// marker, on every screen width), and an optional closing paragraph.
+/// Shared by [LegalDocumentScreen] and the onboarding Terms card so both
+/// always show the same document the same way.
+class LegalSectionView extends StatelessWidget {
+  final LegalSection section;
+  final TextStyle headingStyle;
+  final TextStyle bodyStyle;
+
+  const LegalSectionView({
+    required this.section,
+    required this.headingStyle,
+    required this.bodyStyle,
+    super.key,
+  });
+
+  static final _label = RegExp(r'^([^:]{2,48}):\s+(.*)$', dotAll: true);
+
+  Widget _item(String marker, String text) {
+    final m = _label.firstMatch(text);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 22,
+            child: Text(marker, style: bodyStyle),
+          ),
+          Expanded(
+            child: m == null
+                ? Text(text, style: bodyStyle)
+                : Text.rich(
+                    TextSpan(children: [
+                      TextSpan(
+                        text: '${m.group(1)}: ',
+                        style: bodyStyle.copyWith(fontWeight: FontWeight.w700),
+                      ),
+                      TextSpan(text: m.group(2)),
+                    ]),
+                    style: bodyStyle,
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(section.heading, style: headingStyle),
+        const SizedBox(height: 8),
+        if (section.body.isNotEmpty) ...[
+          Text(section.body, style: bodyStyle),
+          if (section.bullets.isNotEmpty) const SizedBox(height: 8),
+        ],
+        for (var i = 0; i < section.bullets.length; i++)
+          _item(section.numbered ? '${i + 1}.' : '•', section.bullets[i]),
+        if (section.footer != null) ...[
+          const SizedBox(height: 4),
+          Text(section.footer!, style: bodyStyle),
+        ],
+      ],
+    );
+  }
 }
 
 class PrivacyPolicyScreen extends StatelessWidget {
@@ -87,6 +184,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return const LegalDocumentScreen(
       title: 'Privacy Policy',
+      contactEmail: 'privacy@collegereality.in',
       sections: [
         LegalSection(
           heading: 'Overview',
@@ -118,83 +216,146 @@ class PrivacyPolicyScreen extends StatelessWidget {
   }
 }
 
-/// Lead-in paragraph shown above [termsOfServiceSections].
+/// "Last Updated" date of [termsOfServiceSections] -- change it whenever
+/// the Terms text changes.
+const String termsLastUpdated = 'September 30, 2026';
+
+/// Lead-in shown above [termsOfServiceSections].
 const String termsAndConditionsIntro =
-    'Welcome to College Reality ("Platform"). By accessing or using our '
-    'services, you agree to be bound by these Terms:';
+    'Last Updated: $termsLastUpdated\n'
+    'App Name: College Reality\n'
+    'Package Name: com.collegereality.india\n\n'
+    'Please read these Terms and Conditions ("Terms") carefully before using '
+    'the College Reality mobile application and platform operated by us. By '
+    'accessing or using the Service, you agree to be bound by these Terms.';
+
+/// Where Terms questions go (tappable at the end of the Terms screen).
+const String termsContactEmail = 'support@collegereality.in';
 
 /// Canonical Terms & Conditions copy, shared by the read-only
 /// [TermsOfServiceScreen] and the mandatory post-login PermissionsTermsScreen.
 const List<LegalSection> termsOfServiceSections = [
   LegalSection(
-    heading: '1. User Role & Intermediary Status',
-    body:
-        'College Reality is a peer-to-peer informational platform connecting '
-        'prospective students with verified seniors/alumni. The views, answers, '
-        'and reviews expressed by verified users are strictly their personal '
-        'opinions and do not represent the official stance of any educational '
-        'institution or this Platform.',
+    heading: '1. Nature of Platform & Services',
+    bullets: [
+      'Peer-to-Peer Consultation: College Reality is a communication platform '
+          'that connects students/prospective students ("Users") with verified '
+          'college seniors or alumni ("Guides") for guidance through voice '
+          'calls, chat, and shared insights.',
+      'No Official Affiliation: College Reality is an independent platform and '
+          'is not affiliated, endorsed, or associated with any university, '
+          'government educational board, or admission counseling body.',
+    ],
   ),
   LegalSection(
-    heading: '2. Document Verification & AI Processing',
-    body:
-        'Document upload for verification (Aadhaar/College ID/Marksheet) is '
-        'processed via automated system algorithms solely to maintain community '
-        'trust. Documents are handled securely and never sold to third parties. '
-        'Uploading fake, altered, or fraudulent documents will result in '
-        'immediate termination.',
+    heading: '2. Eligibility & Account Registration',
+    bullets: [
+      'You must be at least 18 years of age or have parental consent to use '
+          'this application.',
+      'You agree to provide accurate, complete, and updated information during '
+          'account setup (Name, Phone Number, College Details).',
+      'You are solely responsible for maintaining the confidentiality of your '
+          'login credentials and for all activities under your account.',
+    ],
   ),
   LegalSection(
-    heading: '3. Institutional Disclaimer',
-    body:
-        'Colleges listed on this platform are for informational and '
-        'navigational purposes only. College Reality is an independent entity '
-        'and is not directly endorsed by or affiliated with the listed '
-        'institutions.',
+    heading: '3. Guide Onboarding & Mandatory College Verification',
+    body: 'To maintain platform authenticity, any user registering or '
+        'onboarding as a Guide must complete our mandatory verification '
+        'process:',
+    bullets: [
+      'Multi-Criteria Ratings: Guides must submit ratings (1 to 5 stars) '
+          'across defined categories: Overall College Experience, '
+          'Study/Academics, Campus Environment, and Placements.',
+      'Mandatory Text Review: Guides must write a detailed, authentic review '
+          'of their college.',
+      'Verification Document Upload: Guides must upload valid proof of '
+          'enrollment or graduation (e.g., Student ID Card, Fee Receipt, '
+          'Marksheet, or Degree).',
+      'Document Privacy: Uploaded proof documents are strictly used by College '
+          'Reality administrators for identity verification and will NEVER be '
+          'displayed publicly to other users.',
+      'Zero-Tolerance for Fraud: Uploading fake, altered, or misleading '
+          'documents will lead to immediate account termination and a '
+          'permanent platform ban.',
+      'Approval Rights: Super Admins reserve the right to approve, reject, or '
+          'request re-verification for any Guide profile at their sole '
+          'discretion.',
+    ],
   ),
   LegalSection(
-    heading: '4. No Admission Guarantee & Counseling Disclaimer',
-    body:
-        'The platform, its AI prediction tools, and verified peers offer '
-        'guidance based on past data and personal experiences. The Platform '
-        'provides NO GUARANTEE for admission, seats, or official cut-offs. All '
-        'admission decisions rest solely with the student and parents.',
+    heading: '4. Calls, Chats, and Shared Wallet Rules',
+    bullets: [
+      'Call Wallet Balance: Users must top-up their in-app wallet ("Call '
+          'Wallet") using supported payment gateways (e.g., Razorpay) to place '
+          'consultation calls or initiate paid chats beyond any offered free '
+          'promotional minutes.',
+      "Billing & Metering: Calls and chats are billed based on the Guide's set "
+          'rate or default fallback rate. Billing is calculated per '
+          'second/minute of actual call duration.',
+      'Shared Wallet Utility: Wallet balance is held in a unified account '
+          'balance. Users can use their remaining balance across any available '
+          'Guide on the platform until the balance is exhausted.',
+      'Non-Refundable Balance: Funds deposited into the Call Wallet are '
+          'non-refundable to bank accounts or payment sources once credited, '
+          'except in cases of system billing errors or failed call connections '
+          'verified by platform logs.',
+    ],
   ),
   LegalSection(
-    heading: '5. Code of Conduct & Misuse',
-    body:
-        'Harassment, abusive language, spamming, or sharing false marketing '
-        'content in chats or reviews is strictly prohibited. Any violation will '
-        'lead to immediate content removal and permanent account suspension.',
+    heading: '5. Code of Conduct & Prohibited Uses',
+    body: 'When using College Reality, users and guides strictly agree NOT to:',
+    numbered: true,
+    bullets: [
+      'Use abusive, profane, harassing, discriminatory, or sexually explicit '
+          'language during calls or chat sessions.',
+      'Share or request personal contact information (Phone numbers, Personal '
+          'Emails, Social Media handles, or Bank Account details) to bypass the '
+          'platform.',
+      'Attempt or process off-platform transactions.',
+      'Record, stream, screenshot, or distribute audio calls or private chat '
+          'logs without explicit written consent from all parties and College '
+          'Reality.',
+      'Post defamatory, false, or malicious college reviews.',
+    ],
+    footer: 'Violation of these conduct rules will result in immediate '
+        'suspension, wallet forfeiture, or a permanent ban.',
   ),
   LegalSection(
-    heading: '6. Account Termination Rights',
-    body:
-        'The Admin reserves the full right to suspend or permanently block any '
-        'account found violating community standards, uploading fraudulent '
-        'verification proofs, or engaging in unauthorized activity without '
-        'prior notice or refund.',
+    heading: '6. Disclaimer of Warranties & Limitation of Liability',
+    bullets: [
+      'Informational Purpose: Opinions, advice, and reviews provided by Guides '
+          'are their personal views and experiences. College Reality does not '
+          'guarantee admission, academic success, or job placement based on '
+          'Guide advice.',
+      'Independent Verification: Users are strongly advised to independently '
+          'verify critical admission deadlines, fee structures, and course '
+          'details via official university websites.',
+      'Service Interruptions: College Reality is not liable for temporary '
+          'service interruptions, call drops, or network failures caused by '
+          'third-party infrastructure.',
+    ],
   ),
   LegalSection(
-    heading: '7. Data Privacy & Safety',
-    body:
-        'User data and verification documents are encrypted and managed in '
-        'accordance with applicable privacy standards. Verification records are '
-        'strictly accessed for validation purposes.',
+    heading: '7. Intellectual Property',
+    body: 'All rights, title, and interest in and to the College Reality '
+        'platform—including app design, branding, code, database schemas, and '
+        'features—are and will remain the exclusive property of College '
+        'Reality.',
   ),
   LegalSection(
-    heading: '8. Limitation of Liability',
-    body:
-        'The Platform shall not be held liable for any financial, academic, or '
-        'personal decisions made based on chats, recommendations, or reviews '
-        'hosted on the platform.',
-  ),
-  LegalSection(
-    heading: '9. Jurisdiction & Dispute Resolution',
-    body:
-        'Any legal disputes arising out of or in connection with this Platform '
+    heading: '8. Governing Law & Jurisdiction',
+    body: 'These Terms shall be governed, construed, and enforced in accordance '
+        'with the Laws of India, including the Information Technology Act, '
+        '2000. Any disputes arising under or in connection with these Terms '
         'shall be subject to the exclusive jurisdiction of the courts located '
         'in Pune, Maharashtra, India.',
+  ),
+  LegalSection(
+    heading: '9. Contact Us',
+    body: 'If you have any questions or concerns regarding these Terms & '
+        'Conditions, please reach out to us at support@collegereality.in or '
+        'via the in-app Help & Support section.',
   ),
 ];
 
@@ -207,6 +368,7 @@ class TermsOfServiceScreen extends StatelessWidget {
       title: 'Terms & Conditions',
       intro: termsAndConditionsIntro,
       sections: termsOfServiceSections,
+      contactEmail: termsContactEmail,
     );
   }
 }

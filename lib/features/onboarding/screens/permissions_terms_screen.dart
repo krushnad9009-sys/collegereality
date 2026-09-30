@@ -472,18 +472,16 @@ class _TermsCard extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.lg),
             for (final section in termsOfServiceSections) ...[
-              Text(
-                section.heading,
-                style: AppFonts.plusJakarta(
+              // Same renderer as the /terms-of-service screen, so lists,
+              // bold labels and numbering match exactly.
+              LegalSectionView(
+                section: section,
+                headingStyle: AppFonts.plusJakarta(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
                   color: tokens.textPrimary,
                 ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                section.body,
-                style: AppFonts.plusJakarta(
+                bodyStyle: AppFonts.plusJakarta(
                   fontSize: 13.5,
                   height: 1.55,
                   fontWeight: FontWeight.w500,
