@@ -755,6 +755,21 @@ service cloud.firestore {
             ['ended', 'rejected', 'emergency_ended', 'missed']);
     }
 
+    // Home "Top Picks" (lib/features/home/featured/): one doc holding the
+    // ordered college + guide ids a Super Admin pinned. Public read (ids
+    // only; Home works signed-out); only a Super Admin may change it.
+    match /homepage_featured/{docId} {
+      allow read: if true;
+      allow write: if isSuperAdmin() &&
+        docId == 'current' &&
+        request.resource.data.keys().hasOnly(
+          ['collegeIds', 'guideIds', 'updatedAt', 'updatedBy']) &&
+        request.resource.data.collegeIds is list &&
+        request.resource.data.collegeIds.size() <= 10 &&
+        request.resource.data.guideIds is list &&
+        request.resource.data.guideIds.size() <= 10;
+    }
+
     // Shared call wallet (functions/src/wallet.js). Balance and ledger move
     // money, so ONLY Cloud Functions write them; the owner can read.
     match /wallets/{uid} {

@@ -404,8 +404,11 @@ class _AdminCollegeEditScreenState extends ConsumerState<AdminCollegeEditScreen>
                 onChanged: (v) => setState(() => _isActive = v),
               ),
               SwitchListTile(
-                title: const Text('Featured on Home'),
-                subtitle: const Text('Shows in Featured Colleges carousel'),
+                title: const Text('Featured pool'),
+                subtitle: const Text(
+                  'Boosts this college in Trending / Recommended. Home "Top '
+                  'Picks" order is set in Featured / Top List.',
+                ),
                 value: _isFeatured,
                 onChanged: (v) => setState(() => _isFeatured = v),
               ),

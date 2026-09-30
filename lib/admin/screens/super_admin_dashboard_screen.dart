@@ -206,6 +206,11 @@ class SuperAdminDashboardScreen extends ConsumerWidget {
                       route: SuperAdminRouteNames.colleges,
                     ),
                     _ActionChipButton(
+                      label: 'Featured / Top List',
+                      icon: Icons.star_outline_rounded,
+                      route: SuperAdminRouteNames.featured,
+                    ),
+                    _ActionChipButton(
                       label: 'Moderation',
                       icon: Icons.shield_outlined,
                       route: SuperAdminRouteNames.moderation,

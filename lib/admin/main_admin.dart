@@ -38,6 +38,11 @@ const superAdminPanelConfig = SuperAdminPanelConfig(
       route: SuperAdminRouteNames.colleges,
     ),
     SuperAdminNavItem(
+      title: 'Featured / Top List',
+      icon: Icons.star_outline_rounded,
+      route: SuperAdminRouteNames.featured,
+    ),
+    SuperAdminNavItem(
       title: 'Moderation',
       icon: Icons.shield_outlined,
       route: SuperAdminRouteNames.moderation,

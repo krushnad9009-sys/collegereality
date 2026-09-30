@@ -23,6 +23,8 @@ import '../../admin/providers/platform_settings_provider.dart';
 import '../../admin/services/admin_ads_service.dart';
 import '../../personalization/providers/personalized_colleges_provider.dart';
 import '../providers/home_content_provider.dart';
+import '../featured/home_top_picks_section.dart';
+import '../featured/home_featured_provider.dart';
 import '../widgets/app_header.dart';
 import '../widgets/deferred_incoming_call_banner.dart';
 import '../widgets/explore_by_city_section.dart';
@@ -39,6 +41,8 @@ import '../widgets/home_trending_section.dart';
 ///                        search, filter, bell, avatar), greeting, search bar
 ///   2. Category chips  → one scrolling row of compact tinted pills
 ///   3. Explore by City → circular city badges
+///   3b. Top Picks      → Super Admin-curated colleges + guides (Admin →
+///                        Featured / Top List); top rated when none pinned
 ///   4. Core features   → Talk to a Verified Student · AI Assistant · Compare
 ///   5. Trending        → live carousel of the most searched/reviewed colleges
 ///   6. Recommended     → colleges in the user's most-searched stream
@@ -72,6 +76,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     ref.invalidate(collegesNearYouProvider);
     ref.invalidate(featuredCollegesProvider);
     ref.invalidate(trendingCollegesProvider);
+    ref.invalidate(homeTopCollegesProvider);
+    ref.invalidate(homeTopGuidesProvider);
     ref.invalidate(topRatedCollegesProvider);
     ref.invalidate(maharashtraCollegesProvider);
     ref.invalidate(homeRecentReviewsProvider);
@@ -197,6 +203,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                       // empty) sit below the browse rows.
                                       const _PlatformAnnouncementBanner(),
                                       const _HomePromoAdsStrip(),
+                                      const SizedBox(
+                                        height: AppSpacing.sectionXl,
+                                      ),
+
+                                      // ── 3b. Top Picks — Super Admin-
+                                      // curated colleges + guides (falls
+                                      // back to top rated) ─────────────────
+                                      FadeInSection(
+                                        delayMs: 120,
+                                        child: const HomeTopPicksSection(),
+                                      ),
                                       const SizedBox(
                                         height: AppSpacing.sectionXl,
                                       ),
