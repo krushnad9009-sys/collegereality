@@ -216,6 +216,11 @@ class SuperAdminDashboardScreen extends ConsumerWidget {
                       route: SuperAdminRouteNames.adSettings,
                     ),
                     _ActionChipButton(
+                      label: 'Payment Gateway',
+                      icon: Icons.payments_outlined,
+                      route: SuperAdminRouteNames.paymentSettings,
+                    ),
+                    _ActionChipButton(
                       label: 'Moderation',
                       icon: Icons.shield_outlined,
                       route: SuperAdminRouteNames.moderation,

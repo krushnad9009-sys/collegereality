@@ -17,8 +17,9 @@
 
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const { logger } = require('firebase-functions');
-const { getAuth } = require('firebase-admin/auth');
-const { getStorage } = require('firebase-admin/storage');
+// Lazy: loaded on first use, keeping cold start + deploy discovery fast.
+const getAuth = () => require('firebase-admin/auth').getAuth();
+const getStorage = () => require('firebase-admin/storage').getStorage();
 const { FieldPath } = require('firebase-admin/firestore');
 const { db } = require('./admin');
 const plan = require('./accountDeletionPlan');

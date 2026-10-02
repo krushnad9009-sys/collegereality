@@ -71,5 +71,13 @@
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
         </intent>
+        <!-- Razorpay checkout (wallet recharges / consultations): Android 11+
+             package visibility hides installed UPI apps (GPay, PhonePe,
+             Paytm, BHIM...) unless queried, so UPI intent pay would show
+             no apps. Razorpay's SDK declares its own CheckoutActivity. -->
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:scheme="upi"/>
+        </intent>
     </queries>
 </manifest>

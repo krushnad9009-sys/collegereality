@@ -2,7 +2,8 @@
 
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const crypto = require('crypto');
-const { RtcTokenBuilder, RtcRole } = require('agora-token');
+// Lazy: loaded on first use, keeping cold start + deploy discovery fast.
+const agora = () => require('agora-token');
 const { db } = require('./admin');
 const { CONSULTATION_STATUS } = require('./consultationLogic');
 const { AGORA_APP_ID, AGORA_APP_CERTIFICATE } = require('./params');
@@ -66,12 +67,12 @@ const mintConsultationCallToken = onCall(
     );
 
     const expireAt = Math.floor(Date.now() / 1000) + TOKEN_TTL_SECONDS;
-    const token = RtcTokenBuilder.buildTokenWithUid(
+    const token = agora().RtcTokenBuilder.buildTokenWithUid(
       appId,
       appCertificate,
       consultationId,
       numericUid,
-      RtcRole.PUBLISHER,
+      agora().RtcRole.PUBLISHER,
       expireAt,
       expireAt,
     );
@@ -148,12 +149,12 @@ const mintCallSessionToken = onCall(
     const appCertificate = assertConfigured(AGORA_APP_CERTIFICATE.value(), 'Calling');
     const channelName = `call_${sessionId}`;
     const numericUid = agoraUidFor(uid);
-    const token = RtcTokenBuilder.buildTokenWithUid(
+    const token = agora().RtcTokenBuilder.buildTokenWithUid(
       appId,
       appCertificate,
       channelName,
       numericUid,
-      RtcRole.PUBLISHER,
+      agora().RtcRole.PUBLISHER,
       expireAt,
       expireAt,
     );

@@ -293,3 +293,17 @@ npm run serve          # functions + firestore emulators (needs Java, same as to
 ```bash
 firebase deploy --only functions
 ```
+
+### "User code failed to load … Timeout after 10000ms"
+
+The CLI loads `index.js` locally to discover the functions and gives it
+10 s. Loading takes ~0.6 s warm, but the very first cold load on Windows
+(Defender scanning `node_modules`) has been measured at several seconds.
+Keep module scope cheap: no `secret.value()`, network, or awaits at top
+level, and require heavy SDKs (`razorpay`, `agora-token`,
+`firebase-admin/auth|storage|messaging`) inside the handler that needs them.
+If a cold machine still times out, just retry, or raise the limit (seconds):
+
+```powershell
+$env:FUNCTIONS_DISCOVERY_TIMEOUT=60; firebase deploy --only functions
+```

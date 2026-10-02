@@ -2,10 +2,10 @@
 
 const { onDocumentUpdated } = require('firebase-functions/v2/firestore');
 const { logger } = require('firebase-functions');
-const Razorpay = require('razorpay');
 const { db } = require('./admin');
 const { CONSULTATION_STATUS, PAYMENT_STATUS } = require('./consultationLogic');
 const { RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET } = require('./params');
+const { razorpayClient } = require('./razorpayConfig');
 
 /**
  * Watches every consultation update for two trusted-only transitions that
@@ -57,10 +57,7 @@ async function refundIfPaid({ consultationId, paymentId }) {
   }
 
   try {
-    const razorpay = new Razorpay({
-      key_id: RAZORPAY_KEY_ID.value(),
-      key_secret: RAZORPAY_KEY_SECRET.value(),
-    });
+    const { razorpay } = await razorpayClient();
     await razorpay.payments.refund(payment.gatewayPaymentId, {
       amount: payment.grossAmountPaise,
       speed: 'optimum',

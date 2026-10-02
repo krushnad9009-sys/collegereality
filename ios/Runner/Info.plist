@@ -2,6 +2,15 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 	<dict>
+		<!-- Razorpay UPI intent: lets checkout open installed UPI apps. -->
+		<key>LSApplicationQueriesSchemes</key>
+		<array>
+			<string>tez</string>
+			<string>phonepe</string>
+			<string>paytmmp</string>
+			<string>bhim</string>
+			<string>credpay</string>
+		</array>
 		<key>CADisableMinimumFrameDurationOnPhone</key>
 		<true/>
 		<key>CFBundleDevelopmentRegion</key>

@@ -1,7 +1,6 @@
 'use strict';
 
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
-const Razorpay = require('razorpay');
 const { db } = require('./admin');
 const { finalizePaymentSuccess } = require('./finalizePayment');
 const {
@@ -15,6 +14,7 @@ const {
   RAZORPAY_KEY_SECRET,
 } = require('./params');
 const { assertConfigured } = require('./util/guards');
+const { razorpayClient } = require('./razorpayConfig');
 
 /**
  * Student calls this after creating the `requested` consultation doc
@@ -110,10 +110,7 @@ const createConsultationOrder = onCall(
       );
     }
 
-    const razorpay = new Razorpay({
-      key_id: assertConfigured(RAZORPAY_KEY_ID.value(), 'Payments'),
-      key_secret: assertConfigured(RAZORPAY_KEY_SECRET.value(), 'Payments'),
-    });
+    const { razorpay, keyId } = await razorpayClient();
     const order = await razorpay.orders.create({
       amount: serverPrice,
       currency: 'INR',
@@ -136,6 +133,7 @@ const createConsultationOrder = onCall(
       currency: 'INR',
       gateway: 'razorpay',
       gatewayOrderId: order.id,
+      gatewayKeyId: keyId,
       gatewayPaymentId: null,
       status: PAYMENT_STATUS.PENDING,
       createdAt: nowIso,
@@ -151,7 +149,7 @@ const createConsultationOrder = onCall(
     return {
       paymentDocId: order.id,
       razorpayOrderId: order.id,
-      keyId: RAZORPAY_KEY_ID.value(),
+      keyId,
       amountPaise: serverPrice,
       currency: 'INR',
     };

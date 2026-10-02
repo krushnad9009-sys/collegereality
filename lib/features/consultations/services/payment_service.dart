@@ -57,6 +57,7 @@ class PaymentService {
     required String description,
     required String contactEmail,
     required String contactPhone,
+    String contactName = '',
   }) {
     if (!isCheckoutSupportedOnThisPlatform) {
       throw PaymentException(
@@ -74,9 +75,15 @@ class PaymentService {
         completer.completeError(PaymentException(r.message ?? 'Payment failed.'));
       }
     });
+    // External wallets (Paytm, PhonePe...) finish outside Razorpay's order,
+    // so there is no signed result to verify here. If one does capture
+    // the order, the Razorpay webhook credits it server-side.
     razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, (ExternalWalletResponse r) {
       if (!completer.isCompleted) {
-        completer.completeError(PaymentException('Payment cancelled.'));
+        completer.completeError(PaymentException(
+          "${r.walletName ?? 'That wallet'} isn't supported here. Please "
+          'pay with UPI, card or net banking.',
+        ));
       }
     });
 
@@ -87,7 +94,11 @@ class PaymentService {
       'name': 'College Reality',
       'description': description,
       'order_id': order.razorpayOrderId,
-      'prefill': {'contact': contactPhone, 'email': contactEmail},
+      'prefill': {
+        if (contactName.isNotEmpty) 'name': contactName,
+        'contact': contactPhone,
+        'email': contactEmail,
+      },
     });
 
     return completer.future.whenComplete(razorpay.clear);

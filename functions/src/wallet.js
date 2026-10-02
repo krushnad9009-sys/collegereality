@@ -5,7 +5,6 @@ const { onDocumentUpdated } = require('firebase-functions/v2/firestore');
 const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { logger } = require('firebase-functions');
 const { FieldValue } = require('firebase-admin/firestore');
-const Razorpay = require('razorpay');
 const { db } = require('./admin');
 const { assertCanCallGuide } = require('./callGuards');
 const { verifyCheckoutSignature, PAYMENT_STATUS } = require('./consultationLogic');
@@ -27,6 +26,7 @@ const {
 } = require('./walletLogic');
 const { RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET } = require('./params');
 const { assertConfigured } = require('./util/guards');
+const { razorpayClient } = require('./razorpayConfig');
 
 // Shared call wallet: the student recharges rupees once and spends them on
 // paid calls with ANY guide, billed per second at that guide's rate, only
@@ -44,13 +44,6 @@ const PAYMENT_KIND_WALLET_RECHARGE = 'wallet_recharge';
 
 const nowIso = () => new Date().toISOString();
 
-function razorpayClient() {
-  return new Razorpay({
-    key_id: assertConfigured(RAZORPAY_KEY_ID.value(), 'Payments'),
-    key_secret: assertConfigured(RAZORPAY_KEY_SECRET.value(), 'Payments'),
-  });
-}
-
 /** Step 1 of a recharge: server creates the Razorpay order. */
 const createWalletRechargeOrder = onCall(
   { secrets: [RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET] },
@@ -62,7 +55,8 @@ const createWalletRechargeOrder = onCall(
       throw new HttpsError('invalid-argument', 'Recharge between ₹50 and ₹10,000.');
     }
 
-    const order = await razorpayClient().orders.create({
+    const { razorpay, keyId } = await razorpayClient();
+    const order = await razorpay.orders.create({
       amount: amountPaise,
       currency: 'INR',
       receipt: `wallet_${uid}`.slice(0, 40),
@@ -80,6 +74,7 @@ const createWalletRechargeOrder = onCall(
       currency: 'INR',
       gateway: 'razorpay',
       gatewayOrderId: order.id,
+      gatewayKeyId: keyId,
       gatewayPaymentId: null,
       status: PAYMENT_STATUS.PENDING,
       createdAt: nowIso(),
@@ -89,7 +84,7 @@ const createWalletRechargeOrder = onCall(
     return {
       paymentDocId: order.id,
       razorpayOrderId: order.id,
-      keyId: RAZORPAY_KEY_ID.value(),
+      keyId,
       amountPaise,
       currency: 'INR',
     };

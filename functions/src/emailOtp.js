@@ -16,7 +16,8 @@ const crypto = require('crypto');
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const logger = require('firebase-functions/logger');
 const { FieldValue, Timestamp } = require('firebase-admin/firestore');
-const { getAuth } = require('firebase-admin/auth');
+// Lazy: loaded on first use, keeping cold start + deploy discovery fast.
+const getAuth = () => require('firebase-admin/auth').getAuth();
 const { db } = require('./admin');
 const { RESEND_API_KEY, RESEND_FROM } = require('./params');
 

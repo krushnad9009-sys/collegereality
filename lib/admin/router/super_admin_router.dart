@@ -30,6 +30,7 @@ import '../providers/super_admin_provider.dart';
 import '../screens/access_denied_screen.dart';
 import '../screens/super_admin_dashboard_screen.dart';
 import '../screens/super_admin_ad_settings_screen.dart';
+import '../screens/super_admin_payment_settings_screen.dart';
 import '../screens/super_admin_featured_screen.dart';
 import '../screens/super_admin_lead_analytics_screen.dart';
 import '../screens/super_admin_login_screen.dart';
@@ -265,6 +266,10 @@ final Provider<GoRouter> superAdminRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: SuperAdminRouteNames.adSettings,
         builder: (context, state) => const SuperAdminAdSettingsScreen(),
+      ),
+      GoRoute(
+        path: SuperAdminRouteNames.paymentSettings,
+        builder: (context, state) => const SuperAdminPaymentSettingsScreen(),
       ),
     ],
   );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../config/theme/app_design_tokens.dart';
@@ -42,6 +43,7 @@ class WalletScreen extends ConsumerStatefulWidget {
 
 class _WalletScreenState extends ConsumerState<WalletScreen> {
   int _selectedPaise = WalletConstants.rechargePresetsPaise[1];
+  final _customAmount = TextEditingController();
   bool _processing = false;
   bool _calling = false;
   bool _watchingAd = false;
@@ -60,6 +62,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
   @override
   void dispose() {
     AdManager.instance.settings.removeListener(_onAdSettings);
+    _customAmount.dispose();
     super.dispose();
   }
 
@@ -94,19 +97,44 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
   int get _rate =>
       widget.ratePaisePerMinute ?? WalletConstants.defaultRatePaisePerMinute;
 
+  /// Typed amount (whole rupees) in paise, or null when the field is empty.
+  int? get _customPaise {
+    final rupees = int.tryParse(_customAmount.text.trim());
+    return rupees == null ? null : rupees * 100;
+  }
+
+  /// What "Recharge" will charge: the typed amount, else the chosen chip.
+  int get _amountPaise => _customPaise ?? _selectedPaise;
+
+  /// Same bounds the server enforces (validateRechargeAmount).
+  String? get _customError {
+    if (_customAmount.text.trim().isEmpty) return null;
+    final paise = _customPaise;
+    if (paise == null ||
+        paise < WalletConstants.minRechargePaise ||
+        paise > WalletConstants.maxRechargePaise) {
+      return 'Enter ${formatRupees(WalletConstants.minRechargePaise)} – '
+          '${formatRupees(WalletConstants.maxRechargePaise)}';
+    }
+    return null;
+  }
+
   Future<void> _recharge() async {
     final user = ref.read(currentUserProvider);
     if (user == null) return;
     final payments = ref.read(paymentServiceProvider);
     final wallet = ref.read(walletServiceProvider);
+    if (_customError != null) return;
+    final amountPaise = _amountPaise;
     setState(() => _processing = true);
     try {
-      final order = await wallet.createRechargeOrder(_selectedPaise);
+      final order = await wallet.createRechargeOrder(amountPaise);
       final result = await payments.openCheckout(
         order: order,
-        description: 'Wallet recharge ${formatRupees(_selectedPaise)}',
+        description: 'Wallet recharge ${formatRupees(amountPaise)}',
         contactEmail: user.email ?? '',
         contactPhone: user.phoneNumber ?? '',
+        contactName: user.displayName ?? '',
       );
       await wallet.verifyRecharge(
         razorpayOrderId: result.orderId ?? order.razorpayOrderId,
@@ -116,7 +144,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
       if (mounted) {
         SnackBarHelper.showSuccessSnackBar(
           context,
-          message: '${formatRupees(_selectedPaise)} added to your wallet.',
+          message: '${formatRupees(amountPaise)} added to your wallet.',
         );
       }
     } on PaymentException catch (e) {
@@ -265,16 +293,40 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                   label: Text(
                     '${formatRupees(amount)} · ≈${talkSecondsFor(amount, _rate) ~/ 60} min',
                   ),
-                  selected: _selectedPaise == amount,
-                  onSelected: (_) => setState(() => _selectedPaise = amount),
+                  selected: _customPaise == null && _selectedPaise == amount,
+                  onSelected: (_) => setState(() {
+                    _selectedPaise = amount;
+                    _customAmount.clear();
+                  }),
                 ),
             ],
           ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _customAmount,
+            keyboardType: TextInputType.number,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(5),
+            ],
+            onChanged: (_) => setState(() {}),
+            decoration: InputDecoration(
+              labelText: 'Or enter an amount',
+              prefixText: '₹ ',
+              helperText: _customPaise != null && _customError == null
+                  ? '≈${talkSecondsFor(_customPaise!, _rate) ~/ 60} min at '
+                      '${formatRupees(_rate)}/min'
+                  : 'Min ${formatRupees(WalletConstants.minRechargePaise)}, '
+                      'max ${formatRupees(WalletConstants.maxRechargePaise)}',
+              errorText: _customError,
+              border: const OutlineInputBorder(),
+            ),
+          ),
           const SizedBox(height: 16),
           PrimaryButton(
-            label: 'Recharge ${formatRupees(_selectedPaise)}',
+            label: 'Recharge ${formatRupees(_amountPaise)}',
             isLoading: _processing,
-            onPressed: _recharge,
+            onPressed: _customError == null ? _recharge : null,
           ),
           const SizedBox(height: 8),
           Text(

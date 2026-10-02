@@ -29,6 +29,7 @@ class SuperAdminRouteNames {
   static const String payouts = '/panel/payouts';
   static const String featured = '/panel/featured';
   static const String adSettings = '/panel/ad-settings';
+  static const String paymentSettings = '/panel/payment-settings';
 
   static String collegeEditPath(String id) => '/panel/colleges/$id/edit';
 }

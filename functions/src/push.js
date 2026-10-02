@@ -8,7 +8,8 @@
 // something onto the device when the app isn't in the foreground to see
 // that Firestore write happen live.
 
-const { getMessaging } = require('firebase-admin/messaging');
+// Lazy: loaded on first use, keeping cold start + deploy discovery fast.
+const getMessaging = () => require('firebase-admin/messaging').getMessaging();
 const { logger } = require('firebase-functions');
 const { db } = require('./admin');
 

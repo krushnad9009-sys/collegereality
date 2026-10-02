@@ -1,6 +1,7 @@
 'use strict';
 
-const { getStorage } = require('firebase-admin/storage');
+// Lazy: loaded on first use, keeping cold start + deploy discovery fast.
+const getStorage = () => require('firebase-admin/storage').getStorage();
 const { VERIFICATION_CONFIG } = require('./config');
 const {
   assertOwnedStoragePath,

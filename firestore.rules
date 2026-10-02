@@ -782,11 +782,23 @@ service cloud.firestore {
         isAdUnitIdOrEmpty(data, 'rewardedAdIdIos');
     }
 
+    // Super Admin -> "Payment Gateway": the PUBLIC Razorpay Key ID only
+    // (rzp_test_/rzp_live_). Read by Cloud Functions (functions/src/
+    // razorpayConfig.js), which hand it to the app with each order; the
+    // Key Secret never leaves Secret Manager. Pattern mirrors
+    // functions/src/paymentSettingsLogic.js.
+    function isValidPaymentSettings(data) {
+      return data.keys().hasOnly(['razorpayKeyId', 'updatedAt', 'updatedBy']) &&
+        data.get('razorpayKeyId', '') is string &&
+        (data.get('razorpayKeyId', '') == '' ||
+          data.razorpayKeyId.matches('^rzp_(test|live)_[A-Za-z0-9]{8,32}$'));
+    }
+
     match /app_config/{docId} {
       allow read: if docId == 'ads_settings' || isAdmin();
-      allow write: if isSuperAdmin() &&
-        docId == 'ads_settings' &&
-        isValidAdSettings(request.resource.data);
+      allow write: if isSuperAdmin() && (
+        (docId == 'ads_settings' && isValidAdSettings(request.resource.data)) ||
+        (docId == 'payment_settings' && isValidPaymentSettings(request.resource.data)));
     }
 
     // Home "Top Picks" (lib/features/home/featured/): one doc holding the

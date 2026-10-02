@@ -58,6 +58,11 @@ const superAdminPanelConfig = SuperAdminPanelConfig(
       route: SuperAdminRouteNames.adSettings,
     ),
     SuperAdminNavItem(
+      title: 'Payment Gateway',
+      icon: Icons.payments_outlined,
+      route: SuperAdminRouteNames.paymentSettings,
+    ),
+    SuperAdminNavItem(
       // In-house promo banners (not Google AdMob -- that's above).
       title: 'Promo Ads',
       icon: Icons.campaign,
