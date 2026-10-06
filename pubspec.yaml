@@ -64,6 +64,7 @@ dependencies:
   firebase_app_check: ^0.3.2+10
   agora_rtc_engine: ^6.5.3
   google_mobile_ads: ^9.1.0
+  flutter_svg: ^2.3.0
 
 dev_dependencies:
   flutter_test:
@@ -79,9 +80,13 @@ dev_dependencies:
 flutter_launcher_icons:
   android: true
   ios: true
+  # Generated from assets/images/logo_icon.svg (College Kundli).
   image_path: assets/icons/app_icon.png
-  adaptive_icon_background: "#1E3A8A"
-  adaptive_icon_foreground: assets/icons/app_icon.png
+  adaptive_icon_background: assets/icons/app_icon_background.png
+  adaptive_icon_foreground: assets/icons/app_icon_foreground.png
+  # Foreground PNG is already inside the 66/108 safe zone.
+  adaptive_icon_foreground_inset: 0
+  remove_alpha_ios: true
   min_sdk_android: 21
 
 flutter_native_splash:
@@ -92,11 +97,14 @@ flutter_native_splash:
   web: true
   android_12:
     color: "#FFFFFF"
-    image: assets/icons/splash_logo.png
+    # Icon-only: Android 12+ masks the splash icon to a circle, which
+    # would cut off the wordmark.
+    image: assets/icons/splash_android12.png
 
 flutter:
   uses-material-design: true
 
   assets:
     - assets/data/
-    - assets/icons/splash_logo.png
+    # In-app splash (lib/features/auth/screens/splash_screen.dart).
+    - assets/images/logo.svg

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -84,9 +85,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     super.didChangeDependencies();
     if (!_logoPrecached) {
       _logoPrecached = true;
-      precacheImage(
-        const AssetImage(_CollegeRealityLogo.assetPath),
-        context,
+      // Parse the SVG before the first frame so the logo doesn't pop in
+      // after the native splash (which shows the same artwork as a PNG).
+      const loader = SvgAssetLoader(_CollegeKundliLogo.assetPath);
+      svg.cache.putIfAbsent(
+        loader.cacheKey(null),
+        () => loader.loadBytes(null),
       );
     }
   }
@@ -211,7 +215,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
             );
           },
           child: Center(
-            child: _CollegeRealityLogo(width: logoSize),
+            child: _CollegeKundliLogo(width: logoSize),
           ),
         ),
       ),
@@ -225,22 +229,25 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   }
 }
 
-class _CollegeRealityLogo extends StatelessWidget {
-  const _CollegeRealityLogo({required this.width});
+/// College Kundli logo lockup. The native splash shows the same artwork
+/// rendered to assets/icons/splash_logo.png (same square canvas), so the
+/// hand-off from native splash to this screen doesn't jump.
+class _CollegeKundliLogo extends StatelessWidget {
+  const _CollegeKundliLogo({required this.width});
 
   final double width;
 
-  static const assetPath = 'assets/icons/splash_logo.png';
+  static const assetPath = 'assets/images/logo.svg';
 
   @override
   Widget build(BuildContext context) {
-    return Image.asset(
+    return SvgPicture.asset(
       assetPath,
       width: width,
+      height: width,
       fit: BoxFit.contain,
       alignment: Alignment.center,
-      filterQuality: FilterQuality.high,
-      gaplessPlayback: true,
+      semanticsLabel: 'College Kundli',
     );
   }
 }
