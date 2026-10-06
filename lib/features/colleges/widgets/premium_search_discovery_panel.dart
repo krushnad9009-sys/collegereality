@@ -95,7 +95,7 @@ class PremiumSearchDiscoveryPanel extends ConsumerWidget {
                         child: Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 14,
-                            vertical: 14,
+                            vertical: 4,
                           ),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(14),
@@ -118,11 +118,20 @@ class PremiumSearchDiscoveryPanel extends ConsumerWidget {
                                   ),
                                 ),
                               ),
-                              Icon(
-                                Icons.north_west_rounded,
-                                size: 16,
-                                color: AppTheme.primaryColor
-                                    .withValues(alpha: 0.7),
+                              IconButton(
+                                tooltip: 'Remove "$query"',
+                                visualDensity: VisualDensity.compact,
+                                icon: Icon(
+                                  Icons.close_rounded,
+                                  size: 18,
+                                  color: tokens.textTertiary,
+                                ),
+                                onPressed: () async {
+                                  await ref
+                                      .read(searchHistoryServiceProvider)
+                                      .removeSearch(query);
+                                  ref.invalidate(recentSearchesProvider);
+                                },
                               ),
                             ],
                           ),

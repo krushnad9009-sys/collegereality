@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../config/router/route_names.dart';
@@ -15,6 +16,7 @@ import '../../../core/bootstrap/startup_bootstrap.dart';
 import '../../../core/cache/college_session_cache.dart';
 import '../../../core/cache/firestore_quota_guard.dart';
 import '../../../core/providers/firestore_quota_provider.dart';
+import '../../../core/utils/display_text_quality.dart';
 import '../../../core/widgets/premium_components.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/providers/user_provider.dart';
@@ -421,14 +423,49 @@ class _PlatformAnnouncementBanner extends ConsumerWidget {
   }
 }
 
-class _HomePromoAdsStrip extends ConsumerWidget {
+/// First live in-house promo (Super Admin -> Promo Ads). Skips entries
+/// whose text is test junk (e.g. "hi,,,buddy") and lets the user dismiss
+/// a promo with the X; dismissals are remembered on this device.
+class _HomePromoAdsStrip extends ConsumerStatefulWidget {
   const _HomePromoAdsStrip();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_HomePromoAdsStrip> createState() => _HomePromoAdsStripState();
+}
+
+class _HomePromoAdsStripState extends ConsumerState<_HomePromoAdsStrip> {
+  static const _dismissedKey = 'home_dismissed_promo_ids';
+  Set<String> _dismissed = const {};
+
+  @override
+  void initState() {
+    super.initState();
+    SharedPreferences.getInstance().then((prefs) {
+      if (!mounted) return;
+      setState(() =>
+          _dismissed = (prefs.getStringList(_dismissedKey) ?? []).toSet());
+    }).catchError((_) {});
+  }
+
+  Future<void> _dismiss(String id) async {
+    setState(() => _dismissed = {..._dismissed, id});
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setStringList(_dismissedKey, _dismissed.toList());
+    } catch (_) {}
+  }
+
+  bool _showable(AdminAdModel ad) =>
+      !_dismissed.contains(ad.id) &&
+      isPresentableText(ad.title, minAlnum: 3) &&
+      (ad.body.isEmpty || isPresentableText(ad.body));
+
+  @override
+  Widget build(BuildContext context) {
     final adsAsync = ref.watch(activeHomeAdsProvider);
     return adsAsync.maybeWhen(
-      data: (ads) {
+      data: (all) {
+        final ads = all.where(_showable).toList();
         if (ads.isEmpty) return const SizedBox.shrink();
         final ad = ads.first;
         final tokens = context.tokens;
@@ -511,6 +548,16 @@ class _HomePromoAdsStrip extends ConsumerWidget {
                     color: tokens.textTertiary,
                   ),
                 ],
+                IconButton(
+                  tooltip: 'Dismiss',
+                  visualDensity: VisualDensity.compact,
+                  icon: Icon(
+                    Icons.close_rounded,
+                    size: 18,
+                    color: tokens.textTertiary,
+                  ),
+                  onPressed: () => _dismiss(ad.id),
+                ),
               ],
             ),
           ),
