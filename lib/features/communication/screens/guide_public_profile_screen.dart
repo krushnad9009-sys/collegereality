@@ -320,7 +320,7 @@ class _GuidePublicProfileScreenState
                       ? null
                       : () => _startPrivateChat(guide.displayName),
                   icon: const Icon(Icons.chat_outlined),
-                  label: const Text('Free Private Chat'),
+                  label: const Text('Private Chat'),
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size(double.infinity, 52),
                   ),

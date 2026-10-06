@@ -132,7 +132,7 @@ void main() {
       expect(profile.hasVerificationBadge, isTrue);
     });
 
-    test('uses Student fallback for empty display name', () {
+    test('uses the app-wide Student #N fallback for empty display name', () {
       final user = UserModel(
         uid: 'bare',
         email: 'bare@test.com',
@@ -141,7 +141,7 @@ void main() {
         createdAt: now,
         updatedAt: now,
       );
-      expect(PublicStudentProfile.fromUser(user).displayName, 'Student');
+      expect(PublicStudentProfile.fromUser(user).displayName, startsWith('Student #'));
     });
 
     test('throws when public profile disabled', () {

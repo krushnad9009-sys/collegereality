@@ -31,8 +31,10 @@ class PublicStudentProfile {
     }
     return PublicStudentProfile(
       uid: user.uid,
-      displayName: user.displayName?.trim().isNotEmpty == true
-          ? user.displayName!.trim()
+      // The name the student CHOSE to show (real / anonymous / custom),
+      // never the raw account name.
+      displayName: user.effectivePublicDisplayName.trim().isNotEmpty
+          ? user.effectivePublicDisplayName.trim()
           : 'Student',
       photoURL: user.photoURL,
       course: user.course,

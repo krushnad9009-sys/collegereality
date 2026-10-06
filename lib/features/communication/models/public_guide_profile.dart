@@ -47,9 +47,10 @@ class PublicGuideProfile {
   factory PublicGuideProfile.fromUser(UserModel user) {
     return PublicGuideProfile(
       uid: user.uid,
-      displayName: user.displayName?.trim().isNotEmpty == true
-          ? user.displayName!.trim()
-          : user.anonymousGuideAlias,
+      // The name the guide CHOSE to show (real name / anonymous verified
+      // student or alumni / custom), never the raw account name -- that is
+      // their real name even when they picked an alias.
+      displayName: _publicName(user),
       photoURL: user.photoURL,
       anonymousAlias: user.anonymousGuideAlias,
       languagesKnown: user.languagesKnown,
@@ -62,5 +63,10 @@ class PublicGuideProfile {
       settings: user.communicationSettings,
       presence: user.presence,
     );
+  }
+
+  static String _publicName(UserModel user) {
+    final name = user.effectivePublicDisplayName.trim();
+    return name.isNotEmpty ? name : user.anonymousGuideAlias;
   }
 }
