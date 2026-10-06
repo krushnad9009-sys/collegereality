@@ -319,7 +319,7 @@ class _EarningsBodyState extends ConsumerState<_EarningsBody> {
               const SizedBox(height: 16),
               const SectionHeader(
                 title: 'Withdrawal requests',
-                subtitle: 'Reviewed by a Super Admin.',
+                subtitle: 'Reviewed by College Kundli Team',
               ),
               requestsAsync.when(
                 data: (list) => list.isEmpty
