@@ -455,7 +455,7 @@ class CommunityFirestoreService {
       'lastMessageSenderId': sender.uid,
       'lastMessageAt': message.createdAt.toIso8601String(),
       'updatedAt': message.createdAt.toIso8601String(),
-      'typingUsers.$sender.uid': FieldValue.delete(),
+      'typingUsers.${sender.uid}': FieldValue.delete(),
       if (replyToMessageId != null) 'replyCount': FieldValue.increment(1),
     });
 
@@ -496,9 +496,18 @@ class CommunityFirestoreService {
   }) async {
     final windowId = '${conversationId}_$senderId';
     final counterRef = _messageRateWindows.doc(windowId);
-    final counterSnap = await counterRef.get();
+    // First message in a conversation: the window doc doesn't exist yet.
+    // Older rules denied reading a missing doc, which failed every first
+    // message; treat a denied read as "no window yet". firestore.rules
+    // still enforces the cap on the write itself (messageRateOk).
+    Map<String, dynamic>? data;
+    try {
+      data = (await counterRef.get()).data();
+    } on FirebaseException catch (e) {
+      if (e.code != 'permission-denied') rethrow;
+      data = null;
+    }
 
-    final data = counterSnap.data();
     // Kept as the raw Timestamp (not round-tripped through DateTime) — the
     // rule requires writing back the EXACT same value when the window
     // hasn't reset; a DateTime round-trip would silently truncate the

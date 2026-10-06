@@ -2,9 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../../../core/ads/ad_manager.dart';
-import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/communication_constants.dart';
@@ -39,8 +37,14 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
   bool _limitHandled = false;
   bool _cameraOff = false;
   bool _blurBackground = true;
-  bool _ratingShown = false;
   DateTime? _activeSince;
+
+  /// End tapped: audio is already stopped, the Firestore write is in flight.
+  bool _ending = false;
+
+  /// The call is over and this screen is on its way out (rating sheet,
+  /// then back). Guards against leaving twice.
+  bool _leaving = false;
 
   /// Real-time audio (Agora) for this call, created once it's ACTIVE.
   CallAudioSession? _audio;
@@ -60,11 +64,8 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
   }
 
   void _startAudio(CallSessionModel session) {
-    if (_audio != null) return;
-    final audio = CallAudioSession(
-      sessionId: session.id,
-      isVideo: session.isVideo,
-    );
+    if (_audio != null || _ending || _leaving) return;
+    final audio = CallAudioSession(sessionId: session.id);
     setState(() => _audio = audio);
     unawaited(audio.join());
   }
@@ -73,11 +74,15 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
     final audio = _audio;
     if (audio == null) return;
     _audio = null;
+    if (mounted) setState(() {});
     unawaited(audio.dispose());
   }
 
+  /// Best-effort: dismiss the ringing notification (never blocks or throws).
   void _stopRinging() => unawaited(
-        LocalNotificationService.instance.cancelIncomingCall(widget.sessionId),
+        LocalNotificationService.instance
+            .cancelIncomingCall(widget.sessionId)
+            .catchError((Object e) => debugPrint('[ActiveCall] ring: $e')),
       );
 
   /// Ticks once a second and ends the call at its limit -- 2 minutes for a
@@ -112,25 +117,43 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
     _durationTimer = Timer.periodic(const Duration(seconds: 1), (_) => tick());
   }
 
+  /// Hang up (also cancels a call that is still ringing). Audio stops
+  /// immediately -- before the network write -- and the screen leaves via
+  /// [_onCallOver] once the session reads as ended. If the write fails the
+  /// screen still leaves: the server sweep ends the session (and billing
+  /// only counts connected seconds).
   Future<void> _endCall({
     required bool emergency,
     bool limitReached = false,
     bool isFreeTrial = false,
   }) async {
+    if (_ending) return;
     final user = ref.read(currentUserProvider);
     if (user == null) return;
 
+    setState(() => _ending = true);
     _durationTimer?.cancel();
+    _durationTimer = null;
+    _stopRinging();
+    _stopAudio();
+
+    var written = true;
     try {
-      await ref.read(communicationServiceProvider).endCall(
+      await ref
+          .read(communicationServiceProvider)
+          .endCall(
             sessionId: widget.sessionId,
             userId: user.uid,
             emergency: emergency,
           );
     } on CommunicationException catch (e) {
+      written = false;
       if (mounted) {
         SnackBarHelper.showErrorSnackBar(context, message: e.message);
       }
+    } catch (e) {
+      written = false;
+      debugPrint('[ActiveCall] endCall failed: $e');
     }
 
     if (limitReached && mounted) {
@@ -141,62 +164,76 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
             : 'Your wallet balance for this call is used up.',
       );
     }
+    if (!written) _leave();
   }
 
-  Future<void> _showRatingIfNeeded(
-    dynamic session,
-    String userId,
-  ) async {
-    if (_ratingShown || session == null) return;
-    final isEnded = session.status == CommunicationConstants.callStatusEnded ||
-        session.status == CommunicationConstants.callStatusEmergencyEnded;
-    if (!isEnded) return;
+  /// Back to wherever the call was started from (guide profile, chat);
+  /// Home when the screen was opened from a notification.
+  void _leave() {
+    _leaving = true;
+    if (mounted) context.popOrGo();
+  }
 
+  /// The call reached a final state (ended by either side, declined,
+  /// missed). Ask for a rating only if it actually connected and this side
+  /// hasn't rated yet, then leave. Calls that never connected just show
+  /// their final status for a moment.
+  Future<void> _onCallOver(CallSessionModel session, String userId) async {
+    if (_leaving) return;
+    _leaving = true;
+
+    final connected = session.startedAt != null;
     final alreadyRated = userId == session.callerId
         ? session.ratingsSubmittedCaller
         : session.ratingsSubmittedCallee;
-    if (alreadyRated) return;
 
-    _ratingShown = true;
-    final peerAlias = session.peerAliasFor(userId);
-    final peerId = session.peerIdFor(userId);
-
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      isDismissible: false,
-      enableDrag: false,
-      builder: (context) => PostInteractionRatingSheet(
-        peerAlias: peerAlias,
-        onSubmit: (partial) async {
-          await ref.read(communicationServiceProvider).submitInteractionRating(
-                rating: InteractionRatingModel(
-                  id: '',
-                  sessionId: widget.sessionId,
-                  raterId: userId,
-                  rateeId: peerId,
-                  stars: partial.stars,
-                  helpful: partial.helpful,
-                  respectful: partial.respectful,
-                  wouldRecommend: partial.wouldRecommend,
-                  interactionType: session.isVideo ? 'video_call' : 'voice_call',
-                  createdAt: DateTime.now(),
-                ),
-              );
-        },
-      ),
-    );
-
-    // The call is over and rated: a natural break for a (frequency-
-    // capped) full-screen ad -- never while a call is still running.
-    await AdManager.instance.showInterstitialAtBreak('call_ended');
-    if (mounted) context.go(RouteNames.home);
+    if (connected && !alreadyRated) {
+      final peerAlias = session.peerAliasFor(userId);
+      final peerId = session.peerIdFor(userId);
+      await showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        isDismissible: false,
+        enableDrag: false,
+        builder: (context) => PostInteractionRatingSheet(
+          peerAlias: peerAlias,
+          onSubmit: (partial) async {
+            await ref
+                .read(communicationServiceProvider)
+                .submitInteractionRating(
+                  rating: InteractionRatingModel(
+                    id: '',
+                    sessionId: widget.sessionId,
+                    raterId: userId,
+                    rateeId: peerId,
+                    stars: partial.stars,
+                    helpful: partial.helpful,
+                    respectful: partial.respectful,
+                    wouldRecommend: partial.wouldRecommend,
+                    interactionType: session.isVideo
+                        ? 'video_call'
+                        : 'voice_call',
+                    createdAt: DateTime.now(),
+                  ),
+                );
+          },
+        ),
+      );
+      // The call is over and rated: a natural break for a (frequency-
+      // capped) full-screen ad -- never while a call is still running.
+      await AdManager.instance.showInterstitialAtBreak('call_ended');
+    } else {
+      await Future<void>.delayed(const Duration(milliseconds: 1200));
+    }
+    if (mounted) context.popOrGo();
   }
 
   Future<void> _reportDuringCall(String peerId) async {
     final user = ref.read(currentUserProvider);
     if (user == null) return;
-    await ref.read(communicationServiceProvider).reportUser(
+    await ref
+        .read(communicationServiceProvider)
+        .reportUser(
           reporterId: user.uid,
           reportedId: peerId,
           reason: 'In-call report',
@@ -206,6 +243,11 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
       SnackBarHelper.showSuccessSnackBar(context, message: 'Report submitted.');
     }
   }
+
+  static bool _isLive(String status) =>
+      status == CommunicationConstants.callStatusActive ||
+      status == CommunicationConstants.callStatusRequested ||
+      status == CommunicationConstants.callStatusAccepted;
 
   @override
   Widget build(BuildContext context) {
@@ -243,13 +285,19 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.error_outline_rounded,
-                    color: Colors.white54, size: 40),
+                const Icon(
+                  Icons.error_outline_rounded,
+                  color: Colors.white54,
+                  size: 40,
+                ),
                 const SizedBox(height: 12),
                 Text(
                   e.toString().replaceFirst('Exception: ', ''),
                   textAlign: TextAlign.center,
-                  style: AppFonts.plusJakarta(color: Colors.white70, fontSize: 14),
+                  style: AppFonts.plusJakarta(
+                    color: Colors.white70,
+                    fontSize: 14,
+                  ),
                 ),
               ],
             ),
@@ -267,7 +315,10 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
             body: Center(
               child: Text(
                 'Call session not found',
-                style: AppFonts.plusJakarta(color: Colors.white70, fontSize: 14),
+                style: AppFonts.plusJakarta(
+                  color: Colors.white70,
+                  fontSize: 14,
+                ),
               ),
             ),
           );
@@ -275,6 +326,7 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
 
         if (session.status == CommunicationConstants.callStatusActive &&
             !_timerStarted &&
+            !_ending &&
             session.startedAt != null) {
           _timerStarted = true;
           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -284,276 +336,192 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
             _startAudio(session);
           });
         }
-        // The other side hung up (or the server ended it): stop counting
-        // and leave the audio channel so this device doesn't also try to
-        // end an already-ended call.
-        if (session.status != CommunicationConstants.callStatusActive &&
-            session.status != CommunicationConstants.callStatusRequested &&
-            session.status != CommunicationConstants.callStatusAccepted) {
+        // Over (either side hung up, declined, missed, server ended it):
+        // stop counting, leave the audio channel, then rate / leave.
+        final over = !_isLive(session.status);
+        if (over) {
           if (_durationTimer != null) {
             _durationTimer?.cancel();
             _durationTimer = null;
           }
-          if (_audio != null) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              _stopRinging();
-              _stopAudio();
-            });
-          }
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            _stopRinging();
+            _stopAudio();
+            _onCallOver(session, user.uid);
+          });
         }
-
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          _showRatingIfNeeded(session, user.uid);
-        });
 
         final peerAlias = session.peerAliasFor(user.uid);
         final peerId = session.peerIdFor(user.uid);
         final isCaller = session.callerId == user.uid;
-        final needsAccept = !session.bothAccepted &&
+        final isActive =
+            session.status == CommunicationConstants.callStatusActive;
+        final needsAccept =
+            !session.bothAccepted &&
             ((isCaller && !session.callerAccepted) ||
                 (!isCaller && !session.calleeAccepted));
 
-        return Scaffold(
-          backgroundColor: AppTheme.gray900,
-          appBar: AppBar(
-            backgroundColor: Colors.transparent,
-            foregroundColor: Colors.white,
-            title: Text(session.isVideo ? 'Video Call' : 'Voice Call'),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.flag_outlined),
-                onPressed: () => _reportDuringCall(peerId),
-                tooltip: 'Report',
-              ),
-            ],
-          ),
-          body: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
+        // Back mid-call would leave the session running (and a wallet call
+        // billing) with no way back in. Hang up with End call instead; an
+        // unanswered incoming call may still be left to ring.
+        final canLeave = over || _leaving || (needsAccept && !isCaller);
+        return PopScope(
+          canPop: canLeave,
+          onPopInvokedWithResult: (didPop, _) {
+            if (!didPop) {
+              SnackBarHelper.showInfoSnackBar(
+                context,
+                message: 'Tap End call to hang up.',
+              );
+            }
+          },
+          child: Scaffold(
+            backgroundColor: AppTheme.gray900,
+            appBar: AppBar(
+              backgroundColor: Colors.transparent,
+              foregroundColor: Colors.white,
+              automaticallyImplyLeading: false,
+              title: Text(session.isVideo ? 'Video Call' : 'Voice Call'),
+              actions: [
+                if (!over)
+                  IconButton(
+                    icon: const Icon(Icons.flag_outlined),
+                    onPressed: () => _reportDuringCall(peerId),
+                    tooltip: 'Report',
+                  ),
+              ],
+            ),
+            body: SafeArea(
               child: Column(
                 children: [
-                  const Spacer(),
-                  if (session.isVideo)
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(24),
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Container(
-                            width: double.infinity,
-                            height: 220,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [AppTheme.gray800, AppTheme.gray700],
-                              ),
-                            ),
-                            child: _cameraOff
-                                ? const Icon(Icons.videocam_off_rounded,
-                                    size: 64, color: Colors.white54)
-                                : Icon(Icons.person_rounded,
-                                    size: 80,
-                                    color: Colors.white.withValues(alpha: 0.3)),
+                  // Caller info scrolls if the screen is short, so it can
+                  // never push the controls below off-screen.
+                  Expanded(
+                    child: LayoutBuilder(
+                      builder: (context, constraints) => SingleChildScrollView(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            minHeight: constraints.maxHeight,
                           ),
-                          if (_blurBackground && !_cameraOff)
-                            Container(
-                              width: double.infinity,
-                              height: 220,
-                              color: Colors.black.withValues(alpha: 0.2),
-                              child: Center(
-                                child: Text(
-                                  'Background blurred',
-                                  style: AppFonts.plusJakarta(
-                                    color: Colors.white70,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
-                                  ),
+                          child: Center(
+                            child: _CallInfo(
+                              session: session,
+                              peerAlias: peerAlias,
+                              statusLabel: _ending && !over
+                                  ? 'Ending call…'
+                                  : _statusLabel(session.status, needsAccept),
+                              elapsedSeconds: _elapsedSeconds,
+                              cameraOff: _cameraOff,
+                              blurBackground: _blurBackground,
+                              audio: _audio,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (!over)
+                    _ControlsPanel(
+                      child: needsAccept && !isCaller
+                          ? Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                _CallActionButton(
+                                  icon: Icons.call_end,
+                                  label: 'Decline',
+                                  color: AppTheme.errorColor,
+                                  onTap: () async {
+                                    _stopRinging();
+                                    _leaving = true;
+                                    await ref
+                                        .read(communicationServiceProvider)
+                                        .rejectCall(
+                                          sessionId: widget.sessionId,
+                                          userId: user.uid,
+                                        );
+                                    if (!context.mounted) return;
+                                    // Opened from a notification tap (go)
+                                    // there is nothing underneath to pop to.
+                                    context.popOrGo();
+                                  },
                                 ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    )
-                  else
-                    Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.12),
-                          width: 2,
-                        ),
-                      ),
-                      child: CircleAvatar(
-                        radius: 56,
-                        backgroundColor: AppTheme.primaryColor,
-                        child: Text(
-                          peerAlias.replaceAll('Guide #', '').substring(0, 2),
-                          style: AppFonts.plusJakarta(
-                            fontSize: 28,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  const SizedBox(height: 20),
-                  Text(
-                    peerAlias,
-                    style: AppFonts.plusJakarta(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                      letterSpacing: -0.4,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      _statusLabel(session.status, needsAccept),
-                      style: AppFonts.plusJakarta(
-                        color: Colors.white70,
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  if (session.status ==
-                      CommunicationConstants.callStatusActive) ...[
-                    const SizedBox(height: 20),
-                    Text(
-                      session.isFreeTrial || session.isWalletCall
-                          ? formatCallDuration(
-                              callRemainingSeconds(
-                                elapsedSeconds: _elapsedSeconds,
-                                maxSeconds: session.maxDurationSeconds,
-                              ),
+                                _CallActionButton(
+                                  icon: Icons.call,
+                                  label: 'Accept',
+                                  color: AppTheme.accentColor,
+                                  onTap: () async {
+                                    _stopRinging();
+                                    await ref
+                                        .read(communicationServiceProvider)
+                                        .acceptCall(
+                                          sessionId: widget.sessionId,
+                                          userId: user.uid,
+                                        );
+                                  },
+                                ),
+                              ],
                             )
-                          : formatCallDuration(_elapsedSeconds),
-                      style: AppFonts.plusJakarta(
-                        fontSize: 36,
-                        fontWeight: FontWeight.w300,
-                        color: Colors.white,
-                        letterSpacing: 1,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      session.isFreeTrial
-                          ? 'Free call · ends automatically'
-                          : session.isWalletCall
-                              ? '${formatRupees(session.ratePaisePerMinute)}/min '
-                                  'from wallet · time left'
-                              : 'Max ${formatCallDuration(session.maxDurationSeconds)}',
-                      style: AppFonts.plusJakarta(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white54,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    _AudioStatusLine(audio: _audio),
-                  ],
-                  const Spacer(),
-                  if (needsAccept && !isCaller)
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _CallActionButton(
-                          icon: Icons.call_end,
-                          label: 'Decline',
-                          color: AppTheme.errorColor,
-                          onTap: () async {
-                            _stopRinging();
-                            await ref
-                                .read(communicationServiceProvider)
-                                .rejectCall(
-                                  sessionId: widget.sessionId,
-                                  userId: user.uid,
-                                );
-                            if (!context.mounted) return;
-                            // Opened from a notification tap (go) there is
-                            // nothing underneath to pop back to.
-                            if (context.canPop()) {
-                              context.popOrGo();
-                            } else {
-                              context.go(RouteNames.home);
-                            }
-                          },
-                        ),
-                        _CallActionButton(
-                          icon: Icons.call,
-                          label: 'Accept',
-                          color: AppTheme.accentColor,
-                          onTap: () async {
-                            _stopRinging();
-                            await ref
-                                .read(communicationServiceProvider)
-                                .acceptCall(
-                                  sessionId: widget.sessionId,
-                                  userId: user.uid,
-                                );
-                          },
-                        ),
-                      ],
-                    )
-                  else if (session.status ==
-                          CommunicationConstants.callStatusRequested &&
-                      isCaller)
-                    Text(
-                      'Waiting for guide to accept…',
-                      style: AppFonts.plusJakarta(
-                        color: Colors.white70,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    )
-                  else if (session.status ==
-                      CommunicationConstants.callStatusActive)
-                    Wrap(
-                      alignment: WrapAlignment.center,
-                      spacing: 16,
-                      runSpacing: 12,
-                      children: [
-                        _AudioControls(audio: _audio),
-                        if (session.isVideo) ...[
-                          _CallControl(
-                            icon: _cameraOff
-                                ? Icons.videocam_off
-                                : Icons.videocam,
-                            label: _cameraOff ? 'Camera on' : 'Camera off',
-                            onTap: () =>
-                                setState(() => _cameraOff = !_cameraOff),
-                          ),
-                          _CallControl(
-                            icon: Icons.blur_on,
-                            label: _blurBackground ? 'Blur on' : 'Blur off',
-                            onTap: () => setState(
-                              () => _blurBackground = !_blurBackground,
+                          : Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (isActive) ...[
+                                  // Scales down rather than wrapping/
+                                  // overflowing on narrow phones.
+                                  FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        _AudioControls(
+                                          audio: _ending ? null : _audio,
+                                        ),
+                                        if (session.isVideo) ...[
+                                          _CallControl(
+                                            icon: _cameraOff
+                                                ? Icons.videocam_off
+                                                : Icons.videocam,
+                                            label: _cameraOff
+                                                ? 'Camera on'
+                                                : 'Camera off',
+                                            onTap: () => setState(
+                                              () => _cameraOff = !_cameraOff,
+                                            ),
+                                          ),
+                                          _CallControl(
+                                            icon: Icons.blur_on,
+                                            label: _blurBackground
+                                                ? 'Blur on'
+                                                : 'Blur off',
+                                            onTap: () => setState(
+                                              () => _blurBackground =
+                                                  !_blurBackground,
+                                            ),
+                                          ),
+                                        ],
+                                        _CallControl(
+                                          icon: Icons.warning_amber_rounded,
+                                          label: 'Emergency',
+                                          color: AppTheme.warningColor,
+                                          onTap: _ending
+                                              ? null
+                                              : () => _endCall(emergency: true),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 20),
+                                ],
+                                _CallActionButton(
+                                  icon: Icons.call_end,
+                                  label: isActive ? 'End call' : 'Cancel call',
+                                  color: AppTheme.errorColor,
+                                  busy: _ending,
+                                  onTap: () => _endCall(emergency: false),
+                                ),
+                              ],
                             ),
-                          ),
-                        ],
-                        _CallControl(
-                          icon: Icons.warning_amber_rounded,
-                          label: 'Emergency',
-                          color: AppTheme.warningColor,
-                          onTap: () async {
-                            await _endCall(emergency: true);
-                          },
-                        ),
-                        _CallControl(
-                          icon: Icons.call_end,
-                          label: 'End',
-                          color: AppTheme.errorColor,
-                          onTap: () => _endCall(emergency: false),
-                        ),
-                      ],
                     ),
                 ],
               ),
@@ -586,57 +554,267 @@ class _ActiveCallScreenState extends ConsumerState<ActiveCallScreen> {
   }
 }
 
+/// Avatar / video placeholder, name, status, timer and audio status.
+class _CallInfo extends StatelessWidget {
+  final CallSessionModel session;
+  final String peerAlias;
+  final String statusLabel;
+  final int elapsedSeconds;
+  final bool cameraOff;
+  final bool blurBackground;
+  final CallAudioSession? audio;
+
+  const _CallInfo({
+    required this.session,
+    required this.peerAlias,
+    required this.statusLabel,
+    required this.elapsedSeconds,
+    required this.cameraOff,
+    required this.blurBackground,
+    required this.audio,
+  });
+
+  String get _initials {
+    final cleaned = peerAlias.replaceAll('Guide #', '').trim();
+    if (cleaned.isEmpty) return '?';
+    return cleaned.length < 2 ? cleaned.toUpperCase() : cleaned.substring(0, 2);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isActive = session.status == CommunicationConstants.callStatusActive;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const SizedBox(height: 16),
+        if (session.isVideo)
+          ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Container(
+                  width: double.infinity,
+                  height: 200,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [AppTheme.gray800, AppTheme.gray700],
+                    ),
+                  ),
+                  child: cameraOff
+                      ? const Icon(
+                          Icons.videocam_off_rounded,
+                          size: 64,
+                          color: Colors.white54,
+                        )
+                      : Icon(
+                          Icons.person_rounded,
+                          size: 80,
+                          color: Colors.white.withValues(alpha: 0.3),
+                        ),
+                ),
+                if (blurBackground && !cameraOff)
+                  Container(
+                    width: double.infinity,
+                    height: 200,
+                    color: Colors.black.withValues(alpha: 0.2),
+                    child: Center(
+                      child: Text(
+                        'Background blurred',
+                        style: AppFonts.plusJakarta(
+                          color: Colors.white70,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          )
+        else
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.12),
+                width: 2,
+              ),
+            ),
+            child: CircleAvatar(
+              radius: 56,
+              backgroundColor: AppTheme.primaryColor,
+              child: Text(
+                _initials,
+                style: AppFonts.plusJakarta(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+        const SizedBox(height: 20),
+        Text(
+          peerAlias,
+          textAlign: TextAlign.center,
+          style: AppFonts.plusJakarta(
+            fontSize: 24,
+            fontWeight: FontWeight.w800,
+            color: Colors.white,
+            letterSpacing: -0.4,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Text(
+            statusLabel,
+            textAlign: TextAlign.center,
+            style: AppFonts.plusJakarta(
+              color: Colors.white70,
+              fontSize: 12.5,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        if (isActive) ...[
+          const SizedBox(height: 20),
+          Text(
+            session.isFreeTrial || session.isWalletCall
+                ? formatCallDuration(
+                    callRemainingSeconds(
+                      elapsedSeconds: elapsedSeconds,
+                      maxSeconds: session.maxDurationSeconds,
+                    ),
+                  )
+                : formatCallDuration(elapsedSeconds),
+            style: AppFonts.plusJakarta(
+              fontSize: 36,
+              fontWeight: FontWeight.w300,
+              color: Colors.white,
+              letterSpacing: 1,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            session.isFreeTrial
+                ? 'Free call · ends automatically'
+                : session.isWalletCall
+                ? '${formatRupees(session.ratePaisePerMinute)}/min '
+                      'from wallet · time left'
+                : 'Max ${formatCallDuration(session.maxDurationSeconds)}',
+            style: AppFonts.plusJakarta(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: Colors.white54,
+            ),
+          ),
+          const SizedBox(height: 10),
+          _AudioStatusLine(audio: audio),
+        ],
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+}
+
+/// Fixed bottom bar holding the call controls, visually separated from the
+/// (scrollable) call info above so nothing can cover it.
+class _ControlsPanel extends StatelessWidget {
+  final Widget child;
+
+  const _ControlsPanel({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.28),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      child: child,
+    );
+  }
+}
+
 class _CallActionButton extends StatelessWidget {
   final IconData icon;
   final String label;
   final Color color;
   final VoidCallback onTap;
+  final bool busy;
 
   const _CallActionButton({
     required this.icon,
     required this.label,
     required this.color,
     required this.onTap,
+    this.busy = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Material(
-          color: color,
-          shape: const CircleBorder(),
-          elevation: 0,
-          child: InkWell(
-            customBorder: const CircleBorder(),
-            onTap: onTap,
-            child: Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: color.withValues(alpha: 0.4),
-                    blurRadius: 16,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
+    return Semantics(
+      button: true,
+      label: label,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Material(
+            color: color,
+            shape: const CircleBorder(),
+            elevation: 0,
+            child: InkWell(
+              customBorder: const CircleBorder(),
+              onTap: busy ? null : onTap,
+              child: Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withValues(alpha: 0.4),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: busy
+                    ? const Padding(
+                        padding: EdgeInsets.all(24),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Icon(icon, color: Colors.white, size: 30),
               ),
-              child: Icon(icon, color: Colors.white, size: 28),
             ),
           ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          style: AppFonts.plusJakarta(
-            color: Colors.white70,
-            fontSize: 12.5,
-            fontWeight: FontWeight.w600,
+          const SizedBox(height: 8),
+          ExcludeSemantics(
+            child: Text(
+              label,
+              style: AppFonts.plusJakarta(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -644,7 +822,9 @@ class _CallActionButton extends StatelessWidget {
 class _CallControl extends StatelessWidget {
   final IconData icon;
   final String label;
-  final VoidCallback onTap;
+
+  /// Null = disabled (e.g. Speaker before call audio exists).
+  final VoidCallback? onTap;
   final Color? color;
 
   const _CallControl({
@@ -656,79 +836,88 @@ class _CallControl extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Material(
-          color: (color ?? Colors.white24),
-          shape: const CircleBorder(),
-          elevation: 0,
-          child: InkWell(
-            customBorder: const CircleBorder(),
-            onTap: onTap,
-            child: Container(
-              padding: const EdgeInsets.all(14),
-              decoration: color == null
-                  ? null
-                  : BoxDecoration(
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: color!.withValues(alpha: 0.4),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-              child: Icon(icon, color: Colors.white, size: 22),
-            ),
+    final enabled = onTap != null;
+    return Semantics(
+      button: true,
+      enabled: enabled,
+      label: label,
+      child: Opacity(
+        opacity: enabled ? 1 : 0.4,
+        child: SizedBox(
+          width: 76,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Material(
+                color: color ?? Colors.white24,
+                shape: const CircleBorder(),
+                elevation: 0,
+                child: InkWell(
+                  customBorder: const CircleBorder(),
+                  onTap: onTap,
+                  child: SizedBox(
+                    width: 56,
+                    height: 56,
+                    child: Icon(icon, color: Colors.white, size: 24),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 6),
+              ExcludeSemantics(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppFonts.plusJakarta(
+                    color: Colors.white70,
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: AppFonts.plusJakarta(
-            color: Colors.white70,
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
+      ),
     );
   }
 }
 
-/// Mute + Loudspeaker, both driving the live Agora audio session.
+/// Mute + Loudspeaker, driving the live Agora audio session. Always shown
+/// during a connected call; disabled until call audio exists.
 class _AudioControls extends StatelessWidget {
   final CallAudioSession? audio;
 
   const _AudioControls({required this.audio});
 
+  Widget _buttons(CallAudioState state, CallAudioSession? audio) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      _CallControl(
+        icon: state.muted ? Icons.mic_off : Icons.mic,
+        label: state.muted ? 'Unmute' : 'Mute',
+        onTap: audio == null ? null : () => audio.setMuted(!state.muted),
+      ),
+      _CallControl(
+        icon: state.speakerOn
+            ? Icons.volume_up_rounded
+            : Icons.phone_in_talk_rounded,
+        label: state.speakerOn ? 'Speaker on' : 'Speaker',
+        color: state.speakerOn ? AppTheme.primaryColor : null,
+        onTap: audio == null
+            ? null
+            : () => audio.setSpeakerOn(!state.speakerOn),
+      ),
+    ],
+  );
+
   @override
   Widget build(BuildContext context) {
     final audio = this.audio;
-    if (audio == null) return const SizedBox.shrink();
+    if (audio == null) return _buttons(const CallAudioState(), null);
     return ValueListenableBuilder<CallAudioState>(
       valueListenable: audio.state,
-      builder: (context, state, _) => Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _CallControl(
-            icon: state.muted ? Icons.mic_off : Icons.mic,
-            label: state.muted ? 'Unmute' : 'Mute',
-            onTap: () => audio.setMuted(!state.muted),
-          ),
-          const SizedBox(width: 16),
-          _CallControl(
-            icon: state.speakerOn
-                ? Icons.volume_up_rounded
-                : Icons.phone_in_talk_rounded,
-            label: state.speakerOn ? 'Speaker on' : 'Speaker',
-            color: state.speakerOn ? AppTheme.primaryColor : null,
-            onTap: () => audio.setSpeakerOn(!state.speakerOn),
-          ),
-        ],
-      ),
+      builder: (context, state, _) => _buttons(state, audio),
     );
   }
 }

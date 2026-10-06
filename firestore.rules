@@ -1123,7 +1123,13 @@ service cloud.firestore {
     // arbitrary doc ID per message. Same increment/reset shape as
     // consultation_request_windows above (SocialConstants.maxMessagesPerMinute).
     match /message_rate_windows/{windowId} {
-      allow read: if isAuthenticated() && resource.data.senderId == request.auth.uid;
+      // A sender's FIRST message in a conversation reads a window doc that
+      // doesn't exist yet (resource == null); denying that read made every
+      // first message fail. Allow it only for the caller's own window id.
+      allow read: if isAuthenticated() && (
+        (resource == null && windowId.matches('.+_' + request.auth.uid)) ||
+        (resource != null && resource.data.senderId == request.auth.uid)
+      );
       allow create: if isAuthenticated() &&
         request.resource.data.senderId == request.auth.uid &&
         windowId == (request.resource.data.conversationId + '_' + request.auth.uid) &&

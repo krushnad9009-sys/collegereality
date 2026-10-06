@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
 import 'package:flutter/foundation.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -7,6 +9,7 @@ import '../../consultations/services/call_access_service.dart';
 enum CallAudioStatus {
   idle,
   connecting,
+
   /// In the channel, waiting for the other person's audio to arrive.
   waitingForPeer,
   connected,
@@ -33,13 +36,12 @@ class CallAudioState {
     bool? muted,
     bool? speakerOn,
     String? error,
-  }) =>
-      CallAudioState(
-        status: status ?? this.status,
-        muted: muted ?? this.muted,
-        speakerOn: speakerOn ?? this.speakerOn,
-        error: error ?? this.error,
-      );
+  }) => CallAudioState(
+    status: status ?? this.status,
+    muted: muted ?? this.muted,
+    speakerOn: speakerOn ?? this.speakerOn,
+    error: error ?? this.error,
+  );
 }
 
 /// The real-time audio for ONE direct guide call (Agora). Before this the
@@ -50,14 +52,11 @@ class CallAudioState {
 /// racing an in-flight join. The Firestore call_sessions doc stays the
 /// source of truth for whether the call is on; Agora only carries audio.
 class CallAudioSession {
-  CallAudioSession({
-    required this.sessionId,
-    required bool isVideo,
-    CallSessionTokenService? tokens,
-  })  : _tokens = tokens ?? CallSessionTokenService(),
-        // Voice calls start on the earpiece like a normal phone call;
-        // video calls start on the loudspeaker.
-        state = ValueNotifier(CallAudioState(speakerOn: isVideo));
+  CallAudioSession({required this.sessionId, CallSessionTokenService? tokens})
+    : _tokens = tokens ?? CallSessionTokenService(),
+      // Every call starts on the earpiece like a normal phone call (video
+      // calls are audio-only for now); the Speaker button switches.
+      state = ValueNotifier(const CallAudioState());
 
   final String sessionId;
   final CallSessionTokenService _tokens;
@@ -67,12 +66,17 @@ class CallAudioSession {
   bool _started = false;
   bool _disposed = false;
 
+  /// In the channel. Agora ignores setEnableSpeakerphone before this, so a
+  /// Speaker tap while still connecting is applied on join instead.
+  bool _joined = false;
+
   void _set(CallAudioState next) {
     if (!_disposed) state.value = next;
   }
 
-  void _fail(String message) =>
-      _set(state.value.copyWith(status: CallAudioStatus.failed, error: message));
+  void _fail(String message) => _set(
+    state.value.copyWith(status: CallAudioStatus.failed, error: message),
+  );
 
   Future<void> join() async {
     if (_started || _disposed) return;
@@ -91,26 +95,36 @@ class CallAudioSession {
 
       final engine = createAgoraRtcEngine();
       _engine = engine;
-      await engine.initialize(RtcEngineContext(
-        appId: token.appId,
-        channelProfile: ChannelProfileType.channelProfileCommunication,
-      ));
-      engine.registerEventHandler(RtcEngineEventHandler(
-        onJoinChannelSuccess: (_, _) =>
-            _set(state.value.copyWith(status: CallAudioStatus.waitingForPeer)),
-        onUserJoined: (_, _, _) =>
-            _set(state.value.copyWith(status: CallAudioStatus.connected)),
-        onUserOffline: (_, _, _) =>
-            _set(state.value.copyWith(status: CallAudioStatus.waitingForPeer)),
-        onConnectionStateChanged: (_, connState, _) {
-          if (connState == ConnectionStateType.connectionStateReconnecting) {
-            _set(state.value.copyWith(status: CallAudioStatus.reconnecting));
-          } else if (connState == ConnectionStateType.connectionStateFailed) {
-            _fail('Call audio connection lost.');
-          }
-        },
-        onError: (err, msg) => debugPrint('[CallAudio] $err $msg'),
-      ));
+      await engine.initialize(
+        RtcEngineContext(
+          appId: token.appId,
+          channelProfile: ChannelProfileType.channelProfileCommunication,
+        ),
+      );
+      engine.registerEventHandler(
+        RtcEngineEventHandler(
+          onJoinChannelSuccess: (_, _) {
+            _joined = true;
+            _set(state.value.copyWith(status: CallAudioStatus.waitingForPeer));
+            // Apply whatever the user picked while audio was connecting.
+            unawaited(_applyRoute());
+            unawaited(_engine?.muteLocalAudioStream(state.value.muted));
+          },
+          onUserJoined: (_, _, _) =>
+              _set(state.value.copyWith(status: CallAudioStatus.connected)),
+          onUserOffline: (_, _, _) => _set(
+            state.value.copyWith(status: CallAudioStatus.waitingForPeer),
+          ),
+          onConnectionStateChanged: (_, connState, _) {
+            if (connState == ConnectionStateType.connectionStateReconnecting) {
+              _set(state.value.copyWith(status: CallAudioStatus.reconnecting));
+            } else if (connState == ConnectionStateType.connectionStateFailed) {
+              _fail('Call audio connection lost.');
+            }
+          },
+          onError: (err, msg) => debugPrint('[CallAudio] $err $msg'),
+        ),
+      );
       await engine.enableAudio();
       await engine.setDefaultAudioRouteToSpeakerphone(state.value.speakerOn);
       await engine.joinChannel(
@@ -139,9 +153,29 @@ class CallAudioSession {
   }
 
   /// Loudspeaker on/off (Agora audio route: speaker vs earpiece/headset).
+  /// Before the channel is joined only the preference is stored; it is
+  /// applied on join. A failed switch reverts the button.
   Future<void> setSpeakerOn(bool on) async {
+    final previous = state.value.speakerOn;
     _set(state.value.copyWith(speakerOn: on));
-    await _engine?.setEnableSpeakerphone(on);
+    try {
+      if (_joined) {
+        await _engine?.setEnableSpeakerphone(on);
+      } else {
+        await _engine?.setDefaultAudioRouteToSpeakerphone(on);
+      }
+    } catch (e) {
+      debugPrint('[CallAudio] speaker switch failed: $e');
+      _set(state.value.copyWith(speakerOn: previous));
+    }
+  }
+
+  Future<void> _applyRoute() async {
+    try {
+      await _engine?.setEnableSpeakerphone(state.value.speakerOn);
+    } catch (e) {
+      debugPrint('[CallAudio] route: $e');
+    }
   }
 
   Future<void> dispose() async {
@@ -154,8 +188,13 @@ class CallAudioSession {
   Future<void> _teardown() async {
     final engine = _engine;
     _engine = null;
+    _joined = false;
     if (engine == null) return;
     try {
+      // Silence both directions first so hanging up is instant, even while
+      // leaveChannel/release finish in the background.
+      await engine.muteAllRemoteAudioStreams(true);
+      await engine.muteLocalAudioStream(true);
       await engine.leaveChannel();
       await engine.release();
     } catch (e) {
