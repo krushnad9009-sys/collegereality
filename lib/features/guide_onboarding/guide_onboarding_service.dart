@@ -42,9 +42,10 @@ class GuideOnboardingService {
   DocumentReference<Map<String, dynamic>> _userRef(String uid) =>
       _firestore.collection(FirestoreConstants.usersCollection).doc(uid);
 
-  /// Submits all three steps. Order matters for retries: the review is
-  /// written first and reused if it already exists, so a failed document
-  /// upload can simply be retried without duplicating the review.
+  /// Submits all three steps. Order matters for retries: documents go
+  /// first (skipped if a request is already under review), then the review
+  /// (reusing a pending one for this college), then the users doc -- so any
+  /// failed step can be retried without duplicating uploads or reviews.
   ///
   /// Returns true when onboarding finished immediately (already verified),
   /// false when it now waits on document review.
@@ -67,8 +68,28 @@ class GuideOnboardingService {
       );
     }
 
+    // Documents FIRST: they are the step most likely to fail (upload,
+    // validation), and doing them before the review means a failed attempt
+    // leaves nothing behind. On a retry after the documents went through,
+    // the active request is found and they are not uploaded again.
+    if (documentState == DocumentStepState.needsUpload &&
+        await _verification.getActiveRequest(user.uid) == null) {
+      await _verification.submitGuideVerificationDocuments(
+        user: user,
+        verificationRole: VerificationConstants.roleStudent,
+        collegeId: collegeId,
+        collegeName: collegeName,
+        documents: documents,
+      );
+    }
+
     final now = DateTime.now();
-    final review = await _reviews.createPendingVerificationReview(ReviewModel(
+    // Reuse a pending review of this college from an earlier attempt.
+    final review = await _reviews.findPendingVerificationReview(
+          userId: user.uid,
+          collegeId: collegeId.trim(),
+        ) ??
+        await _reviews.createPendingVerificationReview(ReviewModel(
       id: '',
       collegeId: collegeId.trim(),
       collegeName: collegeName,
@@ -92,16 +113,6 @@ class GuideOnboardingService {
       createdAt: now,
       updatedAt: now,
     ));
-
-    if (documentState == DocumentStepState.needsUpload) {
-      await _verification.submitGuideVerificationDocuments(
-        user: user,
-        verificationRole: VerificationConstants.roleStudent,
-        collegeId: collegeId,
-        collegeName: collegeName,
-        documents: documents,
-      );
-    }
 
     await _userRef(user.uid).set({
       'guideOnboarding': {

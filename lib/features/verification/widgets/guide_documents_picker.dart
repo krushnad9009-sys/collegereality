@@ -7,6 +7,7 @@ import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_fonts.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/verification_constants.dart';
+import '../../../core/widgets/index.dart';
 import '../services/verification_firestore_service.dart';
 
 /// Pick exactly [VerificationConstants.requiredGuideVerificationDocs]
@@ -70,6 +71,15 @@ class _GuideDocumentsPickerState extends State<GuideDocumentsPicker> {
     final file = result.files.first;
     final bytes = file.bytes;
     if (bytes == null) return;
+    if (bytes.length >= VerificationConstants.maxFileBytes) {
+      if (mounted) {
+        SnackBarHelper.showErrorSnackBar(
+          context,
+          message: 'That file is too large. Each document must be under 10 MB.',
+        );
+      }
+      return;
+    }
     setState(() => _files[typeId] = (bytes: bytes, name: file.name));
     _emit();
   }

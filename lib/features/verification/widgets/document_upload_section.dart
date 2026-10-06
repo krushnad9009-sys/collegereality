@@ -108,8 +108,12 @@ class _DocumentUploadSectionState extends ConsumerState<DocumentUploadSection> {
         SnackBarHelper.showErrorSnackBar(context, message: e.message);
       }
     } catch (e) {
+      debugPrint('[DocumentUpload] submit failed: $e');
       if (mounted) {
-        SnackBarHelper.showErrorSnackBar(context, message: e.toString());
+        SnackBarHelper.showErrorSnackBar(
+          context,
+          message: 'Could not submit your document. Please try again.',
+        );
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);

@@ -115,6 +115,23 @@ class FirestoreReviewService {
     return saved;
   }
 
+  /// This user's not-yet-published review of [collegeId], if any -- lets
+  /// the guide onboarding reuse it on a retry instead of creating another.
+  Future<ReviewModel?> findPendingVerificationReview({
+    required String userId,
+    required String collegeId,
+  }) async {
+    final snapshot = await _reviews
+        .where('userId', isEqualTo: userId)
+        .where('status', isEqualTo: ReviewModel.statusPendingVerification)
+        .get();
+    for (final doc in snapshot.docs) {
+      final review = ReviewModel.fromJson(doc.data(), docId: doc.id);
+      if (review.collegeId == collegeId) return review;
+    }
+    return null;
+  }
+
   /// Once the author's verification is approved: publishes each of their
   /// `pending_verification` reviews and adds it to the college aggregates
   /// (the same delta path as a normal review). firestore.rules only allow
@@ -129,8 +146,12 @@ class FirestoreReviewService {
         .where('status', isEqualTo: ReviewModel.statusPendingVerification)
         .get();
     var published = 0;
+    // One review per college: earlier failed onboarding attempts could
+    // leave duplicates; extras simply stay hidden as pending.
+    final publishedColleges = <String>{};
     for (final doc in snapshot.docs) {
       final pending = ReviewModel.fromJson(doc.data(), docId: doc.id);
+      if (!publishedColleges.add(pending.collegeId)) continue;
       final review = pending.copyWith(
         status: ReviewModel.statusPublished,
         isVerifiedStudent: true,

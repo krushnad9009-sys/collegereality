@@ -216,6 +216,7 @@ class _GuideVerificationSheetState
     } on VerificationException catch (e) {
       if (mounted) SnackBarHelper.showErrorSnackBar(context, message: e.message);
     } catch (e) {
+      debugPrint('[GuideVerification] submit failed: $e');
       if (mounted) {
         SnackBarHelper.showErrorSnackBar(
           context,

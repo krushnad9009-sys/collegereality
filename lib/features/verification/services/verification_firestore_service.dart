@@ -1,6 +1,6 @@
-import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/constants/firestore_constants.dart';
@@ -64,24 +64,51 @@ class VerificationFirestoreService {
         .toList();
   }
 
-  Future<bool> _isDuplicateHash(String hash) async {
-    final doc = await _firestore
-        .collection(FirestoreConstants.verificationDocumentHashesCollection)
-        .doc(hash)
-        .get();
-    return doc.exists;
+  /// Has ANOTHER user already submitted this exact file? Re-uploading your
+  /// own earlier file (e.g. after a rejection) is not a duplicate.
+  /// firestore.rules hide other users' hash docs, so a permission-denied
+  /// here means "someone else registered it".
+  Future<bool> _isDuplicateHash(String hash, String userId) async {
+    try {
+      final doc = await _firestore
+          .collection(FirestoreConstants.verificationDocumentHashesCollection)
+          .doc(hash)
+          .get();
+      return doc.exists && doc.data()?['userId'] != userId;
+    } on FirebaseException catch (e) {
+      if (e.code == 'permission-denied') return true;
+      rethrow;
+    }
   }
 
+  /// Best-effort: a duplicate of someone else's file keeps the original
+  /// owner's entry (the write is denied), and that must never block the
+  /// submission -- the request is already flagged for review.
   Future<void> _registerHash(String hash, String userId, String requestId) async {
-    await _firestore
-        .collection(FirestoreConstants.verificationDocumentHashesCollection)
-        .doc(hash)
-        .set({
-      'hash': hash,
-      'userId': userId,
-      'requestId': requestId,
-      'createdAt': DateTime.now().toIso8601String(),
-    });
+    try {
+      await _firestore
+          .collection(FirestoreConstants.verificationDocumentHashesCollection)
+          .doc(hash)
+          .set({
+        'hash': hash,
+        'userId': userId,
+        'requestId': requestId,
+        'createdAt': DateTime.now().toIso8601String(),
+      });
+    } on FirebaseException catch (e) {
+      if (e.code != 'permission-denied') rethrow;
+      debugPrint('[Verification] hash already registered by another user');
+    }
+  }
+
+  /// storage.rules reject uploads of 10 MB or more; fail early with a
+  /// readable message instead of a raw permission error mid-upload.
+  void _checkUploadSize(int bytes, String fileName) {
+    if (bytes >= VerificationConstants.maxFileBytes) {
+      throw VerificationException(
+        '"$fileName" is too large. Each document must be under 10 MB.',
+      );
+    }
   }
 
   bool canSubmitDocument(UserModel user) {
@@ -133,11 +160,13 @@ class VerificationFirestoreService {
       throw VerificationException('You are already verified.');
     }
 
+    _checkUploadSize(bytes.length, fileName);
+
     final validation = await _validationService.validate(
       bytes: bytes,
       fileName: fileName,
       documentType: documentType,
-      isDuplicateHash: _isDuplicateHash,
+      isDuplicateHash: (h) => _isDuplicateHash(h, user.uid),
     );
 
     final hash = _validationService.computeHash(bytes);
@@ -238,6 +267,7 @@ class VerificationFirestoreService {
       if (doc.bytes.isEmpty) {
         throw VerificationException('One of the uploads is empty.');
       }
+      _checkUploadSize(doc.bytes.length, doc.fileName);
     }
 
     final existing = await getActiveRequest(user.uid);
@@ -263,7 +293,7 @@ class VerificationFirestoreService {
         bytes: doc.bytes,
         fileName: doc.fileName,
         documentType: doc.documentType,
-        isDuplicateHash: _isDuplicateHash,
+        isDuplicateHash: (h) => _isDuplicateHash(h, user.uid),
       );
       final hash = _validationService.computeHash(doc.bytes);
       final ext = doc.fileName.split('.').last.toLowerCase();

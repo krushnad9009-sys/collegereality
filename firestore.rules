@@ -1078,10 +1078,21 @@ service cloud.firestore {
       allow update: if isAdmin();
     }
 
+    // Duplicate-document check. A brand-new file's hash doc doesn't exist
+    // (resource == null) and must be readable, or every first upload
+    // failed with permission-denied. Another user's hash stays unreadable:
+    // the client treats that denial as "duplicate" without learning whose
+    // file it was. Re-registering your own hash (resubmission) is an update.
     match /verification_document_hashes/{hashId} {
-      allow read: if isStaff() ||
+      allow get: if isStaff() ||
+        (isAuthenticated() &&
+          (resource == null || resource.data.userId == request.auth.uid));
+      allow list: if isStaff() ||
         (isAuthenticated() && resource.data.userId == request.auth.uid);
       allow create: if isAuthenticated() &&
+        request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated() &&
+        resource.data.userId == request.auth.uid &&
         request.resource.data.userId == request.auth.uid;
     }
 
