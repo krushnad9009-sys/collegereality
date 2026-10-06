@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
 import '../../../core/constants/student_life_constants.dart';
 import '../providers/student_life_provider.dart';
 import '../../../core/navigation/safe_navigation.dart';
+import '../../../core/utils/safe_launch.dart';
 
 class CompetitionsScreen extends ConsumerWidget {
   const CompetitionsScreen({super.key});
@@ -185,7 +185,7 @@ class CompetitionDetailScreen extends ConsumerWidget {
                 Text('Certificates', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
                 ...comp.certificateUrls.map(
                   (url) => TextButton.icon(
-                    onPressed: () => launchUrl(Uri.parse(url)),
+                    onPressed: () => launchSafeWebUrl(url),
                     icon: const Icon(Icons.picture_as_pdf, size: 16),
                     label: const Text('View Certificate'),
                   ),
@@ -217,7 +217,7 @@ class CompetitionDetailScreen extends ConsumerWidget {
                 Text('Videos', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
                 ...comp.videoUrls.map(
                   (url) => TextButton.icon(
-                    onPressed: () => launchUrl(Uri.parse(url)),
+                    onPressed: () => launchSafeWebUrl(url),
                     icon: const Icon(Icons.play_circle_outline, size: 16),
                     label: const Text('Watch Video'),
                   ),

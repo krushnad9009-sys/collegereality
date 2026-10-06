@@ -2,7 +2,6 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../config/theme/app_theme.dart';
 import '../../../core/widgets/index.dart';
@@ -12,6 +11,7 @@ import '../models/careers_models.dart';
 import '../providers/careers_provider.dart';
 import '../utils/resume_scoring_utils.dart';
 import '../../../core/navigation/safe_navigation.dart';
+import '../../../core/utils/safe_launch.dart';
 
 class ResumeHubScreen extends ConsumerWidget {
   const ResumeHubScreen({super.key});
@@ -58,13 +58,13 @@ class ResumeHubScreen extends ConsumerWidget {
                     ),
                     trailing: IconButton(
                       icon: const Icon(Icons.download_outlined),
-                      onPressed: () => launchUrl(Uri.parse(resume.downloadUrl)),
+                      onPressed: () => launchSafeWebUrl(resume.downloadUrl),
                     ),
                   ),
                 ),
                 const SizedBox(height: 12),
                 OutlinedButton.icon(
-                  onPressed: () => launchUrl(Uri.parse(resume.downloadUrl)),
+                  onPressed: () => launchSafeWebUrl(resume.downloadUrl),
                   icon: const Icon(Icons.visibility_outlined),
                   label: const Text('Preview / Download'),
                 ),

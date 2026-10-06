@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
@@ -88,6 +89,12 @@ class FirebaseBootstrap {
       );
     }
 
+    // App Check: attests requests come from this genuine app (not a script
+    // reusing the public Firebase API keys). Fire-and-forget -- startup
+    // must never wait on it. Enforcement is switched on separately in the
+    // Firebase console once metrics show real traffic carrying tokens.
+    if (!kIsWeb) unawaited(_activateAppCheck());
+
     // Persistence is a best-effort offline/session convenience. It must
     // never block app startup or crash it — e.g. another open tab holding
     // the IndexedDB lock, storage blocked in private browsing, or a
@@ -113,5 +120,20 @@ class FirebaseBootstrap {
     }
 
     _configured = true;
+  }
+
+  static Future<void> _activateAppCheck() async {
+    try {
+      await FirebaseAppCheck.instance.activate(
+        // Debug builds print a debug token to the log; register it in the
+        // Firebase console (App Check > Manage debug tokens) to test.
+        androidProvider:
+            kReleaseMode ? AndroidProvider.playIntegrity : AndroidProvider.debug,
+        appleProvider:
+            kReleaseMode ? AppleProvider.deviceCheck : AppleProvider.debug,
+      );
+    } catch (e) {
+      _log('App Check activation failed (continuing without it): $e');
+    }
   }
 }

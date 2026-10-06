@@ -1,8 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../../config/theme/app_design_tokens.dart';
 import '../../../config/theme/app_fonts.dart';
+import '../../../core/utils/safe_launch.dart';
 
 class ReviewMediaGallery extends StatelessWidget {
   final List<String> photoUrls;
@@ -65,10 +65,7 @@ class ReviewMediaGallery extends StatelessWidget {
             (url) => Padding(
               padding: const EdgeInsets.only(bottom: 6),
               child: OutlinedButton.icon(
-                onPressed: () => launchUrl(
-                  Uri.parse(url),
-                  mode: LaunchMode.externalApplication,
-                ),
+                onPressed: () => launchSafeWebUrl(url),
                 icon: const Icon(Icons.play_circle_outline, size: 18),
                 label: const Text('Watch video'),
               ),

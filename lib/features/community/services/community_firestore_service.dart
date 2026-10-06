@@ -433,7 +433,9 @@ class CommunityFirestoreService {
       senderName: resolvePublicDisplayNameFromUser(sender),
       senderPhoto: sender.photoURL,
       messageType: messageType,
-      text: sanitizedText.isNotEmpty ? sanitizedText : text,
+      // Never fall back to the raw input (it may be oversized whitespace
+      // or contain characters the sanitizer strips).
+      text: sanitizedText,
       attachmentUrl: attachmentUrl,
       attachmentName: attachmentName,
       replyToMessageId: replyToMessageId,

@@ -22,8 +22,11 @@ service firebase.storage {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
+    // Raster formats only: `image/.*` also matched image/svg+xml, which can
+    // carry script and be opened from its download URL.
     function isImageContent() {
-      return request.resource.contentType.matches('image/.*');
+      return request.resource.contentType.matches(
+        'image/(jpeg|png|webp|gif|heic|heif)');
     }
 
     function isPdfContent() {
@@ -41,7 +44,9 @@ service firebase.storage {
     match /verification_documents/{userId}/{fileName} {
       allow read: if isAuthenticated() &&
         (isOwner(userId) || isAdmin());
-      allow write: if isOwner(userId) &&
+      // Create-only: every upload gets a unique name, and a document must
+      // not be swappable after the AI/admin reviewed it.
+      allow create: if isOwner(userId) &&
         request.resource.size < 10 * 1024 * 1024 &&
         isImageOrPdf();
     }
@@ -56,7 +61,13 @@ service firebase.storage {
           firestore.get(/databases/(default)/documents/community_conversations/$(conversationId)).data.type != 'private' ||
           request.auth.uid in firestore.get(/databases/(default)/documents/community_conversations/$(conversationId)).data.get('participantIds', [])
         );
+      // Only participants may upload into a conversation's folder.
       allow write: if isOwner(userId) &&
+        firestore.exists(/databases/(default)/documents/community_conversations/$(conversationId)) &&
+        (
+          firestore.get(/databases/(default)/documents/community_conversations/$(conversationId)).data.type != 'private' ||
+          request.auth.uid in firestore.get(/databases/(default)/documents/community_conversations/$(conversationId)).data.get('participantIds', [])
+        ) &&
         request.resource.size < 8 * 1024 * 1024 &&
         isImageOrPdf();
     }

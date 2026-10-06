@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- HTTPS only, on every Android version (cleartext is already off by
+     default from Android 9, but minSdk reaches older devices). Trust only
+     the system CA store -- user-installed certificates (a common MITM
+     setup) are not trusted in release builds. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

@@ -1171,8 +1171,14 @@ service cloud.firestore {
     match /community_messages/{messageId} {
       allow read: if isAuthenticated() &&
         canAccessConversationById(resource.data.conversationId);
+      // Text/name caps mirror sanitizeUserContent (2000) so a modified
+      // client can't store oversized messages.
       allow create: if isAuthenticated() &&
         request.resource.data.senderId == request.auth.uid &&
+        request.resource.data.get('text', '') is string &&
+        request.resource.data.get('text', '').size() <= 2000 &&
+        request.resource.data.get('senderName', '') is string &&
+        request.resource.data.get('senderName', '').size() <= 80 &&
         canAccessConversationById(request.resource.data.conversationId) &&
         messageRateOk(request.resource.data.conversationId, request.auth.uid);
       allow update: if isAdmin() ||
@@ -1673,7 +1679,8 @@ service cloud.firestore {
     }
 
     match /college_accounts/{userId} {
-      allow read: if isAuthenticated();
+      // Holds the official's email: owner or staff only.
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isStaff());
       allow create, update: if isAdmin();
       allow delete: if isAdmin();
     }
@@ -1728,8 +1735,9 @@ service cloud.firestore {
     }
 
     match /admin_settings/{docId} {
-      // Public read so home can show banners/announcements.
-      allow read: if true;
+      // Public read of the home announcement/banner doc only; any other
+      // settings doc added later stays admin-only.
+      allow read: if docId == 'platform' || isAdmin();
       allow write: if isSuperAdmin();
     }
 

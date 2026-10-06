@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../config/router/route_names.dart';
 import '../../../config/theme/app_theme.dart';
@@ -15,6 +14,7 @@ import '../providers/student_life_provider.dart';
 import '../services/firestore_student_life_service.dart';
 import '../utils/student_life_filter_utils.dart';
 import '../../../core/navigation/safe_navigation.dart';
+import '../../../core/utils/safe_launch.dart';
 
 class StudentCommunitiesScreen extends ConsumerWidget {
   const StudentCommunitiesScreen({super.key});
@@ -398,7 +398,7 @@ class _PostCard extends ConsumerWidget {
               const SizedBox(height: 4),
               ...post.pdfUrls.map(
                 (url) => TextButton.icon(
-                  onPressed: () => launchUrl(Uri.parse(url)),
+                  onPressed: () => launchSafeWebUrl(url),
                   icon: const Icon(Icons.picture_as_pdf, size: 16),
                   label: const Text('View PDF'),
                 ),
