@@ -70,7 +70,7 @@ class _AdminCrScoreScreenState extends ConsumerState<AdminCrScoreScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('CR Score Engine'),
+        title: const Text('CK Score Engine'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
           onPressed: () => context.go(RouteNames.admin),
@@ -80,12 +80,12 @@ class _AdminCrScoreScreenState extends ConsumerState<AdminCrScoreScreen> {
         padding: const EdgeInsets.all(20),
         children: [
           Text(
-            'College Reality Score',
+            'College Kundli Score',
             style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 8),
           Text(
-            'Recalculate CR Score from verified review aggregates. '
+            'Recalculate CK Score from verified review aggregates. '
             'Rejected, fake, spam, and hidden reviews are excluded automatically.',
             style: GoogleFonts.poppins(color: AppTheme.gray600, height: 1.45),
           ),
@@ -112,7 +112,7 @@ class _AdminCrScoreScreenState extends ConsumerState<AdminCrScoreScreen> {
           FilledButton.icon(
             onPressed: !canManage || _running ? null : _recalculateAll,
             icon: const Icon(Icons.calculate_outlined),
-            label: const Text('Recalculate All CR Scores'),
+            label: const Text('Recalculate All CK Scores'),
           ),
         ],
       ),

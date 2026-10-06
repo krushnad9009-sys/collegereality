@@ -114,7 +114,7 @@ void main() {
         sample(id: '2', name: 'Beta', overall: 3.8, naacGrade: 'A', nirfRank: 120),
       ]);
       final metrics = result.rows.map((r) => r.metric).toSet();
-      expect(metrics, contains('CR Score'));
+      expect(metrics, contains('CK Score'));
       expect(metrics, contains('Grade'));
       expect(metrics, contains('Confidence Level'));
       expect(metrics, contains('Total Verified Reviews'));
@@ -134,7 +134,7 @@ void main() {
       expect(metrics, contains('NIRF Rank'));
     });
 
-    test('selects overall winner by CR Score', () {
+    test('selects overall winner by CK Score', () {
       final result = service.compare([
         sample(id: '1', name: 'Alpha', overall: 4.8, reviewCount: 200),
         sample(id: '2', name: 'Beta', overall: 3.5, reviewCount: 20),

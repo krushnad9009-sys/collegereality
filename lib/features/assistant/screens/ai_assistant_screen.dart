@@ -350,7 +350,7 @@ class _EmptyState extends StatelessWidget {
                 const SizedBox(height: AppSpacing.md),
                 Text(
                   'Get answers from verified profiles, reviews, student Q&A, '
-                  'and community posts — no guesses, only College Reality data.',
+                  'and community posts — no guesses, only College Kundli data.',
                   style: AppFonts.plusJakarta(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,

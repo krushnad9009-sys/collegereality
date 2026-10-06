@@ -399,7 +399,7 @@ class _CrScoreBadge extends StatelessWidget {
       child: Column(
         children: [
           Text(
-            'CR SCORE',
+            'CK SCORE',
             style: AppFonts.plusJakarta(
               fontSize: 9,
               fontWeight: FontWeight.w800,

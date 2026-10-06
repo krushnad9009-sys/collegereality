@@ -2,7 +2,7 @@ import '../../../core/constants/cr_score_constants.dart';
 import '../../colleges/models/college_model.dart';
 import '../models/cr_score_model.dart';
 
-/// Computes College Reality Score from verified review aggregates only.
+/// Computes College Kundli Score from verified review aggregates only.
 class CrScoreEngine {
   CrScoreEngine._();
 

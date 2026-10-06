@@ -349,9 +349,9 @@ class _HomeCollegeDiscoveryCardState
 
   /// Up to two compact metric chips, in priority order — whichever real
   /// signals actually exist for this college. Never fabricated; a college
-  /// with none of these simply shows the CR Score badge alone.
+  /// with none of these simply shows the CK Score badge alone.
   List<Widget> _metricChips(CollegeModel college, AppDesignTokens tokens) {
-    // Premium: restrained monochrome slate chips (the CR Score badge carries
+    // Premium: restrained monochrome slate chips (the CK Score badge carries
     // the colour). Legacy: green / blue / grey by meaning.
     final flat = tokens.flatSurfaces;
     final placementColor = flat
@@ -486,7 +486,7 @@ class _BookmarkButton extends StatelessWidget {
   }
 }
 
-/// CR Score chip kept available for reuse where a standalone badge (rather
+/// CK Score chip kept available for reuse where a standalone badge (rather
 /// than the inline row above) is a better fit.
 class HomeCrScoreBadge extends StatelessWidget {
   final double score;
@@ -511,7 +511,7 @@ class HomeCrScoreBadge extends StatelessWidget {
           Icon(Icons.star_rounded, size: 12, color: context.tokens.accentWarm),
           const SizedBox(width: 3),
           Text(
-            'CR ${score.toStringAsFixed(0)}',
+            'CK ${score.toStringAsFixed(0)}',
             style: AppFonts.plusJakarta(
               fontSize: 11,
               fontWeight: context.tokens.headingWeight,

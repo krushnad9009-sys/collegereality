@@ -13,7 +13,7 @@
 // Fix: `colleges_seed.json` (the fabricated dataset) is no longer loaded by
 // CollegeBundledDataSource or CollegeSeedService, and the real-named
 // fallback (`prominent_colleges_seed.json`) has its review stats zeroed
-// since College Reality has no verified reviews for those entries either.
+// since College Kundli has no verified reviews for those entries either.
 // This test guards against reintroducing fabricated review data into the
 // bundled/offline path.
 import 'package:college_reality_india/core/data/college_bundled_data_source.dart';

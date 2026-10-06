@@ -235,7 +235,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('HOME SCREEN'), findsNothing);
-    expect(find.text('Welcome to College Reality'), findsOneWidget);
+    expect(find.text('Welcome to College Kundli'), findsOneWidget);
     expect(repo.users['u1']!.hasAcceptedTerms, isFalse);
     expect(permissions.calls, ['photos', 'location', 'notifications']);
 

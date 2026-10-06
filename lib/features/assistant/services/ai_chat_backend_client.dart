@@ -7,7 +7,7 @@ class AiChatBackendResult {
   final bool cached;
 
   /// True when the LLM's reply drew on general educational/career
-  /// knowledge rather than (or in addition to) College Reality's verified
+  /// knowledge rather than (or in addition to) College Kundli's verified
   /// data -- the prompt instructs it to say so inline, this just mirrors
   /// that back as a structured flag for callers that want it.
   final bool isGeneralAdvice;

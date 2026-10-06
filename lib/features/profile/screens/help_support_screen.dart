@@ -61,7 +61,7 @@ class HelpSupportScreen extends ConsumerWidget {
                   subtitle: _supportEmail,
                   onTap: () => _email(
                     context,
-                    subject: 'College Reality — Support request',
+                    subject: 'College Kundli — Support request',
                   ),
                 ),
                 Divider(color: tokens.borderSubtle, height: 1),
@@ -71,7 +71,7 @@ class HelpSupportScreen extends ConsumerWidget {
                   subtitle: 'Tell us what went wrong',
                   onTap: () => _email(
                     context,
-                    subject: 'College Reality — Bug report',
+                    subject: 'College Kundli — Bug report',
                   ),
                 ),
                 Divider(color: tokens.borderSubtle, height: 1),
@@ -80,7 +80,7 @@ class HelpSupportScreen extends ConsumerWidget {
                   title: 'Suggest an improvement',
                   onTap: () => _email(
                     context,
-                    subject: 'College Reality — Feedback',
+                    subject: 'College Kundli — Feedback',
                   ),
                 ),
               ],

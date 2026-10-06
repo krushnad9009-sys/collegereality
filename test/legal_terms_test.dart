@@ -21,7 +21,7 @@ void main() {
 
     test('intro carries date, app name and package', () {
       expect(termsAndConditionsIntro, contains('Last Updated: September 30, 2026'));
-      expect(termsAndConditionsIntro, contains('App Name: College Reality'));
+      expect(termsAndConditionsIntro, contains('App Name: College Kundli'));
       expect(termsAndConditionsIntro,
           contains('Package Name: com.collegereality.india'));
     });

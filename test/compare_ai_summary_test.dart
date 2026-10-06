@@ -66,7 +66,7 @@ void main() {
       expect(summary.bestValueForMoney, isNull);
     });
 
-    test('picks best overall from effective CR score', () {
+    test('picks best overall from effective CK score', () {
       final summary = CompareAiSummaryUtils.build([
         _college(id: 'a', name: 'Alpha', reviewCount: 100, teaching: 3.5),
         _college(id: 'b', name: 'Beta', reviewCount: 100, teaching: 5.0, faculty: 5.0),

@@ -129,7 +129,8 @@ class ValidationUtil {
     for (final reserved in [
       'admin',
       'moderator',
-      'college reality',
+      'college kundli',
+      'college reality', // former brand name
       'anonymous verified student',
       'anonymous verified alumni',
     ]) {

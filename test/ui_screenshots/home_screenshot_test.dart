@@ -63,7 +63,7 @@ void main() {
                         user: mockUser,
                         displayName: 'dk007',
                         subtitle:
-                            'Real reviews & verified CR Scores, personalized for you',
+                            'Real reviews & verified CK Scores, personalized for you',
                         onMenuPressed: () {},
                       ),
                       Padding(
@@ -96,7 +96,7 @@ void main() {
                             const SectionHeader(
                               title: 'More to Explore',
                               subtitle:
-                                  'A few other ways to use College Reality',
+                                  'A few other ways to use College Kundli',
                             ),
                             const HomeMoreSection(),
                           ],

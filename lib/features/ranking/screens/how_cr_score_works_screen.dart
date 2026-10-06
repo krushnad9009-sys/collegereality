@@ -12,7 +12,7 @@ class HowCrScoreWorksScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('How CR Score Works'),
+        title: const Text('How CK Score Works'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
           onPressed: () => context.popOrGo(),
@@ -22,7 +22,7 @@ class HowCrScoreWorksScreen extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         children: [
           Text(
-            'College Reality Score',
+            'College Kundli Score',
             style: GoogleFonts.poppins(
               fontSize: 24,
               fontWeight: FontWeight.w800,
@@ -42,7 +42,7 @@ class HowCrScoreWorksScreen extends StatelessWidget {
             title: 'Verified feedback only',
             body:
                 'Only reviews from verified students and verified alumni of a college are included. '
-                'Rejected, fake, spam, deleted, and reported reviews never affect CR Score.',
+                'Rejected, fake, spam, deleted, and reported reviews never affect CK Score.',
             icon: Icons.verified_user_outlined,
           ),
           _Section(

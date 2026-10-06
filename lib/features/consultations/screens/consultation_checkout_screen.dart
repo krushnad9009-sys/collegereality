@@ -297,7 +297,7 @@ class _ConsultationCheckoutScreenState
                     icon: Icons.phone_iphone_outlined,
                     title: 'Pay on the mobile app',
                     subtitle:
-                        'Secure checkout is available on the College Reality mobile app for now.',
+                        'Secure checkout is available on the College Kundli mobile app for now.',
                   )
                 else
                   PrimaryButton(

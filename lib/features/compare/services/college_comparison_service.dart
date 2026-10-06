@@ -32,10 +32,10 @@ class CollegeComparisonService {
     }
 
     final rows = <ComparisonRow>[
-      _scoreRow('CR Score', 'CR Score', limited, CrScoreEngine.effectiveScore),
+      _scoreRow('CK Score', 'CK Score', limited, CrScoreEngine.effectiveScore),
       _textRow(
         'Grade',
-        'CR Score',
+        'CK Score',
         limited,
         (c) {
           final score = CrScoreEngine.effectiveScore(c);
@@ -44,13 +44,13 @@ class CollegeComparisonService {
       ),
       _textRow(
         'Confidence Level',
-        'CR Score',
+        'CK Score',
         limited,
         (c) => CrScoreConstants.confidenceLabel(c.reviewCount),
       ),
       _textRow(
         'Total Verified Reviews',
-        'CR Score',
+        'CK Score',
         limited,
         (c) => c.reviewCount.toString(),
         higherIsBetter: true,
@@ -358,7 +358,7 @@ class CollegeComparisonService {
           'Missing fields are shown as —.';
     }
     final winner = colleges[winnerIndex];
-    return '${winner.name} is the overall winner based on CR Score '
+    return '${winner.name} is the overall winner based on CK Score '
         '(${CrScoreEngine.effectiveScore(winner).toStringAsFixed(0)}/100, '
         '${winner.reviewCount} verified reviews).';
   }

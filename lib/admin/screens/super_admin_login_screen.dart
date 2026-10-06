@@ -89,7 +89,7 @@ class _SuperAdminLoginScreenState extends ConsumerState<SuperAdminLoginScreen> {
                     Icon(Icons.admin_panel_settings, size: 64, color: Colors.white.withValues(alpha: 0.9)),
                     const SizedBox(height: 24),
                     Text(
-                      'College Reality',
+                      'College Kundli',
                       style: GoogleFonts.inter(
                         fontSize: 36,
                         fontWeight: FontWeight.w800,

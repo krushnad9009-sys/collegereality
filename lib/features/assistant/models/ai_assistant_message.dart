@@ -29,7 +29,7 @@ class AiAssistantMessage {
   final String? resolvedState;
 
   /// True when this reply's text drew on the LLM's general educational/
-  /// career knowledge rather than College Reality's own verified data
+  /// career knowledge rather than College Kundli's own verified data
   /// (the LLM is instructed to say so inline in the text itself; this is
   /// just a structured mirror of that for callers that want it). Always
   /// false for database-only replies, which by construction never

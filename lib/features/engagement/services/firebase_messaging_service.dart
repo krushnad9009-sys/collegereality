@@ -22,7 +22,7 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   final userId = data['userId'] as String?;
   if (userId == null || userId.isEmpty) return;
 
-  final title = message.notification?.title ?? data['title'] as String? ?? 'College Reality';
+  final title = message.notification?.title ?? data['title'] as String? ?? 'College Kundli';
   final body = message.notification?.body ?? data['body'] as String? ?? '';
   final type = data['type'] as String? ?? 'general';
   final category = data['category'] as String? ?? '';

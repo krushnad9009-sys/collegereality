@@ -1,6 +1,6 @@
 'use strict';
 
-// `requestAccountDeletion` — user-initiated erasure of a College Reality
+// `requestAccountDeletion` — user-initiated erasure of a College Kundli
 // account. Callable, auth required, and it deletes the caller's OWN
 // account only (uid comes from the verified ID token, never from the
 // payload).

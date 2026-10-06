@@ -390,7 +390,7 @@ class AiAssistantService {
       return _textReply(
         "I couldn't reach the AI assistant right now. Please try again in a moment -- "
         "or ask about a specific college's fees, placements, hostel, or reviews using "
-        'verified College Reality data.',
+        'verified College Kundli data.',
         mode: mode,
       );
     }

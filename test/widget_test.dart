@@ -21,7 +21,7 @@ void main() {
         GoRoute(
           path: '/',
           builder: (context, state) => const Scaffold(
-            body: Center(child: Text('College Reality')),
+            body: Center(child: Text('College Kundli')),
           ),
         ),
       ],
@@ -38,7 +38,7 @@ void main() {
     await tester.pump();
 
     expect(find.byType(MaterialApp), findsOneWidget);
-    expect(find.text('College Reality'), findsOneWidget);
+    expect(find.text('College Kundli'), findsOneWidget);
   });
 
   test('AppTheme exposes light and dark themes', () {

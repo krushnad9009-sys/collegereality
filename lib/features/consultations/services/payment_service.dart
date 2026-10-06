@@ -91,7 +91,7 @@ class PaymentService {
       'key': order.keyId,
       'amount': order.amountPaise,
       'currency': order.currency,
-      'name': 'College Reality',
+      'name': 'College Kundli',
       'description': description,
       'order_id': order.razorpayOrderId,
       'prefill': {

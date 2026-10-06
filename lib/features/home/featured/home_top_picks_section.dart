@@ -58,7 +58,7 @@ class HomeTopPicksSection extends ConsumerWidget {
                   const SizedBox(height: 3),
                   Text(
                     curated
-                        ? 'Handpicked by the College Reality team'
+                        ? 'Handpicked by the College Kundli team'
                         : 'Top rated right now',
                     style: AppFonts.plusJakarta(
                       fontSize: 13.5,

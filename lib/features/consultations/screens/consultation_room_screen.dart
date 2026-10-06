@@ -307,7 +307,7 @@ class _RatingPrompt extends ConsumerWidget {
       return const AsyncEmptyView(
         icon: Icons.check_circle_outline,
         title: 'Consultation completed',
-        subtitle: 'Thanks for using College Reality.',
+        subtitle: 'Thanks for using College Kundli.',
       );
     }
     final isStudent = uid == consultation.studentId;

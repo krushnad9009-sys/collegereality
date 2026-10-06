@@ -32,7 +32,7 @@ class CompareAiSummaryPanel extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          'Based on verified student feedback and CR Score categories.',
+          'Based on verified student feedback and CK Score categories.',
           style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.gray500),
         ),
         const SizedBox(height: 12),

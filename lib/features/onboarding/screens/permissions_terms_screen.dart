@@ -186,7 +186,7 @@ class _PermissionsTermsScreenState
   }
 
   String get _title {
-    if (_needsTerms && _needsPermissions) return 'Welcome to College Reality';
+    if (_needsTerms && _needsPermissions) return 'Welcome to College Kundli';
     if (_needsTerms) return 'Terms & Conditions';
     return 'Set Up Your Experience';
   }
@@ -198,7 +198,7 @@ class _PermissionsTermsScreenState
     }
     if (_needsTerms) {
       return 'Please read and accept our Terms & Conditions to start using '
-          'College Reality.';
+          'College Kundli.';
     }
     return 'A few optional permissions to get the most out of College '
         'Reality. You can change these later in your device settings.';

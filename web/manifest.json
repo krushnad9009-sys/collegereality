@@ -1,11 +1,11 @@
 {
-    "name": "college_reality_india",
-    "short_name": "college_reality_india",
+    "name": "College Kundli",
+    "short_name": "College Kundli",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#FFFBF7",
     "theme_color": "#6366F1",
-    "description": "A new Flutter project.",
+    "description": "College Kundli — real reviews and verified student guides for Indian colleges.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

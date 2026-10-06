@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../config/theme/app_theme.dart';
 
-/// College Reality Score (CR Score) weights and display thresholds.
+/// College Kundli Score (CK Score) weights and display thresholds.
 class CrScoreConstants {
   CrScoreConstants._();
 

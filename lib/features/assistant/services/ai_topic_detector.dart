@@ -234,6 +234,6 @@ class AiTopicDetector {
   String offTopicMessage() =>
       'I can help with colleges, education, admissions, careers, and student-related '
       'topics — general guidance (e.g. how to choose a college, exam prep, placements) '
-      'as well as verified College Reality data (fees, hostel, placements, reviews) for '
+      'as well as verified College Kundli data (fees, hostel, placements, reviews) for '
       'specific colleges. Try asking me something along those lines!';
 }

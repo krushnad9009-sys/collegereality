@@ -64,9 +64,9 @@ void main() {
 
     // 1) App launch
     await tester.pumpWidget(
-      const MaterialApp(home: Scaffold(body: Text('College Reality'))),
+      const MaterialApp(home: Scaffold(body: Text('College Kundli'))),
     );
-    expect(find.text('College Reality'), findsOneWidget);
+    expect(find.text('College Kundli'), findsOneWidget);
     await _resetTree(tester);
 
     // 2) Onboarding

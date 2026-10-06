@@ -205,8 +205,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                       child: Row(
                         children: [
                           Text(
-                            'College Reality',
-                            style: AppTypography.label('College Reality').copyWith(
+                            'College Kundli',
+                            style: AppTypography.label('College Kundli').copyWith(
                                   color: OnboardingPalette.ink,
                                   fontSize: 12,
                                   letterSpacing: 0.4,

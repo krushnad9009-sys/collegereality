@@ -11,7 +11,7 @@ import '../../../config/theme/app_fonts.dart';
 class HomeCompareSection extends StatelessWidget {
   const HomeCompareSection({super.key});
 
-  static const _dimensions = ['Fees', 'Placements', 'CR Score', 'Student Experience'];
+  static const _dimensions = ['Fees', 'Placements', 'CK Score', 'Student Experience'];
 
   @override
   Widget build(BuildContext context) {

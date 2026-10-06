@@ -6,7 +6,7 @@ import '../../../config/theme/app_fonts.dart';
 /// The hero's greeting block, in white on the royal-blue card:
 ///
 ///   Good afternoon, dk007
-///   Real reviews & verified CR Scores, personalized for you
+///   Real reviews & verified CK Scores, personalized for you
 ///
 /// Signed-out visitors get a short welcome instead of a name (their "Sign in"
 /// button lives in the hero's top bar).

@@ -35,14 +35,14 @@ void main() {
       child: PremiumHomeHeader(
         user: MockUser(uid: 'u1', displayName: 'dk007'),
         displayName: 'dk007',
-        subtitle: 'Real reviews & verified CR Scores, personalized for you',
+        subtitle: 'Real reviews & verified CK Scores, personalized for you',
       ),
     );
 
     // "Good afternoon, dk007" -- greeting and name in ONE text, with the
     // subtitle underneath.
     expect(
-      find.text('Real reviews & verified CR Scores, personalized for you'),
+      find.text('Real reviews & verified CK Scores, personalized for you'),
       findsOneWidget,
     );
     expect(find.textContaining(', dk007'), findsOneWidget);

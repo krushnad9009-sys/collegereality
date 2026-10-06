@@ -26,7 +26,7 @@ class CrScoreBadgeWidget extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
         ),
         child: Text(
-          'No CR Score',
+          'No CK Score',
           style: GoogleFonts.poppins(
             fontSize: fontSize,
             fontWeight: FontWeight.w600,

@@ -39,7 +39,7 @@ class AdminDashboardScreen extends ConsumerWidget {
           padding: const EdgeInsets.all(AppSpacing.xl),
           children: [
             Text(
-              'College Reality Admin',
+              'College Kundli Admin',
               style: AppFonts.plusJakarta(
                 fontSize: 22,
                 fontWeight: FontWeight.w700,
@@ -140,7 +140,7 @@ class AdminDashboardScreen extends ConsumerWidget {
             if (AdminPermissions.canManageColleges(userType))
               _AdminMenuTile(
                 icon: Icons.calculate_outlined,
-                title: 'Recalculate CR Score',
+                title: 'Recalculate CK Score',
                 subtitle: 'Rebuild verified review scores for all colleges',
                 onTap: () => context.go(RouteNames.adminRecalculateCrScore),
               ),

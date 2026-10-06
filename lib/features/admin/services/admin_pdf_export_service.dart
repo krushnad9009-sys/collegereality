@@ -12,7 +12,7 @@ import '../models/admin_models.dart';
 class AdminPdfExportService {
   Future<void> shareDashboardPdf(AdminDashboardStats stats) async {
     final bytes = await _buildSimpleReport(
-      title: 'College Reality - Dashboard KPIs',
+      title: 'College Kundli - Dashboard KPIs',
       rows: [
         ['Metric', 'Value'],
         ['Total Colleges', '${stats.totalColleges}'],
@@ -43,7 +43,7 @@ class AdminPdfExportService {
       ),
     ];
     final bytes = await _buildSimpleReport(
-      title: 'College Reality - Analytics Report',
+      title: 'College Kundli - Analytics Report',
       rows: rows,
     );
     await _share(bytes, 'analytics_report.pdf');
@@ -63,7 +63,7 @@ class AdminPdfExportService {
       ),
     ];
     final bytes = await _buildSimpleReport(
-      title: 'College Reality - Moderation Reports',
+      title: 'College Kundli - Moderation Reports',
       rows: rows,
     );
     await _share(bytes, 'moderation_reports.pdf');
@@ -114,7 +114,7 @@ class AdminPdfExportService {
     await file.writeAsBytes(bytes, flush: true);
     await Share.shareXFiles(
       [XFile(file.path)],
-      text: 'College Reality admin export',
+      text: 'College Kundli admin export',
     );
   }
 }

@@ -17,7 +17,7 @@ double homeContentGutter(BuildContext context) =>
 
 /// The top row of the Home hero, drawn on the royal-blue card:
 ///
-///   [ ☰ ]  College Reality          [ 🔍 ] [ ⚙ ] [ 🔔 ] [ D ]
+///   [ ☰ ]  College Kundli          [ 🔍 ] [ ⚙ ] [ 🔔 ] [ D ]
 ///
 /// Hamburger (opens the navigation drawer), the app title, then Search,
 /// Filter, Notification and Avatar. Signed-out visitors get a "Sign in" pill

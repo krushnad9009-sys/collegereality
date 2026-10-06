@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/cr_score_model.dart';
 
-/// Local cache for frequently viewed CR Score snapshots.
+/// Local cache for frequently viewed CK Score snapshots.
 class CrScoreCacheService {
   CrScoreCacheService(this._prefs);
 

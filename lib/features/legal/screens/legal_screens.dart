@@ -189,7 +189,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
         LegalSection(
           heading: 'Overview',
           body:
-              'College Reality India ("we", "our") respects your privacy. This policy explains how we collect, use, and protect your information when you use our mobile application.',
+              'College Kundli ("we", "our") respects your privacy. This policy explains how we collect, use, and protect your information when you use our mobile application.',
         ),
         LegalSection(
           heading: 'Information We Collect',
@@ -223,10 +223,10 @@ const String termsLastUpdated = 'September 30, 2026';
 /// Lead-in shown above [termsOfServiceSections].
 const String termsAndConditionsIntro =
     'Last Updated: $termsLastUpdated\n'
-    'App Name: College Reality\n'
+    'App Name: College Kundli\n'
     'Package Name: com.collegereality.india\n\n'
     'Please read these Terms and Conditions ("Terms") carefully before using '
-    'the College Reality mobile application and platform operated by us. By '
+    'the College Kundli mobile application and platform operated by us. By '
     'accessing or using the Service, you agree to be bound by these Terms.';
 
 /// Where Terms questions go (tappable at the end of the Terms screen).
@@ -238,11 +238,11 @@ const List<LegalSection> termsOfServiceSections = [
   LegalSection(
     heading: '1. Nature of Platform & Services',
     bullets: [
-      'Peer-to-Peer Consultation: College Reality is a communication platform '
+      'Peer-to-Peer Consultation: College Kundli is a communication platform '
           'that connects students/prospective students ("Users") with verified '
           'college seniors or alumni ("Guides") for guidance through voice '
           'calls, chat, and shared insights.',
-      'No Official Affiliation: College Reality is an independent platform and '
+      'No Official Affiliation: College Kundli is an independent platform and '
           'is not affiliated, endorsed, or associated with any university, '
           'government educational board, or admission counseling body.',
     ],
@@ -304,7 +304,7 @@ const List<LegalSection> termsOfServiceSections = [
   ),
   LegalSection(
     heading: '5. Code of Conduct & Prohibited Uses',
-    body: 'When using College Reality, users and guides strictly agree NOT to:',
+    body: 'When using College Kundli, users and guides strictly agree NOT to:',
     numbered: true,
     bullets: [
       'Use abusive, profane, harassing, discriminatory, or sexually explicit '
@@ -325,20 +325,20 @@ const List<LegalSection> termsOfServiceSections = [
     heading: '6. Disclaimer of Warranties & Limitation of Liability',
     bullets: [
       'Informational Purpose: Opinions, advice, and reviews provided by Guides '
-          'are their personal views and experiences. College Reality does not '
+          'are their personal views and experiences. College Kundli does not '
           'guarantee admission, academic success, or job placement based on '
           'Guide advice.',
       'Independent Verification: Users are strongly advised to independently '
           'verify critical admission deadlines, fee structures, and course '
           'details via official university websites.',
-      'Service Interruptions: College Reality is not liable for temporary '
+      'Service Interruptions: College Kundli is not liable for temporary '
           'service interruptions, call drops, or network failures caused by '
           'third-party infrastructure.',
     ],
   ),
   LegalSection(
     heading: '7. Intellectual Property',
-    body: 'All rights, title, and interest in and to the College Reality '
+    body: 'All rights, title, and interest in and to the College Kundli '
         'platform—including app design, branding, code, database schemas, and '
         'features—are and will remain the exclusive property of College '
         'Reality.',

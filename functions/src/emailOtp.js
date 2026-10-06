@@ -50,7 +50,7 @@ function otpEmailHtml(code) {
     <div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:480px;margin:0 auto;padding:24px">
       <h2 style="margin:0 0 8px;color:#0f172a">Verify your email</h2>
       <p style="margin:0 0 20px;color:#475569;font-size:14px;line-height:1.5">
-        Enter this code in College Reality to verify your email address. It
+        Enter this code in College Kundli to verify your email address. It
         expires in 10 minutes.
       </p>
       <div style="font-size:32px;font-weight:700;letter-spacing:8px;color:#0f172a;background:#f1f5f9;border-radius:12px;padding:16px;text-align:center">
@@ -81,9 +81,9 @@ async function sendOtpEmail(toEmail, code) {
       body: JSON.stringify({
         from: RESEND_FROM.value(),
         to: [toEmail],
-        subject: 'Your College Reality verification code',
+        subject: 'Your College Kundli verification code',
         html: otpEmailHtml(code),
-        text: `Your College Reality verification code is ${code}. It expires in 10 minutes.`,
+        text: `Your College Kundli verification code is ${code}. It expires in 10 minutes.`,
       }),
     });
   } catch (err) {

@@ -103,7 +103,7 @@ class BrandedCampusFallback extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  initials.isNotEmpty ? initials : 'College Reality',
+                  initials.isNotEmpty ? initials : 'College Kundli',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: initials.isNotEmpty ? 20 : 13,
                     fontWeight: FontWeight.w800,

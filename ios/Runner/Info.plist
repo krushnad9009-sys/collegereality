@@ -16,7 +16,7 @@
 		<key>CFBundleDevelopmentRegion</key>
 		<string>$(DEVELOPMENT_LANGUAGE)</string>
 		<key>CFBundleDisplayName</key>
-		<string>College Reality India</string>
+		<string>College Kundli</string>
 		<key>CFBundleExecutable</key>
 		<string>$(EXECUTABLE_NAME)</string>
 		<key>CFBundleIdentifier</key>
@@ -36,9 +36,9 @@
 		<key>LSRequiresIPhoneOS</key>
 		<true/>
 		<key>NSLocationWhenInUseUsageDescription</key>
-		<string>College Reality uses your location to detect your state and city so we can show you localized college content.</string>
+		<string>College Kundli uses your location to detect your state and city so we can show you localized college content.</string>
 		<key>NSPhotoLibraryUsageDescription</key>
-		<string>College Reality needs access to your photos so you can upload a profile picture, college photos, or documents.</string>
+		<string>College Kundli needs access to your photos so you can upload a profile picture, college photos, or documents.</string>
 		<key>UIApplicationSceneManifest</key>
 		<dict>
 			<key>UIApplicationSupportsMultipleScenes</key>
@@ -66,7 +66,7 @@
 		     the SDK crashes at launch if this key is missing. -->
 		<string>ca-app-pub-3940256099942544~1458002511</string>
 		<key>NSMicrophoneUsageDescription</key>
-		<string>College Reality uses the microphone for voice calls with guides.</string>
+		<string>College Kundli uses the microphone for voice calls with guides.</string>
 		<key>UIBackgroundModes</key>
 		<array>
 			<string>audio</string>

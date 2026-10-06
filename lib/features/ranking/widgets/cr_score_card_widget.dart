@@ -55,7 +55,7 @@ class CrScoreCardWidget extends StatelessWidget {
             Row(
               children: [
                 Text(
-                  'CR Score',
+                  'CK Score',
                   style: GoogleFonts.poppins(
                     fontSize: compact ? 16 : 18,
                     fontWeight: FontWeight.w700,

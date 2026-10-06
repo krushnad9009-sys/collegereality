@@ -103,7 +103,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         'Student';
 
     final headerSubtitle = currentUser != null
-        ? 'Real reviews & verified CR Scores, personalized for you'
+        ? 'Real reviews & verified CK Scores, personalized for you'
         : 'Find the right college with real student information';
 
     // The screen is one confident block of royal blue (the hero header, with
@@ -262,7 +262,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                         child: const SectionHeader(
                                           title: 'More to Explore',
                                           subtitle:
-                                              'A few other ways to use College Reality',
+                                              'A few other ways to use College Kundli',
                                         ),
                                       ),
                                       FadeInSection(

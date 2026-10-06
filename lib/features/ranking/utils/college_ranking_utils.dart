@@ -4,7 +4,7 @@ import '../../../core/utils/indian_currency_formatter.dart';
 import '../models/ranking_models.dart';
 import 'cr_score_engine.dart';
 
-/// Computes normalized CR Score (0–100) from verified review aggregates.
+/// Computes normalized CK Score (0–100) from verified review aggregates.
 double computeOverallScore100(CollegeModel college) {
   return CrScoreEngine.effectiveScore(college);
 }

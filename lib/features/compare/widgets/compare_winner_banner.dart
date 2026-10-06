@@ -72,7 +72,7 @@ class CompareWinnerBanner extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    'Best CR Score among compared colleges',
+                    'Best CK Score among compared colleges',
                     style: GoogleFonts.poppins(
                       fontSize: 12,
                       color: AppTheme.gray600,

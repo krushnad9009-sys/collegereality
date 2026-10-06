@@ -42,7 +42,7 @@ firebase functions:secrets:set RESEND_API_KEY
   email-OTP verification functions (`requestEmailOtp` / `verifyEmailOtp`,
   `src/emailOtp.js`) to send the 6-digit code. Also set the sender address
   as a **non-secret** deploy param — either export it before deploy
-  (`RESEND_FROM="College Reality <verify@yourdomain>"`) or accept the
+  (`RESEND_FROM="College Kundli <verify@yourdomain>"`) or accept the
   prompt; it must be an address on a domain you've verified in Resend
   (`onboarding@resend.dev` works only for test sends to your own account).
 

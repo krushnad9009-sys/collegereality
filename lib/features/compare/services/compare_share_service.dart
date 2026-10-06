@@ -13,7 +13,7 @@ import '../models/college_comparison_result.dart';
 
 class CompareShareService {
   Future<void> shareLink(String link) async {
-    await Share.share(link, subject: 'College Reality Comparison');
+    await Share.share(link, subject: 'College Kundli Comparison');
   }
 
   Future<void> shareImage(GlobalKey repaintKey, {String? fileName}) async {
@@ -59,7 +59,7 @@ class CompareShareService {
             pw.Header(
               level: 0,
               child: pw.Text(
-                'College Reality Comparison',
+                'College Kundli Comparison',
                 style: pw.TextStyle(
                   fontSize: 20,
                   fontWeight: pw.FontWeight.bold,

@@ -251,7 +251,7 @@ class _TrendingCardState extends State<_TrendingCard> {
                             ),
                             const SizedBox(width: 2),
                             Text(
-                              'CR ${crScore.toStringAsFixed(0)}',
+                              'CK ${crScore.toStringAsFixed(0)}',
                               style: AppFonts.plusJakarta(
                                 fontSize: 10.5,
                                 fontWeight: tokens.headingWeight,

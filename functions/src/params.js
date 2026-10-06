@@ -14,10 +14,10 @@ const GEMINI_API_KEY = defineSecret('GEMINI_API_KEY');
 
 // Email OTP (see src/emailOtp.js). RESEND_API_KEY is a Secret Manager
 // secret; RESEND_FROM is a plain deploy-time value (a verified sender
-// address on your Resend account, e.g. "College Reality <verify@yourdomain>").
+// address on your Resend account, e.g. "College Kundli <verify@yourdomain>").
 const RESEND_API_KEY = defineSecret('RESEND_API_KEY');
 const RESEND_FROM = defineString('RESEND_FROM', {
-  default: 'College Reality <onboarding@resend.dev>',
+  default: 'College Kundli <onboarding@resend.dev>',
 });
 
 module.exports = {

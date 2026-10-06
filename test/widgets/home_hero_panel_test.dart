@@ -22,7 +22,7 @@ final _signedIn = MockUser(
   displayName: 'dk007',
 );
 
-const _subtitle = 'Real reviews & verified CR Scores, personalized for you';
+const _subtitle = 'Real reviews & verified CK Scores, personalized for you';
 
 Future<void> _pumpHero(
   WidgetTester tester, {
@@ -216,7 +216,7 @@ void main() {
 
       final xs = <double>[
         tester.getCenter(find.byTooltip('Open navigation menu')).dx,
-        tester.getCenter(find.text('College Reality')).dx,
+        tester.getCenter(find.text('College Kundli')).dx,
         tester.getCenter(find.byTooltip('Search colleges')).dx,
         tester.getCenter(find.byTooltip('Filters')).dx,
         tester.getCenter(find.byIcon(Icons.notifications_outlined)).dx,
@@ -236,7 +236,7 @@ void main() {
       // All on one row.
       final ys = <double>[
         tester.getCenter(find.byTooltip('Open navigation menu')).dy,
-        tester.getCenter(find.text('College Reality')).dy,
+        tester.getCenter(find.text('College Kundli')).dy,
         tester.getCenter(find.byTooltip('Filters')).dy,
         tester.getCenter(find.byIcon(Icons.notifications_outlined)).dy,
       ];
@@ -258,7 +258,7 @@ void main() {
         expect(whites, isNotEmpty, reason: '$icon');
       }
       expect(
-        tester.widget<Text>(find.text('College Reality')).style?.color,
+        tester.widget<Text>(find.text('College Kundli')).style?.color,
         Colors.white,
       );
     });
@@ -325,7 +325,7 @@ void main() {
       await _pumpHero(tester, width: 900, user: null);
 
       expect(find.byTooltip('Open navigation menu'), findsOneWidget);
-      expect(find.text('College Reality'), findsOneWidget);
+      expect(find.text('College Kundli'), findsOneWidget);
       expect(find.byTooltip('Search colleges'), findsOneWidget);
       expect(find.byTooltip('Filters'), findsOneWidget);
       expect(find.text('Sign in'), findsOneWidget);
@@ -336,7 +336,7 @@ void main() {
     testWidgets('fits a very narrow phone without overflowing', (tester) async {
       await _pumpHero(tester, width: 320, user: _signedIn);
       expect(tester.takeException(), isNull);
-      expect(find.text('College Reality'), findsOneWidget);
+      expect(find.text('College Kundli'), findsOneWidget);
     });
   });
 }

@@ -5,7 +5,7 @@ import '../../../core/constants/firestore_constants.dart';
 import '../../reviews/models/review_model.dart';
 import '../../reviews/services/firestore_review_service.dart';
 
-/// Admin and batch CR Score recalculation.
+/// Admin and batch CK Score recalculation.
 class CrScoreService {
   CrScoreService({
     FirebaseFirestore? firestore,

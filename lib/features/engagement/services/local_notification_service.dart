@@ -83,7 +83,7 @@ class LocalNotificationService {
     const details = NotificationDetails(
       android: AndroidNotificationDetails(
         'college_reality_alerts',
-        'College Reality Alerts',
+        'College Kundli Alerts',
         channelDescription: 'Notifications for answers, chat, and updates',
         importance: Importance.high,
         priority: Priority.high,

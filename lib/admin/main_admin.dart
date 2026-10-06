@@ -14,7 +14,7 @@ const superAdminPanelConfig = SuperAdminPanelConfig(
   loginRoute: SuperAdminRouteNames.login,
   collegesRoute: SuperAdminRouteNames.colleges,
   collegeNewRoute: SuperAdminRouteNames.collegeNew,
-  brandTitle: 'College Reality',
+  brandTitle: 'College Kundli',
   brandSubtitle: 'Super Admin Panel',
   navItems: [
     SuperAdminNavItem(
@@ -146,7 +146,7 @@ class SuperAdminWebApp extends ConsumerWidget {
 
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
-      title: 'College Reality — Super Admin',
+      title: 'College Kundli — Super Admin',
       theme: SuperAdminTheme.lightTheme,
       routerConfig: router,
     );

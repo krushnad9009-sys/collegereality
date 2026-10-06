@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Read-only production database audit for College Reality. Does not modify data."""
+"""Read-only production database audit for College Kundli. Does not modify data."""
 from __future__ import annotations
 
 import json

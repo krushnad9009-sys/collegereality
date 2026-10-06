@@ -203,7 +203,7 @@ class _Sidebar extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  panel?.brandTitle ?? 'College Reality',
+                  panel?.brandTitle ?? 'College Kundli',
                   style: isPanel
                       ? GoogleFonts.inter(fontWeight: FontWeight.w800, fontSize: 16, color: Colors.white)
                       : AppFonts.plusJakarta(fontWeight: FontWeight.w800, fontSize: 16, color: primary),

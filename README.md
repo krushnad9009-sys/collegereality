@@ -1,4 +1,4 @@
-# 🎓 College Reality
+# 🎓 College Kundli
 
 > **Know the Reality Before You Take Admission**
 
@@ -300,7 +300,7 @@ flutter build web --release
 
 ## 📝 License
 
-Proprietary and Confidential - College Reality Platform
+Proprietary and Confidential - College Kundli Platform
 
 ---
 

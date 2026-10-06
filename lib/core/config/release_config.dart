@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 class ReleaseConfig {
   ReleaseConfig._();
 
-  static const String appName = 'College Reality';
+  static const String appName = 'College Kundli';
   static const String packageId = 'com.collegereality.india';
   static const String version = '1.0.0';
   static const int buildNumber = 1;

@@ -68,7 +68,7 @@ void main() {
       );
       expect(answer.text, isNotEmpty, reason: topic.name);
       expect(answer.sources, isNotEmpty, reason: topic.name);
-      expect(answer.text, contains('College Reality'));
+      expect(answer.text, contains('College Kundli'));
     }
   });
 

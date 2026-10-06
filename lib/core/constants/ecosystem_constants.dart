@@ -1,4 +1,4 @@
-/// College Reality ecosystem workflows — requests, edits, claims, official content.
+/// College Kundli ecosystem workflows — requests, edits, claims, official content.
 class EcosystemConstants {
   EcosystemConstants._();
 

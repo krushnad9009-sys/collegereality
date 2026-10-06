@@ -1,4 +1,4 @@
-# College Reality — Super Admin Web Panel
+# College Kundli — Super Admin Web Panel
 
 Separate Flutter Web entry point for super administrators only.
 

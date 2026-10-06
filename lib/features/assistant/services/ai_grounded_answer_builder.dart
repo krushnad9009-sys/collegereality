@@ -16,7 +16,7 @@ class AiGroundedAnswer {
   const AiGroundedAnswer({required this.text, this.sources = const []});
 }
 
-/// Builds answers strictly from College Reality data — no LLM, no guessing.
+/// Builds answers strictly from College Kundli data — no LLM, no guessing.
 class AiGroundedAnswerBuilder {
   AiGroundedAnswer build({
     required AiCollegeDataBundle bundle,
@@ -59,7 +59,7 @@ class AiGroundedAnswerBuilder {
     }
 
     lines.add(
-      '\nAll facts above are from College Reality profiles, verified reviews, '
+      '\nAll facts above are from College Kundli profiles, verified reviews, '
       'student answers, or community posts — nothing is estimated or generated.',
     );
 

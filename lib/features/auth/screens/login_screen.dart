@@ -186,8 +186,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                           const SizedBox(height: AppSpacing.xl),
                           Text(
-                            'College Reality',
-                            style: AppTypography.label('College Reality').copyWith(
+                            'College Kundli',
+                            style: AppTypography.label('College Kundli').copyWith(
                               color: AppTheme.primaryColor,
                               fontSize: 12,
                               letterSpacing: 0.8,
@@ -205,9 +205,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                           const SizedBox(height: AppSpacing.sm),
                           Text(
-                            'Sign in to continue to College Reality',
+                            'Sign in to continue to College Kundli',
                             style: AppTypography.body(
-                              'Sign in to continue to College Reality',
+                              'Sign in to continue to College Kundli',
                             ).copyWith(color: tokens.textSecondary),
                             textAlign: TextAlign.center,
                           ),

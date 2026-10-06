@@ -14,7 +14,7 @@ class AppDesignTokens extends ThemeExtension<AppDesignTokens> {
   final Color shimmerHighlight;
 
   /// A single warm accent, deliberately distinct from the cool teal
-  /// primary — reserved for CR Score badges and other "this is a real
+  /// primary — reserved for CK Score badges and other "this is a real
   /// signal, look here" highlights so it stays meaningful instead of
   /// being diluted across the page.
   final Color accentWarm;

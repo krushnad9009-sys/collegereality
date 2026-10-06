@@ -86,12 +86,12 @@ class _SecurityBlockScreenState extends ConsumerState<SecurityBlockScreen> {
     final String message;
     if (rooted && !(status?.isDeveloperModeEnabled ?? false)) {
       message = 'Security Restriction: This device appears to be rooted or '
-          'jailbroken. College Reality cannot run on a modified device to '
+          'jailbroken. College Kundli cannot run on a modified device to '
           'protect your account and data.';
     } else {
       message = 'Security Restriction: Developer Mode / USB Debugging is '
           'turned ON. Please disable Developer Options in your Android '
-          'settings to continue using College Reality.';
+          'settings to continue using College Kundli.';
     }
 
     return PopScope(
