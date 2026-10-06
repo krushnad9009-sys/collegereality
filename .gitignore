@@ -89,3 +89,6 @@ tool/security-rules-tests/firestore-debug.log
 tool/security-rules-tests/ui-debug.log
 tool/security-rules-tests/debug_*.mjs
 
+
+# Firebase CLI deploy cache
+.firebase/

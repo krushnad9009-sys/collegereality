@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  College Kundli app icon (512x512 launcher tile).
+  Bold geometric "K" wearing a graduation cap; its upper arm ends in an
+  emerald planet node with an orbit ring, over a faint orbit + stars
+  (the Kundli / cosmic chart accent). Deep indigo -> electric blue tile.
+  Flutter-safe subset (no filters, masks or CSS) for flutter_svg.
+  Full lockup with wordmark: logo.svg.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <title>College Kundli</title>
+  <defs>
+    <linearGradient id="ckTile" gradientUnits="userSpaceOnUse" x1="40" y1="24" x2="472" y2="488">
+      <stop offset="0" stop-color="#1E1B4B"/>
+      <stop offset="0.55" stop-color="#3730A3"/>
+      <stop offset="1" stop-color="#2563EB"/>
+    </linearGradient>
+    <radialGradient id="ckGlow" gradientUnits="userSpaceOnUse" cx="400" cy="140" r="230">
+      <stop offset="0" stop-color="#10B981" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#10B981" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ckSheen" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="300">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.14"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="ckGlyph" gradientUnits="userSpaceOnUse" x1="0" y1="120" x2="0" y2="400">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#DBEAFE"/>
+    </linearGradient>
+    <radialGradient id="ckPlanet" gradientUnits="userSpaceOnUse" cx="344" cy="138" r="34">
+      <stop offset="0" stop-color="#6EE7B7"/>
+      <stop offset="1" stop-color="#059669"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Tile -->
+  <rect width="512" height="512" rx="116" fill="url(#ckTile)"/>
+  <rect width="512" height="512" rx="116" fill="url(#ckGlow)"/>
+  <rect width="512" height="512" rx="116" fill="url(#ckSheen)"/>
+
+  <!-- Cosmic accent: faint orbit + stars -->
+  <ellipse cx="256" cy="268" rx="206" ry="74" transform="rotate(-24 256 268)"
+           fill="none" stroke="#FFFFFF" stroke-opacity="0.13" stroke-width="4"/>
+  <g fill="#FFFFFF">
+    <circle cx="96" cy="118" r="5" fill-opacity="0.55"/>
+    <circle cx="132" cy="402" r="4" fill-opacity="0.4"/>
+    <circle cx="426" cy="300" r="4" fill-opacity="0.45"/>
+    <circle cx="404" cy="420" r="6" fill-opacity="0.3"/>
+    <circle cx="70" cy="300" r="3" fill-opacity="0.4"/>
+  </g>
+
+  <!-- Glyph (K + cap + planet node), optically centred -->
+  <g transform="translate(14 8)">
+    <!-- K: stem, upper arm (to the planet), lower leg -->
+    <g fill="none" stroke="url(#ckGlyph)" stroke-width="50" stroke-linecap="round">
+      <line x1="178" y1="176" x2="178" y2="372"/>
+      <line x1="200" y1="282" x2="316" y2="166"/>
+      <line x1="232" y1="276" x2="330" y2="372"/>
+    </g>
+
+    <!-- Graduation cap on the stem -->
+    <path d="M140 150 L140 170 C140 184 158 192 178 192 C198 192 216 184 216 170 L216 150 Z"
+          fill="#C7D2FE"/>
+    <path d="M178 96 L256 128 L178 160 L100 128 Z" fill="#FFFFFF"
+          stroke="#FFFFFF" stroke-width="8" stroke-linejoin="round"/>
+    <path d="M178 128 L238 140 L238 176" fill="none" stroke="#34D399"
+          stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="238" cy="182" r="9" fill="#34D399"/>
+
+    <!-- Planet node + its orbit ring -->
+    <circle cx="330" cy="152" r="52" fill="none" stroke="#6EE7B7"
+            stroke-opacity="0.55" stroke-width="5"/>
+    <circle cx="330" cy="152" r="32" fill="url(#ckPlanet)"/>
+    <circle cx="320" cy="142" r="9" fill="#FFFFFF" fill-opacity="0.7"/>
+  </g>
+</svg>

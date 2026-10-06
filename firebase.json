@@ -26,6 +26,41 @@
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
   },
+  "hosting": {
+    "predeploy": [
+      "python tools/check_hosting_placeholders.py"
+    ],
+    "public": "hosting/public",
+    "cleanUrls": true,
+    "trailingSlash": false,
+    "ignore": [
+      "**/.*"
+    ],
+    "headers": [
+      {
+        "source": "**/*.@(css|svg|png)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=86400"
+          }
+        ]
+      },
+      {
+        "source": "**",
+        "headers": [
+          {
+            "key": "X-Content-Type-Options",
+            "value": "nosniff"
+          },
+          {
+            "key": "Referrer-Policy",
+            "value": "strict-origin-when-cross-origin"
+          }
+        ]
+      }
+    ]
+  },
   "storage": {
     "rules": "storage.rules"
   },
