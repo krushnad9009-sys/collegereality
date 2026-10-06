@@ -273,7 +273,7 @@ const List<LegalSection> termsOfServiceSections = [
           'enrollment or graduation (e.g., Student ID Card, Fee Receipt, '
           'Marksheet, or Degree).',
       'Document Privacy: Uploaded proof documents are strictly used by College '
-          'Reality administrators for identity verification and will NEVER be '
+          'Kundli administrators for identity verification and will NEVER be '
           'displayed publicly to other users.',
       'Zero-Tolerance for Fraud: Uploading fake, altered, or misleading '
           'documents will lead to immediate account termination and a '
@@ -315,7 +315,7 @@ const List<LegalSection> termsOfServiceSections = [
       'Attempt or process off-platform transactions.',
       'Record, stream, screenshot, or distribute audio calls or private chat '
           'logs without explicit written consent from all parties and College '
-          'Reality.',
+          'Kundli.',
       'Post defamatory, false, or malicious college reviews.',
     ],
     footer: 'Violation of these conduct rules will result in immediate '
@@ -341,7 +341,7 @@ const List<LegalSection> termsOfServiceSections = [
     body: 'All rights, title, and interest in and to the College Kundli '
         'platform—including app design, branding, code, database schemas, and '
         'features—are and will remain the exclusive property of College '
-        'Reality.',
+        'Kundli.',
   ),
   LegalSection(
     heading: '8. Governing Law & Jurisdiction',

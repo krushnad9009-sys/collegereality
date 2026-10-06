@@ -201,7 +201,7 @@ class _PermissionsTermsScreenState
           'College Kundli.';
     }
     return 'A few optional permissions to get the most out of College '
-        'Reality. You can change these later in your device settings.';
+        'Kundli. You can change these later in your device settings.';
   }
 
   String get _buttonLabel {
