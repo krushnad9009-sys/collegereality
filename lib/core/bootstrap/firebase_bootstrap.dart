@@ -93,7 +93,9 @@ class FirebaseBootstrap {
     // reusing the public Firebase API keys). Fire-and-forget -- startup
     // must never wait on it. Enforcement is switched on separately in the
     // Firebase console once metrics show real traffic carrying tokens.
-    if (!kIsWeb) unawaited(_activateAppCheck());
+    if (!kIsWeb || _recaptchaSiteKey.isNotEmpty) {
+      unawaited(_activateAppCheck());
+    }
 
     // Persistence is a best-effort offline/session convenience. It must
     // never block app startup or crash it — e.g. another open tab holding
@@ -122,9 +124,18 @@ class FirebaseBootstrap {
     _configured = true;
   }
 
+  /// reCAPTCHA v3 site key for App Check on web (Flutter web app + Super
+  /// Admin panel): `--dart-define=APP_CHECK_RECAPTCHA_SITE_KEY=...`. Empty
+  /// = App Check stays off on web (never blocks a web build without a key).
+  static const _recaptchaSiteKey =
+      String.fromEnvironment('APP_CHECK_RECAPTCHA_SITE_KEY');
+
   static Future<void> _activateAppCheck() async {
     try {
       await FirebaseAppCheck.instance.activate(
+        webProvider: _recaptchaSiteKey.isEmpty
+            ? null
+            : ReCaptchaV3Provider(_recaptchaSiteKey),
         // Debug builds print a debug token to the log; register it in the
         // Firebase console (App Check > Manage debug tokens) to test.
         androidProvider:

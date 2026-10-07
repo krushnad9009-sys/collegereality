@@ -151,6 +151,19 @@ service cloud.firestore {
     }
 
     // Owners may update profile fields but cannot self-elevate roles/verification.
+    // Mirrors AdminPermissions.assignableRoles: only a super_admin may
+    // grant or revoke admin / super_admin (or company); a regular admin can
+    // only move users between student and moderator. Without this an admin
+    // could make themselves super_admin with one direct write.
+    function adminRoleChangeAllowed() {
+      let oldType = resource.data.get('userType', 'student');
+      let newType = request.resource.data.get('userType', 'student');
+      return oldType == newType ||
+        isSuperAdmin() ||
+        (oldType in ['student', 'moderator'] &&
+          newType in ['student', 'moderator']);
+    }
+
     function ownerCannotElevatePrivileges() {
       return request.resource.data.userType == resource.data.userType &&
         request.resource.data.get('verificationBadge', 'none') ==
@@ -624,7 +637,7 @@ service cloud.firestore {
       allow read: if isAuthenticated() && canReadUserProfile(userId);
       allow create: if isSafeUserCreate(userId);
       allow update: if exists(/databases/$(database)/documents/users/$(userId)) && (
-        isAdmin() ||
+        (isAdmin() && adminRoleChangeAllowed()) ||
         (isOwner(userId) && isGuideStatsLastActiveUpdate()) ||
         (isAuthenticated() &&
           request.auth.uid != userId &&
