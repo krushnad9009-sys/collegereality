@@ -2,7 +2,7 @@ name: college_reality_india
 description: "India's Best College Review Platform - Know the Reality Before You Take Admission."
 publish_to: 'none'
 
-version: 1.0.0+2
+version: 1.0.0+3
 
 environment:
   sdk: ^3.12.2

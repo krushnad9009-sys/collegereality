@@ -39,8 +39,12 @@ class AdConfig {
   static const _testRewardedAndroid = 'ca-app-pub-3940256099942544/5224354917';
   static const _testRewardedIos = 'ca-app-pub-3940256099942544/1712485313';
 
+  // Production Android banner unit (College Kundli AdMob account). Still
+  // only used in release builds, and only while the Super Admin "Manage
+  // Advertisements" switch enables banners; a remote ID set there wins.
   static const _prodBannerAndroid = String.fromEnvironment(
     'ADMOB_BANNER_ANDROID',
+    defaultValue: 'ca-app-pub-3434990208974544/5867984873',
   );
   static const _prodBannerIos = String.fromEnvironment('ADMOB_BANNER_IOS');
   static const _prodInterstitialAndroid = String.fromEnvironment(
