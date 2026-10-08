@@ -1,9 +1,15 @@
-"""Local preview of hosting/public with Firebase-style clean URLs (/terms -> terms.html)."""
+"""Local preview with Firebase-style clean URLs (/terms -> terms.html).
+
+Usage: python tools/serve_hosting.py [port] [dir]  (dir defaults to hosting/public;
+use build/web to preview the full deploy after tools/build_web_hosting.py).
+"""
 import http.server
 import os
 import sys
 
 ROOT = os.path.join(os.path.dirname(__file__), '..', 'hosting', 'public')
+if len(sys.argv) > 2:
+    ROOT = os.path.abspath(sys.argv[2])
 
 
 class CleanUrlHandler(http.server.SimpleHTTPRequestHandler):

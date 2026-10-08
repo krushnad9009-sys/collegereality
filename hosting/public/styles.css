@@ -1,4 +1,4 @@
-/* College Kundli website: landing page + policy pages (static, no JS). */
+/* College Kundli website: landing page + policy pages. The Flutter web app is served at /app/. */
 :root {
   --ink: #0F172A;
   --ink-2: #334155;
@@ -210,6 +210,34 @@ section.block .lead { color: #475569; font-size: 17px; margin: 0 0 32px; max-wid
 @media (max-width: 1023px) { .features { grid-template-columns: 1fr; max-width: 640px; margin: 0 auto; } }
 
 .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+
+/* Search preview */
+.search-band { background: linear-gradient(180deg, var(--bg) 0%, var(--indigo-soft) 100%); }
+.search-box {
+  display: flex; align-items: center; gap: 12px; max-width: 720px; margin: 0 auto;
+  background: var(--card); border: 1px solid var(--line); border-radius: 999px;
+  padding: 8px 8px 8px 22px; box-shadow: 0 16px 40px rgba(79, 70, 229, 0.12); color: var(--faint);
+}
+.search-box:focus-within { border-color: rgba(79, 70, 229, 0.5); }
+.search-box input {
+  flex: 1; min-width: 0; border: 0; outline: 0; background: transparent;
+  font: 500 16px/1.4 "Inter", "Segoe UI", Roboto, Arial, sans-serif; color: var(--ink); padding: 10px 0;
+}
+.search-box input::placeholder { color: var(--faint); }
+.chip-groups { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; max-width: 900px; margin: 40px auto 0; }
+.chip-label { margin: 0 0 12px; font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; }
+.chips { display: flex; flex-wrap: wrap; gap: 10px; }
+.chip {
+  padding: 9px 16px; border-radius: 999px; background: var(--card); border: 1px solid var(--line);
+  color: var(--ink-2); font-weight: 600; font-size: 14px; transition: border-color 0.15s, color 0.15s, transform 0.15s;
+}
+.chip:hover { text-decoration: none; color: var(--indigo); border-color: rgba(79, 70, 229, 0.4); transform: translateY(-1px); }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+@media (max-width: 639px) {
+  .search-box { padding-left: 16px; }
+  .search-box > svg { display: none; }
+  .chip-groups { grid-template-columns: 1fr; }
+}
 
 /* Pricing table */
 .pricing-band { background: var(--card); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }

@@ -15,6 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="canonical" href="https://collegekundli.com/">
 <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
@@ -34,25 +35,27 @@
     <a class="brand" href="/"><img src="/logo_icon.svg" alt="" width="38" height="38"><span>College <b>Kundli</b></span></a>
     <div class="header-actions">
       <nav class="nav" aria-label="Main">
+        <a href="#search">Search</a>
         <a href="#features">Features</a>
         <a href="#stats">Stats</a>
         <a href="#pricing">Pricing</a>
         <a href="#about">About</a>
       </nav>
-      <a class="btn btn-primary" href="#about">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 20h14"/></svg>
-        Get App
+      <a class="btn btn-primary" href="/app#/home">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m0 0-5-5m5 5-5 5"/></svg>
+        Open Web App
       </a>
       <details class="menu">
         <summary aria-label="Open menu">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
         </summary>
         <div class="menu-panel">
+          <a href="#search">Search</a>
           <a href="#features">Features</a>
           <a href="#stats">Stats</a>
           <a href="#pricing">Pricing</a>
           <a href="#about">About</a>
-          <a class="btn btn-primary" href="#about">Get App</a>
+          <a class="btn btn-primary" href="/app#/home">Open Web App</a>
         </div>
       </details>
     </div>
@@ -70,17 +73,17 @@
         <!-- Before launch this is a badge, not a link. When the Play Store listing is live, change it to:
              <a class="btn btn-primary btn-lg" href="https://play.google.com/store/apps/details?id=com.collegereality.india"> ... Download Android App </a>
              (and the same for the button in #about). -->
-        <span class="btn btn-primary btn-lg" aria-disabled="true">
-          <svg width="22" height="22" aria-hidden="true"><use href="#i-play"/></svg>
-          <span class="stack"><small>Coming soon on</small>Google Play</span>
-        </span>
-        <a class="btn btn-secondary btn-lg" href="#features">
+        <a class="btn btn-primary btn-lg" href="/app#/college-search">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5 5-2Z"/></svg>
           Explore Colleges
         </a>
+        <span class="btn btn-secondary btn-lg" aria-disabled="true">
+          <svg width="22" height="22" aria-hidden="true"><use href="#i-play"/></svg>
+          <span class="stack"><small>Coming soon on</small>Google Play</span>
+        </span>
       </div>
       <ul class="trust rise d4">
-        <li>Free to browse</li>
+        <li>Free to browse, no sign-up</li>
         <li>Verified students only</li>
         <li>First 2 minutes free</li>
       </ul>
@@ -126,6 +129,46 @@
     </div>
   </section>
 </div>
+
+<section class="block search-band" id="search">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Search</p>
+      <h2>Find your college in seconds</h2>
+      <p class="lead">Search 45,000+ colleges by name, city or course. No sign-up needed to browse.</p>
+    </div>
+    <form class="search-box" action="/app" method="get" role="search">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <label class="visually-hidden" for="college-q">College, city or course</label>
+      <input id="college-q" name="q" type="search" placeholder="College, city or course" autocomplete="off">
+      <button class="btn btn-primary" type="submit">Search</button>
+    </form>
+    <div class="chip-groups">
+      <div>
+        <p class="chip-label">Popular searches</p>
+        <div class="chips">
+          <a class="chip" href="/app#/college-search?q=Engineering">Engineering</a>
+          <a class="chip" href="/app#/college-search?q=Medical">Medical</a>
+          <a class="chip" href="/app#/college-search?q=MBA">MBA</a>
+          <a class="chip" href="/app#/college-search?q=Law">Law</a>
+          <a class="chip" href="/app#/college-search?q=Pharmacy">Pharmacy</a>
+          <a class="chip" href="/app#/college-search?q=Architecture">Architecture</a>
+        </div>
+      </div>
+      <div>
+        <p class="chip-label">Browse by city</p>
+        <div class="chips">
+          <a class="chip" href="/app#/college-browse?city=Pune">Pune</a>
+          <a class="chip" href="/app#/college-browse?city=Mumbai">Mumbai</a>
+          <a class="chip" href="/app#/college-browse?city=Delhi">Delhi</a>
+          <a class="chip" href="/app#/college-browse?city=Bengaluru">Bengaluru</a>
+          <a class="chip" href="/app#/college-browse?city=Hyderabad">Hyderabad</a>
+          <a class="chip" href="/app#/college-browse?city=Chennai">Chennai</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
 <section class="block" id="features">
   <div class="wrap">
@@ -183,11 +226,14 @@
   <div class="wrap">
     <div class="cta">
       <h2>Your college journey, in your pocket</h2>
-      <p>College Kundli exists so every student can hear it from people who actually study there before choosing a college. The Android app brings live calls with verified seniors, cutoff predictions and saved shortlists. Questions? Write to <a href="mailto:support@collegekundli.in">support@collegekundli.in</a>.</p>
-      <span class="btn btn-light btn-lg" aria-disabled="true">
-        <svg width="22" height="22" aria-hidden="true"><use href="#i-play"/></svg>
-        <span class="stack"><small>Coming soon on</small>Google Play</span>
-      </span>
+      <p>College Kundli exists so every student can hear it from people who actually study there before choosing a college. The app brings live calls with verified seniors, cutoff predictions and saved shortlists. Questions? Write to <a href="mailto:support@collegekundli.in">support@collegekundli.in</a>.</p>
+      <div class="cta-row" style="justify-content:center">
+        <a class="btn btn-light btn-lg" href="/app#/home">Open the web app</a>
+        <span class="btn btn-light btn-lg" aria-disabled="true">
+          <svg width="22" height="22" aria-hidden="true"><use href="#i-play"/></svg>
+          <span class="stack"><small>Coming soon on</small>Google Play</span>
+        </span>
+      </div>
     </div>
   </div>
 </section>
@@ -211,5 +257,12 @@
     <small>&copy; 2026 College Kundli. Operated by DKS Technologies Pvt Ltd. Independent platform; not affiliated with any university or admission body.</small>
   </div>
 </footer>
+<script>
+  document.querySelector('.search-box').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var q = document.getElementById('college-q').value.trim();
+    location.href = '/app#/college-search' + (q ? '?q=' + encodeURIComponent(q) : '');
+  });
+</script>
 </body>
 </html>

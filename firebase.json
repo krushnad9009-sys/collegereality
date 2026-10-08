@@ -28,15 +28,48 @@
   },
   "hosting": {
     "predeploy": [
-      "python tools/check_hosting_placeholders.py"
+      "python tools/check_hosting_placeholders.py",
+      "python tools/build_web_hosting.py"
     ],
-    "public": "hosting/public",
+    "public": "build/hosting",
     "cleanUrls": true,
     "trailingSlash": false,
     "ignore": [
-      "**/.*"
+      "**/.*",
+      ".last_build_id"
+    ],
+    "redirects": [
+      {
+        "source": "/about",
+        "destination": "/",
+        "type": 301
+      }
+    ],
+    "rewrites": [
+      {
+        "source": "/app{,/**}",
+        "destination": "/app/index.html"
+      }
     ],
     "headers": [
+      {
+        "regex": "^/(app/?)?$",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
+      },
+      {
+        "source": "**/*.@(html|js|mjs|json|wasm)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
+      },
       {
         "source": "**/*.@(css|svg|png)",
         "headers": [
