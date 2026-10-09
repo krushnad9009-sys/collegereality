@@ -20,12 +20,10 @@ import '../helpers/test_harness.dart';
 /// Records which OS permissions were requested, in order, with canned answers.
 class _FakePermissions extends OnboardingPermissionService {
   final calls = <String>[];
-  final bool photos;
   final bool notifications;
   final OnboardingLocationResult location;
 
   _FakePermissions({
-    this.photos = true,
     this.notifications = true,
     this.location = const OnboardingLocationResult(
       granted: true,
@@ -33,12 +31,6 @@ class _FakePermissions extends OnboardingPermissionService {
       city: 'Pune',
     ),
   });
-
-  @override
-  Future<bool> requestPhotos() async {
-    calls.add('photos');
-    return photos;
-  }
 
   @override
   Future<bool> requestNotifications() async {
@@ -149,12 +141,12 @@ void main() {
     expect(termsOfServiceSections, hasLength(9));
   });
 
-  testWidgets('offers all three permissions and one accept action', (
+  testWidgets('offers location and notifications (no photo permission) and one accept action', (
     tester,
   ) async {
     await pumpGate(tester, user: newUser());
 
-    expect(find.text('Gallery / Photos'), findsOneWidget);
+    expect(find.text('Gallery / Photos'), findsNothing);
     expect(find.text('Location'), findsOneWidget);
     expect(find.text('Notifications'), findsOneWidget);
     expect(find.text(_acceptLabel), findsOneWidget);
@@ -167,7 +159,7 @@ void main() {
     await tester.tap(find.text(_acceptLabel));
     await tester.pumpAndSettle();
 
-    expect(permissions.calls, ['photos', 'location', 'notifications']);
+    expect(permissions.calls, ['location', 'notifications']);
     expect(repo.completeOnboardingCalls, hasLength(1));
     final call = repo.completeOnboardingCalls.single;
     expect(call.recordTerms, isTrue);
@@ -187,7 +179,7 @@ void main() {
     await tester.tap(find.text(_acceptLabel));
     await tester.pumpAndSettle();
 
-    expect(permissions.calls, ['photos', 'location']);
+    expect(permissions.calls, ['location']);
     expect(find.text('HOME SCREEN'), findsOneWidget);
   });
 
@@ -196,7 +188,7 @@ void main() {
   ) async {
     await pumpGate(tester, user: newUser());
 
-    for (final name in ['Gallery / Photos', 'Location', 'Notifications']) {
+    for (final name in ['Location', 'Notifications']) {
       await tester.tap(find.byKey(ValueKey('permission-switch-$name')));
     }
     await tester.pump();
@@ -213,7 +205,6 @@ void main() {
 
   testWidgets('denied permissions never block reaching Home', (tester) async {
     permissions = _FakePermissions(
-      photos: false,
       notifications: false,
       location: OnboardingLocationResult.notProvided,
     );
@@ -237,7 +228,7 @@ void main() {
     expect(find.text('HOME SCREEN'), findsNothing);
     expect(find.text('Welcome to College Kundli'), findsOneWidget);
     expect(repo.users['u1']!.hasAcceptedTerms, isFalse);
-    expect(permissions.calls, ['photos', 'location', 'notifications']);
+    expect(permissions.calls, ['location', 'notifications']);
 
     // Every permission has been answered, so the retry button no longer
     // claims to grant anything.
@@ -248,7 +239,7 @@ void main() {
 
     expect(find.text('HOME SCREEN'), findsOneWidget);
     // Not asked a second time.
-    expect(permissions.calls, ['photos', 'location', 'notifications']);
+    expect(permissions.calls, ['location', 'notifications']);
     expect(repo.users['u1']!.hasAcceptedTerms, isTrue);
   });
 

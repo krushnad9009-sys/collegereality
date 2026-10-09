@@ -81,3 +81,11 @@ flutter {
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }
+
+// agora_rtc_engine pulls in Agora's screen-sharing extension, which adds a
+// mediaProjection foreground service + FOREGROUND_SERVICE_MEDIA_PROJECTION
+// (a Play Console declaration on Android 14+). Calls are voice only and
+// never share the screen, so leave it out.
+configurations.all {
+    exclude(group = "io.agora.rtc", module = "full-screen-sharing")
+}

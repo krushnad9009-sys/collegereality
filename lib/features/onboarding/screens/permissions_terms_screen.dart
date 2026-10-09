@@ -18,7 +18,7 @@ import '../../legal/screens/legal_screens.dart';
 import '../services/onboarding_location_resolver.dart';
 import '../services/onboarding_permission_service.dart';
 
-enum _Permission { photos, location, notifications }
+enum _Permission { location, notifications }
 
 /// Per-tile state: a switch while [pending], then the outcome of the request.
 enum _PermissionState { pending, requesting, granted, denied }
@@ -27,8 +27,8 @@ enum _PermissionState { pending, requesting, granted, denied }
 /// Bounded because on web a Firestore write never resolves while offline.
 const Duration _kSaveTimeout = Duration(seconds: 15);
 
-/// The ONE post-login onboarding step: the full Terms & Conditions, the three
-/// optional permissions (gallery, location, notifications) and a single
+/// The ONE post-login onboarding step: the full Terms & Conditions, the two
+/// optional permissions (location, notifications) and a single
 /// "I Accept Terms & Grant Permissions" action. The router
 /// (`onboardingGateRedirect`) shows it until `UserModel.hasCompletedOnboarding`
 /// is true, then sends the user straight to Home.
@@ -103,15 +103,6 @@ class _PermissionsTermsScreenState
   /// without awaiting can silently drop the second.
   Future<void> _requestSelectedPermissions() async {
     final service = ref.read(onboardingPermissionServiceProvider);
-
-    if (_shouldRequest(_Permission.photos)) {
-      _setState(_Permission.photos, _PermissionState.requesting);
-      final granted = await service.requestPhotos();
-      _setState(
-        _Permission.photos,
-        granted ? _PermissionState.granted : _PermissionState.denied,
-      );
-    }
 
     if (_shouldRequest(_Permission.location)) {
       _setState(_Permission.location, _PermissionState.requesting);
@@ -341,20 +332,16 @@ class _PermissionsTermsScreenState
   }
 
   static IconData _iconFor(_Permission p) => switch (p) {
-    _Permission.photos => Icons.photo_library_outlined,
     _Permission.location => Icons.location_on_outlined,
     _Permission.notifications => Icons.notifications_outlined,
   };
 
   static String _titleFor(_Permission p) => switch (p) {
-    _Permission.photos => 'Gallery / Photos',
     _Permission.location => 'Location',
     _Permission.notifications => 'Notifications',
   };
 
   static String _descriptionFor(_Permission p) => switch (p) {
-    _Permission.photos =>
-      'To upload a profile picture, college photos & documents',
     _Permission.location =>
       'To detect your state and city for localized college content',
     _Permission.notifications =>

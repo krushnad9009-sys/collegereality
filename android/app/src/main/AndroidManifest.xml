@@ -1,18 +1,14 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <!-- Location: onboarding permissions screen detects state/city for
-         localized college content. Coarse alone is enough for city-level
-         accuracy; fine is requested too since geolocator asks for both
-         together on Android and a coarse-only grant still satisfies it. -->
+         localized college content. Coarse only: the resolver asks for
+         LocationAccuracy.medium, which a coarse grant satisfies. -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
-    <!-- Photos: Android 13+ (API 33+) split READ_EXTERNAL_STORAGE into
-         per-media-type permissions; READ_MEDIA_IMAGES is the one relevant
-         to profile/college photo uploads. READ_EXTERNAL_STORAGE is kept for
-         API < 33, where READ_MEDIA_IMAGES doesn't exist. -->
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
+    <!-- No photo/storage permission: uploads use the system picker
+         (file_picker -> Storage Access Framework / photo picker), which
+         needs none, and Play restricts READ_MEDIA_IMAGES to photo apps. -->
     <!-- Voice calls (Agora): microphone, audio routing (loudspeaker /
          earpiece / Bluetooth headset) and network state for reconnects. -->
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
@@ -23,6 +19,18 @@
          screen (full-screen intent), like a normal phone call. -->
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT"/>
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <!-- Plugins add these back during the manifest merge; strip them so the
+         release build asks only for what the app uses (Play policy):
+         - safe_device: FINE location (we only read root/dev-mode state)
+         - agora_rtc_engine: CAMERA + phone state (calls are voice only)
+         - Agora screen sharing (also excluded in build.gradle.kts)
+         - photo/storage: uploads use the system picker, no permission -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" tools:node="remove"/>
+    <uses-permission android:name="android.permission.CAMERA" tools:node="remove"/>
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" tools:node="remove"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" tools:node="remove"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" tools:node="remove"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" tools:node="remove"/>
     <application
         android:label="College Kundli"
         android:name="${applicationName}"
