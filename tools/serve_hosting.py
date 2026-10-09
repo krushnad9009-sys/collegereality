@@ -22,6 +22,13 @@ class CleanUrlHandler(http.server.SimpleHTTPRequestHandler):
             return local + '.html'
         return local
 
+    def end_headers(self):
+        # Local preview only: make browsers recheck every file, so a page
+        # edited (or served from a different folder) earlier never sticks
+        # around from cache.
+        self.send_header('Cache-Control', 'no-store')
+        super().end_headers()
+
 
 if __name__ == '__main__':
     port = int(sys.argv[1]) if len(sys.argv) > 1 else 5000
