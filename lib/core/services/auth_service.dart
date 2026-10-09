@@ -101,12 +101,14 @@ class AuthService implements AuthServiceApi {
   final FirebaseAuth _firebaseAuth;
   final GoogleSignIn _googleSignIn;
 
-  // OAuth *Web application* client ID (Google Cloud Console -> Credentials).
-  // Override per build with --dart-define=GOOGLE_WEB_CLIENT_ID=<id>.
+  // OAuth *Web application* client ID (Google Cloud Console -> Credentials):
+  // the "Web client (auto created by Google Service)", client_type 3 in
+  // android/app/google-services.json. Not derived from the Firebase web app
+  // ID. Override per build with --dart-define=GOOGLE_WEB_CLIENT_ID=<id>.
   static const String _webClientId = String.fromEnvironment(
     'GOOGLE_WEB_CLIENT_ID',
     defaultValue:
-        '244446156099-bb6c7e0dabe7a5efbf0bf6.apps.googleusercontent.com',
+        '244446156099-g6ra01v0mavtbmceqpvkmsd0pn13vsof.apps.googleusercontent.com',
   );
 
   @override
