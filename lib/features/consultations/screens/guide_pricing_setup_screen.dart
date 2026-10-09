@@ -10,7 +10,7 @@ import '../../auth/providers/user_provider.dart';
 import '../../auth/services/firestore_user_service.dart';
 import '../../communication/models/guide_stats_model.dart';
 
-/// Lets a verified guide set chat/call/video prices in whole rupees
+/// Lets a verified guide set chat/voice call prices in whole rupees
 /// (converted to paise before writing — Firestore/rules never see a
 /// float). Route is only reachable once the "Available as a guide" toggle
 /// on the profile screen is on, which is itself gated on verification.
@@ -36,15 +36,10 @@ class _GuidePricingSetupScreenState
   final _callPriceController = TextEditingController(text: '99');
   int _callDuration = 15;
 
-  bool _videoOn = false;
-  final _videoPriceController = TextEditingController(text: '199');
-  int _videoDuration = 30;
-
   @override
   void dispose() {
     _chatPriceController.dispose();
     _callPriceController.dispose();
-    _videoPriceController.dispose();
     super.dispose();
   }
 
@@ -66,15 +61,6 @@ class _GuidePricingSetupScreenState
       _callPriceController.text = (call.pricePaise / 100).toStringAsFixed(0);
       _callDuration = call.minutes;
     }
-    final video = settings.callPricing
-        .where((o) => o.type == 'video')
-        .cast<GuideCallPriceOption?>()
-        .firstWhere((_) => true, orElse: () => null);
-    if (video != null) {
-      _videoOn = settings.callAvailable && video.pricePaise > 0;
-      _videoPriceController.text = (video.pricePaise / 100).toStringAsFixed(0);
-      _videoDuration = video.minutes;
-    }
   }
 
   int _rupeesToPaise(TextEditingController c) {
@@ -92,19 +78,15 @@ class _GuidePricingSetupScreenState
             minutes: _callDuration,
             pricePaise: _rupeesToPaise(_callPriceController),
           ),
-        if (_videoOn)
-          GuideCallPriceOption(
-            type: 'video',
-            minutes: _videoDuration,
-            pricePaise: _rupeesToPaise(_videoPriceController),
-          ),
       ];
       final updated = current.copyWith(
         chatAvailable: _chatOn,
         chatPricePaise: _rupeesToPaise(_chatPriceController),
         chatDurationMinutes: _chatDuration,
-        callAvailable: _callOn || _videoOn,
+        callAvailable: _callOn,
         callPricing: options,
+        // Voice only: video calling isn't offered.
+        videoCallsEnabled: false,
       );
       await _userService.updateUserProfile(uid: uid, communicationSettings: updated);
       if (!mounted) return;
@@ -168,16 +150,6 @@ class _GuidePricingSetupScreenState
                   duration: _callDuration,
                   durationOptions: const [15, 30],
                   onDurationChanged: (v) => setState(() => _callDuration = v),
-                ),
-                const SizedBox(height: 12),
-                _channelTile(
-                  title: '📹 Video call',
-                  enabled: _videoOn,
-                  onToggle: (v) => setState(() => _videoOn = v),
-                  priceController: _videoPriceController,
-                  duration: _videoDuration,
-                  durationOptions: const [15, 30, 45],
-                  onDurationChanged: (v) => setState(() => _videoDuration = v),
                 ),
                 const SizedBox(height: 24),
                 PrimaryButton(

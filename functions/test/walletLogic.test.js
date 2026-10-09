@@ -124,3 +124,30 @@ describe('validateRechargeAmount', () => {
     }
   });
 });
+
+describe('video packages (voice-only calling)', () => {
+  const settings = {
+    callAvailable: true,
+    callPricing: [
+      { type: 'call', minutes: 15, pricePaise: 15000 }, // ₹10/min
+      { type: 'video', minutes: 30, pricePaise: 6000 }, // ₹2/min, ignored
+    ],
+  };
+
+  it('ignores video packages when deriving the per-minute rate', () => {
+    expect(resolvePerMinuteRatePaise(settings)).toBe(1000);
+  });
+
+  it('never offers a video package for booking', () => {
+    expect(effectiveCallPackages(settings).map((p) => p.type)).toEqual(['call']);
+  });
+
+  it('a guide with only video packages gets the defaults, not video', () => {
+    const videoOnly = {
+      callAvailable: true,
+      callPricing: [{ type: 'video', minutes: 30, pricePaise: 6000 }],
+    };
+    expect(resolvePerMinuteRatePaise(videoOnly)).toBe(DEFAULT_RATE_PAISE_PER_MINUTE);
+    expect(effectiveCallPackages(videoOnly).every((p) => p.type === 'call')).toBe(true);
+  });
+});

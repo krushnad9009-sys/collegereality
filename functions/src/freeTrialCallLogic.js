@@ -52,7 +52,8 @@ const DENIAL_REASON = Object.freeze({
   CALL_IN_PROGRESS: 'call_in_progress',
 });
 
-const VALID_CALL_TYPES = Object.freeze(['voice', 'video']);
+// Voice only: video calling isn't offered (no live video stream exists).
+const VALID_CALL_TYPES = Object.freeze(['voice']);
 
 function isEndedStatus(status) {
   return ENDED_STATUSES.includes(status);

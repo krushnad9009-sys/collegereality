@@ -113,7 +113,7 @@ class LocalNotificationService {
       android: AndroidNotificationDetails(
         _callChannelId,
         'Incoming calls',
-        channelDescription: 'Rings for incoming voice and video calls',
+        channelDescription: 'Rings for incoming voice calls',
         importance: Importance.max,
         priority: Priority.max,
         category: AndroidNotificationCategory.call,

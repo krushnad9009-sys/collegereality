@@ -60,6 +60,12 @@ describe('resolveGuidePriceForConsultation', () => {
     ).toBeNull();
   });
 
+  it('returns null for a video option (voice-only calling)', () => {
+    expect(
+      resolveGuidePriceForConsultation({ settings, type: 'video', durationMinutes: 30 }),
+    ).toBeNull();
+  });
+
   it('returns null when the channel is toggled off', () => {
     expect(
       resolveGuidePriceForConsultation({

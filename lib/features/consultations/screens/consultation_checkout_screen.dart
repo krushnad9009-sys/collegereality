@@ -62,7 +62,7 @@ class _ConsultationCheckoutScreenState
         o.type,
         o.minutes,
         o.pricePaise,
-        '${o.type == 'video' ? '📹 Video' : '📞 Call'} · ${o.minutes} min',
+        '📞 Voice call · ${o.minutes} min',
       ));
     }
     return options;
