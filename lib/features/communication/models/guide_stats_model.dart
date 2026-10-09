@@ -1,3 +1,5 @@
+import '../../../core/constants/consultation_constants.dart';
+
 class GuideStatsModel {
   final double overallRating;
   final int totalChats;
@@ -217,9 +219,13 @@ class GuideCommunicationSettings {
       chatPricePaise: (json['chatPricePaise'] as num?)?.toInt() ?? 0,
       chatDurationMinutes:
           (json['chatDurationMinutes'] as num?)?.toInt() ?? 15,
+      // Voice only: video calling isn't offered, so video packages some
+      // guides saved earlier are dropped here (mirrors the server's
+      // walletLogic.pricedVoicePackages).
       callPricing: (json['callPricing'] as List<dynamic>?)
               ?.map((e) => GuideCallPriceOption.fromJson(
                   Map<String, dynamic>.from(e as Map)))
+              .where((o) => o.type != ConsultationConstants.typeVideo)
               .toList() ??
           const [],
       areasOfExpertise: (json['areasOfExpertise'] as List<dynamic>?)

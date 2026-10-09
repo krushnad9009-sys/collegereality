@@ -6,8 +6,9 @@ class ConsultationConstants {
 
   static const String typeChat = 'chat';
   static const String typeCall = 'call';
+  // Kept so older consultation docs still parse; video isn't offered.
   static const String typeVideo = 'video';
-  static const List<String> types = [typeChat, typeCall, typeVideo];
+  static const List<String> types = [typeChat, typeCall];
 
   // Consultation lifecycle — see PRODUCT GOAL states in the feature plan.
   static const String statusRequested = 'requested';

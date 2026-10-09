@@ -9,7 +9,7 @@ const MAX_CALL_REQUESTS_PER_HOUR = 10; // was CommunicationConstants.maxCallRequ
 /**
  * Checks shared by every way of starting a direct guide call (free trial
  * and wallet-paid): valid input, not calling yourself, no block in either
- * direction, guide in guide mode, video allowed, request rate limit.
+ * direction, guide in guide mode, voice only, request rate limit.
  *
  * @returns {Promise<{guideId: string, callType: string, caller: object, guide: object}>}
  */
@@ -20,7 +20,7 @@ async function assertCanCallGuide(uid, data) {
     throw new HttpsError('invalid-argument', 'guideId is required.');
   }
   if (!VALID_CALL_TYPES.includes(callType)) {
-    throw new HttpsError('invalid-argument', 'callType must be voice or video.');
+    throw new HttpsError('invalid-argument', 'Only voice calls are supported.');
   }
   if (guideId === uid) {
     throw new HttpsError('invalid-argument', 'You cannot call yourself.');
@@ -51,9 +51,6 @@ async function assertCanCallGuide(uid, data) {
   const settings = guide.communicationSettings || {};
   if (settings.isGuideAvailable !== true) {
     throw new HttpsError('failed-precondition', 'This guide is not available.');
-  }
-  if (callType === 'video' && settings.videoCallsEnabled === false) {
-    throw new HttpsError('failed-precondition', 'Video calls are disabled for this guide.');
   }
   if (recentCalls.size >= MAX_CALL_REQUESTS_PER_HOUR) {
     throw new HttpsError(

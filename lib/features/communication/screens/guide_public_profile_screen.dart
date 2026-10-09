@@ -347,24 +347,6 @@ class _GuidePublicProfileScreenState
                         resolvePerMinuteRatePaise(guide.settings),
                   ),
                 ),
-                if (guide.settings.videoCallsEnabled) ...[
-                  const SizedBox(height: 12),
-                  OutlinedButton.icon(
-                    onPressed: _isRequestingCall
-                        ? null
-                        : () => _startCall(
-                              CommunicationConstants.callTypeVideo,
-                              guideName: guide.displayName,
-                              ratePaisePerMinute:
-                                  resolvePerMinuteRatePaise(guide.settings),
-                            ),
-                    icon: const Icon(Icons.videocam_outlined),
-                    label: const Text('Video Call'),
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size(double.infinity, 52),
-                    ),
-                  ),
-                ],
               ],
             ),
           );

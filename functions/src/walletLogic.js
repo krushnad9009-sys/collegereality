@@ -30,16 +30,30 @@ function isPositiveInt(n) {
 /**
  * The per-minute rate for calling a guide:
  *   1. their explicit per-minute rate, if set;
- *   2. otherwise derived from their cheapest priced voice/video call
- *      package (price / minutes, rounded up to whole paise);
+ *   2. otherwise derived from their cheapest priced voice call package
+ *      (price / minutes, rounded up to whole paise);
  *   3. otherwise the platform default (₹10/min).
  */
+/**
+ * A guide's priced call packages, voice only. Video calling isn't offered
+ * (no live video stream exists), so video packages some guides saved
+ * earlier are ignored everywhere. Mirrored in the app's
+ * GuideCommunicationSettings.fromJson.
+ */
+function pricedVoicePackages(s) {
+  return (Array.isArray(s.callPricing) ? s.callPricing : []).filter(
+    (p) =>
+      p &&
+      p.type !== 'video' &&
+      isPositiveInt(p.pricePaise) &&
+      isPositiveInt(p.minutes),
+  );
+}
+
 function resolvePerMinuteRatePaise(settings) {
   const s = settings || {};
   if (isPositiveInt(s.perMinuteRatePaise)) return s.perMinuteRatePaise;
-  const packs = Array.isArray(s.callPricing) ? s.callPricing : [];
-  const perMinute = packs
-    .filter((p) => p && isPositiveInt(p.pricePaise) && isPositiveInt(p.minutes))
+  const perMinute = pricedVoicePackages(s)
     .map((p) => Math.ceil(p.pricePaise / p.minutes));
   if (perMinute.length > 0) return Math.min(...perMinute);
   return DEFAULT_RATE_PAISE_PER_MINUTE;
@@ -54,9 +68,7 @@ const DEFAULT_PACKAGE_MINUTES = Object.freeze([15, 30]);
 
 function effectiveCallPackages(settings) {
   const s = settings || {};
-  const packs = (Array.isArray(s.callPricing) ? s.callPricing : []).filter(
-    (p) => p && isPositiveInt(p.pricePaise) && isPositiveInt(p.minutes),
-  );
+  const packs = pricedVoicePackages(s);
   if (s.callAvailable && packs.length > 0) return packs;
   if (packs.length > 0) return []; // guide priced calls but switched them off
   return DEFAULT_PACKAGE_MINUTES.map((minutes) => ({
