@@ -1,9 +1,15 @@
-"""Local preview of hosting/public with Firebase-style clean URLs (/terms -> terms.html)."""
+"""Local preview with Firebase-style clean URLs (/terms -> terms.html).
+
+Usage: python tools/serve_hosting.py [port] [dir]  (dir defaults to hosting/public;
+use build/web to preview the full deploy after tools/build_web_hosting.py).
+"""
 import http.server
 import os
 import sys
 
 ROOT = os.path.join(os.path.dirname(__file__), '..', 'hosting', 'public')
+if len(sys.argv) > 2:
+    ROOT = os.path.abspath(sys.argv[2])
 
 
 class CleanUrlHandler(http.server.SimpleHTTPRequestHandler):
@@ -15,6 +21,13 @@ class CleanUrlHandler(http.server.SimpleHTTPRequestHandler):
         if not os.path.exists(local) and os.path.exists(local + '.html'):
             return local + '.html'
         return local
+
+    def end_headers(self):
+        # Local preview only: make browsers recheck every file, so a page
+        # edited (or served from a different folder) earlier never sticks
+        # around from cache.
+        self.send_header('Cache-Control', 'no-store')
+        super().end_headers()
 
 
 if __name__ == '__main__':
