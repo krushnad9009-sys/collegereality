@@ -855,8 +855,8 @@ class _HeroCopy extends StatelessWidget {
           constraints: const BoxConstraints(maxWidth: 560),
           child: Text(
             'Read genuine reviews from verified students, predict your '
-            'admission chances with real cutoff data, and get 1-on-1 video or '
-            'audio guidance from experts who have been there.',
+            'admission chances with real cutoff data, and get 1-on-1 voice-call '
+            'guidance from experts who have been there.',
             textAlign: align,
             style: TextStyle(
               fontSize: mobile ? 16 : 18,
@@ -1062,7 +1062,7 @@ class AppPreviewMockup extends StatelessWidget {
           const SizedBox(height: 12),
           // Consultation call
           _MockTile(
-            icon: Icons.videocam_rounded,
+            icon: Icons.call_rounded,
             title: 'Talk to a senior student',
             subtitle: 'Online now · Computer Engg, 3rd year',
             trailing: Container(
@@ -1163,8 +1163,8 @@ const _stats = [
       'Every state, every stream'),
   _Stat(Icons.verified_user_rounded, '100%', 'Verified Reviews',
       'Written by ID-checked students'),
-  _Stat(Icons.headset_mic_rounded, '1-on-1', 'Consultation Calls',
-      'HD video & audio, powered by Agora'),
+  _Stat(Icons.headset_mic_rounded, '1-on-1', 'Audio Consultations',
+      'Voice calls, right in the app'),
   _Stat(Icons.bolt_rounded, 'Instant', 'Cutoff Predictions',
       'From your rank in seconds'),
 ];
@@ -1255,11 +1255,11 @@ const _features = [
     ['Category-wise cutoffs', 'Multi-year trend charts', 'Rank-based predictor'],
   ),
   _Feature(
-    Icons.video_call_rounded,
-    'Real-time Expert Guidance',
-    'Book in-app video or audio calls with verified seniors and counsellors. '
+    Icons.call_rounded,
+    'Real-time Audio Consultation',
+    'Book in-app voice calls with verified seniors and counsellors. '
         'Ask anything about admissions, hostels, placements and campus life.',
-    ['In-app video & audio calls', 'Verified student guides', 'Free trial minutes'],
+    ['In-app voice calls', 'Verified student guides', 'Free trial minutes'],
   ),
   _Feature(
     Icons.rate_review_rounded,
