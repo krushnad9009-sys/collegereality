@@ -20,8 +20,8 @@ double homeContentGutter(BuildContext context) =>
 ///   [ ☰ ]  College Kundli          [ 🔍 ] [ ⚙ ] [ 🔔 ] [ D ]
 ///
 /// Hamburger (opens the navigation drawer), the app title, then Search,
-/// Filter, Notification and Avatar. Signed-out visitors get a "Sign in" pill
-/// in place of the bell + avatar. All icons are white on translucent-white
+/// Filter, Notification and Avatar. Signed-out visitors get "Login" and
+/// "Sign up" pills in place of the bell + avatar. All icons are white on translucent-white
 /// squares so they read crisply on the blue.
 class HomeTopBar extends StatelessWidget {
   final User? user;
@@ -80,7 +80,7 @@ class HomeTopBar extends StatelessWidget {
         if (user != null)
           HomeHeaderActions(user: user!, onDark: true, size: controlSize)
         else
-          const _SignInPill(),
+          const _GuestAuthButtons(),
       ],
     );
   }
@@ -122,8 +122,46 @@ class _BarButton extends StatelessWidget {
   }
 }
 
-class _SignInPill extends StatelessWidget {
-  const _SignInPill();
+/// Signed-out visitors: an outlined "Login" pill and a solid white
+/// "Sign up" pill. On very narrow phones only the "Login" pill shows (its
+/// screen links to Sign up).
+class _GuestAuthButtons extends StatelessWidget {
+  const _GuestAuthButtons();
+
+  @override
+  Widget build(BuildContext context) {
+    final showSignup = MediaQuery.sizeOf(context).width >= 380;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _AuthPill(
+          label: 'Login',
+          filled: false,
+          onTap: () => context.go(RouteNames.login),
+        ),
+        if (showSignup) ...[
+          const SizedBox(width: 6),
+          _AuthPill(
+            label: 'Sign up',
+            filled: true,
+            onTap: () => context.go(RouteNames.signup),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _AuthPill extends StatelessWidget {
+  final String label;
+  final bool filled;
+  final VoidCallback onTap;
+
+  const _AuthPill({
+    required this.label,
+    required this.filled,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -131,21 +169,24 @@ class _SignInPill extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(999),
-        onTap: () => context.go(RouteNames.login),
+        onTap: onTap,
         child: Container(
           height: HomeTopBar.controlSize,
-          padding: const EdgeInsets.symmetric(horizontal: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 9),
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: filled ? Colors.white : Colors.white.withValues(alpha: 0.16),
             borderRadius: BorderRadius.circular(999),
+            border: filled
+                ? null
+                : Border.all(color: Colors.white.withValues(alpha: 0.5)),
           ),
           child: Text(
-            'Sign in',
+            label,
             style: AppFonts.plusJakarta(
-              fontSize: 13,
+              fontSize: 12,
               fontWeight: FontWeight.w700,
-              color: const Color(0xFF093F72),
+              color: filled ? const Color(0xFF093F72) : Colors.white,
             ),
           ),
         ),

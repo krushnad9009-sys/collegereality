@@ -320,15 +320,16 @@ void main() {
       expect(opened, 1);
     });
 
-    testWidgets('signed-out visitors get a Sign in pill instead of the bell '
-        'and avatar', (tester) async {
+    testWidgets('signed-out visitors get Login and Sign up pills instead of '
+        'the bell and avatar', (tester) async {
       await _pumpHero(tester, width: 900, user: null);
 
       expect(find.byTooltip('Open navigation menu'), findsOneWidget);
       expect(find.text('College Kundli'), findsOneWidget);
       expect(find.byTooltip('Search colleges'), findsOneWidget);
       expect(find.byTooltip('Filters'), findsOneWidget);
-      expect(find.text('Sign in'), findsOneWidget);
+      expect(find.text('Login'), findsOneWidget);
+      expect(find.text('Sign up'), findsOneWidget);
       expect(find.byType(HomeHeaderActions), findsNothing);
       expect(find.text('Find your dream college'), findsOneWidget);
     });

@@ -69,7 +69,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     _hardFallbackTimer = Timer(_kSplashTimeout + const Duration(seconds: 2), () {
       if (!mounted || _navigated) return;
       _log('HARD FALLBACK fired -- forcing navigation to login');
-      _forceNavigate(RouteNames.login);
+      _forceNavigate(_signedOutRoute);
     });
   }
 
@@ -104,7 +104,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       debugPrint('Splash navigation error: $e\n$st');
       // Use the force path: a normal `_goTo` no-ops if `_navigating` is
       // still true from a `_resolveAndNavigate` that hung mid-`_goTo`.
-      _forceNavigate(RouteNames.login);
+      _forceNavigate(_signedOutRoute);
     }
   }
 
@@ -153,6 +153,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     if (isLoggedIn) {
       _log('SUCCESS resolveAndNavigate -- routing to home');
       await _goTo(RouteNames.home);
+    } else if (kIsWeb) {
+      // Website (collegekundli.com): visitors land on Home and browse as a
+      // guest; Login / Sign up live in Home's top bar.
+      _log('SUCCESS resolveAndNavigate -- web guest, routing to home');
+      await _goTo(RouteNames.home);
     } else if (hasSeenOnboarding) {
       _log('SUCCESS resolveAndNavigate -- routing to login');
       await _goTo(RouteNames.login);
@@ -161,6 +166,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       await _goTo(RouteNames.onboarding);
     }
   }
+
+  /// Fallback for a signed-out (or unknown) user: Home on the website,
+  /// Login in the mobile app.
+  static String get _signedOutRoute =>
+      kIsWeb ? RouteNames.home : RouteNames.login;
 
   /// Navigate off the splash immediately, bypassing the exit fade and the
   /// `_navigating` guard. Only for the timeout / hard-fallback paths.
