@@ -1,10 +1,12 @@
 """Assemble collegekundli.com for Firebase Hosting.
 
 Output: build/hosting
-  /       static landing + policy pages from hosting/public (/, /terms,
-          /privacy-policy, /refund-policy, /shipping-policy, /contact,
-          app-ads.txt, ...)
-  /app/   Flutter Web release build of lib/main.dart (--base-href /app/)
+  /       Flutter Web release build of lib/main.dart (--base-href /), so the
+          website is the same app as on Android
+  + the static policy pages from hosting/public (/terms, /privacy-policy,
+          /refund-policy, /shipping-policy, /contact, app-ads.txt, ...).
+          hosting/public/index.html (the old HTML landing page) is not
+          shipped; old /app links are redirected to / in firebase.json.
 
 firebase.json serves build/hosting and runs this as the hosting predeploy, so
 `firebase deploy --only hosting` always ships a fresh build.
@@ -26,13 +28,13 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 STATIC = ROOT / 'hosting' / 'public'
 FLUTTER_OUT = ROOT / 'build' / 'web'
 OUT = ROOT / 'build' / 'hosting'
-APP_PATH = 'app'
+STATIC_SKIP = {'index.html'}  # the app owns /
 DART_DEFINES = ['APP_CHECK_RECAPTCHA_SITE_KEY']
 
 
 def build_flutter():
     cmd = ['flutter', 'build', 'web', '--release', '-t', 'lib/main.dart',
-           '--base-href', f'/{APP_PATH}/']
+           '--base-href', '/']
     for name in DART_DEFINES:
         value = os.environ.get(name, '').strip()
         if value:
@@ -55,15 +57,22 @@ def main():
     app_index = FLUTTER_OUT / 'index.html'
     if not app_index.exists() or not (FLUTTER_OUT / 'main.dart.js').exists():
         sys.exit('build/web is missing the Flutter build output.')
-    if f'<base href="/{APP_PATH}/">' not in app_index.read_text(encoding='utf-8'):
-        sys.exit(f'build/web was not built with --base-href /{APP_PATH}/; rebuild without SKIP_FLUTTER_BUILD.')
-    if (STATIC / APP_PATH).exists():
-        sys.exit(f'hosting/public/{APP_PATH} would collide with the web app; rename it.')
+    if '<base href="/">' not in app_index.read_text(encoding='utf-8'):
+        sys.exit('build/web was not built with --base-href /; rebuild without SKIP_FLUTTER_BUILD.')
 
     shutil.rmtree(OUT, ignore_errors=True)
-    shutil.copytree(STATIC, OUT)
-    shutil.copytree(FLUTTER_OUT, OUT / APP_PATH)
-    print(f'build/hosting is ready: landing page at /, web app at /{APP_PATH}/')
+    shutil.copytree(FLUTTER_OUT, OUT)
+    for item in STATIC.iterdir():
+        if item.name in STATIC_SKIP:
+            continue
+        dest = OUT / item.name
+        if dest.exists():
+            sys.exit(f'hosting/public/{item.name} would overwrite a Flutter build file; rename it.')
+        if item.is_dir():
+            shutil.copytree(item, dest)
+        else:
+            shutil.copy2(item, dest)
+    print('build/hosting is ready: web app at /, policy pages beside it')
 
 
 if __name__ == '__main__':
